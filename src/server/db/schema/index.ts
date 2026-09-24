@@ -1,2 +1,5 @@
 export * from '@/server/db/schema/global'
 export * from '@/server/db/schema/identity'
+export * from '@/server/db/schema/catalog'
+export * from '@/server/db/schema/orders'
+export * from '@/server/db/schema/activity'
