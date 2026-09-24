@@ -1,0 +1,25 @@
+name: formline-admin
+services:
+  postgres:
+    image: postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports: ['127.0.0.1:55432:5432']
+    tmpfs: ['/var/lib/postgresql/data']
+    volumes: ['./tests/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro']
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  pgbouncer:
+    image: edoburu/pgbouncer:v1.25.2-p0@sha256:7d7a27d9e90985cab5cf42256f5c13a3120baa4b055b69df37beb272b89b2340
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports: ['127.0.0.1:56432:6432']
+    volumes:
+      - ./tests/db/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+      - ./tests/db/userlist.txt:/etc/pgbouncer/userlist.txt:ro
