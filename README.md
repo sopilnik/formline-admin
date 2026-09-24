@@ -24,8 +24,8 @@ Checks: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:int`, `pnpm test:
 
 ## Security model
 
-The container is reachable only through the bunny edge, which signs every request with a shared secret and the
-visitor's real IP; the edge proxy checks both on every page and refuses anything without them, so the raw origin
+The container is reachable only through the bunny edge, which adds a shared secret and the visitor's real IP as
+headers to every request; the edge proxy checks both on every page and refuses anything without them, so the raw origin
 stays closed. Each response carries a Content Security Policy built with a fresh per-request nonce, so only scripts
 the server itself emitted can run. Inside the database, row-level security keeps every workspace's rows apart, and
 the `app` role is checked at startup so the server can never fall back to a role that bypasses it.
