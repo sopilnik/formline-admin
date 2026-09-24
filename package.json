@@ -1,0 +1,32 @@
+{
+  "name": "formline-admin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Admin dashboard for the Formline poster store: per-visitor demo sandboxes, PostgreSQL row-level security, Next.js App Router",
+  "author": "Alexandr Sopilnik",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "next": "16.3.6",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.6",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.3.6",
+    "typescript": "6.0.3",
+    "vitest": "5.0.1"
+  }
+}
