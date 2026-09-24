@@ -1,6 +1,7 @@
 import pg from 'pg'
 import { setTimeout as sleep } from 'node:timers/promises'
-import { ADMIN_URL, TEST_DB } from './env'
+import { migrate } from '../../scripts/migrate'
+import { ADMIN_URL, APP_POOLED_URL, MIGRATOR_URL, TEST_DB } from './env'
 
 async function waitForDatabase(url: string): Promise<void> {
   for (let attempt = 1; ; attempt++) {
@@ -29,4 +30,5 @@ export default async function setup(): Promise<void> {
   } finally {
     await admin.end()
   }
+  await migrate({ migratorUrl: MIGRATOR_URL, appUrl: APP_POOLED_URL })
 }
