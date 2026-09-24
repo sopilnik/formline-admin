@@ -3,7 +3,12 @@ import { defineConfig } from 'vitest/config'
 
 // Integration tests share one database per run, so files run one after another.
 export default defineConfig({
-  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      'server-only': fileURLToPath(new URL('./tests/server-only-stub.ts', import.meta.url)),
+    },
+  },
   test: {
     environment: 'node',
     include: ['tests/int/**/*.test.ts'],
