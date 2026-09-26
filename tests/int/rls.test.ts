@@ -3,7 +3,7 @@ import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { withWorkspace, type Role, type WorkspaceContext } from '@/server/db/with-workspace'
 import { adminPool, appDirectPool, appPool, closeAll } from './db'
-import { asSchemaOwner, createUser, createWorkspace, inRollback } from './fixtures'
+import { asSchemaOwner, createUser, createWorkspace, errorText, inRollback } from './fixtures'
 
 type Actor = Role | 'system'
 type Ids = Record<string, string>
@@ -48,13 +48,6 @@ async function seed(): Promise<Seeded> {
     return out
   })
   return { ws, users, ids }
-}
-
-/** The Postgres text of an error: drizzle-orm wraps it and keeps the original on `cause`. */
-function errorText(error: unknown): string {
-  const parts: string[] = []
-  for (let e: unknown = error; e instanceof Error; e = e.cause) parts.push(e.message)
-  return parts.length > 0 ? parts.join(' | ') : String(error)
 }
 
 /** Runs fn inside withWorkspace and always rolls back, returning fn's outcome. */

@@ -2,6 +2,13 @@ import type pg from 'pg'
 
 export class Rollback extends Error {}
 
+/** The Postgres text of an error: drizzle-orm wraps it and keeps the original on `cause`. */
+export function errorText(error: unknown): string {
+  const parts: string[] = []
+  for (let e: unknown = error; e instanceof Error; e = e.cause) parts.push(e.message)
+  return parts.length > 0 ? parts.join(' | ') : String(error)
+}
+
 /** Runs fn in a transaction that is always rolled back; returns fn's result. */
 export async function inRollback<T>(pool: pg.Pool, fn: (c: pg.PoolClient) => Promise<T>): Promise<T> {
   const client = await pool.connect()

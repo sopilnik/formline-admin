@@ -7,14 +7,7 @@ import { generateToken, hashToken } from '@/server/auth/tokens'
 import { withWorkspace } from '@/server/db/with-workspace'
 import { endSandbox, resetSandbox } from '@/server/sandbox/lifecycle'
 import { adminPool, appPool, closeAll } from './db'
-import { asSchemaOwner } from './fixtures'
-
-/** The Postgres text of an error: drizzle-orm wraps it and keeps the original on `cause`. */
-function errorText(error: unknown): string {
-  const parts: string[] = []
-  for (let e: unknown = error; e instanceof Error; e = e.cause) parts.push(e.message)
-  return parts.length > 0 ? parts.join(' | ') : String(error)
-}
+import { asSchemaOwner, errorText } from './fixtures'
 
 let admin: pg.Pool
 let app: pg.Pool
