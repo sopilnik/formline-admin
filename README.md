@@ -22,6 +22,14 @@ Checks: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:int`, `pnpm test:
 
     pnpm build && ORIGIN_AUTH_SECRET=… pnpm start
 
+## Template data
+
+Every sandbox is a copy of the template workspace: the store's catalog (`db/seed/catalog.ts`, with the poster images in
+`public/posters/`), four demo users and 150 customers with 700 orders over 180 days, all generated deterministically by
+`db/seed/generator.ts` from `TEMPLATE_VERSION`. `pnpm db:migrate` builds the template after the migrations and rebuilds it when
+the version changes; copies of store orders and existing sandboxes are kept. Generated timestamps are relative to
+`TEMPLATE_EPOCH` and shifted to the present when a sandbox is created.
+
 ## Security model
 
 The container is reachable only through the bunny edge, which adds a shared secret and the visitor's real IP as

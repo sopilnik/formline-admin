@@ -39,7 +39,6 @@ describe('workspaces', () => {
 
   it('allows one template and one owner workspace', async () => {
     await inRollback(admin, async c => {
-      await c.query("insert into fa.workspaces (kind) values ('template')")
       await expect(c.query("insert into fa.workspaces (kind) values ('template')")).rejects.toThrow(/workspaces_one_template/)
     })
     await inRollback(admin, async c => {

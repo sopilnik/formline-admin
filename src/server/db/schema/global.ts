@@ -15,6 +15,7 @@ export const workspaces = fa.table('workspaces', {
   expiresAt: ts('expires_at'),
   creatorIpHash: text('creator_ip_hash'),
   templateVersion: integer('template_version'),
+  templateEpoch: ts('template_epoch'),
 })
 
 export const rateLimits = fa.table('rate_limits', {

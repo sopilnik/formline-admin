@@ -10,6 +10,6 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['*.test.ts', 'app/**/*.test.{ts,tsx}', 'src/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts', 'tests/unit/**/*.test.ts'],
+    include: ['*.test.ts', 'app/**/*.test.{ts,tsx}', 'src/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts', 'db/**/*.test.ts', 'tests/unit/**/*.test.ts'],
   },
 })

@@ -1,10 +1,11 @@
-// Applies the SQL migrations as schema_owner and keeps the two database roles
-// in shape. Runs at container start before the server listens (stage 9) and by
-// hand with `pnpm db:migrate`.
+// Applies the SQL migrations as schema_owner, keeps the two database roles in
+// shape and builds the template workspace. Runs at container start before the
+// server listens (stage 9) and by hand with `pnpm db:migrate`.
 import pg from 'pg'
 import { readdir, readFile } from 'node:fs/promises'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
+import { buildTemplate } from '../db/seed/build.ts'
 
 export type MigrateOptions = {
   migratorUrl: string
@@ -91,6 +92,12 @@ export async function migrate(options: MigrateOptions): Promise<{ applied: strin
       }
       applied.push(file)
       log({ event: 'migrate.applied', version: file })
+    }
+    // Only against the real schema (the default migrations directory); a caller with its
+    // own directory, such as the migration-runner tests, has no fa.workspaces to build into.
+    if (!options.dir) {
+      const template = await buildTemplate(client)
+      if (template.rebuilt) log({ event: 'template.built', version: template.version })
     }
     return { applied }
   } finally {
