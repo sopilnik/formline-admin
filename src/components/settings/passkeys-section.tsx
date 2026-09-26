@@ -100,44 +100,46 @@ function PasskeyItem({ passkey, canRemove }: { passkey: PasskeyView; canRemove: 
 
   return (
     <li className="flex flex-wrap items-center gap-3 px-4 py-3">
-      <div className="min-w-0 flex-1">
+      <div className="min-w-48 flex-1">
         <p className="font-medium break-words">{passkey.name}</p>
         <p className="text-xs text-muted-foreground">
           {t('added', { date: passkey.added })} · {passkey.lastUsed ? t('lastUsed', { date: passkey.lastUsed }) : t('neverUsed')}
         </p>
       </div>
-      <Dialog open={renaming} onOpenChange={setRenaming}>
-        <DialogTrigger render={<Button variant="outline" size="sm" aria-label={t('renameNamed', { name: passkey.name })} />}>
-          {t('rename')}
-        </DialogTrigger>
-        <DialogContent showCloseButton={false}>
-          <DialogHeader>
-            <DialogTitle>{t('rename')}</DialogTitle>
-          </DialogHeader>
-          <form action={rename} className="flex flex-col gap-4">
-            <TextField id={`passkey-name-${passkey.id}`} name="name" label={t('renameLabel')} defaultValue={passkey.name} maxLength={60} />
+      <div className="flex shrink-0 gap-2">
+        <Dialog open={renaming} onOpenChange={setRenaming}>
+          <DialogTrigger render={<Button variant="outline" size="sm" aria-label={t('renameNamed', { name: passkey.name })} />}>
+            {t('rename')}
+          </DialogTrigger>
+          <DialogContent showCloseButton={false}>
+            <DialogHeader>
+              <DialogTitle>{t('rename')}</DialogTitle>
+            </DialogHeader>
+            <form action={rename} className="flex flex-col gap-4">
+              <TextField id={`passkey-name-${passkey.id}`} name="name" label={t('renameLabel')} defaultValue={passkey.name} maxLength={60} />
+              <DialogFooter>
+                <DialogClose render={<Button type="button" variant="outline" />}>{t('cancel')}</DialogClose>
+                <Button type="submit" disabled={pending}>{t('save')}</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+        <Dialog open={removing} onOpenChange={setRemoving}>
+          <DialogTrigger render={<Button variant="outline" size="sm" disabled={!canRemove} aria-label={t('removeNamed', { name: passkey.name })} />}>
+            {t('remove')}
+          </DialogTrigger>
+          <DialogContent showCloseButton={false}>
+            <DialogHeader>
+              <DialogTitle>{t('removeTitle', { name: passkey.name })}</DialogTitle>
+              <DialogDescription>{t('removeBody')}</DialogDescription>
+            </DialogHeader>
             <DialogFooter>
               <DialogClose render={<Button type="button" variant="outline" />}>{t('cancel')}</DialogClose>
-              <Button type="submit" disabled={pending}>{t('save')}</Button>
+              <Button type="button" variant="destructive" onClick={remove} disabled={pending}>{t('remove')}</Button>
             </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={removing} onOpenChange={setRemoving}>
-        <DialogTrigger render={<Button variant="outline" size="sm" disabled={!canRemove} aria-label={t('removeNamed', { name: passkey.name })} />}>
-          {t('remove')}
-        </DialogTrigger>
-        <DialogContent showCloseButton={false}>
-          <DialogHeader>
-            <DialogTitle>{t('removeTitle', { name: passkey.name })}</DialogTitle>
-            <DialogDescription>{t('removeBody')}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <DialogClose render={<Button type="button" variant="outline" />}>{t('cancel')}</DialogClose>
-            <Button type="button" variant="destructive" onClick={remove} disabled={pending}>{t('remove')}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      </div>
     </li>
   )
 }

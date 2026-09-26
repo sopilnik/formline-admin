@@ -111,6 +111,14 @@ test('the owner adds a passkey, signs in with it and removes it', async ({ page 
   await page.getByRole('button', { name: 'Add a passkey' }).click()
   await expect(page.getByText('Passkey added.')).toBeVisible()
   await expect(page.getByRole('list', { name: 'Passkeys' }).getByRole('listitem')).toHaveCount(1)
+  // On a phone the row's buttons sit under the name instead of squeezing it (visual walk, 26 September).
+  await page.setViewportSize({ width: 375, height: 812 })
+  const name = page.getByRole('list', { name: 'Passkeys' }).getByRole('listitem').getByText('Chrome on Linux')
+  const nameBox = (await name.boundingBox())!
+  const removeBox = (await page.getByRole('button', { name: /^Remove / }).boundingBox())!
+  expect(nameBox.width).toBeGreaterThan(150)
+  expect(removeBox.y).toBeGreaterThanOrEqual(nameBox.y + nameBox.height)
+  await page.setViewportSize({ width: 1280, height: 720 })
   await signOut(page)
   await page.getByRole('button', { name: 'Sign in with a passkey' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
