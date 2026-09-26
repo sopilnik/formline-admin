@@ -34,7 +34,7 @@ const enter = () => window.location.assign('/overview')
  */
 export function PasskeySignIn() {
   const t = useTranslations('auth')
-  const [error, setError] = useState<AuthError | null>(null)
+  const [error, setError] = useState<{ code: AuthError; minutes: number } | null>(null)
   const [pending, setPending] = useState(false)
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export function PasskeySignIn() {
       .then(outcome => {
         if (!outcome || !active) return
         if (outcome.ok) enter()
-        else setError(outcome.error)
+        else setError({ code: outcome.error, minutes: outcome.retryAfterMinutes ?? 1 })
       })
       // Cancelled when the button starts its own request or the page is left.
       .catch(() => undefined)
@@ -59,9 +59,9 @@ export function PasskeySignIn() {
     try {
       const outcome = await attempt(false)
       if (outcome.ok) enter()
-      else setError(outcome.error)
+      else setError({ code: outcome.error, minutes: outcome.retryAfterMinutes ?? 1 })
     } catch {
-      setError('passkey_cancelled')
+      setError({ code: 'passkey_cancelled', minutes: 1 })
     } finally {
       setPending(false)
     }
@@ -73,7 +73,7 @@ export function PasskeySignIn() {
         <FingerprintPattern aria-hidden />
         {pending ? t('signIn.passkeyPending') : t('signIn.passkey')}
       </Button>
-      {error ? <p role="alert" className="text-sm text-destructive">{t(`errors.${error}`, { minutes: 1 })}</p> : null}
+      {error ? <p role="alert" className="text-sm text-destructive">{t(`errors.${error.code}`, { minutes: error.minutes })}</p> : null}
     </div>
   )
 }
