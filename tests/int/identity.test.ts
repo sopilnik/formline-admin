@@ -43,7 +43,7 @@ describe('workspaces', () => {
       await expect(c.query("insert into fa.workspaces (kind) values ('template')")).rejects.toThrow(/workspaces_one_template/)
     })
     await inRollback(admin, async c => {
-      await c.query("insert into fa.workspaces (kind) values ('owner')")
+      // The migrations create the owner workspace (0005_sessions.sql).
       await expect(c.query("insert into fa.workspaces (kind) values ('owner')")).rejects.toThrow(/workspaces_one_owner/)
     })
   })

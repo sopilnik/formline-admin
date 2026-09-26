@@ -12,3 +12,10 @@ export function getPool(): pg.Pool {
   }
   return pool
 }
+
+/** Ends the pool (graceful shutdown, tests). */
+export async function closePool(): Promise<void> {
+  const current = pool
+  pool = undefined
+  await current?.end()
+}

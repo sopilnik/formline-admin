@@ -251,7 +251,7 @@ describe('functions', () => {
   it('the application may execute exactly the helper functions', async () => {
     const { rows } = await admin.query<{ name: string }>(
       "select p.proname as name from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'fa' and has_function_privilege('app', p.oid, 'execute') order by 1")
-    expect(rows.map(r => r.name)).toEqual(['app_role', 'app_user', 'app_workspace', 'app_workspace_kind'])
+    expect(rows.map(r => r.name)).toEqual(['app_role', 'app_user', 'app_workspace', 'app_workspace_kind', 'auth_session', 'owner_workspace_id'])
   })
 
   it('app_workspace_kind reports the current workspace only', async () => {
