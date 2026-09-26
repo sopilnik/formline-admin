@@ -32,6 +32,10 @@ describe('vendored ui primitives', () => {
     expect(read(name)).not.toMatch(/primary/)
   })
 
+  it.each(files)('%s takes cn from @/lib/utils', name => {
+    expect(read(name)).not.toMatch(/from "cn"/)
+  })
+
   it('uses Base UI toasts, not sonner', () => {
     expect(files).not.toContain('sonner.tsx')
     expect(read('toast.tsx')).toContain('@base-ui/react/toast')
