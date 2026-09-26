@@ -66,6 +66,14 @@ describe('request decoration', () => {
     expect(proxy(req('/?lang=ru', good)).cookies.get('NEXT_LOCALE')?.value).toBe('ru')
     expect(proxy(req('/?lang=de', good)).cookies.get('NEXT_LOCALE')).toBeUndefined()
   })
+
+  it('lets the request that carries ?lang render in that language already', () => {
+    production()
+    const res = proxy(req('/sign-in?lang=ru', { ...good, cookie: 'formline_theme=dark' }))
+    const forwarded = res.headers.get('x-middleware-request-cookie') ?? ''
+    expect(forwarded).toContain('NEXT_LOCALE=ru')
+    expect(forwarded).toContain('formline_theme=dark')
+  })
 })
 
 describe('buildCsp', () => {

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './test'
 import { E2E_CLIENT_IP, E2E_ORIGIN_SECRET } from './constants'
 
 test('liveness answers without the origin secret', async ({ playwright, baseURL }) => {

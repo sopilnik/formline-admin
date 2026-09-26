@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { NextIntlClientProvider } from 'next-intl'
+import { getLocale, getTranslations } from 'next-intl/server'
 import localFont from 'next/font/local'
 import { cookies } from 'next/headers'
 import type { ReactNode } from 'react'
@@ -37,12 +39,16 @@ export const dynamic = 'force-dynamic'
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value)
   const nonce = await getNonce()
+  const locale = await getLocale()
+  const t = await getTranslations('common')
   return (
-    <html lang="en" className={cn(inter.variable, spaceGrotesk.variable, themeClassName(theme))}>
+    <html lang={locale} className={cn(inter.variable, spaceGrotesk.variable, themeClassName(theme))}>
       <body>
-        <Providers nonce={nonce} closeLabel="Dismiss">
-          {children}
-        </Providers>
+        <NextIntlClientProvider>
+          <Providers nonce={nonce} closeLabel={t('dismiss')}>
+            {children}
+          </Providers>
+        </NextIntlClientProvider>
       </body>
     </html>
   )

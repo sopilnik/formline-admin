@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto'
 import { isIP } from 'node:net'
 import { NextResponse, type NextRequest } from 'next/server'
+import { LOCALE_COOKIE } from '@/i18n/locale'
 
 // The container is reachable only through the bunny edge, which sets both
 // headers on every request and overwrites whatever a client sent. Anything
@@ -48,18 +49,22 @@ export function proxy(request: NextRequest): NextResponse {
       headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'X-Request-Id': requestId },
     })
   }
+  const lang = request.nextUrl.searchParams.get('lang')
+  const locale = lang === 'en' || lang === 'ru' ? lang : null
+  // The request that carries ?lang renders in that language already, not only the next one.
+  if (locale) request.cookies.set(LOCALE_COOKIE, locale)
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
   const csp = buildCsp(nonce, process.env.NODE_ENV === 'development')
   const headers = new Headers(request.headers)
+  if (locale) headers.set('cookie', request.cookies.toString())
   headers.set('x-nonce', nonce)
   headers.set('x-request-id', requestId)
   headers.set('Content-Security-Policy', csp)
   const response = NextResponse.next({ request: { headers } })
   response.headers.set('Content-Security-Policy', csp)
   response.headers.set('X-Request-Id', requestId)
-  const lang = request.nextUrl.searchParams.get('lang')
-  if (lang === 'en' || lang === 'ru') {
-    response.cookies.set('NEXT_LOCALE', lang, {
+  if (locale) {
+    response.cookies.set(LOCALE_COOKIE, locale, {
       path: '/',
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',

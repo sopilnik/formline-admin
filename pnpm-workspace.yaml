@@ -1,6 +1,8 @@
 # Blocks packages published less than a day ago, in case a fresh release turns out compromised.
 minimumReleaseAge: 1440
 allowBuilds:
+  '@parcel/watcher': false
+  '@swc/core': false
   esbuild: true
   sharp: false
   unrs-resolver: false

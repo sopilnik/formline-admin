@@ -1,0 +1,52 @@
+{
+  "common": {
+    "brandSub": "Admin",
+    "dismiss": "Dismiss",
+    "skipToContent": "Skip to content"
+  },
+  "nav": {
+    "label": "Main menu",
+    "overview": "Overview",
+    "orders": "Orders",
+    "products": "Products",
+    "collections": "Collections",
+    "customers": "Customers",
+    "team": "Team",
+    "activity": "Activity",
+    "outbox": "Outbox",
+    "settings": "Settings",
+    "collapse": "Collapse menu",
+    "expand": "Expand menu",
+    "open": "Open menu",
+    "close": "Close menu"
+  },
+  "theme": {
+    "label": "Theme: {name}",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "language": {
+    "label": "Language: {name}",
+    "en": "English",
+    "ru": "Русский"
+  },
+  "user": {
+    "menu": "Account menu: {name}, {role}",
+    "signOut": "Sign out",
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "manager": "Manager",
+      "viewer": "Viewer"
+    }
+  },
+  "overview": {
+    "title": "Overview",
+    "placeholder": "Revenue, orders and stock appear here once the orders module is in place."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you are looking for does not exist."
+  }
+}

@@ -1,3 +1,4 @@
+import createNextIntlPlugin from 'next-intl/plugin'
 import type { NextConfig } from 'next'
 
 // The CSP is per request (proxy.ts, it carries the nonce); these are the same for every response.
@@ -23,4 +24,7 @@ const nextConfig: NextConfig = {
   },
 }
 
-export default nextConfig
+// Languages without i18n routing: the locale comes from a cookie (spec §11), src/i18n/request.ts.
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
+
+export default withNextIntl(nextConfig)
