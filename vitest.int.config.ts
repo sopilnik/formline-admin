@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
+import { APP_POOLED_URL, TEST_AUTH_ENV } from './tests/int/env'
 
 // Integration tests share one database per run, so files run one after another.
 export default defineConfig({
@@ -16,5 +17,6 @@ export default defineConfig({
     fileParallelism: false,
     testTimeout: 30_000,
     hookTimeout: 120_000,
+    env: { DATABASE_URL: APP_POOLED_URL, ...TEST_AUTH_ENV },
   },
 })

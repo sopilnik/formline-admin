@@ -1,5 +1,5 @@
 import { defineConfig } from '@playwright/test'
-import { E2E_CLIENT_IP, E2E_ORIGIN_SECRET, E2E_PORT } from './tests/e2e/constants'
+import { E2E_AUTH_ENV, E2E_CLIENT_IP, E2E_ORIGIN_SECRET, E2E_PORT } from './tests/e2e/constants'
 
 export default defineConfig({
   testDir: 'tests/e2e',
@@ -20,6 +20,7 @@ export default defineConfig({
       HOSTNAME: '127.0.0.1',
       ORIGIN_AUTH_SECRET: E2E_ORIGIN_SECRET,
       DATABASE_URL: 'postgres://app:app-local-password@127.0.0.1:56432/formline_dev',
+      ...E2E_AUTH_ENV,
     },
   },
 })
