@@ -16,8 +16,8 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   poweredByHeader: false,
   reactStrictMode: true,
-  // pino loads its transports at run time; bundling it breaks them.
-  serverExternalPackages: ['pino'],
+  // pino loads its transports at run time and @node-rs/argon2 is a native module; bundling breaks both.
+  serverExternalPackages: ['pino', '@node-rs/argon2'],
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }]
   },
