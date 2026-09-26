@@ -13,7 +13,7 @@ Requirements: Node.js 24 or later, pnpm 11, Docker.
 
 Copy `.env.example` to `.env` before running anything that touches the database.
 
-`pnpm db:up` starts Postgres 17 and PgBouncer in transaction mode on `127.0.0.1:55432` and `127.0.0.1:56432`.
+`pnpm db:up` starts Postgres 18 and PgBouncer in transaction mode on `127.0.0.1:55432` and `127.0.0.1:56432`.
 `pnpm test:int` runs the integration tests against that stack; `pnpm db:down` stops it and removes its data.
 
 Checks: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:int`, `pnpm test:e2e` (builds first).
