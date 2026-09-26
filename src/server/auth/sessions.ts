@@ -138,11 +138,12 @@ export const getSession = cache(async (): Promise<Session | null> => {
 /**
  * For pages and Server Actions: a verified session, or a redirect into the
  * sign-in flow. `pending: true` also accepts a session that still waits for its
- * second factor (the verification step itself).
+ * second factor (the verification step itself). A missing session with the demo
+ * marker cookie lands on the ended-sandbox notice (spec §6.4).
  */
 export async function requireSession(options: { pending?: boolean } = {}): Promise<Session> {
   const session = await getSession()
-  if (!session) redirect('/sign-in')
+  if (!session) redirect((await cookies()).has(DEMO_COOKIE) ? '/sign-in?ended=1' : '/sign-in')
   if (!session.secondFactorVerified && !options.pending) redirect('/sign-in/verify')
   return session
 }

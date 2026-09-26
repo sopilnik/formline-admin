@@ -7,11 +7,14 @@ import { logActivity } from '@/server/dal/activity'
 import { withWorkspace } from '@/server/db/with-workspace'
 import { hashIp } from '@/server/ratelimit/ip'
 import { getClientIp } from '@/server/request'
+import { endSandbox } from '@/server/sandbox/lifecycle'
 
-/** Signs out of this device (spec §5.1). Stage 3 turns a sandbox sign-out into ending the sandbox. */
+/** Signs out of this device (spec §5.1); in a sandbox that ends the sandbox itself (spec §6.4). */
 export async function signOutAction(): Promise<void> {
   const session = await getSession()
-  if (session) {
+  if (session?.workspaceKind === 'sandbox') {
+    await endSandbox(session)
+  } else if (session) {
     const ipHash = hashIp(await getClientIp(), authConfig().ipHashKey)
     await withWorkspace(workspaceContext(session), async tx => {
       await deleteSession(tx, session)

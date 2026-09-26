@@ -35,6 +35,9 @@
     "menu": "Account menu: {name}, {role}",
     "security": "Security",
     "signOut": "Sign out",
+    "endDemoTitle": "Sign out and end the demo?",
+    "endDemoBody": "Your sandbox and everything you changed in it are deleted.",
+    "cancel": "Cancel",
     "roles": {
       "owner": "Owner",
       "admin": "Admin",
@@ -146,7 +149,20 @@
       "title": "Try the demo",
       "body": "No sign-up. You get your own copy of the store's data, where everything can be changed. It is deleted after 2 hours without activity.",
       "button": "Enter the demo",
-      "pending": "Opening your sandbox…"
+      "pending": "Opening your sandbox…",
+      "ended": "Your demo sandbox has ended. Start a new one."
+    },
+    "banner": {
+      "label": "Demo sandbox",
+      "title": "Demo sandbox.",
+      "body": "Your changes are private. The sandbox is deleted after 2 hours without activity, or {hours, plural, =0 {within the hour} one {after # hour} other {after # hours}} at the latest.",
+      "reset": "Reset data",
+      "resetTitle": "Reset the sandbox?",
+      "resetBody": "Everything you changed is deleted and a fresh copy is created.",
+      "resetConfirm": "Reset",
+      "resetting": "Resetting…",
+      "cancel": "Cancel",
+      "more": "More actions"
     }
   },
   "settings": {

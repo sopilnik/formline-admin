@@ -9,7 +9,10 @@ function leaves(tree: Tree, prefix = ''): [string, string][] {
     typeof value === 'string' ? [[`${prefix}${key}`, value]] : leaves(value, `${prefix}${key}.`))
 }
 
-const argumentNames = (text: string): string[] => [...new Set([...text.matchAll(/\{(\w+)/g)].map(m => m[1]!))].sort()
+// A true argument name is followed by "," (a formatted argument) or "}" (a bare
+// placeholder); a plural or select sub-message's literal text can itself start
+// with a word ("after # hour") and must not be mistaken for one.
+const argumentNames = (text: string): string[] => [...new Set([...text.matchAll(/\{(\w+)(?=[,}])/g)].map(m => m[1]!))].sort()
 
 const english = new Map(leaves(en as Tree))
 const russian = new Map(leaves(ru as Tree))

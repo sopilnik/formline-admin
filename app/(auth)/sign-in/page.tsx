@@ -13,13 +13,14 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 // Without a session cookie this page does not touch the database (spec §6.5).
-export default async function SignInPage() {
+export default async function SignInPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   if ((await getSession())?.secondFactorVerified) redirect('/overview')
+  const ended = (await searchParams).ended === '1'
   const t = await getTranslations('auth.signIn')
   return (
     <AuthCard title={t('title')} description={t('intro')}>
       <div className="flex flex-col gap-5">
-        <DemoEntry />
+        <DemoEntry ended={ended} />
         <h2 className="text-base font-semibold">{t('ownerSignIn')}</h2>
         <PasskeySignIn />
         <div aria-hidden className="flex items-center gap-3 text-xs text-muted-foreground">

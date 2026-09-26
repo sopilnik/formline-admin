@@ -97,6 +97,7 @@ test.describe('app frame', () => {
     await page.goto('/overview')
     await page.getByRole('button', { name: /^Account menu/ }).click()
     await page.getByRole('menuitem', { name: 'Sign out' }).click()
+    await page.getByRole('dialog', { name: 'Sign out and end the demo?' }).getByRole('button', { name: 'Sign out' }).click()
     await expect(page).toHaveURL(/\/sign-in$/)
     expect((await context.cookies()).some(c => c.name === '__Host-formline_session' && c.value !== '')).toBe(false)
     await page.goto('/overview')

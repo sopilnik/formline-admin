@@ -3,8 +3,10 @@ import { redirect } from 'next/navigation'
 import { getLocale } from 'next-intl/server'
 import type { ReactNode } from 'react'
 import { AppFrame } from '@/components/app/app-frame'
+import { DemoBanner } from '@/components/app/demo-banner'
 import { navItems } from '@/components/app/nav'
 import { SIDEBAR_COOKIE } from '@/lib/preferences'
+import { hoursLeft } from '@/lib/sandbox'
 import { parseTheme, THEME_COOKIE } from '@/lib/theme'
 import { requireSession, workspaceContext } from '@/server/auth/sessions'
 import { getSelf } from '@/server/dal/users'
@@ -21,7 +23,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       collapsed={store.get(SIDEBAR_COOKIE)?.value === 'collapsed'}
       theme={parseTheme(store.get(THEME_COOKIE)?.value)}
       locale={await getLocale()}
-      user={{ name: self.name, role: session.role }}
+      user={{ name: self.name, role: session.role, kind: session.workspaceKind }}
+      banner={session.workspaceKind === 'sandbox' ? <DemoBanner hours={hoursLeft(session.expiresAt)} /> : null}
     >
       {children}
     </AppFrame>
