@@ -11,6 +11,15 @@ import type { Role, Tx, WorkspaceContext } from '@/server/db/with-workspace'
 
 export const SESSION_COOKIE = '__Host-formline_session'
 
+/**
+ * Set beside the session cookie of a sandbox and cleared by every owner sign-in
+ * and by sign-out. A request whose session no longer resolves while this marker
+ * is present belongs to a visitor whose sandbox has ended (spec §6.4).
+ */
+export const DEMO_COOKIE = '__Host-formline_demo'
+
+const COOKIE = { httpOnly: true, secure: true, sameSite: 'lax', path: '/' } as const
+
 export type Session = {
   /** The token hash, which is the row's key. */
   id: string
@@ -107,14 +116,17 @@ export async function deleteOtherSessions(tx: Tx, session: Session): Promise<voi
 // The session cookie can only be written by Server Actions and route handlers.
 // __Host- requires Secure and Path=/ and forbids Domain; SameSite=Lax is what
 // stops a cross-site POST when a browser sends no Origin (spec §5.6).
-export async function setSessionCookie(token: string, expiresAt: Date): Promise<void> {
+export async function setSessionCookie(token: string, expiresAt: Date, options: { demo?: boolean } = {}): Promise<void> {
   const store = await cookies()
-  store.set(SESSION_COOKIE, token, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', expires: expiresAt })
+  store.set(SESSION_COOKIE, token, { ...COOKIE, expires: expiresAt })
+  if (options.demo) store.set(DEMO_COOKIE, '1', { ...COOKIE, expires: expiresAt })
+  else store.set(DEMO_COOKIE, '', { ...COOKIE, maxAge: 0 })
 }
 
 export async function clearSessionCookie(): Promise<void> {
   const store = await cookies()
-  store.set(SESSION_COOKIE, '', { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 0 })
+  store.set(SESSION_COOKIE, '', { ...COOKIE, maxAge: 0 })
+  store.set(DEMO_COOKIE, '', { ...COOKIE, maxAge: 0 })
 }
 
 /** The current request's session, resolved once per request. */

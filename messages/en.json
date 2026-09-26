@@ -88,7 +88,8 @@
       "pending": "Signing in…",
       "or": "or",
       "passkey": "Sign in with a passkey",
-      "passkeyPending": "Waiting for your passkey…"
+      "passkeyPending": "Waiting for your passkey…",
+      "ownerSignIn": "Owner sign-in"
     },
     "reauth": {
       "title": "Confirm it's you",
@@ -135,7 +136,17 @@
       "session_expired": "The sign-in took too long. Start again.",
       "last_factor": "This is your only second factor. Add another one before you remove it.",
       "reauth_required": "Confirm it's you first.",
+      "demo_full": "The demo is full right now. Try again in a few minutes.",
+      "demo_rate_limited": "Too many demo sandboxes from your network. Try again in {minutes, plural, one {# minute} other {# minutes}}.",
       "generic": "Something went wrong. Try again."
+    }
+  },
+  "demo": {
+    "entry": {
+      "title": "Try the demo",
+      "body": "No sign-up. You get your own copy of the store's data, where everything can be changed. It is deleted after 2 hours without activity.",
+      "button": "Enter the demo",
+      "pending": "Opening your sandbox…"
     }
   },
   "settings": {

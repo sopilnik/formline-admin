@@ -24,22 +24,25 @@ export async function asSchemaOwner<T>(fn: (client: pg.Client) => Promise<T>): P
 }
 
 /**
- * A sandbox workspace with one user of the given role and a verified session; the
- * raw token goes into the cookie. Stage 3's demo button replaces this fixture.
+ * A real sandbox through create_sandbox — the template copy every visitor gets —
+ * with a verified session for the user of the given role; the raw token goes into
+ * the cookie. A random address hash keeps the fixture outside the per-address limit.
  */
-export function createSandboxSession(role: Role = 'owner', name = 'Dana Ortiz'): Promise<{ token: string; workspaceId: string; userId: string }> {
+export function createSandboxSession(role: Role = 'owner'): Promise<{ token: string; workspaceId: string; userId: string }> {
   return asSchemaOwner(async client => {
-    const workspace = await client.query<{ id: string }>("insert into fa.workspaces (kind, expires_at) values ('sandbox', now() + interval '1 day') returning id")
-    const workspaceId = workspace.rows[0]!.id
-    const user = await client.query<{ id: string }>(
-      'insert into fa.users (workspace_id, email, name, role) values ($1, $2, $3, $4) returning id',
-      [workspaceId, `${role}.${randomUUID()}@example.test`, name, role])
-    const userId = user.rows[0]!.id
+    const sha256 = (value: string) => createHash('sha256').update(value).digest('hex')
+    const entryToken = encodeBase32LowerCaseNoPadding(randomBytes(20))
+    const entry = await client.query<{ outcome: string; sandbox_id: string; demo_user_id: string }>(
+      'select * from fa.create_sandbox($1, $2, $3, $4)', [sha256(randomUUID()), sha256(entryToken), 'Playwright', 'en'])
+    const row = entry.rows[0]
+    if (row?.outcome !== 'created') throw new Error(`create_sandbox: ${row?.outcome ?? 'no row'}`)
+    if (role === 'owner') return { token: entryToken, workspaceId: row.sandbox_id, userId: row.demo_user_id }
+    const user = await client.query<{ id: string }>('select id from fa.users where workspace_id = $1 and role = $2', [row.sandbox_id, role])
     const token = encodeBase32LowerCaseNoPadding(randomBytes(20))
     await client.query(
-      "insert into fa.sessions (workspace_id, id, user_id, expires_at, second_factor_verified, reauth_at) values ($1, $2, $3, now() + interval '1 day', true, now())",
-      [workspaceId, createHash('sha256').update(token).digest('hex'), userId])
-    return { token, workspaceId, userId }
+      'insert into fa.sessions (workspace_id, id, user_id, expires_at, second_factor_verified, reauth_at) values ($1, $2, $3, (select expires_at from fa.workspaces where id = $1), true, now())',
+      [row.sandbox_id, sha256(token), user.rows[0]!.id])
+    return { token, workspaceId: row.sandbox_id, userId: user.rows[0]!.id }
   })
 }
 
