@@ -26,6 +26,7 @@
     "pretest:e2e": "pnpm build && node tests/e2e/prepare-db.ts",
     "test:e2e": "playwright test",
     "db:migrate": "node --env-file-if-exists=.env scripts/migrate.ts",
+    "owner:recovery": "node --env-file-if-exists=.env scripts/owner-recovery.ts",
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down -v"
   },

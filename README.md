@@ -29,3 +29,14 @@ headers to every request; the edge proxy checks both on every page and refuses a
 stays closed. Each response carries a Content Security Policy built with a fresh per-request nonce, so only scripts
 the server itself emitted can run. Inside the database, row-level security keeps every workspace's rows apart, and
 the `app` role is checked at startup so the server can never fall back to a role that bypasses it.
+
+## Owner recovery
+
+When the owner has lost every second factor and the recovery codes, recovery needs access to the database:
+
+    DATABASE_URL_MIGRATOR=… pnpm owner:recovery
+
+The command prints a one-time code, valid for 30 minutes; only the schema owner may issue it, the application's own
+role cannot. Open `/recover`, enter the code, a new password and the first code of a new authenticator app, and keep
+the new recovery codes the page shows. Recovery removes every passkey and signs out every session of the owner, and it
+lifts the password and second-factor lockouts.

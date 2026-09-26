@@ -1,6 +1,7 @@
+import { execFileSync } from 'node:child_process'
 import type { Page } from '@playwright/test'
 import { expectNoSeriousA11yViolations } from './a11y'
-import { E2E_AUTH_ENV, E2E_SESSION_COOKIE } from './constants'
+import { E2E_AUTH_ENV, E2E_MIGRATOR_URL, E2E_SESSION_COOKIE } from './constants'
 import { ageOwnerAuthentication } from './db'
 import { expect, test } from './test'
 import { codeFor, readTotpSecret, type Totp } from './totp'
@@ -153,4 +154,35 @@ test('ten wrong codes lock the second factor', async ({ page }) => {
   await page.getByLabel('6-digit code').fill(await codeFor(totp))
   await page.getByRole('button', { name: 'Verify' }).click()
   await expect(formAlert(page)).toHaveText(lockedMessage)
+})
+
+test('owner recovery replaces the lost factors and lifts the lock', async ({ page }) => {
+  test.setTimeout(120_000)
+  const output = execFileSync(process.execPath, ['scripts/owner-recovery.ts'], {
+    env: { ...process.env, DATABASE_URL_MIGRATOR: E2E_MIGRATOR_URL },
+    encoding: 'utf8',
+  })
+  const recoveryCode = /Recovery code: ([a-z2-7]{32})/.exec(output)?.[1]
+  expect(recoveryCode).toBeDefined()
+  await page.goto('/recover')
+  await expect(page.getByRole('heading', { level: 1, name: 'Recover the owner account' })).toBeVisible()
+  await expectNoSeriousA11yViolations(page)
+  totp.secret = await readTotpSecret(page)
+  totp.lastStep = 0
+  const oldPassword = owner.password
+  owner.password = 'new-plum-kettle-sunrise-5582'
+  await page.getByLabel('Recovery code from the command').fill(recoveryCode!)
+  await page.getByLabel('New password').fill(owner.password)
+  await page.getByLabel('6-digit code').fill(await codeFor(totp))
+  await page.getByRole('button', { name: 'Recover the account' }).click()
+  await expect(page.getByRole('heading', { name: 'Save your recovery codes' })).toBeVisible()
+  await page.getByRole('link', { name: 'Continue to the dashboard' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
+  await signOut(page)
+  await signInWithPassword(page, oldPassword)
+  await expect(formAlert(page)).toHaveText('Email or password is incorrect.')
+  await signInWithPassword(page)
+  await page.getByLabel('6-digit code').fill(await codeFor(totp))
+  await page.getByRole('button', { name: 'Verify' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
 })
