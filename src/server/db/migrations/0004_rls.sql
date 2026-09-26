@@ -196,6 +196,9 @@ grant select, insert, update on fa.rate_limits to app;
 grant select, insert on fa.stripe_events, fa.used_challenges to app;
 grant select, insert, delete on fa.pending_media_deletions to app;
 
+-- Functions are closed to public: the existing ones here, every later one through the
+-- default privileges of schema_owner. The default must be global — a per-schema default
+-- only adds to the built-in privileges and cannot take EXECUTE from public.
 revoke execute on all functions in schema fa from public;
-alter default privileges for role schema_owner in schema fa revoke execute on functions from public;
+alter default privileges for role schema_owner revoke execute on functions from public;
 grant execute on function fa.app_workspace(), fa.app_user(), fa.app_role(), fa.app_workspace_kind() to app;

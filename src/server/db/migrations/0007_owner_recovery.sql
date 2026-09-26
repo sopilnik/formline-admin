@@ -19,10 +19,6 @@ begin
 end
 $$;
 
--- The schema's default-privilege revocation (migration 0004) does not reach functions
--- created afterwards, so a new function stays open to public unless closed here explicitly.
-revoke execute on function fa.issue_owner_recovery(text) from public;
-
 create function fa.redeem_owner_recovery(p_code_hash text, p_user_id uuid, p_password_hash text,
     p_totp_secret_enc text, p_totp_step bigint, p_recovery_hashes text[], p_session_hash text,
     p_user_agent text, p_ip_hash text)

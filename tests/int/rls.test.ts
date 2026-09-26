@@ -3,7 +3,7 @@ import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { withWorkspace, type Role, type WorkspaceContext } from '@/server/db/with-workspace'
 import { adminPool, appDirectPool, appPool, closeAll } from './db'
-import { asSchemaOwner, createUser, createWorkspace } from './fixtures'
+import { asSchemaOwner, createUser, createWorkspace, inRollback } from './fixtures'
 
 type Actor = Role | 'system'
 type Ids = Record<string, string>
@@ -252,6 +252,16 @@ describe('functions', () => {
     const { rows } = await admin.query<{ name: string }>(
       "select p.proname as name from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'fa' and has_function_privilege('app', p.oid, 'execute') order by 1")
     expect(rows.map(r => r.name)).toEqual(['app_role', 'app_user', 'app_workspace', 'app_workspace_kind', 'auth_session', 'create_owner', 'owner_workspace_id', 'redeem_owner_recovery'])
+  })
+
+  it('closes a function created later by schema_owner to the application by default', async () => {
+    await inRollback(admin, async c => {
+      await c.query('set local role schema_owner')
+      await c.query("create function fa.probe_default_privileges() returns int language sql as 'select 1'")
+      const { rows } = await c.query<{ open: boolean }>(
+        "select has_function_privilege('app', 'fa.probe_default_privileges()', 'execute') as open")
+      expect(rows[0]?.open).toBe(false)
+    })
   })
 
   it('app_workspace_kind reports the current workspace only', async () => {
