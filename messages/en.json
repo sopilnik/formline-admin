@@ -48,5 +48,59 @@
   "notFound": {
     "title": "Page not found",
     "description": "The page you are looking for does not exist."
+  },
+  "auth": {
+    "fields": {
+      "name": "Your name",
+      "email": "Email",
+      "password": "Password",
+      "newPassword": "New password",
+      "passwordHint": "At least 12 characters. A few unrelated words make a strong password.",
+      "code": "6-digit code",
+      "recoveryCode": "Recovery code"
+    },
+    "setup": {
+      "title": "Set up the owner account",
+      "intro": "This page works once: it creates the only account of the owner workspace.",
+      "token": "Setup token",
+      "tokenHint": "The value of OWNER_SETUP_TOKEN in the container settings.",
+      "submit": "Create the owner account",
+      "pending": "Creating the account…",
+      "completed": "The owner account is set up.",
+      "continue": "Go to the dashboard"
+    },
+    "totp": {
+      "title": "Authenticator app",
+      "intro": "Scan the code with an authenticator app, or type the key into it, then enter the 6-digit code the app shows.",
+      "key": "Key",
+      "qr": "QR code for the authenticator app"
+    },
+    "recoveryCodes": {
+      "title": "Save your recovery codes",
+      "intro": "Each code signs you in once if you lose your authenticator app. Keep them somewhere safe: they are shown only now.",
+      "continue": "Continue to the dashboard"
+    },
+    "errors": {
+      "unavailable": "Setup is not available on this server.",
+      "rate_limited": "Too many attempts. Try again in {minutes, plural, one {# minute} other {# minutes}}.",
+      "token_invalid": "The setup token is not correct.",
+      "name_required": "Enter your name.",
+      "email_invalid": "Enter a valid email address.",
+      "password_too_short": "Use at least 12 characters.",
+      "password_too_long": "Use at most 128 characters.",
+      "password_breached": "This password appears in known data breaches. Choose a different one.",
+      "code_invalid": "The code is not correct. Check it and try again.",
+      "owner_exists": "The owner account already exists.",
+      "credentials_invalid": "Email or password is incorrect.",
+      "second_factor_locked": "Too many wrong codes. Two-step verification is locked for an hour, and the owner has been notified.",
+      "recovery_invalid": "The recovery code is not valid or has expired.",
+      "passkey_failed": "The passkey could not be verified. Try again, or sign in with your password.",
+      "passkey_unknown": "This passkey is not registered here any more.",
+      "passkey_cancelled": "The passkey request was cancelled.",
+      "session_expired": "The sign-in took too long. Start again.",
+      "last_factor": "This is your only second factor. Add another one before you remove it.",
+      "reauth_required": "Confirm it's you first.",
+      "generic": "Something went wrong. Try again."
+    }
   }
 }
