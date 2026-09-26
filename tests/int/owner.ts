@@ -1,10 +1,33 @@
 import { generateHOTP } from '@oslojs/otp'
 import type pg from 'pg'
+import { findOwner } from '@/server/auth/owner'
+import { setupOwner } from '@/server/auth/setup'
+import { formatTotpSecret } from '@/server/auth/totp'
+import { TEST_AUTH_ENV } from './env'
 
 /** The owner every auth test uses; the setup test creates it with exactly these values. */
 export const OWNER = { name: 'Test Owner', email: 'owner@formline.test', password: 'plum-kettle-sunrise-4471' }
 export const OWNER_TOTP_SECRET = new Uint8Array(20).fill(7)
 export const noBreach = async (): Promise<boolean> => false
+
+/** Creates the owner unless a test already has; returns its id. */
+export async function ensureOwner(admin: pg.Pool, app: pg.Pool): Promise<string> {
+  const existing = await findOwner(app)
+  if (existing) return existing.id
+  const totp = await nextTotp(admin)
+  const result = await setupOwner({
+    token: TEST_AUTH_ENV.OWNER_SETUP_TOKEN,
+    ...OWNER,
+    totpSecret: formatTotpSecret(OWNER_TOTP_SECRET),
+    code: totp.code,
+    ip: '198.51.100.250',
+    userAgent: null,
+    locale: 'en',
+    theme: 'system',
+  }, { pool: app, now: totp.now, isBreached: noBreach })
+  if (!result.ok) throw new Error(`owner setup failed: ${result.error}`)
+  return (await findOwner(app))!.id
+}
 
 /**
  * A code and a clock at its step: one step after the owner's last accepted step,

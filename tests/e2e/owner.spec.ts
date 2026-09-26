@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test'
 import { expectNoSeriousA11yViolations } from './a11y'
 import { E2E_AUTH_ENV, E2E_SESSION_COOKIE } from './constants'
 import { expect, test } from './test'
@@ -33,4 +34,74 @@ test('owner setup creates the owner with an authenticator and shows ten recovery
 
 test('setup is gone once the owner exists', async ({ page }) => {
   expect((await page.goto('/setup'))?.status()).toBe(404)
+})
+
+async function signInWithPassword(page: Page, password = owner.password): Promise<void> {
+  await page.goto('/sign-in')
+  await page.getByLabel('Email').fill(owner.email)
+  await page.getByLabel('Password').fill(password)
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+}
+
+async function signOut(page: Page): Promise<void> {
+  await page.getByRole('button', { name: /^Account menu/ }).click()
+  await page.getByRole('menuitem', { name: 'Sign out' }).click()
+  await expect(page).toHaveURL(/\/sign-in$/)
+}
+
+test('the owner signs in with the password and an authenticator code, and signs out', async ({ page }) => {
+  test.setTimeout(90_000)
+  await page.goto('/')
+  await expect(page).toHaveURL(/\/sign-in$/)
+  await expect(page.getByRole('heading', { level: 1, name: 'Sign in' })).toBeVisible()
+  await expectNoSeriousA11yViolations(page)
+  await signInWithPassword(page)
+  await expect(page.getByRole('heading', { level: 1, name: 'Two-step verification' })).toBeVisible()
+  await expectNoSeriousA11yViolations(page)
+  await page.getByLabel('6-digit code').fill(await codeFor(totp))
+  await page.getByRole('button', { name: 'Verify' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
+  await signOut(page)
+  await page.goto('/overview')
+  await expect(page).toHaveURL(/\/sign-in$/)
+})
+
+// The form's own alert is a <p>; Next's hidden route announcer is a <div role="alert">
+// mounted in a shadow root on every page, so the role alone is not unique here.
+const formAlert = (page: Page) => page.locator('p[role="alert"]')
+
+test('a wrong password and an unknown email get the same message', async ({ page }) => {
+  await signInWithPassword(page, 'not-the-password-0000')
+  await expect(formAlert(page)).toHaveText('Email or password is incorrect.')
+  await page.getByLabel('Email').fill('nobody@formline.test')
+  await page.getByLabel('Password').fill(owner.password)
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+  await expect(formAlert(page)).toHaveText('Email or password is incorrect.')
+})
+
+test('a recovery code replaces the authenticator code', async ({ page }) => {
+  await signInWithPassword(page)
+  await page.getByRole('button', { name: 'Use a recovery code instead' }).click()
+  await page.getByLabel('Recovery code').fill(recoveryCodes[0]!)
+  await page.getByRole('button', { name: 'Verify' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
+  await signOut(page)
+})
+
+// Keep this the last test before the recovery test of task 2.9: it locks the second factor for an hour.
+test('ten wrong codes lock the second factor', async ({ page }) => {
+  test.setTimeout(120_000)
+  await signInWithPassword(page)
+  for (let attempt = 1; attempt <= 10; attempt++) {
+    await page.getByLabel('6-digit code').fill('12345')
+    const answered = page.waitForResponse(r => r.request().method() === 'POST' && r.request().headers()['next-action'] !== undefined)
+    await page.getByRole('button', { name: 'Verify' }).click()
+    await answered
+  }
+  const lockedMessage = 'Too many wrong codes. Two-step verification is locked for an hour, and the owner has been notified.'
+  await expect(formAlert(page)).toHaveText(lockedMessage)
+  await signInWithPassword(page)
+  await page.getByLabel('6-digit code').fill(await codeFor(totp))
+  await page.getByRole('button', { name: 'Verify' }).click()
+  await expect(formAlert(page)).toHaveText(lockedMessage)
 })

@@ -80,6 +80,23 @@
       "intro": "Each code signs you in once if you lose your authenticator app. Keep them somewhere safe: they are shown only now.",
       "continue": "Continue to the dashboard"
     },
+    "signIn": {
+      "title": "Sign in",
+      "intro": "Formline Admin, the back office of the Formline poster store.",
+      "submit": "Sign in",
+      "pending": "Signing in…"
+    },
+    "verify": {
+      "title": "Two-step verification",
+      "intro": "Enter the 6-digit code from your authenticator app.",
+      "introRecovery": "Enter one of your recovery codes. Each code works once.",
+      "noTotp": "This account has no authenticator app. Use a recovery code, or sign in with your passkey.",
+      "submit": "Verify",
+      "pending": "Verifying…",
+      "useRecovery": "Use a recovery code instead",
+      "useTotp": "Use the authenticator app instead",
+      "startOver": "Start over"
+    },
     "errors": {
       "unavailable": "Setup is not available on this server.",
       "rate_limited": "Too many attempts. Try again in {minutes, plural, one {# minute} other {# minutes}}.",

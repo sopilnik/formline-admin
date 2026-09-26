@@ -22,8 +22,8 @@ for (const [name, headers] of [
 }
 
 test('pages carry the security headers and a per-request nonce the scripts use', async ({ request, page }) => {
-  const a = await request.get('/')
-  const b = await request.get('/')
+  const a = await request.get('/sign-in')
+  const b = await request.get('/sign-in')
   expect(a.status()).toBe(200)
   const h = a.headers()
   expect(h['content-security-policy']).toMatch(/script-src 'self' 'nonce-[A-Za-z0-9+/=]+' 'strict-dynamic'/)
@@ -38,7 +38,7 @@ test('pages carry the security headers and a per-request nonce the scripts use',
 
   const violations: string[] = []
   page.on('console', m => { if (m.type() === 'error' && /Content Security Policy/i.test(m.text())) violations.push(m.text()) })
-  const res = await page.goto('/')
+  const res = await page.goto('/sign-in')
   const nonce = /'nonce-([^']+)'/.exec(res?.headers()['content-security-policy'] ?? '')?.[1]
   const scriptNonces = await page.locator('script[nonce]').evaluateAll(els => els.map(e => (e as HTMLScriptElement).nonce))
   expect(scriptNonces.length).toBeGreaterThan(0)
@@ -46,7 +46,8 @@ test('pages carry the security headers and a per-request nonce the scripts use',
   expect(violations).toEqual([])
 })
 
-test('?lang=ru sets the language cookie', async ({ request }) => {
-  const res = await request.get('/?lang=ru')
+test('?lang=ru sets the language cookie and renders that request in Russian', async ({ request }) => {
+  const res = await request.get('/sign-in?lang=ru')
   expect(res.headers()['set-cookie']).toMatch(/NEXT_LOCALE=ru/)
+  expect(await res.text()).toContain('Вход')
 })
