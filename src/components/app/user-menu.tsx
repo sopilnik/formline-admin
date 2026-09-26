@@ -1,6 +1,7 @@
 'use client'
 
-import { ChevronDown, LogOut } from 'lucide-react'
+import { ChevronDown, KeyRound, LogOut } from 'lucide-react'
+import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useTransition } from 'react'
 import { Button } from '@/components/ui/button'
@@ -28,6 +29,10 @@ export function UserMenu({ user }: { user: FrameUser }) {
         <ChevronDown aria-hidden className="size-3.5" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuItem render={<Link href="/settings/security" />}>
+          <KeyRound aria-hidden />
+          {t('security')}
+        </DropdownMenuItem>
         <DropdownMenuItem disabled={pending} onClick={() => startTransition(async () => { await signOutAction() })}>
           <LogOut aria-hidden />
           {t('signOut')}

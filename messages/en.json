@@ -33,6 +33,7 @@
   },
   "user": {
     "menu": "Account menu: {name}, {role}",
+    "security": "Security",
     "signOut": "Sign out",
     "roles": {
       "owner": "Owner",
@@ -84,7 +85,17 @@
       "title": "Sign in",
       "intro": "Formline Admin, the back office of the Formline poster store.",
       "submit": "Sign in",
-      "pending": "Signing in…"
+      "pending": "Signing in…",
+      "or": "or",
+      "passkey": "Sign in with a passkey",
+      "passkeyPending": "Waiting for your passkey…"
+    },
+    "reauth": {
+      "title": "Confirm it's you",
+      "intro": "This change needs a fresh sign-in: your password and a code, or a passkey.",
+      "submit": "Confirm",
+      "pending": "Confirming…",
+      "passkey": "Use a passkey"
     },
     "verify": {
       "title": "Two-step verification",
@@ -118,6 +129,34 @@
       "last_factor": "This is your only second factor. Add another one before you remove it.",
       "reauth_required": "Confirm it's you first.",
       "generic": "Something went wrong. Try again."
+    }
+  },
+  "settings": {
+    "security": {
+      "title": "Security",
+      "passkeys": {
+        "title": "Passkeys",
+        "intro": "Sign in with your fingerprint, face or device PIN instead of a password and a code.",
+        "add": "Add a passkey",
+        "adding": "Waiting for your device…",
+        "empty": "No passkeys yet.",
+        "added": "Added {date}",
+        "lastUsed": "last used {date}",
+        "neverUsed": "not used yet",
+        "rename": "Rename",
+        "renameNamed": "Rename {name}",
+        "renameLabel": "Name of the passkey",
+        "save": "Save",
+        "cancel": "Cancel",
+        "remove": "Remove",
+        "removeNamed": "Remove {name}",
+        "removeTitle": "Remove the passkey “{name}”?",
+        "removeBody": "You can no longer sign in with it, and your other signed-in devices are signed out.",
+        "addedToast": "Passkey added.",
+        "removedToast": "Passkey removed.",
+        "renamedToast": "Passkey renamed.",
+        "sandbox": "Passkeys are available in a real account. A passkey made here would stay in your password manager after the demo is deleted."
+      }
     }
   }
 }

@@ -42,3 +42,9 @@ export function createSandboxSession(role: Role = 'owner', name = 'Dana Ortiz'):
     return { token, workspaceId, userId }
   })
 }
+
+/** Moves the owner's last authentication an hour back, as if the ten minutes had long passed. */
+export async function ageOwnerAuthentication(): Promise<void> {
+  await asSchemaOwner(client => client.query(
+    "update fa.sessions s set reauth_at = now() - interval '1 hour' from fa.users u where u.workspace_id = s.workspace_id and u.id = s.user_id and u.role = 'owner'"))
+}

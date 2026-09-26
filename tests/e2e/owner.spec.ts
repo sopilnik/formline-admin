@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test'
 import { expectNoSeriousA11yViolations } from './a11y'
 import { E2E_AUTH_ENV, E2E_SESSION_COOKIE } from './constants'
+import { ageOwnerAuthentication } from './db'
 import { expect, test } from './test'
 import { codeFor, readTotpSecret, type Totp } from './totp'
 
@@ -85,6 +86,54 @@ test('a recovery code replaces the authenticator code', async ({ page }) => {
   await page.getByLabel('Recovery code').fill(recoveryCodes[0]!)
   await page.getByRole('button', { name: 'Verify' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
+  await signOut(page)
+})
+
+test('the owner adds a passkey, signs in with it and removes it', async ({ page }) => {
+  test.setTimeout(120_000)
+  // The browser's passkey autofill needs a person choosing from its list; this test drives the button.
+  await page.addInitScript(() => {
+    PublicKeyCredential.isConditionalMediationAvailable = async () => false
+  })
+  const cdp = await page.context().newCDPSession(page)
+  await cdp.send('WebAuthn.enable')
+  await cdp.send('WebAuthn.addVirtualAuthenticator', {
+    options: { protocol: 'ctap2', transport: 'internal', hasResidentKey: true, hasUserVerification: true, isUserVerified: true, automaticPresenceSimulation: true },
+  })
+  await signInWithPassword(page)
+  await page.getByLabel('6-digit code').fill(await codeFor(totp))
+  await page.getByRole('button', { name: 'Verify' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
+  await page.goto('/settings/security')
+  await expect(page.getByRole('heading', { level: 1, name: 'Security' })).toBeVisible()
+  await expectNoSeriousA11yViolations(page)
+  await page.getByRole('button', { name: 'Add a passkey' }).click()
+  await expect(page.getByText('Passkey added.')).toBeVisible()
+  await expect(page.getByRole('list', { name: 'Passkeys' }).getByRole('listitem')).toHaveCount(1)
+  await signOut(page)
+  await page.getByRole('button', { name: 'Sign in with a passkey' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
+  await page.goto('/settings/security')
+  await page.getByRole('button', { name: /^Remove / }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Remove' }).click()
+  await expect(page.getByText('No passkeys yet.')).toBeVisible()
+  await signOut(page)
+})
+
+test('a sensitive change asks for the password and a code once ten minutes have passed', async ({ page }) => {
+  test.setTimeout(120_000)
+  await signInWithPassword(page)
+  await page.getByLabel('6-digit code').fill(await codeFor(totp))
+  await page.getByRole('button', { name: 'Verify' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
+  await ageOwnerAuthentication()
+  await page.goto('/settings/security')
+  await expect(page.getByRole('button', { name: 'Add a passkey' })).toBeDisabled()
+  await page.getByLabel('Password').fill(owner.password)
+  await page.getByLabel('6-digit code').fill(await codeFor(totp))
+  await page.getByRole('button', { name: 'Confirm' }).click()
+  await expect(page.getByRole('heading', { name: "Confirm it's you" })).toBeHidden()
+  await expect(page.getByRole('button', { name: 'Add a passkey' })).toBeEnabled()
   await signOut(page)
 })
 
