@@ -1,0 +1,188 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Spec §11. The hex values are pinned: Tailwind's palette steps are OKLCH and may fall
+   below the contrast targets. Every themed token is one light-dark() pair, which
+   tests/unit/contrast.test.ts reads from this file. */
+
+/* dark: follows an explicit .dark (the root, or the always-dark sidebar) and, when the
+   root has neither .light nor .dark, the visitor's system preference. */
+@custom-variant dark {
+  &:is(.dark *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:is(:root:not(.light):not(.dark) *) {
+      @slot;
+    }
+  }
+}
+
+:root {
+  color-scheme: light dark;
+  --background: light-dark(#F4F4F3, #121314);
+  --foreground: light-dark(#17181A, #ECECEA);
+  --card: light-dark(#FFFFFF, #1A1B1D);
+  --card-foreground: light-dark(#17181A, #ECECEA);
+  --popover: light-dark(#FFFFFF, #1A1B1D);
+  --popover-foreground: light-dark(#17181A, #ECECEA);
+  --primary: light-dark(#BF3A0E, #F07A4F);
+  --primary-foreground: light-dark(#FFFFFF, #1A0D07);
+  --primary-soft: light-dark(#FBEAE3, #3A2118);
+  --secondary: light-dark(#F8F8F7, #202124);
+  --secondary-foreground: light-dark(#17181A, #ECECEA);
+  --muted: light-dark(#F8F8F7, #202124);
+  --muted-foreground: light-dark(#62656B, #9DA0A6);
+  --accent: light-dark(#F8F8F7, #202124);
+  --accent-foreground: light-dark(#17181A, #ECECEA);
+  --ink-2: light-dark(#3A3C40, #C9CAC7);
+  --destructive: light-dark(#B42318, #F2877D);
+  --border: light-dark(#E3E4E1, #2A2C2F);
+  --border-strong: light-dark(#CFD1CD, #3A3D41);
+  --input: light-dark(#858880, #74777D);
+  --ring: light-dark(#BF3A0E, #F07A4F);
+  --selected: light-dark(#17181A, #ECECEA);
+  --selected-foreground: light-dark(#FFFFFF, #17181A);
+  --row-selected: light-dark(#F0F0EE, #26282B);
+  --chart-ink: light-dark(#4A4D52, #A0A3A8);
+  --status-ok: light-dark(#1F7A4D, #6FCF9A);
+  --status-warn: light-dark(#9A6200, #E8B45A);
+  --status-bad: light-dark(#B42318, #F2877D);
+  --status-info: light-dark(#1D4E89, #8DB4EA);
+  --status-violet: light-dark(#5B3FA6, #B9A5EE);
+  --status-grey: light-dark(#5E6167, #A6A9AE);
+  --badge-paid: light-dark(#E8EEF7, #1C2A3C);
+  --badge-processing: light-dark(#FBF1DC, #33280F);
+  --badge-shipped: light-dark(#EFEAF8, #2A2340);
+  --badge-delivered: light-dark(#E4F2EA, #16301F);
+  --badge-cancelled: light-dark(#EEEEED, #26272A);
+  --badge-refunded: light-dark(#FBE7E5, #3A1B18);
+  --collection-mono: light-dark(#14110F, #E9E4D8);
+  --collection-primary: light-dark(#D62828, #F0605A);
+  --collection-pastel: light-dark(#57826A, #A9CDB2);
+  --collection-night: light-dark(#1D3557, #7EA6DD);
+  /* The sidebar always renders with the dark token set (spec §11); only its surface
+     follows the page theme, so these are plain values, not light-dark() pairs. */
+  --sidebar: #17181A;
+  --sidebar-foreground: #C9CAC7;
+  --sidebar-muted: #9DA0A6;
+  --sidebar-strong: #F2F2F0;
+  --sidebar-accent: #2A2C30;
+  --sidebar-bar: #F07A4F;
+  --sidebar-bar-foreground: #1A0D07;
+  --sidebar-border: #2A2C2F;
+  --radius: 8px;
+  --heading-family: var(--font-space-grotesk), var(--font-inter), system-ui, sans-serif;
+}
+
+:root.light {
+  color-scheme: light;
+}
+
+:root.dark {
+  --sidebar: #1A1B1D;
+}
+
+:root.dark,
+.dark {
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --sidebar: #1A1B1D;
+  }
+}
+
+/* Space Grotesk has no Cyrillic: Russian headings are set in Inter (spec §11). */
+:root:lang(ru) {
+  --heading-family: var(--font-inter), system-ui, sans-serif;
+}
+
+@theme inline {
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-heading: var(--heading-family);
+  --font-brand: var(--font-space-grotesk), var(--font-inter), system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-ink-2: var(--ink-2);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-selected: var(--selected);
+  --color-selected-foreground: var(--selected-foreground);
+  --color-row-selected: var(--row-selected);
+  --color-chart-ink: var(--chart-ink);
+  --color-status-ok: var(--status-ok);
+  --color-status-warn: var(--status-warn);
+  --color-status-bad: var(--status-bad);
+  --color-status-info: var(--status-info);
+  --color-status-violet: var(--status-violet);
+  --color-status-grey: var(--status-grey);
+  --color-badge-paid: var(--badge-paid);
+  --color-badge-processing: var(--badge-processing);
+  --color-badge-shipped: var(--badge-shipped);
+  --color-badge-delivered: var(--badge-delivered);
+  --color-badge-cancelled: var(--badge-cancelled);
+  --color-badge-refunded: var(--badge-refunded);
+  --color-collection-mono: var(--collection-mono);
+  --color-collection-primary: var(--collection-primary);
+  --color-collection-pastel: var(--collection-pastel);
+  --color-collection-night: var(--collection-night);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-strong: var(--sidebar-strong);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-bar: var(--sidebar-bar);
+  --color-sidebar-bar-foreground: var(--sidebar-bar-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background font-sans text-sm text-foreground antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-heading;
+  }
+  /* One solid focus indicator everywhere (spec §11): the primary colour, 2 px, offset 2 px. */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

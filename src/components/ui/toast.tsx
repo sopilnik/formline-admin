@@ -1,0 +1,63 @@
+"use client"
+
+import * as React from "react"
+import { Toast } from "@base-ui/react/toast"
+import { XIcon } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+
+// Base UI Toast instead of sonner: sonner injects a <style> element at run
+// time, which the nonce-based style-src-elem policy blocks (spec §4.2).
+function ToastProvider({ children, closeLabel }: { children: React.ReactNode; closeLabel: string }) {
+  return (
+    <Toast.Provider>
+      {children}
+      <Toast.Portal>
+        <Toast.Viewport className="fixed right-4 bottom-4 z-50 flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-2 outline-none">
+          <ToastList closeLabel={closeLabel} />
+        </Toast.Viewport>
+      </Toast.Portal>
+    </Toast.Provider>
+  )
+}
+
+function ToastList({ closeLabel }: { closeLabel: string }) {
+  const { toasts } = Toast.useToastManager()
+  return toasts.map((toast) => (
+    <Toast.Root
+      key={toast.id}
+      toast={toast}
+      className={cn(
+        "rounded-lg border bg-popover text-sm text-popover-foreground shadow-md transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0",
+        toast.type === "error" && "border-destructive"
+      )}
+    >
+      <Toast.Content className="flex items-start gap-3 p-3">
+        <div className="min-w-0 flex-1">
+          <Toast.Title className="font-medium" />
+          <Toast.Description className="text-muted-foreground" />
+        </div>
+        <Toast.Close
+          aria-label={closeLabel}
+          className="-m-1 inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        >
+          <XIcon className="size-4" aria-hidden />
+        </Toast.Close>
+      </Toast.Content>
+    </Toast.Root>
+  ))
+}
+
+function useToast() {
+  const manager = Toast.useToastManager()
+  return React.useMemo(
+    () => ({
+      success: (title: string, description?: string) => manager.add({ title, description, type: "success" }),
+      error: (title: string, description?: string) =>
+        manager.add({ title, description, type: "error", priority: "high" }),
+    }),
+    [manager]
+  )
+}
+
+export { ToastProvider, useToast }
