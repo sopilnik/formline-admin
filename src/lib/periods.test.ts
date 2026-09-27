@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, addMonths, daysInMonth, isoInZone, presetRange, startOfDay, startOfMonth, validTimeZone, zonedParts, zonedToDate } from '@/lib/periods'
+import { addDays, addMonths, daysInMonth, isoInZone, lastMoment, parsePeriod, periodPlan, PERIODS, presetRange, startOfDay, startOfMonth, validTimeZone, zonedParts, zonedToDate } from '@/lib/periods'
 
 const berlin = 'Europe/Berlin'
 const iso = (date: Date) => date.toISOString()
@@ -57,5 +57,67 @@ describe('presetRange', () => {
     expect(presetRange('7d', now, berlin)).toEqual({ start: new Date('2026-09-20T22:00:00Z'), end: new Date('2026-09-27T22:00:00Z') })
     expect(presetRange('30d', now, berlin)).toEqual({ start: new Date('2026-08-28T22:00:00Z'), end: new Date('2026-09-27T22:00:00Z') })
     expect(presetRange('month', now, berlin)).toEqual({ start: new Date('2026-08-31T22:00:00Z'), end: new Date('2026-09-27T22:00:00Z') })
+  })
+})
+
+describe('periodPlan (spec §8.1, amendment 4)', () => {
+  const now = new Date('2026-09-27T09:00:00Z')  // Sunday 27 September, 11:00 in Berlin
+  const range = (start: string, end: string) => ({ start: new Date(start), end: new Date(end) })
+  const contiguous = (buckets: readonly ({ start: Date; end: Date } | null)[]) =>
+    buckets.filter(b => b !== null).every((b, i, all) => i === 0 || b!.start.getTime() === all[i - 1]!.end.getTime())
+
+  it('rolls whole days back from today and compares with the same span N days earlier', () => {
+    const plan = periodPlan('30d', now, berlin)
+    expect(plan.step).toBe('day')
+    expect(plan.current).toEqual(range('2026-08-28T22:00:00Z', '2026-09-27T09:00:00Z'))
+    expect(plan.previous).toEqual(range('2026-07-29T22:00:00Z', '2026-08-28T09:00:00Z'))
+    expect(plan.buckets).toHaveLength(30)
+    expect(plan.buckets.at(-1)).toEqual(range('2026-09-26T22:00:00Z', '2026-09-27T09:00:00Z'))
+    expect(plan.previousBuckets.at(-1)).toEqual(range('2026-08-27T22:00:00Z', '2026-08-28T09:00:00Z'))
+    expect(periodPlan('7d', now, berlin).current).toEqual(range('2026-09-20T22:00:00Z', '2026-09-27T09:00:00Z'))
+  })
+
+  it('uses 7-day weeks counted back from today on 90 days, the earliest one shorter', () => {
+    const plan = periodPlan('90d', now, berlin)
+    expect(plan.step).toBe('week')
+    expect(plan.buckets).toHaveLength(13)
+    expect(plan.buckets[0]).toEqual(range('2026-06-29T22:00:00Z', '2026-07-05T22:00:00Z'))
+    expect(plan.buckets.at(-1)).toEqual(range('2026-09-20T22:00:00Z', '2026-09-27T09:00:00Z'))
+    expect(plan.previous).toEqual(range('2026-03-31T22:00:00Z', '2026-06-29T09:00:00Z'))
+  })
+
+  it('compares this month with the same days of the previous month, clamped to its length', () => {
+    const september = periodPlan('month', now, berlin)
+    expect(september.current).toEqual(range('2026-08-31T22:00:00Z', '2026-09-27T09:00:00Z'))
+    expect(september.previous).toEqual(range('2026-07-31T22:00:00Z', '2026-08-27T09:00:00Z'))
+    expect(september.buckets).toHaveLength(27)
+    const march = periodPlan('month', new Date('2026-03-30T10:00:00Z'), berlin)  // 12:00 in Berlin, the day after the spring change
+    expect(march.previous).toEqual(range('2026-01-31T23:00:00Z', '2026-02-28T11:00:00Z'))
+    expect(march.previousBuckets[27]).toEqual(range('2026-02-27T23:00:00Z', '2026-02-28T11:00:00Z'))
+    expect(march.previousBuckets.slice(28)).toEqual([null, null])
+  })
+
+  it('keeps the buckets contiguous over the whole period, 25-hour day included', () => {
+    for (const period of PERIODS) {
+      const plan = periodPlan(period, now, berlin)
+      expect(contiguous(plan.buckets), period).toBe(true)
+      expect(contiguous(plan.previousBuckets), period).toBe(true)
+      expect(plan.buckets[0]!.start).toEqual(plan.current.start)
+      expect(plan.buckets.at(-1)!.end).toEqual(plan.current.end)
+      const previous = plan.previousBuckets.filter(b => b !== null)
+      expect(previous[0]!.start).toEqual(plan.previous.start)
+      expect(previous.at(-1)!.end).toEqual(plan.previous.end)
+    }
+    const october = periodPlan('30d', new Date('2026-10-30T12:00:00Z'), berlin)
+    const long = october.buckets.find(b => b.end.getTime() - b.start.getTime() === 25 * 3_600_000)
+    expect(long?.start).toEqual(new Date('2026-10-24T22:00:00Z'))
+  })
+
+  it('reads the period from the URL and names the last moment of a range', () => {
+    expect(parsePeriod('90d')).toBe('90d')
+    expect(parsePeriod(['month', '7d'])).toBe('month')
+    expect(parsePeriod('year')).toBe('30d')
+    expect(parsePeriod(undefined)).toBe('30d')
+    expect(lastMoment(range('2026-08-28T22:00:00Z', '2026-09-27T09:00:00Z'))).toEqual(new Date('2026-09-27T08:59:59.999Z'))
   })
 })

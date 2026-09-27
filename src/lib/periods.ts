@@ -98,3 +98,74 @@ export function presetRange(preset: DatePreset, now: Date, timeZone: string): Ra
   if (preset === '30d') return { start: addDays(startOfDay(now, timeZone), -29, timeZone), end }
   return { start: startOfMonth(now, timeZone), end }
 }
+
+/** The overview's periods (spec §8.1); the selector is a set of links with `?period=`. */
+export const PERIODS = ['7d', '30d', '90d', 'month'] as const
+export type Period = (typeof PERIODS)[number]
+export const DEFAULT_PERIOD: Period = '30d'
+
+export function parsePeriod(value: string | string[] | undefined): Period {
+  const first = Array.isArray(value) ? value[0] : value
+  return first !== undefined && (PERIODS as readonly string[]).includes(first) ? (first as Period) : DEFAULT_PERIOD
+}
+
+/**
+ * A period of the overview with its previous period and the chart's buckets (amendment 4).
+ * The buckets are contiguous and cover `current` exactly; `previousBuckets` are the same
+ * buckets moved back and cover `previous` exactly, with null for a day the previous month lacks.
+ */
+export type PeriodPlan = {
+  period: Period
+  step: 'day' | 'week'
+  current: Range
+  previous: Range
+  buckets: Range[]
+  previousBuckets: (Range | null)[]
+}
+
+const ROLLING_DAYS = { '7d': 7, '30d': 30, '90d': 90 } as const
+
+function dayBuckets(start: Date, count: number, now: Date, timeZone: string): Range[] {
+  return Array.from({ length: count }, (_, i) => ({ start: addDays(start, i, timeZone), end: i === count - 1 ? now : addDays(start, i + 1, timeZone) }))
+}
+
+/** 7-day buckets counted back from today; the earliest one may be shorter. */
+function weekBuckets(start: Date, now: Date, timeZone: string): Range[] {
+  const buckets: Range[] = []
+  let end = now
+  let from = addDays(startOfDay(now, timeZone), -6, timeZone)
+  while (end > start) {
+    const bucketStart = from < start ? start : from
+    buckets.unshift({ start: bucketStart, end })
+    end = bucketStart
+    from = addDays(from, -7, timeZone)
+  }
+  return buckets
+}
+
+export function periodPlan(period: Period, now: Date, timeZone: string): PeriodPlan {
+  if (period === 'month') {
+    const start = startOfMonth(now, timeZone)
+    const previous = { start: addMonths(start, -1, timeZone), end: addMonths(now, -1, timeZone) }
+    const buckets = dayBuckets(start, zonedParts(now, timeZone).day, now, timeZone)
+    const month = zonedParts(previous.start, timeZone).month
+    const previousBuckets = buckets.map((_, i) => {
+      const dayStart = addDays(previous.start, i, timeZone)
+      if (zonedParts(dayStart, timeZone).month !== month || dayStart >= previous.end) return null
+      const dayEnd = addDays(dayStart, 1, timeZone)
+      return { start: dayStart, end: dayEnd < previous.end ? dayEnd : previous.end }
+    })
+    return { period, step: 'day', current: { start, end: now }, previous, buckets, previousBuckets }
+  }
+  const days = ROLLING_DAYS[period]
+  const start = addDays(startOfDay(now, timeZone), -(days - 1), timeZone)
+  const previous = { start: addDays(start, -days, timeZone), end: addDays(now, -days, timeZone) }
+  const buckets = period === '90d' ? weekBuckets(start, now, timeZone) : dayBuckets(start, days, now, timeZone)
+  const previousBuckets = buckets.map(bucket => ({ start: addDays(bucket.start, -days, timeZone), end: addDays(bucket.end, -days, timeZone) }))
+  return { period, step: period === '90d' ? 'week' : 'day', current: { start, end: now }, previous, buckets, previousBuckets }
+}
+
+/** The last instant inside a half-open range: the end of "26 Aug – 24 Sept". */
+export function lastMoment(range: Range): Date {
+  return new Date(range.end.getTime() - 1)
+}
