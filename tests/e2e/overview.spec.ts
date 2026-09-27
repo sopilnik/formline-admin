@@ -76,4 +76,35 @@ test.describe('overview', () => {
     await expect(page.getByRole('region', { name: 'Ключевые показатели' }).getByRole('heading', { name: 'Средний чек' })).toBeVisible()
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375)
   })
+
+  test('draws the revenue with the previous period, explains itself and shows the same data as a table', async ({ page, context }) => {
+    await signInAsSandboxUser(context)
+    await page.goto('/overview')
+    const card = page.getByRole('region', { name: 'Revenue by day', exact: true })
+    await expect(card.getByRole('img', { name: /^Revenue by day, .+: \$[\d,]+, (up [\d.]+%|down [\d.]+%|no change|no earlier data)$/ })).toBeVisible()
+    await card.locator('[data-bucket]').last().hover()
+    await expect(card.getByText(/today so far/)).toBeVisible()
+    const toggle = card.getByRole('button', { name: 'Show as table' })
+    await toggle.click()
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    const table = card.getByRole('table', { name: 'Revenue by day' })
+    await expect(table.getByRole('row')).toHaveCount(31)
+    await expect(table.getByRole('row').last().getByRole('rowheader')).toContainText('today so far')
+    await expect(card.getByRole('img')).toHaveCount(0)
+    await page.goto('/overview?period=90d')
+    await expect(page.getByRole('region', { name: 'Revenue by week', exact: true }).getByRole('img', { name: /^Revenue by week, / })).toBeVisible()
+  })
+
+  test('splits the posters by collection and shows posters and shipping', async ({ page, context }) => {
+    const { workspaceId } = await signInAsSandboxUser(context)
+    const sums = await asSchemaOwner(async c => (await c.query<{ posters: string; shipping: string }>(
+      `select coalesce(sum(o.subtotal_cents), 0) as posters, coalesce(sum(o.shipping_cents), 0) as shipping from fa.orders o where o.workspace_id = $1 and ${REVENUE} and ${LAST_30_DAYS}`,
+      [workspaceId])).rows[0]!)
+    await page.goto('/overview')
+    const card = page.getByRole('region', { name: 'Revenue by collection' })
+    for (const name of ['Monochrome', 'Primary', 'Pastel', 'Night']) await expect(card.getByText(name, { exact: true })).toBeVisible()
+    await expect(card.getByText(/^\d+ posters?$/).first()).toBeVisible()
+    await expect(card.getByText(`Posters ${dollars(Number(sums.posters))}`)).toBeVisible()
+    await expect(card.getByText(`Shipping ${dollars(Number(sums.shipping))}`)).toBeVisible()
+  })
 })

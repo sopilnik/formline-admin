@@ -20,6 +20,11 @@ export function formatPercent(fraction: number, locale: Locale): string {
   return new Intl.NumberFormat(INTL_LOCALE[locale], { style: 'percent', maximumFractionDigits: 1, signDisplay: 'exceptZero' }).format(fraction).replace(/^-/, '\u2212')
 }
 
+/** A share without a sign ("36%", "12.4%"): the collection shares and the chart's summary. */
+export function formatShare(fraction: number, locale: Locale, digits = 0): string {
+  return new Intl.NumberFormat(INTL_LOCALE[locale], { style: 'percent', maximumFractionDigits: digits }).format(fraction)
+}
+
 /** "24 Sept, 14:02" / "24 сент., 14:02" in the store zone. */
 export function formatDateTime(date: Date, locale: Locale, timeZone: string): string {
   return new Intl.DateTimeFormat(INTL_LOCALE[locale], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone }).format(date)

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatDate, formatDateTime, formatDay, formatDayRange, formatMoney, formatNumber, formatPercent } from '@/lib/intl'
+import { formatDate, formatDateTime, formatDay, formatDayRange, formatMoney, formatNumber, formatPercent, formatShare } from '@/lib/intl'
 
 describe('formatDate', () => {
   it('writes the calendar date of the store time zone in the interface language', () => {
@@ -33,5 +33,11 @@ describe('money, numbers and dates (spec §11)', () => {
     // English ranges put thin spaces (U+2009) around the dash; Russian ones plain spaces (ICU, checked on Node 26).
     expect(formatDayRange(new Date('2026-08-25T22:00:00Z'), new Date('2026-09-24T12:00:00Z'), 'en', 'Europe/Berlin')).toMatch(/^26 Aug – 24 Sept?$/)
     expect(formatDayRange(new Date('2026-08-25T22:00:00Z'), new Date('2026-09-24T12:00:00Z'), 'ru', 'Europe/Berlin')).toBe('26 авг. – 24 сент.')
+  })
+
+  it('formats a share without a sign', () => {
+    expect(formatShare(0.36, 'en')).toBe('36%')
+    expect(formatShare(0.124, 'en', 1)).toBe('12.4%')
+    expect(formatShare(0.36, 'ru')).toBe('36 %')
   })
 })

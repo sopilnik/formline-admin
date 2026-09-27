@@ -1,16 +1,19 @@
 import type { Metadata } from 'next'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { AttentionStrip } from '@/components/overview/attention-strip'
+import { CollectionRevenue } from '@/components/overview/collection-revenue'
 import { KpiCard, type KpiView } from '@/components/overview/kpi-card'
 import { PeriodNav } from '@/components/overview/period-nav'
+import { RevenueChart } from '@/components/overview/revenue-chart'
 import type { Locale } from '@/i18n/locale'
-import { formatDayRange, formatMoney, formatNumber, formatPercent } from '@/lib/intl'
+import { formatDayRange, formatMoney, formatNumber, formatPercent, formatShare } from '@/lib/intl'
 import type { SearchParams } from '@/lib/orders/query'
-import { kpis, type Kpi } from '@/lib/overview/kpi'
+import { buildChart } from '@/lib/overview/chart'
+import { bucketSums, collectionShares, kpis, type Kpi } from '@/lib/overview/kpi'
 import { lastMoment, parsePeriod, periodPlan, type Range } from '@/lib/periods'
 import { requireSession, workspaceContext } from '@/server/auth/sessions'
 import { authorize } from '@/server/authz/authorize'
-import { attentionCounts, revenueTotals } from '@/server/dal/overview'
+import { attentionCounts, collectionRevenue, revenuePoints, revenueTotals } from '@/server/dal/overview'
 import { getStoreSettings } from '@/server/dal/settings'
 import { withWorkspace } from '@/server/db/with-workspace'
 
@@ -50,11 +53,14 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
       current: await revenueTotals(tx, session.workspaceId, plan.current),
       previous: await revenueTotals(tx, session.workspaceId, plan.previous),
       attention: await attentionCounts(tx, session.workspaceId),
+      points: await revenuePoints(tx, session.workspaceId, { start: plan.previous.start, end: plan.current.end }),
+      collections: await collectionRevenue(tx, session.workspaceId, plan.current),
     }
   })
+  const { plan, timeZone } = data
   const locale = await getLocale()
   const t = await getTranslations('overview')
-  const range = (r: Range): string => formatDayRange(r.start, lastMoment(r), locale, data.timeZone)
+  const range = (r: Range): string => formatDayRange(r.start, lastMoment(r), locale, timeZone)
   const cards = kpis(data.current, data.previous)
   const whole: Format = cents => formatMoney(cents, locale, 'whole')
   const cents: Format = value => formatMoney(value, locale)
@@ -65,12 +71,25 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
     view('average', t('kpis.averageOrder'), t('kpis.averageOrderHint'), cards.averageOrder, cents, locale),
     view('customers', t('kpis.newCustomers'), t('kpis.newCustomersHint'), cards.newCustomers, number, locale),
   ]
+
+  const chartTitle = t('chart.title', { step: plan.step })
+  const change = cards.revenue.change
+  const summary = t('chart.summary', {
+    title: chartTitle,
+    range: range(plan.current),
+    amount: whole(data.current.revenueCents),
+    trend: change === null ? 'none' : change > 0 ? 'up' : change < 0 ? 'down' : 'flat',
+    percent: change === null ? '' : formatShare(Math.abs(change), locale, 1),
+  })
+  const model = buildChart({ plan, current: bucketSums(data.points, plan.buckets), previous: bucketSums(data.points, plan.previousBuckets), locale, timeZone })
+  const shares = collectionShares(data.collections.rows, data.collections.postersCents)
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-end gap-4">
         <div className="min-w-0 flex-1">
           <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
-          <p className="mt-1 text-[13px] text-muted-foreground">{t('compared', { current: range(data.plan.current), previous: range(data.plan.previous) })}</p>
+          <p className="mt-1 text-[13px] text-muted-foreground">{t('compared', { current: range(plan.current), previous: range(plan.previous) })}</p>
         </div>
         <PeriodNav period={period} />
       </div>
@@ -78,6 +97,15 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
       <section aria-label={t('kpis.label')} className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
         {figures.map(kpi => <KpiCard key={kpi.id} kpi={kpi} />)}
       </section>
+      <div className="grid gap-5 xl:grid-cols-[2fr_1fr]">
+        <RevenueChart model={model} title={chartTitle} summary={summary} legend={{ current: range(plan.current), previous: range(plan.previous) }} />
+        <CollectionRevenue
+          rows={shares.rows.map(row => ({ slug: row.slug, name: row.name, posters: row.posters, amount: whole(row.cents), share: formatShare(row.share, locale), bar: row.bar }))}
+          other={shares.otherCents > 0 ? whole(shares.otherCents) : null}
+          posters={whole(data.collections.postersCents)}
+          shipping={whole(data.collections.shippingCents)}
+        />
+      </div>
     </div>
   )
 }

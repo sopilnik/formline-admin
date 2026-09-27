@@ -75,6 +75,22 @@
       "averageOrderHint": "Revenue divided by the number of orders.",
       "newCustomers": "New customers",
       "newCustomersHint": "Customers whose first paid, processing, shipped or delivered order was placed in the period."
+    },
+    "chart": {
+      "title": "{step, select, week {Revenue by week} other {Revenue by day}}",
+      "summary": "{title}, {range}: {amount}, {trend, select, up {up {percent}} down {down {percent}} flat {no change} other {no earlier data}}",
+      "showTable": "Show as table",
+      "tableLabel": "{title}, table",
+      "bucket": "Period",
+      "todaySoFar": "today so far",
+      "todayLegend": "Today so far"
+    },
+    "collections": {
+      "title": "Revenue by collection",
+      "posters": "{count, plural, one {# poster} other {# posters}}",
+      "other": "Other items",
+      "postersTotal": "Posters",
+      "shipping": "Shipping"
     }
   },
   "orders": {

@@ -75,6 +75,22 @@
       "averageOrderHint": "Выручка, делённая на число заказов.",
       "newCustomers": "Новые покупатели",
       "newCustomersHint": "Покупатели, чей первый заказ в этих статусах оформлен за период."
+    },
+    "chart": {
+      "title": "{step, select, week {Выручка по неделям} other {Выручка по дням}}",
+      "summary": "{title}, {range}: {amount}, {trend, select, up {рост на {percent}} down {снижение на {percent}} flat {без изменений} other {нет данных для сравнения}}",
+      "showTable": "Показать таблицей",
+      "tableLabel": "{title}, таблица",
+      "bucket": "Период",
+      "todaySoFar": "сегодня, день не закончен",
+      "todayLegend": "Сегодня, день не закончен"
+    },
+    "collections": {
+      "title": "Выручка по коллекциям",
+      "posters": "{count, plural, one {# постер} few {# постера} many {# постеров} other {# постера}}",
+      "other": "Прочие позиции",
+      "postersTotal": "Постеры",
+      "shipping": "Доставка"
     }
   },
   "orders": {
