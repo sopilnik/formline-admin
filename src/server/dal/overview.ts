@@ -92,3 +92,33 @@ export async function attentionCounts(tx: Tx, workspaceId: string): Promise<{ to
   const row = rows[0]!
   return { toProcess: Number(row.to_process), processing: Number(row.processing), soldOut: Number(row.sold_out) }
 }
+
+export type LowStockRow = {
+  variantId: string; productSlug: string; productName: string; size: string; palette: string; stock: number
+  image: { id: string; storagePath: string; source: 'static' | 'upload' } | null
+}
+
+/** Variants at or below their threshold, sold out first (spec §8.1): the first `limit` of them and how many there are. */
+export async function lowStock(tx: Tx, workspaceId: string, limit = 5): Promise<{ total: number; rows: LowStockRow[] }> {
+  const low = sql`v.workspace_id = ${workspaceId} and v.stock <= v.low_stock_threshold and p.status <> 'archived'`
+  const counted = await tx.execute<{ n: string }>(sql`
+    select count(*) as n
+      from fa.product_variants v
+      join fa.products p on p.workspace_id = v.workspace_id and p.id = v.product_id
+     where ${low}`)
+  const { rows } = await tx.execute<{ id: string; slug: string; name: string; size: string; palette: string; stock: number; image_id: string | null; storage_path: string | null; source: 'static' | 'upload' | null }>(sql`
+    select v.id, p.slug, p.name, v.size, v.palette, v.stock, i.id as image_id, i.storage_path, i.source
+      from fa.product_variants v
+      join fa.products p on p.workspace_id = v.workspace_id and p.id = v.product_id
+      left join fa.images i on i.workspace_id = p.workspace_id and i.id = p.image_id
+     where ${low}
+     order by v.stock, p.name, v.sku
+     limit ${limit}`)
+  return {
+    total: Number(counted.rows[0]!.n),
+    rows: rows.map(row => ({
+      variantId: row.id, productSlug: row.slug, productName: row.name, size: row.size, palette: row.palette, stock: Number(row.stock),
+      image: row.image_id && row.storage_path && row.source ? { id: row.image_id, storagePath: row.storage_path, source: row.source } : null,
+    })),
+  }
+}

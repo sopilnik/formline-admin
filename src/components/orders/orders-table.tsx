@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { BulkActions } from '@/components/orders/bulk-actions'
+import { ORDER_LINK } from '@/components/orders/row-link'
 import { SourceLabel } from '@/components/orders/source-label'
 import { StatusBadge } from '@/components/orders/status-badge'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -12,8 +13,6 @@ import { ordersHref, type OrdersQuery, type SortKey } from '@/lib/orders/query'
 import type { OrderRowView } from '@/lib/orders/view'
 import { cn } from '@/lib/utils'
 
-// The number is a real link stretched over its row or card (spec §8.2): underlined on hover and focus, no click handler on the row.
-const ORDER_LINK = 'font-semibold underline decoration-border-strong underline-offset-3 group-hover/row:decoration-current focus-visible:decoration-current after:absolute after:inset-0'
 const TH = 'h-10 border-b bg-card px-3 text-left font-medium whitespace-nowrap text-muted-foreground'
 const TD = 'h-11 border-b px-3 group-last/row:border-b-0'
 

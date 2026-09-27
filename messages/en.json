@@ -91,6 +91,18 @@
       "other": "Other items",
       "postersTotal": "Posters",
       "shipping": "Shipping"
+    },
+    "latest": {
+      "title": "Latest orders",
+      "all": "All orders"
+    },
+    "lowStock": {
+      "title": "Low stock",
+      "count": "{count, plural, one {# variant} other {# variants}}",
+      "left": "{count, number} left",
+      "soldOut": "Sold out",
+      "viewAll": "View all {count, number}",
+      "empty": "Every variant is above its low-stock threshold."
     }
   },
   "orders": {
@@ -198,6 +210,47 @@
       "status": "Status",
       "source": "Source",
       "delivery": "Delivery"
+    },
+    "detail": {
+      "title": "Order #{number}",
+      "back": "Orders",
+      "placed": "Placed {date}",
+      "changeStatus": "Change status",
+      "changing": "Changing…",
+      "changed": "Order #{number} is now {status}.",
+      "conflict": "This order changed while the page was open. It now shows its current status.",
+      "failed": "The status could not be changed. Try again.",
+      "items": "Items",
+      "item": "Item",
+      "quantityPrice": "Qty × price",
+      "lineTotal": "Total",
+      "unmatched": "Not in the catalog",
+      "subtotal": "Subtotal",
+      "shipping": "Shipping, {delivery}",
+      "total": "Total",
+      "history": "History",
+      "system": "System",
+      "statusSet": "Status set to {status}",
+      "statusChanged": "{from} → {to}",
+      "noteLabel": "Internal note",
+      "noteHint": "Seen by the team only. Up to 1,000 characters.",
+      "addNote": "Add note",
+      "adding": "Adding…",
+      "noteAdded": "Note added.",
+      "noteErrors": {
+        "required": "Write the note first.",
+        "too_long": "Keep the note to 1,000 characters.",
+        "forbidden": "Your role cannot add notes.",
+        "not_found": "This order no longer exists."
+      },
+      "customer": "Customer",
+      "customerPage": "Customer page",
+      "address": "Shipping address",
+      "noAddress": "No shipping address was given.",
+      "delivery": "Delivery: {delivery}",
+      "notFoundTitle": "Order not found",
+      "notFoundBody": "This workspace has no order with that number.",
+      "allOrders": "All orders"
     }
   },
   "errors": {

@@ -107,4 +107,24 @@ test.describe('overview', () => {
     await expect(card.getByText(`Posters ${dollars(Number(sums.posters))}`)).toBeVisible()
     await expect(card.getByText(`Shipping ${dollars(Number(sums.shipping))}`)).toBeVisible()
   })
+
+  test('lists the latest orders and the variants running low', async ({ page, context }) => {
+    const { workspaceId } = await signInAsSandboxUser(context)
+    const newest = await asSchemaOwner(async c => (await c.query<{ number: number }>('select number from fa.orders where workspace_id = $1 order by placed_at desc, id desc limit 1', [workspaceId])).rows[0]!.number)
+    const low = await one(
+      "select count(*) as n from fa.product_variants v join fa.products p on p.workspace_id = v.workspace_id and p.id = v.product_id where v.workspace_id = $1 and v.stock <= v.low_stock_threshold and p.status <> 'archived'",
+      [workspaceId])
+    const soldOut = await one('select count(*) as n from fa.product_variants where workspace_id = $1 and stock = 0', [workspaceId])
+    await page.goto('/overview')
+    const latest = page.getByRole('region', { name: 'Latest orders' })
+    const links = latest.getByRole('link', { name: /^#\d+$/ })
+    await expect(links).toHaveCount(8)
+    await expect(links.first()).toHaveText(`#${newest}`)
+    await expect(links.first()).toHaveAttribute('href', `/orders/${newest}`)
+    await expect(latest.getByRole('link', { name: 'All orders' })).toHaveAttribute('href', '/orders')
+    const stock = page.getByRole('region', { name: 'Low stock' })
+    await expect(stock.getByRole('listitem')).toHaveCount(Math.min(5, low))
+    if (soldOut > 0) await expect(stock.getByRole('listitem').first()).toContainText('Sold out')
+    await expect(stock.getByRole('link', { name: `View all ${low}` })).toHaveAttribute('href', '/products?stock=low')
+  })
 })

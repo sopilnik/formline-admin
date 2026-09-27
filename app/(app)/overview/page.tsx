@@ -3,17 +3,22 @@ import { getLocale, getTranslations } from 'next-intl/server'
 import { AttentionStrip } from '@/components/overview/attention-strip'
 import { CollectionRevenue } from '@/components/overview/collection-revenue'
 import { KpiCard, type KpiView } from '@/components/overview/kpi-card'
+import { LatestOrders } from '@/components/overview/latest-orders'
+import { LowStock } from '@/components/overview/low-stock'
 import { PeriodNav } from '@/components/overview/period-nav'
 import { RevenueChart } from '@/components/overview/revenue-chart'
 import type { Locale } from '@/i18n/locale'
+import { imageSrc, variantLabel } from '@/lib/catalog'
 import { formatDayRange, formatMoney, formatNumber, formatPercent, formatShare } from '@/lib/intl'
 import type { SearchParams } from '@/lib/orders/query'
+import { toRowView } from '@/lib/orders/view'
 import { buildChart } from '@/lib/overview/chart'
 import { bucketSums, collectionShares, kpis, type Kpi } from '@/lib/overview/kpi'
 import { lastMoment, parsePeriod, periodPlan, type Range } from '@/lib/periods'
 import { requireSession, workspaceContext } from '@/server/auth/sessions'
 import { authorize } from '@/server/authz/authorize'
-import { attentionCounts, collectionRevenue, revenuePoints, revenueTotals } from '@/server/dal/overview'
+import { latestOrders } from '@/server/dal/orders'
+import { attentionCounts, collectionRevenue, lowStock, revenuePoints, revenueTotals } from '@/server/dal/overview'
 import { getStoreSettings } from '@/server/dal/settings'
 import { withWorkspace } from '@/server/db/with-workspace'
 
@@ -55,6 +60,8 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
       attention: await attentionCounts(tx, session.workspaceId),
       points: await revenuePoints(tx, session.workspaceId, { start: plan.previous.start, end: plan.current.end }),
       collections: await collectionRevenue(tx, session.workspaceId, plan.current),
+      latest: await latestOrders(tx, session.workspaceId),
+      stock: await lowStock(tx, session.workspaceId),
     }
   })
   const { plan, timeZone } = data
@@ -104,6 +111,20 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
           other={shares.otherCents > 0 ? whole(shares.otherCents) : null}
           posters={whole(data.collections.postersCents)}
           shipping={whole(data.collections.shippingCents)}
+        />
+      </div>
+      <div className="grid gap-5 xl:grid-cols-[2fr_1fr]">
+        <LatestOrders rows={data.latest.map(row => toRowView(row, locale, timeZone))} />
+        <LowStock
+          total={data.stock.total}
+          rows={data.stock.rows.map(row => ({
+            key: row.variantId,
+            href: `/products/${row.productSlug}`,
+            product: row.productName,
+            variant: variantLabel(row.size, row.palette),
+            stock: row.stock,
+            imageSrc: row.image ? imageSrc(row.image) : null,
+          }))}
         />
       </div>
     </div>

@@ -1,9 +1,11 @@
 import 'server-only'
 import { and, asc, count, desc, eq, gte, ilike, inArray, lt, or, sql, type SQL } from 'drizzle-orm'
+import { z } from 'zod'
+import { imageSrc } from '@/lib/catalog'
 import type { OrdersQuery } from '@/lib/orders/query'
-import { canTransition, ORDER_STATUSES, returnsStock, type OrderStatus } from '@/lib/orders/status'
+import { canTransition, isOrderStatus, ORDER_STATUSES, returnsStock, type OrderStatus } from '@/lib/orders/status'
 import { presetRange } from '@/lib/periods'
-import { customers, orderEvents, orders } from '@/server/db/schema'
+import { customers, images, orderEvents, orderLines, orders, products, productVariants, users } from '@/server/db/schema'
 import type { Tx } from '@/server/db/with-workspace'
 
 export type OrderRow = {
@@ -102,4 +104,94 @@ export async function changeOrderStatus(tx: Tx, ctx: { workspaceId: string; user
          and l.workspace_id = ${ctx.workspaceId} and l.order_id = ${input.orderId}`)
   }
   return { ok: true, number: row.number, from, to: input.to }
+}
+
+const addressSchema = z.object({ name: z.string(), line1: z.string(), postalCode: z.string(), city: z.string(), country: z.string() })
+export type ShippingAddress = z.infer<typeof addressSchema>
+
+export type OrderLineDetail = {
+  id: string; name: string; sku: string | null; unitCents: number; qty: number; unmatched: boolean
+  /** The product the line's variant belongs to; null for a line the catalog does not know. */
+  product: { slug: string; imageSrc: string | null } | null
+}
+export type OrderEventDetail = {
+  id: string; kind: 'status' | 'note'; from: OrderStatus | null; to: OrderStatus | null; note: string | null
+  /** Null for events without a person: the Stripe ingest and the seed's first event ("System"). */
+  actorName: string | null
+  at: Date
+}
+export type OrderDetail = {
+  id: string; number: number; status: OrderStatus; source: 'seed' | 'stripe'; delivery: 'standard' | 'express'
+  subtotalCents: number; shippingCents: number; totalCents: number; placedAt: Date
+  address: ShippingAddress | null
+  customer: { id: string; name: string; email: string; city: string | null; country: string | null }
+  lines: OrderLineDetail[]
+  history: OrderEventDetail[]
+}
+
+const asStatus = (value: string | null): OrderStatus | null => (value !== null && isOrderStatus(value) ? value : null)
+
+/** The newest orders (spec §8.1: eight on the overview), in the list's row shape and order. */
+export async function latestOrders(tx: Tx, workspaceId: string, limit = 8): Promise<OrderRow[]> {
+  return tx.select(ROW_FIELDS).from(orders).innerJoin(customers, customerJoin)
+    .where(eq(orders.workspaceId, workspaceId))
+    .orderBy(desc(orders.placedAt), desc(orders.id)).limit(limit)
+}
+
+/** One order by the number people quote (amendment 3), with everything its page shows (spec §8.2). */
+export async function getOrder(tx: Tx, workspaceId: string, number: number): Promise<OrderDetail | null> {
+  const [order] = await tx
+    .select({
+      id: orders.id, number: orders.number, status: orders.status, source: orders.source, delivery: orders.delivery,
+      subtotalCents: orders.subtotalCents, shippingCents: orders.shippingCents, totalCents: orders.totalCents,
+      placedAt: orders.placedAt, address: orders.shippingAddress,
+      customerId: customers.id, customerName: customers.name, customerEmail: customers.email, customerCity: customers.city, customerCountry: customers.country,
+    })
+    .from(orders).innerJoin(customers, customerJoin)
+    .where(and(eq(orders.workspaceId, workspaceId), eq(orders.number, number)))
+  if (!order) return null
+
+  const lines = await tx.select().from(orderLines)
+    .where(and(eq(orderLines.workspaceId, workspaceId), eq(orderLines.orderId, order.id)))
+    .orderBy(asc(orderLines.name), asc(orderLines.id))
+  const variantIds = lines.flatMap(line => (line.variantId ? [line.variantId] : []))
+  const catalog = variantIds.length === 0 ? [] : await tx
+    .select({ variantId: productVariants.id, slug: products.slug, imageId: images.id, storagePath: images.storagePath, imageSource: images.source })
+    .from(productVariants)
+    .innerJoin(products, and(eq(products.workspaceId, productVariants.workspaceId), eq(products.id, productVariants.productId)))
+    .leftJoin(images, and(eq(images.workspaceId, products.workspaceId), eq(images.id, products.imageId)))
+    .where(and(eq(productVariants.workspaceId, workspaceId), inArray(productVariants.id, variantIds)))
+  const productOf = new Map(catalog.map(row => [row.variantId, {
+    slug: row.slug,
+    imageSrc: row.imageId && row.storagePath && row.imageSource ? imageSrc({ id: row.imageId, storagePath: row.storagePath, source: row.imageSource }) : null,
+  }]))
+
+  const events = await tx
+    .select({ id: orderEvents.id, kind: orderEvents.kind, from: orderEvents.fromStatus, to: orderEvents.toStatus, note: orderEvents.note, actorName: users.name, at: orderEvents.at })
+    .from(orderEvents)
+    .leftJoin(users, and(eq(users.workspaceId, orderEvents.workspaceId), eq(users.id, orderEvents.actorUserId)))
+    .where(and(eq(orderEvents.workspaceId, workspaceId), eq(orderEvents.orderId, order.id)))
+    .orderBy(asc(orderEvents.at), asc(orderEvents.id))
+
+  const address = addressSchema.safeParse(order.address)
+  return {
+    id: order.id, number: order.number, status: order.status, source: order.source, delivery: order.delivery,
+    subtotalCents: order.subtotalCents, shippingCents: order.shippingCents, totalCents: order.totalCents, placedAt: order.placedAt,
+    address: address.success ? address.data : null,
+    customer: { id: order.customerId, name: order.customerName, email: order.customerEmail, city: order.customerCity, country: order.customerCountry },
+    lines: lines.map(line => ({
+      id: line.id, name: line.name, sku: line.sku, unitCents: line.unitCents, qty: line.qty, unmatched: line.unmatched,
+      product: line.variantId ? (productOf.get(line.variantId) ?? null) : null,
+    })),
+    history: events.map(event => ({ id: event.id, kind: event.kind, from: asStatus(event.from), to: asStatus(event.to), note: event.note, actorName: event.actorName, at: event.at })),
+  }
+}
+
+/** An internal note on an order (amendment 8); null when the workspace holds no such order. */
+export async function addOrderNote(tx: Tx, ctx: { workspaceId: string; userId: string }, input: { orderId: string; note: string }): Promise<{ number: number } | null> {
+  const [row] = await tx.select({ number: orders.number }).from(orders)
+    .where(and(eq(orders.workspaceId, ctx.workspaceId), eq(orders.id, input.orderId)))
+  if (!row) return null
+  await tx.insert(orderEvents).values({ workspaceId: ctx.workspaceId, orderId: input.orderId, kind: 'note', note: input.note, actorUserId: ctx.userId })
+  return { number: row.number }
 }
