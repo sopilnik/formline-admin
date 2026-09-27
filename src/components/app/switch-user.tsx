@@ -40,7 +40,10 @@ export function SwitchUserDialog({ open, onOpenChange, members }: { open: boolea
                   type="radio"
                   name="user"
                   value={member.id}
-                  checked={selected?.id === member.id}
+                  // React resets the form after every action result and the browser restores each radio to its
+                  // default; a default that follows the state survives that, a controlled `checked` that did not
+                  // change is not written back and the chosen user would vanish after a wrong code.
+                  defaultChecked={selected?.id === member.id}
                   onChange={() => setSelected(member)}
                   className="size-4 accent-primary"
                 />

@@ -1,5 +1,6 @@
+import { generateHOTP } from '@oslojs/otp'
 import { E2E_ORIGIN_SECRET } from './constants'
-import { asSchemaOwner } from './db'
+import { asSchemaOwner, enrolAuthenticator } from './db'
 import { signInAsSandboxUser } from './sessions'
 import { expect, test } from './test'
 
@@ -35,5 +36,24 @@ test.describe('switch user', () => {
     await expect(dialog.getByText('Dana Ortiz')).toBeVisible()
     await dialog.getByRole('button', { name: 'Cancel' }).click()
     await expect(dialog).toBeHidden()
+  })
+
+  test('keeps the chosen user through a wrong authenticator code', async ({ page, context }) => {
+    const { workspaceId } = await signInAsSandboxUser(context)
+    const admin = await asSchemaOwner(async c => (await c.query<{ id: string }>("select id from fa.users where workspace_id = $1 and role = 'admin'", [workspaceId])).rows[0]!)
+    const secret = new Uint8Array(20).fill(9)
+    await enrolAuthenticator(workspaceId, admin.id, secret)
+    await page.goto('/overview')
+    await page.getByRole('region', { name: 'Demo sandbox' }).getByRole('button', { name: 'Switch user' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Switch user' })
+    await dialog.getByRole('radio', { name: /Noah Becker/ }).check()
+    await dialog.getByLabel('Authenticator code').fill('000000')
+    await dialog.getByRole('button', { name: 'Switch', exact: true }).click()
+    await expect(dialog.getByText('The code is not correct. Check it and try again.')).toBeVisible()
+    // React resets the form after the action; the chosen user must not be lost with it.
+    await expect(dialog.getByRole('radio', { name: /Noah Becker/ })).toBeChecked()
+    await dialog.getByLabel('Authenticator code').fill(generateHOTP(secret, BigInt(Math.floor(Date.now() / 30_000)), 6))
+    await dialog.getByRole('button', { name: 'Switch', exact: true }).click()
+    await expect(page.getByRole('button', { name: 'Account menu: Noah Becker, Admin' })).toBeVisible()
   })
 })

@@ -1,7 +1,7 @@
-import { encodeBase32LowerCaseNoPadding } from '@oslojs/encoding'
-import { createHash, randomBytes, randomUUID } from 'node:crypto'
+import { encodeBase32LowerCaseNoPadding, encodeBase64urlNoPadding } from '@oslojs/encoding'
+import { createCipheriv, createHash, randomBytes, randomUUID } from 'node:crypto'
 import pg from 'pg'
-import { E2E_MIGRATOR_URL } from './constants'
+import { E2E_AUTH_ENV, E2E_MIGRATOR_URL } from './constants'
 
 export type Role = 'owner' | 'admin' | 'manager' | 'viewer'
 
@@ -44,6 +44,21 @@ export function createSandboxSession(role: Role = 'owner'): Promise<{ token: str
       [row.sandbox_id, sha256(token), user.rows[0]!.id])
     return { token, workspaceId: row.sandbox_id, userId: user.rows[0]!.id }
   })
+}
+
+/**
+ * Enrols an authenticator on a sandbox user: the same AES-256-GCM envelope as the server's
+ * totp module, which is server-only and cannot be imported here (spec §5.3).
+ */
+export async function enrolAuthenticator(workspaceId: string, userId: string, secret: Uint8Array): Promise<void> {
+  const [keyId = '', encoded = ''] = E2E_AUTH_ENV.TOTP_ENCRYPTION_KEYS.split(',')[0]!.split(':')
+  const iv = randomBytes(12)
+  const cipher = createCipheriv('aes-256-gcm', Buffer.from(encoded, 'base64'), iv, { authTagLength: 16 })
+  cipher.setAAD(Buffer.from(`${workspaceId}${userId}`))
+  const ciphertext = Buffer.concat([cipher.update(secret), cipher.final()])
+  const part = (bytes: Uint8Array) => encodeBase64urlNoPadding(bytes)
+  const value = `${keyId}.${part(iv)}.${part(ciphertext)}.${part(cipher.getAuthTag())}`
+  await asSchemaOwner(client => client.query('update fa.users set totp_secret_enc = $3 where workspace_id = $1 and id = $2', [workspaceId, userId, value]))
 }
 
 /** Moves the owner's last authentication an hour back, as if the ten minutes had long passed. */
