@@ -9,20 +9,22 @@ import { SIDEBAR_COOKIE } from '@/lib/preferences'
 import { hoursLeft } from '@/lib/sandbox'
 import { parseTheme, THEME_COOKIE } from '@/lib/theme'
 import { requireSession, workspaceContext } from '@/server/auth/sessions'
+import { ordersToProcess } from '@/server/dal/orders'
 import { getSelf, listMembers } from '@/server/dal/users'
 import { withWorkspace } from '@/server/db/with-workspace'
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const session = await requireSession()
-  const { self, members } = await withWorkspace(workspaceContext(session), async tx => ({
+  const { self, members, toProcess } = await withWorkspace(workspaceContext(session), async tx => ({
     self: await getSelf(tx, session.userId),
     members: session.workspaceKind === 'sandbox' ? await listMembers(tx) : [],
+    toProcess: await ordersToProcess(tx, session.workspaceId),
   }))
   if (!self) redirect('/sign-in')
   const store = await cookies()
   return (
     <AppFrame
-      items={navItems(session.role, session.workspaceKind)}
+      items={navItems(session.role, session.workspaceKind, { orders: toProcess })}
       collapsed={store.get(SIDEBAR_COOKIE)?.value === 'collapsed'}
       theme={parseTheme(store.get(THEME_COOKIE)?.value)}
       locale={await getLocale()}

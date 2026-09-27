@@ -18,7 +18,8 @@
     "collapse": "Collapse menu",
     "expand": "Expand menu",
     "open": "Open menu",
-    "close": "Close menu"
+    "close": "Close menu",
+    "ordersToProcess": "{count, plural, one {# to process} other {# to process}}"
   },
   "theme": {
     "label": "Theme: {name}",
@@ -47,7 +48,34 @@
   },
   "overview": {
     "title": "Overview",
-    "placeholder": "Revenue, orders and stock appear here once the orders module is in place."
+    "loading": "Loading the overview…",
+    "compared": "{current}, compared with {previous}",
+    "periods": {
+      "label": "Period",
+      "7d": "7 days",
+      "30d": "30 days",
+      "90d": "90 days",
+      "month": "This month"
+    },
+    "attention": {
+      "label": "Needs attention",
+      "toProcess": "<b>{count, number}</b> {count, plural, one {order to process} other {orders to process}}",
+      "processing": "<b>{count, number}</b> in processing",
+      "soldOut": "<b>{count, number}</b> {count, plural, one {variant sold out} other {variants sold out}}"
+    },
+    "kpis": {
+      "label": "Key figures",
+      "about": "About {label}",
+      "versus": "vs {previous}",
+      "revenue": "Revenue",
+      "revenueHint": "The sum of the totals of the paid, processing, shipped and delivered orders placed in the period.",
+      "orders": "Orders",
+      "ordersHint": "The number of paid, processing, shipped and delivered orders placed in the period.",
+      "averageOrder": "Average order value",
+      "averageOrderHint": "Revenue divided by the number of orders.",
+      "newCustomers": "New customers",
+      "newCustomersHint": "Customers whose first paid, processing, shipped or delivered order was placed in the period."
+    }
   },
   "orders": {
     "title": "Orders",

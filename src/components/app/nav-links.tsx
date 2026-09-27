@@ -32,15 +32,23 @@ export function NavLinks({ items, collapsed = false, onNavigate }: { items: NavI
           <Link
             href={item.href}
             aria-current={current ? 'page' : undefined}
+            aria-label={item.count ? `${t(item.key)}, ${t('ordersToProcess', { count: item.count })}` : undefined}
             onClick={onNavigate}
             className={cn(
-              'flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-strong',
+              'relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-strong',
               current && 'bg-sidebar-accent text-sidebar-strong shadow-[inset_3px_0_0_var(--sidebar-bar)]',
               collapsed && 'justify-center',
             )}
           >
             <Icon className="size-[18px] shrink-0" aria-hidden />
             <span className={cn(collapsed && 'sr-only')}>{t(item.key)}</span>
+            {item.count ? (
+              collapsed ? (
+                <span aria-hidden className="absolute top-1.5 right-1.5 size-2 rounded-full bg-sidebar-bar" />
+              ) : (
+                <span aria-hidden className="ml-auto text-xs text-sidebar-muted tabular-nums">{item.count}</span>
+              )
+            ) : null}
           </Link>
         )
         const startsGroup = index > 0 && item.group !== items[index - 1]!.group

@@ -66,6 +66,12 @@ export async function listOrders(tx: Tx, workspaceId: string, query: OrdersQuery
   return { rows, filtered, total: totalRow?.n ?? 0, statusCounts, page: query.page, pages: Math.max(1, Math.ceil(filtered / query.size)) }
 }
 
+/** The orders waiting in "paid": the sidebar count and the first link of the overview's strip (spec §8.1, §11). */
+export async function ordersToProcess(tx: Tx, workspaceId: string): Promise<number> {
+  const [row] = await tx.select({ n: count() }).from(orders).where(and(eq(orders.workspaceId, workspaceId), eq(orders.status, 'paid')))
+  return row?.n ?? 0
+}
+
 export type StatusChange =
   | { ok: true; number: number; from: OrderStatus; to: OrderStatus }
   | { ok: false; reason: 'not_found' }

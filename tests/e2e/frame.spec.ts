@@ -24,7 +24,7 @@ test.describe('app frame', () => {
   test('keyboard focus shows the solid outline in the colour of its surface', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/overview')
-    const orders = page.getByRole('link', { name: 'Orders' })
+    const orders = page.getByRole('link', { name: /^Orders/ })
     await orders.focus()
     await page.keyboard.press('Shift+Tab')
     await page.keyboard.press('Tab')
@@ -58,7 +58,7 @@ test.describe('app frame', () => {
     await page.getByRole('menuitemradio', { name: 'Русский' }).click()
     await expect(page.locator('html')).toHaveAttribute('lang', 'ru')
     await expect(page.getByRole('heading', { level: 1, name: 'Обзор' })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Заказы' })).toBeVisible()
+    await expect(page.getByRole('link', { name: /^Заказы/ })).toBeVisible()
   })
 
   test('a viewer does not see the activity log or the outbox', async ({ page, context }) => {
@@ -74,7 +74,7 @@ test.describe('app frame', () => {
     await page.goto('/overview')
     await page.getByRole('button', { name: 'Collapse menu' }).click()
     await expect(page.getByRole('button', { name: 'Expand menu' })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Orders' })).toBeVisible()
+    await expect(page.getByRole('link', { name: /^Orders/ })).toBeVisible()
     await page.reload()
     await expect(page.getByRole('button', { name: 'Expand menu' })).toBeVisible()
   })
@@ -86,7 +86,7 @@ test.describe('app frame', () => {
     await expect(page.locator('aside')).toBeHidden()
     await page.getByRole('button', { name: 'Open menu' }).click()
     const drawer = page.getByRole('dialog', { name: 'Main menu' })
-    await expect(drawer.getByRole('link', { name: 'Orders' })).toBeVisible()
+    await expect(drawer.getByRole('link', { name: /^Orders/ })).toBeVisible()
     await expectNoSeriousA11yViolations(page)
     await drawer.getByRole('button', { name: 'Close menu' }).click()
     await expect(drawer).toBeHidden()

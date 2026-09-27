@@ -17,4 +17,11 @@ describe('navItems', () => {
   it('puts the store modules before the administration', () => {
     expect(navItems('owner', 'owner').map(i => i.group)).toEqual(['store', 'store', 'store', 'store', 'store', 'admin', 'admin', 'admin', 'admin'])
   })
+
+  it('carries a count only where there is one', () => {
+    const items = navItems('manager', 'sandbox', { orders: 18 })
+    expect(items.find(item => item.key === 'orders')?.count).toBe(18)
+    expect(items.filter(item => item.count !== undefined).map(item => item.key)).toEqual(['orders'])
+    expect(navItems('owner', 'owner', { orders: 0 }).find(item => item.key === 'orders')).not.toHaveProperty('count')
+  })
 })
