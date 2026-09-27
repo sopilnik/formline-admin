@@ -10,7 +10,7 @@ describe('vendored ui primitives', () => {
   it('include every primitive the panel uses', () => {
     expect(files).toEqual(expect.arrayContaining([
       'button.tsx', 'checkbox.tsx', 'dialog.tsx', 'dropdown-menu.tsx', 'input.tsx', 'label.tsx', 'radio-group.tsx',
-      'sheet.tsx', 'switch.tsx', 'toast.tsx', 'tooltip.tsx',
+      'sheet.tsx', 'skeleton.tsx', 'switch.tsx', 'toast.tsx', 'toggle-group.tsx', 'toggle.tsx', 'tooltip.tsx',
     ]))
   })
 

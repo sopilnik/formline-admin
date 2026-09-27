@@ -49,6 +49,76 @@
     "title": "Overview",
     "placeholder": "Revenue, orders and stock appear here once the orders module is in place."
   },
+  "orders": {
+    "title": "Orders",
+    "count": "{total, plural, one {# order} other {# orders}}",
+    "countFiltered": "{filtered, number} of {total, plural, one {# order} other {# orders}}",
+    "loading": "Loading orders…",
+    "itemsCount": "{count, plural, one {# item} other {# items}}",
+    "status": {
+      "paid": "Paid",
+      "processing": "Processing",
+      "shipped": "Shipped",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled",
+      "refunded": "Refunded"
+    },
+    "source": {
+      "stripe": "Store",
+      "seed": "Sample",
+      "storeHint": "Placed in the live Formline store"
+    },
+    "columns": {
+      "order": "Order",
+      "placed": "Placed",
+      "customer": "Customer",
+      "items": "Items",
+      "total": "Total",
+      "status": "Status",
+      "source": "Source"
+    },
+    "filters": {
+      "status": "Status",
+      "all": "All",
+      "searchLabel": "Search orders",
+      "searchPlaceholder": "Number, name or email",
+      "placed": "Placed",
+      "placedOptions": {
+        "any": "Any time",
+        "today": "Today",
+        "7d": "Last 7 days",
+        "30d": "Last 30 days",
+        "month": "This month"
+      },
+      "source": "Source",
+      "sourceOptions": {
+        "any": "Any source",
+        "stripe": "Store",
+        "seed": "Sample"
+      },
+      "clear": "Clear filters"
+    },
+    "empty": {
+      "noneTitle": "No orders yet",
+      "noneBody": "Orders placed in the live Formline store appear here.",
+      "filteredTitle": "No orders match these filters",
+      "filteredBody": "Try another search, or clear the filters."
+    },
+    "pager": {
+      "label": "Pagination",
+      "range": "{from, number}–{to, number} of {total, number}",
+      "previous": "Previous page",
+      "next": "Next page",
+      "page": "Page {page}",
+      "size": "Orders per page",
+      "sizeOption": "{size} per page"
+    }
+  },
+  "errors": {
+    "title": "Something went wrong",
+    "body": "This page could not be loaded. Try again in a moment.",
+    "retry": "Try again"
+  },
   "notFound": {
     "title": "Page not found",
     "description": "The page you are looking for does not exist."

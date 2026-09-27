@@ -17,3 +17,12 @@ export async function expectNoSeriousA11yViolations(page: Page): Promise<void> {
     .map(v => `${v.id}: ${v.nodes.map(n => n.target.join(' ')).join(', ')}`)
   expect(serious).toEqual([])
 }
+
+/** axe in the light and the dark scheme (spec §12.3); the panel follows the system scheme unless a theme is chosen. */
+export async function expectNoSeriousA11yViolationsInBothThemes(page: Page): Promise<void> {
+  for (const colorScheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme })
+    await expectNoSeriousA11yViolations(page)
+  }
+  await page.emulateMedia({ colorScheme: null })
+}

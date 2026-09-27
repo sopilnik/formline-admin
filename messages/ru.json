@@ -49,6 +49,76 @@
     "title": "Обзор",
     "placeholder": "Выручка, заказы и остатки появятся здесь вместе с модулем заказов."
   },
+  "orders": {
+    "title": "Заказы",
+    "count": "{total, plural, one {# заказ} few {# заказа} many {# заказов} other {# заказа}}",
+    "countFiltered": "{filtered, number} из {total, plural, one {# заказа} few {# заказов} many {# заказов} other {# заказа}}",
+    "loading": "Загружаем заказы…",
+    "itemsCount": "{count, plural, one {# товар} few {# товара} many {# товаров} other {# товара}}",
+    "status": {
+      "paid": "Оплачен",
+      "processing": "В обработке",
+      "shipped": "Отправлен",
+      "delivered": "Доставлен",
+      "cancelled": "Отменён",
+      "refunded": "Возврат"
+    },
+    "source": {
+      "stripe": "Магазин",
+      "seed": "Пример",
+      "storeHint": "Оформлен в живом магазине Formline"
+    },
+    "columns": {
+      "order": "Заказ",
+      "placed": "Оформлен",
+      "customer": "Покупатель",
+      "items": "Товаров",
+      "total": "Сумма",
+      "status": "Статус",
+      "source": "Источник"
+    },
+    "filters": {
+      "status": "Статус",
+      "all": "Все",
+      "searchLabel": "Поиск заказов",
+      "searchPlaceholder": "Номер, имя или email",
+      "placed": "Оформлен",
+      "placedOptions": {
+        "any": "За всё время",
+        "today": "Сегодня",
+        "7d": "Последние 7 дней",
+        "30d": "Последние 30 дней",
+        "month": "Этот месяц"
+      },
+      "source": "Источник",
+      "sourceOptions": {
+        "any": "Любой источник",
+        "stripe": "Магазин",
+        "seed": "Пример"
+      },
+      "clear": "Сбросить фильтры"
+    },
+    "empty": {
+      "noneTitle": "Заказов пока нет",
+      "noneBody": "Здесь появятся заказы из живого магазина Formline.",
+      "filteredTitle": "Нет заказов по этим фильтрам",
+      "filteredBody": "Измените поиск или сбросьте фильтры."
+    },
+    "pager": {
+      "label": "Страницы",
+      "range": "{from, number}–{to, number} из {total, number}",
+      "previous": "Предыдущая страница",
+      "next": "Следующая страница",
+      "page": "Страница {page}",
+      "size": "Заказов на странице",
+      "sizeOption": "{size} на странице"
+    }
+  },
+  "errors": {
+    "title": "Что-то пошло не так",
+    "body": "Не удалось загрузить страницу. Попробуйте ещё раз чуть позже.",
+    "retry": "Повторить"
+  },
   "notFound": {
     "title": "Страница не найдена",
     "description": "Такой страницы не существует."
