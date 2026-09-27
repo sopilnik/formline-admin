@@ -38,6 +38,14 @@ the server process: it also purges rate-limit windows and used challenges older 
 sign-in entries older than 90 days, and retries the deletion of uploaded images from storage with a doubling delay (1 h to
 24 h). Nothing else touches the database on a schedule.
 
+## Limits and measurements
+
+At most 100 sandboxes are live at once; at the cap the least recently active one idle for more than 15 minutes is replaced,
+and when none qualifies the demo button says so. One address may open five sandboxes an hour, resets included.
+`tests/int/sandbox-size.test.ts` measures the table and index space of one sandbox (20 copies, `vacuum full` first) and
+fails above 2 MB (a sandbox measures about 1.6 MB: the 700 orders with their lines and events take nine tenths of it); `tests/e2e/demo-timing.spec.ts` measures a warm "Enter the demo" and fails above 3 s. Both print a
+JSON line with the number.
+
 ## Security model
 
 The container is reachable only through the bunny edge, which adds a shared secret and the visitor's real IP as
