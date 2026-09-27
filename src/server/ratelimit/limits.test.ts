@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { passwordLockSeconds } from '@/server/ratelimit/limits'
+import { LIMITS, passwordLockSeconds } from '@/server/ratelimit/limits'
 
 describe('passwordLockSeconds', () => {
   it('locks from the fifth failure: 15 minutes, doubling, at most an hour', () => {
@@ -8,5 +8,11 @@ describe('passwordLockSeconds', () => {
     expect(passwordLockSeconds(6)).toBe(30 * 60)
     expect(passwordLockSeconds(7)).toBe(60 * 60)
     expect(passwordLockSeconds(12)).toBe(60 * 60)
+  })
+})
+
+describe('LIMITS', () => {
+  it('allows ten CSV exports a minute (spec §5.4)', () => {
+    expect(LIMITS.csvExport).toEqual({ purpose: 'csv.export', limit: 10, windowSeconds: 60 })
   })
 })

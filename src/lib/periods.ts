@@ -49,6 +49,16 @@ export function zonedToDate(parts: Partial<ZonedParts> & Pick<ZonedParts, 'year'
   return new Date(guess)
 }
 
+/** "2026-09-24T14:02:00+02:00": the civil time of the zone and its offset at that instant (the CSV's Placed column). */
+export function isoInZone(date: Date, timeZone: string): string {
+  const p = zonedParts(date, timeZone)
+  const offset = Math.round((civilUtc(p) - date.getTime()) / 60_000)
+  const pad = (n: number, width = 2): string => String(n).padStart(width, '0')
+  const sign = offset < 0 ? '-' : '+'
+  const abs = Math.abs(offset)
+  return `${pad(p.year, 4)}-${pad(p.month)}-${pad(p.day)}T${pad(p.hour)}:${pad(p.minute)}:${pad(p.second)}${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`
+}
+
 export function startOfDay(date: Date, timeZone: string): Date {
   const p = zonedParts(date, timeZone)
   return zonedToDate({ year: p.year, month: p.month, day: p.day }, timeZone)

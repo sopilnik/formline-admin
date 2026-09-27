@@ -3,15 +3,19 @@
 import { ChevronDown } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useTransition } from 'react'
+import { ExportButton } from '@/components/orders/export-button'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useToast } from '@/components/ui/toast'
+import { exportHref, type OrdersQuery } from '@/lib/orders/query'
 import { sharedTransitions, type OrderStatus } from '@/lib/orders/status'
 import type { OrderRowView } from '@/lib/orders/view'
 import { changeStatusesAction } from '@/server/actions/orders'
 
+type Props = { chosen: OrderRowView[]; query: OrdersQuery; canUpdate: boolean; onClear: () => void }
+
 /** The actions on the selected orders (spec §8.2); the table and the phone bar render the same controls. */
-export function BulkActions({ chosen, canUpdate, onClear }: { chosen: OrderRowView[]; canUpdate: boolean; onClear: () => void }) {
+export function BulkActions({ chosen, query, canUpdate, onClear }: Props) {
   const t = useTranslations('orders.bulk')
   const statusLabel = useTranslations('orders.status')
   const toast = useToast()
@@ -47,6 +51,7 @@ export function BulkActions({ chosen, canUpdate, onClear }: { chosen: OrderRowVi
           </DropdownMenuContent>
         </DropdownMenu>
       ) : null}
+      <ExportButton href={exportHref(query, chosen.map(row => row.id))} label={t('exportSelected')} size="sm" />
       <button type="button" onClick={onClear} className="ml-auto rounded-sm text-ink-2 underline underline-offset-3 hover:text-foreground">
         {t('clear')}
       </button>

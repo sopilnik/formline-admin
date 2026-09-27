@@ -2,10 +2,11 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getLocale, getTranslations } from 'next-intl/server'
+import { ExportButton } from '@/components/orders/export-button'
 import { OrdersFilters } from '@/components/orders/orders-filters'
 import { OrdersTable } from '@/components/orders/orders-table'
 import { Pager } from '@/components/orders/pager'
-import { DEFAULT_QUERY, isFiltered, ordersHref, parseOrdersQuery, type SearchParams } from '@/lib/orders/query'
+import { DEFAULT_QUERY, exportHref, isFiltered, ordersHref, parseOrdersQuery, type SearchParams } from '@/lib/orders/query'
 import { toRowView } from '@/lib/orders/view'
 import { requireSession, workspaceContext } from '@/server/auth/sessions'
 import { authorize } from '@/server/authz/authorize'
@@ -13,6 +14,7 @@ import { can } from '@/server/authz/matrix'
 import { listOrders } from '@/server/dal/orders'
 import { getStoreSettings } from '@/server/dal/settings'
 import { withWorkspace } from '@/server/db/with-workspace'
+import { EXPORT_CAP } from '@/server/orders/export'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('orders')
@@ -42,12 +44,23 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
             {filtered ? t('countFiltered', { filtered: page.filtered, total: page.total }) : t('count', { total: page.total })}
           </p>
         </div>
+        {page.filtered > 0 && can(session.role, 'csv.export', session.workspaceKind) ? (
+          <ExportButton
+            href={exportHref(query)}
+            label={page.filtered > EXPORT_CAP ? t('export.first', { count: EXPORT_CAP }) : t('export.all', { count: page.filtered })}
+          />
+        ) : null}
       </div>
       <OrdersFilters query={query} statusCounts={page.statusCounts} />
       <section aria-label={t('title')} className="@container rounded-lg border bg-card p-2 pb-3">
         {page.rows.length > 0 ? (
           <>
-            <OrdersTable key={ordersHref(query)} rows={page.rows.map(row => toRowView(row, locale, timeZone))} query={query} canUpdate={can(session.role, 'orders.update', session.workspaceKind)} />
+            <OrdersTable
+              key={ordersHref(query)}
+              rows={page.rows.map(row => toRowView(row, locale, timeZone))}
+              query={query}
+              canUpdate={can(session.role, 'orders.update', session.workspaceKind)}
+            />
             <Pager query={query} filtered={page.filtered} pages={page.pages} />
           </>
         ) : (

@@ -81,7 +81,7 @@ export function OrdersTable({ rows, query, canUpdate }: { rows: OrderRowView[]; 
             <tr>
               <th scope="col" className={cn(TH, 'w-10 border-border-strong bg-secondary')}>{allBox}</th>
               <th colSpan={7} className={cn(TH, 'border-border-strong bg-secondary font-normal text-foreground')}>
-                <BulkActions chosen={chosen} canUpdate={canUpdate} onClear={clear} />
+                <BulkActions chosen={chosen} query={query} canUpdate={canUpdate} onClear={clear} />
               </th>
             </tr>
           ) : (
@@ -149,7 +149,7 @@ export function OrdersTable({ rows, query, canUpdate }: { rows: OrderRowView[]; 
             aria-label={t('selection.region')}
             className="fixed inset-x-4 bottom-4 z-30 mx-auto max-w-xl rounded-lg border border-border-strong bg-card px-3 py-2 shadow-lg"
           >
-            <BulkActions chosen={chosen} canUpdate={canUpdate} onClear={clear} />
+            <BulkActions chosen={chosen} query={query} canUpdate={canUpdate} onClear={clear} />
           </section>
         ) : null}
       </div>

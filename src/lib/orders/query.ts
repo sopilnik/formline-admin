@@ -77,3 +77,16 @@ export function ordersHref(query: OrdersQuery, changes: Partial<OrdersQuery> = {
 export function isFiltered(query: OrdersQuery): boolean {
   return query.status.length > 0 || query.q !== '' || query.placed !== DEFAULT_QUERY.placed || query.source !== DEFAULT_QUERY.source
 }
+
+/** The CSV of the list: its filters and sort without the page, or the chosen orders in the list's sort (spec §8.2). */
+export function exportHref(query: OrdersQuery, ids?: readonly string[]): string {
+  const href = ordersHref({ ...query, page: 1, size: DEFAULT_QUERY.size })
+  const at = href.indexOf('?')
+  const params = new URLSearchParams(at === -1 ? '' : href.slice(at + 1))
+  if (ids && ids.length > 0) {
+    for (const key of ['status', 'q', 'placed', 'source']) params.delete(key)
+    params.set('ids', ids.join(','))
+  }
+  const text = params.toString().replace(/%2C/g, ',')
+  return text ? `/api/orders/export?${text}` : '/api/orders/export'
+}

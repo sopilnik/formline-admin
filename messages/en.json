@@ -127,7 +127,33 @@
       "skipped": "{count, plural, one {Skipped {numbers}: not allowed from its status.} other {Skipped {numbers}: not allowed from their status.}}",
       "noneChanged": "No orders changed.",
       "failed": "The status could not be changed. Try again.",
-      "clear": "Clear selection"
+      "clear": "Clear selection",
+      "exportSelected": "Export selected"
+    },
+    "delivery": {
+      "standard": "Standard",
+      "express": "Express"
+    },
+    "export": {
+      "all": "Export {count, number} as CSV",
+      "first": "Export the first {count, number} as CSV",
+      "pending": "Preparing the file…",
+      "rateLimited": "Too many exports. Try again in {seconds, plural, one {# second} other {# seconds}}.",
+      "failed": "The export failed. Try again.",
+      "truncated": "The file holds the first {count, number} orders."
+    },
+    "csv": {
+      "order": "Order",
+      "placed": "Placed",
+      "customer": "Customer",
+      "email": "Email",
+      "items": "Items",
+      "subtotal": "Subtotal",
+      "shipping": "Shipping",
+      "total": "Total",
+      "status": "Status",
+      "source": "Source",
+      "delivery": "Delivery"
     }
   },
   "errors": {

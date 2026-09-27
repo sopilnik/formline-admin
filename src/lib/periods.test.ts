@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, addMonths, daysInMonth, presetRange, startOfDay, startOfMonth, validTimeZone, zonedParts, zonedToDate } from '@/lib/periods'
+import { addDays, addMonths, daysInMonth, isoInZone, presetRange, startOfDay, startOfMonth, validTimeZone, zonedParts, zonedToDate } from '@/lib/periods'
 
 const berlin = 'Europe/Berlin'
 const iso = (date: Date) => date.toISOString()
@@ -38,6 +38,14 @@ describe('zoned dates (review focus 3: DST day boundaries)', () => {
     expect(validTimeZone('Asia/Almaty')).toBe('Asia/Almaty')
     expect(validTimeZone('Mars/Olympus')).toBe('Europe/Berlin')
     expect(validTimeZone(null)).toBe('Europe/Berlin')
+  })
+
+  it('writes an instant as ISO 8601 with the offset of the zone at that instant', () => {
+    expect(isoInZone(new Date('2026-09-24T12:02:00Z'), berlin)).toBe('2026-09-24T14:02:00+02:00')
+    expect(isoInZone(new Date('2026-01-15T12:00:30.500Z'), berlin)).toBe('2026-01-15T13:00:30+01:00')
+    expect(isoInZone(new Date('2026-09-24T12:02:00Z'), 'Asia/Kolkata')).toBe('2026-09-24T17:32:00+05:30')
+    expect(isoInZone(new Date('2026-09-24T12:02:00Z'), 'America/New_York')).toBe('2026-09-24T08:02:00-04:00')
+    expect(isoInZone(new Date('2026-09-24T12:02:00Z'), 'UTC')).toBe('2026-09-24T12:02:00+00:00')
   })
 })
 

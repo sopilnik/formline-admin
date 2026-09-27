@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_QUERY, isFiltered, ordersHref, parseOrdersQuery } from '@/lib/orders/query'
+import { DEFAULT_QUERY, exportHref, isFiltered, ordersHref, parseOrdersQuery } from '@/lib/orders/query'
 
 describe('parseOrdersQuery', () => {
   it('falls back to the defaults for missing and unknown values', () => {
@@ -35,5 +35,16 @@ describe('ordersHref', () => {
     expect(isFiltered(DEFAULT_QUERY)).toBe(false)
     expect(isFiltered({ ...DEFAULT_QUERY, sort: 'total', page: 2 })).toBe(false)
     expect(isFiltered({ ...DEFAULT_QUERY, placed: 'today' })).toBe(true)
+  })
+})
+
+describe('exportHref', () => {
+  it('carries the filters and the sort but not the page', () => {
+    expect(exportHref(DEFAULT_QUERY)).toBe('/api/orders/export')
+    expect(exportHref({ ...DEFAULT_QUERY, status: ['paid'], sort: 'total', page: 3, size: 50 })).toBe('/api/orders/export?status=paid&sort=total')
+  })
+
+  it('exports a selection in the list order, without the filters', () => {
+    expect(exportHref({ ...DEFAULT_QUERY, status: ['paid'], q: 'maya', sort: 'total' }, ['a', 'b'])).toBe('/api/orders/export?sort=total&ids=a,b')
   })
 })
