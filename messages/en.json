@@ -112,6 +112,22 @@
       "page": "Page {page}",
       "size": "Orders per page",
       "sizeOption": "{size} per page"
+    },
+    "selection": {
+      "all": "Select all orders on this page",
+      "allShort": "Select all",
+      "one": "Select order #{number}",
+      "region": "Selected orders"
+    },
+    "bulk": {
+      "selected": "{count, number} selected",
+      "changeStatus": "Change status",
+      "changing": "Changing…",
+      "changed": "{count, plural, one {# order changed to {status}.} other {# orders changed to {status}.}}",
+      "skipped": "{count, plural, one {Skipped {numbers}: not allowed from its status.} other {Skipped {numbers}: not allowed from their status.}}",
+      "noneChanged": "No orders changed.",
+      "failed": "The status could not be changed. Try again.",
+      "clear": "Clear selection"
     }
   },
   "errors": {

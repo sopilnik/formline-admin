@@ -9,6 +9,7 @@ import { DEFAULT_QUERY, isFiltered, ordersHref, parseOrdersQuery, type SearchPar
 import { toRowView } from '@/lib/orders/view'
 import { requireSession, workspaceContext } from '@/server/auth/sessions'
 import { authorize } from '@/server/authz/authorize'
+import { can } from '@/server/authz/matrix'
 import { listOrders } from '@/server/dal/orders'
 import { getStoreSettings } from '@/server/dal/settings'
 import { withWorkspace } from '@/server/db/with-workspace'
@@ -46,7 +47,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
       <section aria-label={t('title')} className="@container rounded-lg border bg-card p-2 pb-3">
         {page.rows.length > 0 ? (
           <>
-            <OrdersTable key={ordersHref(query)} rows={page.rows.map(row => toRowView(row, locale, timeZone))} query={query} />
+            <OrdersTable key={ordersHref(query)} rows={page.rows.map(row => toRowView(row, locale, timeZone))} query={query} canUpdate={can(session.role, 'orders.update', session.workspaceKind)} />
             <Pager query={query} filtered={page.filtered} pages={page.pages} />
           </>
         ) : (
