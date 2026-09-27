@@ -14,15 +14,15 @@ describe('money, numbers and dates (spec §11)', () => {
     expect(formatMoney(1428600, 'en', 'whole')).toBe('$14,286')
     expect(formatMoney(6676, 'en')).toBe('$66.76')
     expect(formatMoney(11800, 'en')).toBe('$118.00')
-    expect(formatMoney(1428600, 'ru', 'whole')).toBe('14 286 $')
+    expect(formatMoney(1428600, 'ru', 'whole')).toBe('14\u00a0286\u00a0$')
     expect(formatNumber(1234, 'en')).toBe('1,234')
   })
 
   it('formats a signed percentage with a real minus sign', () => {
     expect(formatPercent(0.124, 'en')).toBe('+12.4%')
-    expect(formatPercent(-0.047, 'en')).toBe('−4.7%')
+    expect(formatPercent(-0.047, 'en')).toBe('\u22124.7%')
     expect(formatPercent(0, 'en')).toBe('0%')
-    expect(formatPercent(0.124, 'ru')).toBe('+12,4 %')
+    expect(formatPercent(0.124, 'ru')).toBe('+12,4\u00a0%')
   })
 
   it('formats date-times, days and ranges in the store zone', () => {

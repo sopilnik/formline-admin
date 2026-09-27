@@ -17,7 +17,7 @@ export function formatNumber(value: number, locale: Locale): string {
 
 /** A signed change with one decimal and a real minus sign (U+2212), as the KPI cards show it. */
 export function formatPercent(fraction: number, locale: Locale): string {
-  return new Intl.NumberFormat(INTL_LOCALE[locale], { style: 'percent', maximumFractionDigits: 1, signDisplay: 'exceptZero' }).format(fraction).replace(/^-/, '−')
+  return new Intl.NumberFormat(INTL_LOCALE[locale], { style: 'percent', maximumFractionDigits: 1, signDisplay: 'exceptZero' }).format(fraction).replace(/^-/, '\u2212')
 }
 
 /** "24 Sept, 14:02" / "24 сент., 14:02" in the store zone. */
