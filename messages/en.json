@@ -162,7 +162,18 @@
       "resetConfirm": "Reset",
       "resetting": "Resetting…",
       "cancel": "Cancel",
-      "more": "More actions"
+      "more": "More actions",
+      "switch": "Switch user"
+    },
+    "switch": {
+      "title": "Switch user",
+      "body": "Continue as another member of this sandbox. Each role sees and may do different things.",
+      "hasCode": "asks for a code",
+      "code": "Authenticator code",
+      "codeHint": "This user has an authenticator app enrolled. Enter its current six-digit code.",
+      "cancel": "Cancel",
+      "confirm": "Switch",
+      "switching": "Switching…"
     }
   },
   "settings": {

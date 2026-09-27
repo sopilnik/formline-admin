@@ -9,12 +9,15 @@ import { SIDEBAR_COOKIE } from '@/lib/preferences'
 import { hoursLeft } from '@/lib/sandbox'
 import { parseTheme, THEME_COOKIE } from '@/lib/theme'
 import { requireSession, workspaceContext } from '@/server/auth/sessions'
-import { getSelf } from '@/server/dal/users'
+import { getSelf, listMembers } from '@/server/dal/users'
 import { withWorkspace } from '@/server/db/with-workspace'
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const session = await requireSession()
-  const self = await withWorkspace(workspaceContext(session), tx => getSelf(tx, session.userId))
+  const { self, members } = await withWorkspace(workspaceContext(session), async tx => ({
+    self: await getSelf(tx, session.userId),
+    members: session.workspaceKind === 'sandbox' ? await listMembers(tx) : [],
+  }))
   if (!self) redirect('/sign-in')
   const store = await cookies()
   return (
@@ -24,7 +27,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       theme={parseTheme(store.get(THEME_COOKIE)?.value)}
       locale={await getLocale()}
       user={{ name: self.name, role: session.role, kind: session.workspaceKind }}
-      banner={session.workspaceKind === 'sandbox' ? <DemoBanner hours={hoursLeft(session.expiresAt)} /> : null}
+      banner={session.workspaceKind === 'sandbox' ? <DemoBanner hours={hoursLeft(session.expiresAt)} members={members.filter(m => m.id !== session.userId)} /> : null}
     >
       {children}
     </AppFrame>
