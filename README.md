@@ -30,6 +30,14 @@ Every sandbox is a copy of the template workspace: the store's catalog (`db/seed
 the version changes; copies of store orders and existing sandboxes are kept. Generated timestamps are relative to
 `TEMPLATE_EPOCH` and shifted to the present when a sandbox is created.
 
+## Housekeeping
+
+A sandbox is deleted after 2 hours without activity, 24 hours after creation at the latest, or when its visitor signs out.
+Expired sandboxes are removed after every demo entry (off the request path) and by the daily job, which runs at 03:17 UTC in
+the server process: it also purges rate-limit windows and used challenges older than a day, expired sessions and failed
+sign-in entries older than 90 days, and retries the deletion of uploaded images from storage with a doubling delay (1 h to
+24 h). Nothing else touches the database on a schedule.
+
 ## Security model
 
 The container is reachable only through the bunny edge, which adds a shared secret and the visitor's real IP as

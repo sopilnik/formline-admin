@@ -2,6 +2,7 @@
 
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { after } from 'next/server'
 import { getLocale } from 'next-intl/server'
 import { z } from 'zod'
 import { failureState, formText, type FormState } from '@/lib/auth-form'
@@ -10,6 +11,7 @@ import { summariseUserAgent } from '@/server/auth/user-agent'
 import { authConfig } from '@/server/config'
 import { hashIp } from '@/server/ratelimit/ip'
 import { getClientIp } from '@/server/request'
+import { cleanupExpiredSandboxes } from '@/server/sandbox/cleanup'
 import { enterSandbox, type VisitorMeta } from '@/server/sandbox/enter'
 import { resetSandbox } from '@/server/sandbox/lifecycle'
 import { switchUser } from '@/server/sandbox/sign-in-as'
@@ -28,6 +30,7 @@ export async function enterDemoAction(_previous: FormState, _form: FormData): Pr
   const entry = await enterSandbox(await visitorMeta())
   if (!entry.ok) return failureState(entry)
   await setSessionCookie(entry.token, entry.expiresAt, { demo: true })
+  after(() => cleanupExpiredSandboxes())
   redirect('/overview')
 }
 
