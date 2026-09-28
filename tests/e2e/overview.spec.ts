@@ -77,6 +77,25 @@ test.describe('overview', () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375)
   })
 
+  test('stacks the period links under the subtitle and lists the latest orders on a phone', async ({ page, context }) => {
+    await page.setViewportSize({ width: 375, height: 800 })
+    await signInAsSandboxUser(context)
+    await page.goto('/overview')
+    await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
+    const subtitle = (await page.getByText(/, compared with /).boundingBox())!
+    const periods = (await page.getByRole('navigation', { name: 'Period' }).boundingBox())!
+    // The subtitle keeps the width of the page and the period links sit under it, not beside it.
+    expect(subtitle.width).toBeGreaterThan(300)
+    expect(periods.y).toBeGreaterThanOrEqual(subtitle.y + subtitle.height)
+    const latest = page.getByRole('region', { name: 'Latest orders' })
+    await expect(latest.getByRole('table')).toHaveCount(0)
+    const list = latest.getByRole('list', { name: 'Latest orders' })
+    await expect(list.getByRole('listitem')).toHaveCount(8)
+    await expect(list.getByRole('listitem').first().getByRole('link', { name: /^#\d+$/ })).toBeVisible()
+    expect(await list.evaluate(el => el.scrollWidth - el.clientWidth)).toBe(0)
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375)
+  })
+
   test('draws the revenue with the previous period, explains itself and shows the same data as a table', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/overview')
@@ -119,6 +138,8 @@ test.describe('overview', () => {
     const latest = page.getByRole('region', { name: 'Latest orders' })
     const links = latest.getByRole('link', { name: /^#\d+$/ })
     await expect(links).toHaveCount(8)
+    await expect(latest.getByRole('table')).toBeVisible()
+    await expect(latest.getByRole('listitem')).toHaveCount(0)
     await expect(links.first()).toHaveText(`#${newest}`)
     await expect(links.first()).toHaveAttribute('href', `/orders/${newest}`)
     await expect(latest.getByRole('link', { name: 'All orders' })).toHaveAttribute('href', '/orders')

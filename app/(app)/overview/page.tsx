@@ -94,7 +94,8 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-end gap-4">
-        <div className="min-w-0 flex-1">
+        {/* A basis, not flex-1: with a basis of 0 the title block shrinks to a sliver beside the period links instead of wrapping them. */}
+        <div className="min-w-0 grow basis-64">
           <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
           <p className="mt-1 text-[13px] text-muted-foreground">{t('compared', { current: range(plan.current), previous: range(plan.previous) })}</p>
         </div>
