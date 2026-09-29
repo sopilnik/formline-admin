@@ -412,5 +412,61 @@
         "sandbox": "Ключи доступа работают в настоящем аккаунте. Ключ, созданный здесь, остался бы в вашем менеджере паролей после удаления демо."
       }
     }
+  },
+  "products": {
+    "title": "Товары",
+    "count": "{total, plural, one {# товар} few {# товара} many {# товаров} other {# товара}}",
+    "countFiltered": "{filtered, number} из {total, plural, one {# товара} few {# товаров} many {# товаров} other {# товара}}",
+    "loading": "Загружаем товары…",
+    "status": {
+      "published": "Опубликован",
+      "draft": "Черновик",
+      "archived": "В архиве"
+    },
+    "columns": {
+      "product": "Товар",
+      "collection": "Коллекция",
+      "status": "Статус",
+      "price": "Цена от",
+      "stock": "Остаток",
+      "updated": "Изменён"
+    },
+    "priceFrom": "от {price}",
+    "noVariants": "Нет вариантов",
+    "inStock": "на складе: {stock}",
+    "stockNote": {
+      "soldOut": "распродано: {count, number}",
+      "low": "на исходе: {count, number}"
+    },
+    "filters": {
+      "status": "Статус",
+      "all": "Все",
+      "searchLabel": "Поиск товаров",
+      "searchPlaceholder": "Название товара",
+      "collection": "Коллекция",
+      "collectionAll": "Все коллекции",
+      "stock": "Остаток",
+      "stockOptions": {
+        "any": "Любой остаток",
+        "low": "Мало на складе",
+        "out": "Распродано"
+      },
+      "clear": "Сбросить фильтры"
+    },
+    "empty": {
+      "noneTitle": "Товаров пока нет",
+      "noneBody": "Здесь появятся товары, которые вы добавите.",
+      "filteredTitle": "Нет товаров по этим фильтрам",
+      "filteredBody": "Измените поиск или сбросьте фильтры."
+    },
+    "pager": {
+      "label": "Страницы",
+      "range": "{from, number}–{to, number} из {total, number}",
+      "previous": "Предыдущая страница",
+      "next": "Следующая страница",
+      "page": "Страница {page}",
+      "size": "Товаров на странице",
+      "sizeOption": "{size} на странице"
+    }
   }
 }

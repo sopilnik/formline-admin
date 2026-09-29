@@ -2,10 +2,10 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getLocale, getTranslations } from 'next-intl/server'
+import { Pager } from '@/components/app/pager'
 import { ExportButton } from '@/components/orders/export-button'
 import { OrdersFilters } from '@/components/orders/orders-filters'
 import { OrdersTable } from '@/components/orders/orders-table'
-import { Pager } from '@/components/orders/pager'
 import { DEFAULT_QUERY, exportHref, isFiltered, ordersHref, parseOrdersQuery, type SearchParams } from '@/lib/orders/query'
 import { toRowView } from '@/lib/orders/view'
 import { requireSession, workspaceContext } from '@/server/auth/sessions'
@@ -61,7 +61,15 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
               query={query}
               canUpdate={can(session.role, 'orders.update', session.workspaceKind)}
             />
-            <Pager query={query} filtered={page.filtered} pages={page.pages} />
+            <Pager
+              namespace="orders.pager"
+              sizeId="orders-page-size"
+              page={query.page}
+              pages={page.pages}
+              size={query.size}
+              filtered={page.filtered}
+              href={changes => ordersHref(query, changes)}
+            />
           </>
         ) : (
           <div className="flex flex-col items-start gap-1.5 px-3 py-8">

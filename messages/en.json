@@ -412,5 +412,61 @@
         "sandbox": "Passkeys are available in a real account. A passkey made here would stay in your password manager after the demo is deleted."
       }
     }
+  },
+  "products": {
+    "title": "Products",
+    "count": "{total, plural, one {# product} other {# products}}",
+    "countFiltered": "{filtered, number} of {total, plural, one {# product} other {# products}}",
+    "loading": "Loading products…",
+    "status": {
+      "published": "Published",
+      "draft": "Draft",
+      "archived": "Archived"
+    },
+    "columns": {
+      "product": "Product",
+      "collection": "Collection",
+      "status": "Status",
+      "price": "Price from",
+      "stock": "Stock",
+      "updated": "Updated"
+    },
+    "priceFrom": "from {price}",
+    "noVariants": "No variants",
+    "inStock": "{stock} in stock",
+    "stockNote": {
+      "soldOut": "{count, number} sold out",
+      "low": "{count, number} low"
+    },
+    "filters": {
+      "status": "Status",
+      "all": "All",
+      "searchLabel": "Search products",
+      "searchPlaceholder": "Product name",
+      "collection": "Collection",
+      "collectionAll": "All collections",
+      "stock": "Stock",
+      "stockOptions": {
+        "any": "Any stock",
+        "low": "Low stock",
+        "out": "Sold out"
+      },
+      "clear": "Clear filters"
+    },
+    "empty": {
+      "noneTitle": "No products yet",
+      "noneBody": "Products you add appear here.",
+      "filteredTitle": "No products match these filters",
+      "filteredBody": "Try another search, or clear the filters."
+    },
+    "pager": {
+      "label": "Pagination",
+      "range": "{from, number}–{to, number} of {total, number}",
+      "previous": "Previous page",
+      "next": "Next page",
+      "page": "Page {page}",
+      "size": "Products per page",
+      "sizeOption": "{size} per page"
+    }
   }
 }
