@@ -592,5 +592,65 @@
       "conflict": "This product can no longer be deleted: it is not a draft, or it has orders now.",
       "failed": "The product could not be deleted. Try again."
     }
+  },
+  "collections": {
+    "title": "Collections",
+    "intro": "The groups the posters are sold in, in the order the panel lists them everywhere.",
+    "loading": "Loading collections…",
+    "new": "New collection",
+    "back": "Collections",
+    "all": "All collections",
+    "empty": "There are no collections yet.",
+    "products": "{count, plural, one {# product} other {# products}}",
+    "moveUp": "Move {name} up",
+    "moveDown": "Move {name} down",
+    "moved": "{name} is now {position, number} of {count, number}.",
+    "moveFailed": "The collection could not be moved. Try again.",
+    "notFoundTitle": "Collection not found",
+    "notFoundBody": "This workspace has no collection at this address.",
+    "detail": {
+      "products": "Products",
+      "noProducts": "No products are in this collection.",
+      "details": "Details",
+      "none": "None"
+    },
+    "form": {
+      "name": "Name",
+      "slug": "Slug",
+      "slugHint": "Used in the products list's collection filter: lowercase Latin letters, digits and hyphens.",
+      "description": "Description",
+      "create": "Create collection",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "created": "Collection created.",
+      "saved": "Changes saved.",
+      "failed": {
+        "cap": "This workspace holds 50 collections, the most it can.",
+        "forbidden": "Your role cannot change collections.",
+        "not_found": "This collection no longer exists."
+      },
+      "errors": {
+        "name_required": "Enter a name.",
+        "name_too_long": "Keep the name to 80 characters.",
+        "slug_required": "Enter a slug: this name gives none.",
+        "slug_invalid": "Use lowercase Latin letters, digits and single hyphens, up to 60 characters. “new” is taken.",
+        "slug_taken": "Another collection already has this slug.",
+        "description_too_long": "Keep the description to 2,000 characters."
+      }
+    },
+    "delete": {
+      "title": "Delete collection",
+      "body": "An empty collection can be deleted. This cannot be undone.",
+      "blocked": "This collection holds {count, plural, one {# product} other {# products}}. Move them to another collection or delete them first.",
+      "button": "Delete collection",
+      "confirmTitle": "Delete {name}?",
+      "confirmBody": "The collection is deleted. This cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete collection",
+      "deleting": "Deleting…",
+      "done": "{name} deleted.",
+      "conflict": "This collection holds products now, so it was not deleted.",
+      "failed": "The collection could not be deleted. Try again."
+    }
   }
 }
