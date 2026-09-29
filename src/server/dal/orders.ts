@@ -4,7 +4,9 @@ import { z } from 'zod'
 import { imageSrc } from '@/lib/catalog'
 import type { OrdersQuery } from '@/lib/orders/query'
 import { canTransition, isOrderStatus, ORDER_STATUSES, returnsStock, type OrderStatus } from '@/lib/orders/status'
+import { pageCount } from '@/lib/pagination'
 import { presetRange } from '@/lib/periods'
+import { containsPattern } from '@/server/db/like'
 import { customers, images, orderEvents, orderLines, orders, products, productVariants, users } from '@/server/db/schema'
 import type { Tx } from '@/server/db/with-workspace'
 
@@ -22,15 +24,13 @@ export const itemsSql = sql<number>`(select coalesce(sum(l.qty), 0)::int from fa
 
 const SORT_COLUMNS = { placed: orders.placedAt, number: orders.number, total: orders.totalCents } as const
 
-const escapeLike = (text: string): string => text.replace(/[\\%_]/g, match => `\\${match}`)
-
 /** Every filter of the query as one condition; `withStatus: false` leaves the status out (the chip counts, spec §8.2). */
 export function orderFilters(workspaceId: string, query: OrdersQuery, now: Date, timeZone: string, withStatus = true): SQL {
   const parts: SQL[] = [eq(orders.workspaceId, workspaceId)]
   if (withStatus && query.status.length > 0) parts.push(inArray(orders.status, query.status))
   const term = query.q.trim()
   if (term) {
-    const pattern = `%${escapeLike(term)}%`
+    const pattern = containsPattern(term)
     const byNumber = /^\d{1,9}$/.test(term) ? eq(orders.number, Number(term)) : sql`false`
     parts.push(or(byNumber, ilike(customers.name, pattern), ilike(customers.email, pattern))!)
   }
@@ -65,7 +65,7 @@ export async function listOrders(tx: Tx, workspaceId: string, query: OrdersQuery
   const statusCounts = Object.fromEntries(ORDER_STATUSES.map(status => [status, 0])) as Record<OrderStatus, number>
   for (const row of byStatus) statusCounts[row.status] = row.n
   const filtered = filteredRow?.n ?? 0
-  return { rows, filtered, total: totalRow?.n ?? 0, statusCounts, page: query.page, pages: Math.max(1, Math.ceil(filtered / query.size)) }
+  return { rows, filtered, total: totalRow?.n ?? 0, statusCounts, page: query.page, pages: pageCount(filtered, query.size) }
 }
 
 /** The orders waiting in "paid": the sidebar count and the first link of the overview's strip (spec §8.1, §11). */

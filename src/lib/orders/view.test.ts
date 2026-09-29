@@ -1,15 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { orderHref, pageWindow, toRowView } from '@/lib/orders/view'
-
-describe('pageWindow', () => {
-  it('shows at most five pages, the current one centred where it can be', () => {
-    expect(pageWindow(1, 1)).toEqual([1])
-    expect(pageWindow(1, 3)).toEqual([1, 2, 3])
-    expect(pageWindow(1, 28)).toEqual([1, 2, 3, 4, 5])
-    expect(pageWindow(4, 28)).toEqual([2, 3, 4, 5, 6])
-    expect(pageWindow(28, 28)).toEqual([24, 25, 26, 27, 28])
-  })
-})
+import { orderHref, toRowView } from '@/lib/orders/view'
 
 describe('toRowView', () => {
   it('formats money and time on the server and links the order by its number', () => {

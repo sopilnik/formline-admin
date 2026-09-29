@@ -28,10 +28,3 @@ export function toRowView(row: OrderRow, locale: Locale, timeZone: string): Orde
     source: row.source,
   }
 }
-
-/** The page numbers the pager shows: at most five, the current one centred where the ends allow. */
-export function pageWindow(page: number, pages: number): number[] {
-  const size = Math.min(5, pages)
-  const start = Math.min(Math.max(1, page - 2), pages - size + 1)
-  return Array.from({ length: size }, (_, i) => start + i)
-}

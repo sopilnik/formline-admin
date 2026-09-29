@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { PageSizeSelect } from '@/components/orders/page-size-select'
 import { ordersHref, type OrdersQuery } from '@/lib/orders/query'
-import { pageWindow } from '@/lib/orders/view'
+import { pageWindow } from '@/lib/pagination'
 import { cn } from '@/lib/utils'
 
 const PAGE = 'grid h-[30px] min-w-[30px] place-items-center rounded-md px-1 text-ink-2 hover:bg-muted hover:text-foreground'

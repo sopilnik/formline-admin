@@ -4,7 +4,8 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useOptimistic, useTransition } from 'react'
 import { FilterSelect } from '@/components/orders/filter-select'
-import { ordersHref, PAGE_SIZES, type OrdersQuery, type PageSize } from '@/lib/orders/query'
+import { ordersHref, type OrdersQuery } from '@/lib/orders/query'
+import { PAGE_SIZES, type PageSize } from '@/lib/pagination'
 
 export function PageSizeSelect({ query }: { query: OrdersQuery }) {
   const t = useTranslations('orders.pager')

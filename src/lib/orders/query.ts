@@ -1,10 +1,9 @@
 import { isOrderStatus, ORDER_STATUSES, type OrderStatus } from '@/lib/orders/status'
+import { DEFAULT_PAGE_SIZE, parsePage, parsePageSize, type PageSize } from '@/lib/pagination'
 
-export const PAGE_SIZES = [25, 50, 100] as const
 export const DATE_PRESETS = ['any', 'today', '7d', '30d', 'month'] as const
 export const SOURCES = ['any', 'stripe', 'seed'] as const
 export const SORT_KEYS = ['placed', 'number', 'total'] as const
-export type PageSize = (typeof PAGE_SIZES)[number]
 export type DatePreset = (typeof DATE_PRESETS)[number]
 export type SourceFilter = (typeof SOURCES)[number]
 export type SortKey = (typeof SORT_KEYS)[number]
@@ -21,7 +20,7 @@ export type OrdersQuery = {
   size: PageSize
 }
 
-export const DEFAULT_QUERY: OrdersQuery = { status: [], q: '', placed: 'any', source: 'any', sort: 'placed', dir: 'desc', page: 1, size: 25 }
+export const DEFAULT_QUERY: OrdersQuery = { status: [], q: '', placed: 'any', source: 'any', sort: 'placed', dir: 'desc', page: 1, size: DEFAULT_PAGE_SIZE }
 const MAX_SEARCH = 100
 
 export type SearchParams = Record<string, string | string[] | undefined>
@@ -41,8 +40,6 @@ function pick<T extends string>(options: readonly T[], value: string | undefined
 /** Tolerant: an unknown value means the default, never an error. Statuses may repeat or be comma-separated. */
 export function parseOrdersQuery(params: SearchParams | URLSearchParams): OrdersQuery {
   const statuses = new Set(all(params, 'status').flatMap(v => v.split(',')).filter(isOrderStatus))
-  const page = Number(one(params, 'page'))
-  const size = Number(one(params, 'size'))
   return {
     status: ORDER_STATUSES.filter(s => statuses.has(s)),
     q: (one(params, 'q') ?? '').trim().slice(0, MAX_SEARCH),
@@ -50,8 +47,8 @@ export function parseOrdersQuery(params: SearchParams | URLSearchParams): Orders
     source: pick(SOURCES, one(params, 'source'), DEFAULT_QUERY.source),
     sort: pick(SORT_KEYS, one(params, 'sort'), DEFAULT_QUERY.sort),
     dir: pick(['asc', 'desc'] as const, one(params, 'dir'), DEFAULT_QUERY.dir),
-    page: Number.isInteger(page) && page >= 1 ? page : DEFAULT_QUERY.page,
-    size: (PAGE_SIZES as readonly number[]).includes(size) ? (size as PageSize) : DEFAULT_QUERY.size,
+    page: parsePage(one(params, 'page')),
+    size: parsePageSize(one(params, 'size')),
   }
 }
 
