@@ -523,7 +523,27 @@
       "stock": "Stock",
       "threshold": "Low at",
       "soldOut": "Sold out",
-      "left": "{count, number} left"
+      "left": "{count, number} left",
+      "fields": {
+        "price": "Own price, $",
+        "stock": "Stock",
+        "threshold": "Low at"
+      },
+      "hint": "Leave the own price empty to sell at the base price plus the size's surcharge. A variant is low at or below its threshold.",
+      "save": "Save variants",
+      "saving": "Saving…",
+      "saved": "Variants saved.",
+      "reload": "Load the current stock",
+      "failed": {
+        "stock_conflict": "The stock of {skus} changed while the page was open: a sale or someone else's edit. Nothing was saved.",
+        "forbidden": "Your role cannot change products.",
+        "not_found": "This product or one of its variants no longer exists."
+      },
+      "errors": {
+        "price_invalid": "From 0.01 to 9999.99, or empty.",
+        "stock_invalid": "A whole number up to 100,000.",
+        "threshold_invalid": "A whole number up to 1,000."
+      }
     },
     "new": {
       "title": "New product",

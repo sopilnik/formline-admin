@@ -40,7 +40,7 @@ test.describe('product page', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Low Tide, Revisited' })).toBeVisible()
     await expect(details(page).getByLabel('Base price, $')).toHaveValue('33.50')
     await expect(details(page).getByLabel('Tags')).toHaveValue('calm, sea-glass')
-    await expect(page.getByRole('table', { name: 'Variants' }).getByRole('row').nth(1)).toContainText('$33.50')
+    await expect(page.getByRole('region', { name: 'Variants' }).getByLabel('Own price, $, A3 · Paper')).toHaveAttribute('placeholder', '33.50')
     const entries = await asSchemaOwner(async c => (await c.query<{ details: { changed: string[] } }>(
       "select details from fa.activity_log where workspace_id = $1 and action = 'product.updated'", [workspaceId])).rows)
     expect(entries.map(e => e.details.changed)).toEqual([['name', 'basePrice', 'tags']])
@@ -93,7 +93,7 @@ test.describe('product page', () => {
   })
 
   test('opens from an order line and fits a phone', async ({ page, context }) => {
-    const { workspaceId } = await signInAsSandboxUser(context)
+    const { workspaceId } = await signInAsSandboxUser(context, 'viewer')
     const line = await asSchemaOwner(async c => (await c.query<{ number: number; name: string; slug: string }>(
       `select o.number, l.name, p.slug from fa.orders o
          join fa.order_lines l on l.workspace_id = o.workspace_id and l.order_id = o.id

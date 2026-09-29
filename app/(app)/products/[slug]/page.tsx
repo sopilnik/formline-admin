@@ -8,10 +8,11 @@ import { ProductDetailsForm } from '@/components/products/product-details-form'
 import { ProductFacts } from '@/components/products/product-facts'
 import { ProductImage } from '@/components/products/product-image'
 import { ProductStatusBadge } from '@/components/products/product-status-badge'
+import { VariantsForm } from '@/components/products/variants-form'
 import { VariantsTable, type VariantView } from '@/components/products/variants-table'
 import { imageSrc, variantLabel } from '@/lib/catalog'
 import { formatDateTime, formatMoney } from '@/lib/intl'
-import { priceField } from '@/lib/products/price'
+import { priceField, variantPriceCents } from '@/lib/products/price'
 import { SLUG_PATTERN } from '@/lib/slug'
 import { cn } from '@/lib/utils'
 import { requireSession, workspaceContext } from '@/server/auth/sessions'
@@ -101,7 +102,19 @@ export default async function ProductPage({ params }: Params) {
           </section>
           <section aria-labelledby="variants-title" className={cn(CARD, '@container')}>
             <h2 id="variants-title" className={CARD_TITLE}>{t('detail.variants')}</h2>
-            <VariantsTable variants={variants} />
+            {canWrite ? (
+              <VariantsForm
+                productId={product.id}
+                rows={product.variants.map(v => ({
+                  id: v.id, label: variantLabel(v.size, v.palette), sku: v.sku,
+                  computedPrice: priceField(variantPriceCents(product.basePriceCents, v.size, null), locale),
+                  override: v.priceOverrideCents === null ? '' : priceField(v.priceOverrideCents, locale),
+                  stock: v.stock, threshold: v.lowStockThreshold,
+                }))}
+              />
+            ) : (
+              <VariantsTable variants={variants} />
+            )}
           </section>
         </div>
         <section aria-labelledby="image-title" className={CARD}>

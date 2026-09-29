@@ -19,3 +19,15 @@ export type ProductDetails = { name: string; slug: string; collectionId: string;
 /** The new-product form adds the palettes: each chosen one comes in every size (spec §8.3). */
 export type NewProductField = DetailField | 'palettes'
 export type NewProductIssue = DetailIssue | 'palettes_missing' | 'sku_taken'
+
+// The variant form (spec §8.3): one row per variant, its fields named `<field>:<variant id>`.
+export const STOCK_MAX = 100_000
+export const THRESHOLD_MAX = 1_000
+/** A store product has at most six palettes in three sizes. */
+export const VARIANTS_MAX = 18
+export const VARIANT_FIELDS = ['price', 'stock', 'threshold'] as const
+export type VariantField = (typeof VARIANT_FIELDS)[number]
+/** Each variant field's problem; the keys of `products.variants.errors` in the dictionaries. */
+export type VariantIssue = 'price_invalid' | 'stock_invalid' | 'threshold_invalid'
+
+export const variantFieldName = (field: VariantField | 'stockWas', variantId: string): string => `${field}:${variantId}`

@@ -3,13 +3,17 @@
 import { refresh } from 'next/cache'
 import { z } from 'zod'
 import { formText } from '@/lib/auth-form'
-import { DETAIL_FIELDS, type DetailField, type DetailIssue, type NewProductField, type NewProductIssue } from '@/lib/products/fields'
+import {
+  DETAIL_FIELDS, VARIANT_FIELDS, variantFieldName, type DetailField, type DetailIssue, type NewProductField, type NewProductIssue,
+} from '@/lib/products/fields'
 import { parsePalettes, parseProductDetails } from '@/lib/products/form'
+import { parseVariants, type VariantErrors } from '@/lib/products/variants'
 import { actorOf } from '@/server/actor'
 import { requireSession } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'
 import { createProductWithLog } from '@/server/products/create'
 import { saveProductDetails } from '@/server/products/details'
+import { saveVariantsWithLog } from '@/server/products/variants'
 
 const VERSION = /^\d{1,20}$/
 
@@ -75,4 +79,36 @@ export async function createProductAction(_previous: CreateState, form: FormData
     return fail('invalid', { slug: result.reason === 'slug_taken' ? 'slug_taken' : 'sku_taken' })
   }
   return { status: 'done', slug: result.slug }
+}
+
+export type VariantsState =
+  | { status: 'idle' }
+  | {
+    status: 'error'; error: 'invalid' | 'forbidden' | 'not_found' | 'stock_conflict'
+    /** Per variant id, the fields with a problem; `skus` are the variants whose stock moved on. */
+    errors: VariantErrors; skus: string[]
+    /** What was sent, by field name, to put back into the fields. */
+    values: Record<string, string>
+  }
+  | { status: 'done'; count: number }
+
+/** The variant form of the product page (spec §8.3): own prices, stock and thresholds in one save. */
+export async function saveVariantsAction(previous: VariantsState, form: FormData): Promise<VariantsState> {
+  const session = await requireSession()
+  const variantIds = form.getAll('variant').filter((value): value is string => typeof value === 'string')
+  const values = Object.fromEntries(variantIds.flatMap(id => VARIANT_FIELDS.map(field => {
+    const name = variantFieldName(field, id)
+    return [name, formText(form, name)]
+  })))
+  const fail = (error: 'invalid' | 'forbidden' | 'not_found' | 'stock_conflict', errors: VariantErrors = {}, skus: string[] = []): VariantsState =>
+    ({ status: 'error', error, errors, skus, values })
+  if (!can(session.role, 'catalog.write', session.workspaceKind)) return fail('forbidden')
+  const productId = z.uuid().safeParse(formText(form, 'productId'))
+  const parsed = parseVariants(variantIds, name => formText(form, name))
+  if (!productId.success || parsed === null) return fail('not_found')
+  if (!parsed.ok) return fail('invalid', parsed.errors)
+  const result = await saveVariantsWithLog(await actorOf(session), productId.data, parsed.rows)
+  if (!result.ok) return result.reason === 'stock_conflict' ? fail('stock_conflict', {}, result.skus) : fail('not_found')
+  refresh()
+  return { status: 'done', count: previous.status === 'done' ? previous.count + 1 : 1 }
 }

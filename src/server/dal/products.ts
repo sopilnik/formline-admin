@@ -268,3 +268,48 @@ export async function createProduct(tx: Tx, workspaceId: string, input: NewProdu
   })))
   return { ok: true, id: created!.id, slug: input.slug, variants: variants.length }
 }
+
+export type VariantRowInput = { id: string; priceOverrideCents: number | null; stock: number; stockWas: number; lowStockThreshold: number }
+export type VariantChange = { sku: string; price?: [number | null, number | null]; stock?: [number, number]; threshold?: [number, number] }
+export type VariantsSave =
+  | { ok: true; slug: string; changes: VariantChange[] }
+  | { ok: false; reason: 'not_found' }
+  | { ok: false; reason: 'stock_conflict'; skus: string[] }
+
+/**
+ * Saves the variant form (spec §8.3). The variants are locked first. A stock the person changed
+ * while the stored stock moved on since the page opened (a sale, another person) is a conflict,
+ * and nothing is written; a stock the person left alone is not written at all, so a sale made
+ * meanwhile stays counted.
+ */
+export async function saveVariants(tx: Tx, workspaceId: string, productId: string, rows: readonly VariantRowInput[]): Promise<VariantsSave> {
+  const [product] = await tx.select({ slug: products.slug }).from(products)
+    .where(and(eq(products.workspaceId, workspaceId), eq(products.id, productId))).for('update')
+  if (!product) return { ok: false, reason: 'not_found' }
+  const stored = await tx.select({
+    id: productVariants.id, sku: productVariants.sku, priceOverrideCents: productVariants.priceOverrideCents,
+    stock: productVariants.stock, lowStockThreshold: productVariants.lowStockThreshold,
+  }).from(productVariants)
+    .where(and(eq(productVariants.workspaceId, workspaceId), eq(productVariants.productId, productId)))
+    .orderBy(asc(productVariants.id)).for('update')
+  const byId = new Map(stored.map(v => [v.id, v]))
+  if (rows.some(row => !byId.has(row.id))) return { ok: false, reason: 'not_found' }
+  const conflicts = rows.filter(row => row.stock !== row.stockWas && byId.get(row.id)!.stock !== row.stockWas).map(row => byId.get(row.id)!.sku)
+  if (conflicts.length > 0) return { ok: false, reason: 'stock_conflict', skus: conflicts.sort() }
+  const changes: VariantChange[] = []
+  for (const row of rows) {
+    const current = byId.get(row.id)!
+    const change: VariantChange = { sku: current.sku }
+    if (row.priceOverrideCents !== current.priceOverrideCents) change.price = [current.priceOverrideCents, row.priceOverrideCents]
+    if (row.stock !== row.stockWas && row.stock !== current.stock) change.stock = [current.stock, row.stock]
+    if (row.lowStockThreshold !== current.lowStockThreshold) change.threshold = [current.lowStockThreshold, row.lowStockThreshold]
+    if (!change.price && !change.stock && !change.threshold) continue
+    await tx.update(productVariants).set({
+      priceOverrideCents: row.priceOverrideCents,
+      lowStockThreshold: row.lowStockThreshold,
+      ...(change.stock ? { stock: row.stock } : {}),
+    }).where(and(eq(productVariants.workspaceId, workspaceId), eq(productVariants.id, row.id)))
+    changes.push(change)
+  }
+  return { ok: true, slug: product.slug, changes: changes.sort((a, b) => a.sku.localeCompare(b.sku)) }
+}
