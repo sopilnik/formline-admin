@@ -29,4 +29,12 @@ describe('messages', () => {
   it('use the same arguments in both languages', () => {
     for (const [key, value] of english) expect(argumentNames(russian.get(key) ?? ''), key).toEqual(argumentNames(value))
   })
+
+  it('put a given name in quotes inside a Russian sentence', () => {
+    // A name cannot be declined, so it stands in quotes; a label that ends in the value and a person's name need none.
+    const bare = new Set(['theme.label', 'language.label', 'user.menu'])
+    for (const [key, value] of russian) {
+      if (value.includes('{name}') && !bare.has(key)) expect(value, key).toContain('«{name}»')
+    }
+  })
 })

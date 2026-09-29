@@ -8,12 +8,12 @@ import { cn } from "@/lib/utils"
 
 // Base UI Toast instead of sonner: sonner injects a <style> element at run
 // time, which the nonce-based style-src-elem policy blocks (spec §4.2).
-function ToastProvider({ children, closeLabel }: { children: React.ReactNode; closeLabel: string }) {
+function ToastProvider({ children, closeLabel, regionLabel }: { children: React.ReactNode; closeLabel: string; regionLabel: string }) {
   return (
     <Toast.Provider>
       {children}
       <Toast.Portal>
-        <Toast.Viewport className="fixed right-4 bottom-4 z-50 flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-2 outline-none">
+        <Toast.Viewport aria-label={regionLabel} className="fixed right-4 bottom-4 z-50 flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-2 outline-none">
           <ToastList closeLabel={closeLabel} />
         </Toast.Viewport>
       </Toast.Portal>

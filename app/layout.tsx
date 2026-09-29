@@ -45,7 +45,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     <html lang={locale} className={cn(inter.variable, spaceGrotesk.variable, themeClassName(theme))}>
       <body>
         <NextIntlClientProvider>
-          <Providers nonce={nonce} closeLabel={t('dismiss')}>
+          <Providers nonce={nonce} closeLabel={t('dismiss')} regionLabel={t('notifications')}>
             {children}
           </Providers>
         </NextIntlClientProvider>

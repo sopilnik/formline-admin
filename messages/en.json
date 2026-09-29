@@ -2,7 +2,8 @@
   "common": {
     "brandSub": "Admin",
     "dismiss": "Dismiss",
-    "skipToContent": "Skip to content"
+    "skipToContent": "Skip to content",
+    "notifications": "Notifications"
   },
   "nav": {
     "label": "Main menu",
