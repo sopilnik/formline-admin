@@ -233,3 +233,38 @@ export async function updateProductDetails(tx: Tx, workspaceId: string, input: D
   }
   return { ok: true, slug: input.slug, previousSlug: row.slug, changed }
 }
+
+export type NewProductInput = {
+  name: string; slug: string; collectionId: string; basePriceCents: number; tags: string[]; description: string
+  palettes: string[]; lowStockThreshold: number
+}
+export type ProductCreation =
+  | { ok: true; id: string; slug: string; variants: number }
+  | { ok: false; reason: 'cap' | 'slug_taken' | 'sku_taken' | 'collection_missing' }
+
+/**
+ * A new product (spec §8.3): a draft with one variant per size and chosen palette, no stock,
+ * and the store's low-stock threshold. SKUs are made from the slug once and never change, so
+ * a product that later took another slug still holds them: a new slug may collide with its SKUs.
+ */
+export async function createProduct(tx: Tx, workspaceId: string, input: NewProductInput): Promise<ProductCreation> {
+  const [counted] = await tx.select({ n: sql<number>`count(*)::int` }).from(products).where(eq(products.workspaceId, workspaceId))
+  if ((counted?.n ?? 0) >= PRODUCT_CAP) return { ok: false, reason: 'cap' }
+  const [collection] = await tx.select({ id: collections.id }).from(collections)
+    .where(and(eq(collections.workspaceId, workspaceId), eq(collections.id, input.collectionId)))
+  if (!collection) return { ok: false, reason: 'collection_missing' }
+  const [other] = await tx.select({ id: products.id }).from(products).where(and(eq(products.workspaceId, workspaceId), eq(products.slug, input.slug)))
+  if (other) return { ok: false, reason: 'slug_taken' }
+  const variants = input.palettes.flatMap(palette => SIZE_IDS.map(size => ({ size, palette, sku: `${input.slug}-${size}-${palette}` })))
+  const [taken] = await tx.select({ id: productVariants.id }).from(productVariants)
+    .where(and(eq(productVariants.workspaceId, workspaceId), inArray(productVariants.sku, variants.map(v => v.sku))))
+  if (taken) return { ok: false, reason: 'sku_taken' }
+  const [created] = await tx.insert(products).values({
+    workspaceId, slug: input.slug, name: input.name, collectionId: input.collectionId, description: input.description,
+    basePriceCents: input.basePriceCents, status: 'draft', tags: input.tags,
+  }).returning({ id: products.id })
+  await tx.insert(productVariants).values(variants.map(v => ({
+    workspaceId, productId: created!.id, sku: v.sku, size: v.size, palette: v.palette, stock: 0, lowStockThreshold: input.lowStockThreshold,
+  })))
+  return { ok: true, id: created!.id, slug: input.slug, variants: variants.length }
+}

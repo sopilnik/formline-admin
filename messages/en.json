@@ -510,7 +510,9 @@
         "collection_missing": "Choose a collection.",
         "price_invalid": "Enter a price from 0.01 to 9999.99.",
         "tags_invalid": "Use up to 12 tags of letters, digits and hyphens, each up to 30 characters.",
-        "description_too_long": "Keep the description to 4,000 characters."
+        "description_too_long": "Keep the description to 4,000 characters.",
+        "palettes_missing": "Choose at least one palette.",
+        "sku_taken": "Another product already has SKUs made from this slug. Choose another slug."
       }
     },
     "variants": {
@@ -522,6 +524,19 @@
       "threshold": "Low at",
       "soldOut": "Sold out",
       "left": "{count, number} left"
+    },
+    "new": {
+      "title": "New product",
+      "intro": "It starts as a draft, with no stock on any variant.",
+      "palettes": "Palettes",
+      "palettesHint": "Each palette comes in A3, A2 and A1. The SKUs are made from the slug and never change.",
+      "create": "Create product",
+      "creating": "Creating…",
+      "created": "Product created.",
+      "failed": {
+        "cap": "This workspace holds 200 products, the most it can. Delete a draft to add another.",
+        "forbidden": "Your role cannot add products."
+      }
     }
   }
 }

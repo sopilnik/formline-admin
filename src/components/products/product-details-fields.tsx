@@ -3,11 +3,11 @@
 import { useTranslations } from 'next-intl'
 import { SelectField, TextAreaField } from '@/components/app/form-fields'
 import { TextField } from '@/components/auth/text-field'
-import { DESCRIPTION_MAX, NAME_MAX, PRODUCT_SLUG_MAX, type DetailField, type DetailIssue } from '@/lib/products/fields'
+import { DESCRIPTION_MAX, NAME_MAX, PRODUCT_SLUG_MAX, type DetailField, type NewProductIssue } from '@/lib/products/fields'
 
 type Props = {
   values: Record<DetailField, string>
-  errors: Partial<Record<DetailField, DetailIssue>>
+  errors: Partial<Record<DetailField, NewProductIssue>>
   collections: { id: string; name: string }[]
   /** The slug the name would give, shown while the slug field is empty (the new-product form). */
   slugPlaceholder?: string

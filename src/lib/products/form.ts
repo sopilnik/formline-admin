@@ -2,6 +2,7 @@ import { z } from 'zod'
 import {
   DESCRIPTION_MAX, DETAIL_FIELDS, NAME_MAX, PRODUCT_SLUG_MAX, TAG_MAX, TAGS_MAX, type DetailField, type DetailIssue, type ProductDetails,
 } from '@/lib/products/fields'
+import { PALETTE_IDS } from '@/lib/catalog'
 import { parsePrice } from '@/lib/products/price'
 import { isSlug, slugify } from '@/lib/slug'
 
@@ -52,4 +53,10 @@ export function parseProductDetails(input: Record<DetailField, string>): Details
   if (!fieldErrors.name && !isSlug(slug, PRODUCT_SLUG_MAX)) fieldErrors.slug = slug ? 'slug_invalid' : 'slug_required'
   if (!parsed.success || Object.keys(fieldErrors).length > 0) return { ok: false, fieldErrors }
   return { ok: true, data: { name, slug, collectionId: parsed.data.collection, basePriceCents: basePriceCents!, tags: tags!, description: parsed.data.description } }
+}
+
+/** The palettes ticked on the new-product form, in the store's order; null when none of the store's is among them. */
+export function parsePalettes(values: readonly string[]): string[] | null {
+  const chosen = PALETTE_IDS.filter(id => values.includes(id))
+  return chosen.length > 0 ? chosen : null
 }

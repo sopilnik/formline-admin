@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { DetailField } from '@/lib/products/fields'
-import { parseProductDetails, parseTags } from '@/lib/products/form'
+import { parsePalettes, parseProductDetails, parseTags } from '@/lib/products/form'
 
 const COLLECTION = '5b0f1f3e-8c4a-4c55-9d0e-2f6f7c1a9b10'
 const valid: Record<DetailField, string> = {
@@ -50,5 +50,16 @@ describe('parseTags', () => {
     expect(parseTags(Array.from({ length: 13 }, (_, i) => `t${i}`).join(','))).toBeNull()
     expect(parseTags('x'.repeat(31))).toBeNull()
     expect(parseTags('#bold')).toBeNull()
+  })
+})
+
+describe('parsePalettes', () => {
+  it('keeps the store palettes in the store order and drops anything else', () => {
+    expect(parsePalettes(['sand', 'ink', 'teal', 'ink'])).toEqual(['ink', 'sand'])
+  })
+
+  it('needs at least one', () => {
+    expect(parsePalettes([])).toBeNull()
+    expect(parsePalettes(['teal'])).toBeNull()
   })
 })

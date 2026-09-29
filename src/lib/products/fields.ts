@@ -15,3 +15,7 @@ export type DetailIssue =
   | 'price_invalid' | 'tags_invalid' | 'description_too_long'
 
 export type ProductDetails = { name: string; slug: string; collectionId: string; basePriceCents: number; tags: string[]; description: string }
+
+/** The new-product form adds the palettes: each chosen one comes in every size (spec §8.3). */
+export type NewProductField = DetailField | 'palettes'
+export type NewProductIssue = DetailIssue | 'palettes_missing' | 'sku_taken'

@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
@@ -5,10 +6,12 @@ import { getLocale, getTranslations } from 'next-intl/server'
 import { Pager } from '@/components/app/pager'
 import { ProductsFilters } from '@/components/products/products-filters'
 import { ProductsTable } from '@/components/products/products-table'
+import { buttonVariants } from '@/components/ui/button'
 import { DEFAULT_PRODUCTS_QUERY, isProductsFiltered, parseProductsQuery, productsHref, type SearchParams } from '@/lib/products/query'
 import { toProductRowView } from '@/lib/products/view'
 import { requireSession, workspaceContext } from '@/server/auth/sessions'
 import { authorize } from '@/server/authz/authorize'
+import { can } from '@/server/authz/matrix'
 import { listProducts } from '@/server/dal/products'
 import { getStoreSettings } from '@/server/dal/settings'
 import { withWorkspace } from '@/server/db/with-workspace'
@@ -40,6 +43,12 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
             {filtered ? t('countFiltered', { filtered: list.filtered, total: list.total }) : t('count', { total: list.total })}
           </p>
         </div>
+        {can(session.role, 'catalog.write', session.workspaceKind) ? (
+          <Link href="/products/new" className={buttonVariants()}>
+            <Plus aria-hidden />
+            {t('new.title')}
+          </Link>
+        ) : null}
       </div>
       <ProductsFilters query={query} statusCounts={list.statusCounts} collections={list.collections} />
       <section aria-label={t('title')} className="@container rounded-lg border bg-card p-2 pb-3">
