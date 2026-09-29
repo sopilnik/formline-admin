@@ -19,3 +19,10 @@ export async function releaseImage(tx: Tx, workspaceId: string, imageId: string)
   await tx.insert(pendingMediaDeletions).values({ storagePath: image.storagePath }).onConflictDoNothing()
   return image.storagePath
 }
+
+/** An uploaded image of the workspace (spec §8.4); null for another workspace's image or a template poster, which `/posters/` serves. */
+export async function getUpload(tx: Tx, workspaceId: string, imageId: string): Promise<{ storagePath: string; bytes: number } | null> {
+  const [image] = await tx.select({ storagePath: images.storagePath, bytes: images.bytes }).from(images)
+    .where(and(eq(images.workspaceId, workspaceId), eq(images.id, imageId), eq(images.source, 'upload')))
+  return image ?? null
+}

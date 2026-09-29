@@ -23,6 +23,17 @@ export async function asSchemaOwner<T>(fn: (client: pg.Client) => Promise<T>): P
   }
 }
 
+/** The sandboxes the fixtures created in this worker; tests/e2e/test.ts deletes each test's own afterwards. */
+export const createdSandboxes: string[] = []
+
+/**
+ * Deletes sandboxes directly, as the schema owner. A run creates one or more per test, and the demo holds at most 100
+ * live sandboxes (spec §6.5): without this a growing suite would fill the cap before it ends.
+ */
+export async function deleteSandboxes(ids: readonly string[]): Promise<void> {
+  if (ids.length > 0) await asSchemaOwner(client => client.query("delete from fa.workspaces where kind = 'sandbox' and id = any($1::uuid[])", [ids]))
+}
+
 /**
  * A real sandbox through create_sandbox — the template copy every visitor gets —
  * with a verified session for the user of the given role; the raw token goes into
@@ -36,6 +47,7 @@ export function createSandboxSession(role: Role = 'owner'): Promise<{ token: str
       'select * from fa.create_sandbox($1, $2, $3, $4)', [sha256(randomUUID()), sha256(entryToken), 'Playwright', 'en'])
     const row = entry.rows[0]
     if (row?.outcome !== 'created') throw new Error(`create_sandbox: ${row?.outcome ?? 'no row'}`)
+    createdSandboxes.push(row.sandbox_id)
     if (role === 'owner') return { token: entryToken, workspaceId: row.sandbox_id, userId: row.demo_user_id }
     const user = await client.query<{ id: string }>('select id from fa.users where workspace_id = $1 and role = $2', [row.sandbox_id, role])
     const token = encodeBase32LowerCaseNoPadding(randomBytes(20))

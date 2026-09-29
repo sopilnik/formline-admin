@@ -8,6 +8,7 @@ import { DeleteProduct } from '@/components/products/delete-product'
 import { ProductDetailsForm } from '@/components/products/product-details-form'
 import { ProductFacts } from '@/components/products/product-facts'
 import { ProductImage } from '@/components/products/product-image'
+import { ProductImageEditor } from '@/components/products/product-image-editor'
 import { ProductStatusControl } from '@/components/products/product-status-control'
 import { VariantsForm } from '@/components/products/variants-form'
 import { VariantsTable, type VariantView } from '@/components/products/variants-table'
@@ -122,7 +123,17 @@ export default async function ProductPage({ params }: Params) {
         <div className="flex min-w-0 flex-col gap-5">
           <section aria-labelledby="image-title" className={CARD}>
             <h2 id="image-title" className={CARD_TITLE}>{t('detail.image')}</h2>
-            <ProductImage src={product.image ? imageSrc(product.image) : null} width={product.image?.width ?? 0} height={product.image?.height ?? 0} />
+            {canWrite ? (
+              <ProductImageEditor
+                productId={product.id}
+                name={product.name}
+                src={product.image ? imageSrc(product.image) : null}
+                width={product.image?.width ?? 0}
+                height={product.image?.height ?? 0}
+              />
+            ) : (
+              <ProductImage src={product.image ? imageSrc(product.image) : null} width={product.image?.width ?? 0} height={product.image?.height ?? 0} />
+            )}
           </section>
           {can(session.role, 'catalog.delete', session.workspaceKind) ? (
             <section aria-labelledby="delete-title" className={CARD}>

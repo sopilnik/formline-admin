@@ -13,6 +13,7 @@ import { ok, type ActionResult, type ErrorCode } from '@/lib/result'
 import { actorOf } from '@/server/actor'
 import { requireSession } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'
+import { removeProductImage } from '@/server/media/upload'
 import { createProductWithLog } from '@/server/products/create'
 import { saveProductDetails } from '@/server/products/details'
 import { changeProductStatusWithLog, deleteProductWithLog } from '@/server/products/status'
@@ -143,4 +144,17 @@ export async function deleteProductAction(input: unknown): Promise<ActionResult<
   if (result.ok) return ok({ name: result.name })
   refresh()
   return refused(result.reason === 'not_found' ? 'not_found' : 'conflict')
+}
+
+const imageInput = z.strictObject({ productId: z.uuid() })
+
+/** "Remove image" of the product page (spec §8.4): the product keeps no image; an upload's file is queued for deletion. */
+export async function removeProductImageAction(input: unknown): Promise<ActionResult<null>> {
+  const session = await requireSession()
+  if (!can(session.role, 'catalog.write', session.workspaceKind)) return refused('forbidden')
+  const parsed = imageInput.safeParse(input)
+  if (!parsed.success) return refused('invalid')
+  const result = await removeProductImage(await actorOf(session), parsed.data.productId)
+  refresh()
+  return result.ok ? ok(null) : refused('not_found')
 }

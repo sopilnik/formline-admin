@@ -591,6 +591,34 @@
       "done": "{name} deleted.",
       "conflict": "This product can no longer be deleted: it is not a draft, or it has orders now.",
       "failed": "The product could not be deleted. Try again."
+    },
+    "image": {
+      "upload": "Upload image",
+      "replace": "Replace image",
+      "uploading": "Uploading…",
+      "hint": "JPEG, PNG or WebP up to 2 MB. It is stored as WebP, 2000 px on the longest side at most.",
+      "uploaded": "Image updated.",
+      "remove": "Remove image",
+      "removeTitle": "Remove the image of {name}?",
+      "removeBody": "The product shows no image until another is uploaded. This cannot be undone.",
+      "cancel": "Cancel",
+      "removeConfirm": "Remove image",
+      "removing": "Removing…",
+      "removed": "Image removed.",
+      "removeFailed": "The image could not be removed. Try again.",
+      "errors": {
+        "unauthenticated": "Your session has ended. Sign in again.",
+        "forbidden": "Your role cannot change images.",
+        "invalid": "The upload could not be read. Try again.",
+        "rate_limited": "Too many uploads. Try again in {minutes, plural, one {# minute} other {# minutes}}.",
+        "too_large": "The file is larger than 2 MB.",
+        "type": "Choose a JPEG, PNG or WebP image.",
+        "pixels": "The image is larger than 40 megapixels.",
+        "decode": "The image could not be read. It may be damaged.",
+        "cap": "This workspace holds 30 uploaded images or 20 MB, the most it can. Remove an image first.",
+        "not_found": "This product no longer exists.",
+        "unavailable": "Image uploads are not available right now."
+      }
     }
   },
   "collections": {
