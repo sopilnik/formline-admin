@@ -1,0 +1,77 @@
+'use client'
+
+import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { useActionState, useEffect, useEffectEvent, useRef, useState, useTransition } from 'react'
+import { ProductDetailsFields } from '@/components/products/product-details-fields'
+import { Button } from '@/components/ui/button'
+import { useToast } from '@/components/ui/toast'
+import { DETAIL_FIELDS, type DetailField } from '@/lib/products/fields'
+import { productHref } from '@/lib/products/view'
+import { updateProductDetailsAction, type DetailsState } from '@/server/actions/products'
+
+const IDLE: DetailsState = { status: 'idle' }
+
+type Props = {
+  productId: string
+  slug: string
+  /** The concurrency token of the loaded product (`ProductDetail.version`). */
+  version: string
+  values: Record<DetailField, string>
+  collections: { id: string; name: string }[]
+}
+
+/**
+ * The details form of the product page (spec §8.3). After a save React resets the fields to the
+ * stored values the refreshed page brings; after a conflict "Load the current version" starts
+ * the form afresh from them, dropping what was typed.
+ */
+export function ProductDetailsForm(props: Props) {
+  const router = useRouter()
+  const [reloading, startReload] = useTransition()
+  const [generation, setGeneration] = useState(0)
+  const reload = (): void => startReload(() => {
+    router.refresh()
+    setGeneration(n => n + 1)
+  })
+  return <DetailsForm key={generation} {...props} reloading={reloading} onReload={reload} />
+}
+
+function DetailsForm({ productId, slug, version, values, collections, reloading, onReload }: Props & { reloading: boolean; onReload: () => void }) {
+  const t = useTranslations('products.form')
+  const toast = useToast()
+  const router = useRouter()
+  const form = useRef<HTMLFormElement>(null)
+  const [state, action, pending] = useActionState(updateProductDetailsAction, IDLE)
+  // Once per result: an effect that listed `toast` would run again after every toast it shows.
+  const settle = useEffectEvent((result: DetailsState) => {
+    if (result.status === 'done') {
+      toast.success(t('saved'))
+      if (result.slug !== slug) router.replace(productHref(result.slug))
+    }
+    if (result.status === 'error') {
+      const first = DETAIL_FIELDS.find(field => result.fieldErrors[field])
+      form.current?.querySelector<HTMLElement>(first ? `[name="${first}"]` : '[role="alert"]')?.focus()
+    }
+  })
+  useEffect(() => settle(state), [state])
+  const failure = state.status === 'error' && state.error !== 'invalid' ? state.error : null
+  return (
+    <form ref={form} action={action} noValidate className="flex flex-col gap-4">
+      <input type="hidden" name="productId" value={productId} />
+      <input type="hidden" name="version" value={version} />
+      {failure ? (
+        <div role="alert" tabIndex={-1} className="rounded-md border border-destructive px-3 py-2 text-sm text-destructive">
+          {t(`failed.${failure}`)}
+          {failure === 'conflict' ? (
+            <Button type="button" variant="link" disabled={reloading} className="ml-1 h-auto p-0 text-sm" onClick={onReload}>{t('reload')}</Button>
+          ) : null}
+        </div>
+      ) : null}
+      <ProductDetailsFields values={state.status === 'error' ? state.values : values} errors={state.status === 'error' ? state.fieldErrors : {}} collections={collections} />
+      <div>
+        <Button type="submit" disabled={pending}>{pending ? t('saving') : t('save')}</Button>
+      </div>
+    </form>
+  )
+}

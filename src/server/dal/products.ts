@@ -1,11 +1,12 @@
 import 'server-only'
 import { and, asc, count, desc, eq, ilike, inArray, ne, or, sql, type SQL } from 'drizzle-orm'
+import { compareVariants } from '@/lib/catalog'
 import { pageCount } from '@/lib/pagination'
-import { SIZE_IDS, SIZE_SURCHARGE_CENTS } from '@/lib/products/price'
+import { SIZE_IDS, SIZE_SURCHARGE_CENTS, variantPriceCents, type SizeId } from '@/lib/products/price'
 import type { ProductsQuery } from '@/lib/products/query'
 import { PRODUCT_STATUSES, type ProductStatus } from '@/lib/products/status'
 import { containsPattern } from '@/server/db/like'
-import { collections, images, products, productVariants } from '@/server/db/schema'
+import { collections, images, orderLines, products, productVariants } from '@/server/db/schema'
 import type { Tx } from '@/server/db/with-workspace'
 
 export type ImageRef = { id: string; storagePath: string; source: 'static' | 'upload' }
@@ -137,4 +138,98 @@ export async function listProducts(tx: Tx, workspaceId: string, query: ProductsQ
     rows, total: totalRow?.n ?? 0, filtered, statusCounts, collections: collectionOptions,
     page: query.page, pages: pageCount(filtered, query.size),
   }
+}
+
+export type VariantDetail = {
+  id: string; sku: string; size: SizeId; palette: string
+  priceOverrideCents: number | null
+  /** What the variant sells for: the override, or the base price plus the size's surcharge. */
+  priceCents: number
+  stock: number; lowStockThreshold: number
+}
+
+export type ProductDetail = {
+  id: string; slug: string; name: string; description: string; status: ProductStatus; tags: string[]; basePriceCents: number
+  collection: CollectionOption
+  image: (ImageRef & { width: number; height: number }) | null
+  createdAt: Date; updatedAt: Date
+  /** The details form's concurrency token: `updated_at` in microseconds, exact where a Date is not. */
+  version: string
+  /** In the store's order: by palette, then A3, A2, A1. */
+  variants: VariantDetail[]
+  /** Whether any order line points at one of the variants: such a product is archived, never deleted (spec §8.3). */
+  hasOrders: boolean
+}
+
+const versionSql = sql<string>`(extract(epoch from ${products.updatedAt}) * 1000000)::bigint::text`
+
+/** One product by the slug in its address (spec §8.3), with everything its page shows. One table per query (spec §6.1). */
+export async function getProduct(tx: Tx, workspaceId: string, slug: string): Promise<ProductDetail | null> {
+  const [product] = await tx.select({
+    id: products.id, slug: products.slug, name: products.name, description: products.description, status: products.status,
+    tags: products.tags, basePriceCents: products.basePriceCents, collectionId: products.collectionId, imageId: products.imageId,
+    createdAt: products.createdAt, updatedAt: products.updatedAt, version: versionSql,
+  }).from(products).where(and(eq(products.workspaceId, workspaceId), eq(products.slug, slug)))
+  if (!product) return null
+  const [collection] = await tx.select({ id: collections.id, slug: collections.slug, name: collections.name }).from(collections)
+    .where(and(eq(collections.workspaceId, workspaceId), eq(collections.id, product.collectionId)))
+  const [image] = product.imageId === null ? [] : await tx
+    .select({ id: images.id, storagePath: images.storagePath, source: images.source, width: images.width, height: images.height }).from(images)
+    .where(and(eq(images.workspaceId, workspaceId), eq(images.id, product.imageId)))
+  const variantRows = await tx.select({
+    id: productVariants.id, sku: productVariants.sku, size: productVariants.size, palette: productVariants.palette,
+    priceOverrideCents: productVariants.priceOverrideCents, stock: productVariants.stock, lowStockThreshold: productVariants.lowStockThreshold,
+  }).from(productVariants).where(and(eq(productVariants.workspaceId, workspaceId), eq(productVariants.productId, product.id)))
+  const ids = variantRows.map(v => v.id)
+  const [ordered] = ids.length === 0 ? [] : await tx.select({ id: orderLines.id }).from(orderLines)
+    .where(and(eq(orderLines.workspaceId, workspaceId), inArray(orderLines.variantId, ids))).limit(1)
+  return {
+    id: product.id, slug: product.slug, name: product.name, description: product.description, status: product.status,
+    tags: product.tags, basePriceCents: product.basePriceCents,
+    collection: collection!,
+    image: image ?? null,
+    createdAt: product.createdAt, updatedAt: product.updatedAt, version: product.version,
+    variants: variantRows
+      .map(v => ({ ...v, priceCents: variantPriceCents(product.basePriceCents, v.size, v.priceOverrideCents) }))
+      .sort(compareVariants),
+    hasOrders: ordered !== undefined,
+  }
+}
+
+export type DetailsInput = { productId: string; version: string; name: string; slug: string; collectionId: string; basePriceCents: number; tags: string[]; description: string }
+export type DetailsChange =
+  | { ok: true; slug: string; previousSlug: string; changed: string[] }
+  | { ok: false; reason: 'not_found' | 'conflict' | 'slug_taken' | 'collection_missing' }
+
+/**
+ * Saves the details form (spec §8.3). The row is locked and its version compared, so a save
+ * made from a page opened before someone else's change reports a conflict instead of
+ * overwriting it. For a viewer, row-level security hides the row from the locking read.
+ */
+export async function updateProductDetails(tx: Tx, workspaceId: string, input: DetailsInput): Promise<DetailsChange> {
+  const [row] = await tx.select({
+    slug: products.slug, name: products.name, collectionId: products.collectionId, basePriceCents: products.basePriceCents,
+    tags: products.tags, description: products.description, version: versionSql,
+  }).from(products).where(and(eq(products.workspaceId, workspaceId), eq(products.id, input.productId))).for('update')
+  if (!row) return { ok: false, reason: 'not_found' }
+  if (row.version !== input.version) return { ok: false, reason: 'conflict' }
+  const [collection] = await tx.select({ id: collections.id }).from(collections)
+    .where(and(eq(collections.workspaceId, workspaceId), eq(collections.id, input.collectionId)))
+  if (!collection) return { ok: false, reason: 'collection_missing' }
+  if (input.slug !== row.slug) {
+    const [other] = await tx.select({ id: products.id }).from(products).where(and(eq(products.workspaceId, workspaceId), eq(products.slug, input.slug)))
+    if (other) return { ok: false, reason: 'slug_taken' }
+  }
+  const changed = [
+    input.name !== row.name && 'name', input.slug !== row.slug && 'slug', input.collectionId !== row.collectionId && 'collection',
+    input.basePriceCents !== row.basePriceCents && 'basePrice', input.tags.join(',') !== row.tags.join(',') && 'tags',
+    input.description !== row.description && 'description',
+  ].filter((field): field is string => typeof field === 'string')
+  if (changed.length > 0) {
+    await tx.update(products).set({
+      name: input.name, slug: input.slug, collectionId: input.collectionId, basePriceCents: input.basePriceCents,
+      tags: input.tags, description: input.description, updatedAt: sql`now()`,
+    }).where(and(eq(products.workspaceId, workspaceId), eq(products.id, input.productId)))
+  }
+  return { ok: true, slug: input.slug, previousSlug: row.slug, changed }
 }

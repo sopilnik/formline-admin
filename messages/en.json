@@ -467,6 +467,61 @@
       "page": "Page {page}",
       "size": "Products per page",
       "sizeOption": "{size} per page"
+    },
+    "detail": {
+      "back": "Products",
+      "loading": "Loading the product…",
+      "subtitle": "{collection} · updated {date}",
+      "details": "Details",
+      "variants": "Variants",
+      "image": "Image",
+      "noImage": "No image",
+      "readOnly": "Your role can view products but not change them.",
+      "none": "None",
+      "notFoundTitle": "Product not found",
+      "notFoundBody": "This workspace has no product at this address.",
+      "allProducts": "All products"
+    },
+    "form": {
+      "name": "Name",
+      "slug": "Slug",
+      "slugHint": "The end of the page address: lowercase Latin letters, digits and hyphens.",
+      "collection": "Collection",
+      "basePrice": "Base price, $",
+      "basePriceHint": "The A3 price. A2 adds $16.00 and A1 $40.00, unless a variant has its own price.",
+      "tags": "Tags",
+      "tagsHint": "Separate them with commas.",
+      "description": "Description",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "saved": "Changes saved.",
+      "reload": "Load the current version",
+      "failed": {
+        "conflict": "Someone changed this product while the page was open. Your edits are still below.",
+        "forbidden": "Your role cannot change products.",
+        "not_found": "This product no longer exists."
+      },
+      "errors": {
+        "name_required": "Enter a name.",
+        "name_too_long": "Keep the name to 120 characters.",
+        "slug_required": "Enter a slug: this name gives none.",
+        "slug_invalid": "Use lowercase Latin letters, digits and single hyphens, up to 80 characters. “new” is taken.",
+        "slug_taken": "Another product already has this slug.",
+        "collection_missing": "Choose a collection.",
+        "price_invalid": "Enter a price from 0.01 to 9999.99.",
+        "tags_invalid": "Use up to 12 tags of letters, digits and hyphens, each up to 30 characters.",
+        "description_too_long": "Keep the description to 4,000 characters."
+      }
+    },
+    "variants": {
+      "variant": "Variant",
+      "sku": "SKU",
+      "price": "Price",
+      "custom": "Own price",
+      "stock": "Stock",
+      "threshold": "Low at",
+      "soldOut": "Sold out",
+      "left": "{count, number} left"
     }
   }
 }

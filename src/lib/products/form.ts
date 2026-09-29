@@ -1,0 +1,55 @@
+import { z } from 'zod'
+import {
+  DESCRIPTION_MAX, DETAIL_FIELDS, NAME_MAX, PRODUCT_SLUG_MAX, TAG_MAX, TAGS_MAX, type DetailField, type DetailIssue, type ProductDetails,
+} from '@/lib/products/fields'
+import { parsePrice } from '@/lib/products/price'
+import { isSlug, slugify } from '@/lib/slug'
+
+// Server side only: Zod checks whether it may compile code with `new Function`, which the
+// Content Security Policy refuses in the browser. The fields import src/lib/products/fields.ts.
+
+const TAG = /^[\p{Ll}\p{N}]+(-[\p{Ll}\p{N}]+)*$/u
+
+/** "Bold, Type,  bold" → ['bold', 'type']: lowercase, spaces become hyphens, repeats dropped. Null when a tag is not a word. */
+export function parseTags(text: string): string[] | null {
+  const tags = text.split(',').map(tag => tag.trim().toLocaleLowerCase().replace(/\s+/g, '-')).filter(Boolean)
+  const unique = [...new Set(tags)]
+  if (unique.length > TAGS_MAX || unique.some(tag => [...tag].length > TAG_MAX || !TAG.test(tag))) return null
+  return unique
+}
+
+const issue = (error: DetailIssue) => ({ error })
+
+// Every field arrives as text; unknown keys are refused (spec §5.6).
+const schema = z.strictObject({
+  name: z.string().trim().min(1, issue('name_required')).max(NAME_MAX, issue('name_too_long')),
+  slug: z.string().trim().toLowerCase(),
+  collection: z.uuid(issue('collection_missing')),
+  basePrice: z.string(),
+  tags: z.string(),
+  description: z.string().trim().max(DESCRIPTION_MAX, issue('description_too_long')),
+})
+
+export type DetailsResult = { ok: true; data: ProductDetails } | { ok: false; fieldErrors: Partial<Record<DetailField, DetailIssue>> }
+
+/** The details form (spec §8.3): the slug comes from the name when it is left empty. */
+export function parseProductDetails(input: Record<DetailField, string>): DetailsResult {
+  const fieldErrors: Partial<Record<DetailField, DetailIssue>> = {}
+  const parsed = schema.safeParse(input)
+  if (!parsed.success) {
+    for (const problem of parsed.error.issues) {
+      const field = problem.path[0]
+      if (typeof field === 'string' && (DETAIL_FIELDS as readonly string[]).includes(field)) fieldErrors[field as DetailField] ??= problem.message as DetailIssue
+    }
+  }
+  const basePriceCents = parsePrice(input.basePrice)
+  if (basePriceCents === null) fieldErrors.basePrice = 'price_invalid'
+  const tags = parseTags(input.tags)
+  if (tags === null) fieldErrors.tags = 'tags_invalid'
+  const name = parsed.success ? parsed.data.name : input.name.trim()
+  const typed = parsed.success ? parsed.data.slug : input.slug.trim().toLowerCase()
+  const slug = typed || slugify(name, PRODUCT_SLUG_MAX)
+  if (!fieldErrors.name && !isSlug(slug, PRODUCT_SLUG_MAX)) fieldErrors.slug = slug ? 'slug_invalid' : 'slug_required'
+  if (!parsed.success || Object.keys(fieldErrors).length > 0) return { ok: false, fieldErrors }
+  return { ok: true, data: { name, slug, collectionId: parsed.data.collection, basePriceCents: basePriceCents!, tags: tags!, description: parsed.data.description } }
+}
