@@ -126,4 +126,25 @@ test.describe('products list', () => {
     await expect(cards.first()).toContainText('in stock')
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375)
   })
+
+  test('keeps both stock notes of a row inside the stock column in Russian', async ({ page, context }) => {
+    await signInAsSandboxUser(context)
+    await page.goto('/products?lang=ru')
+    const table = page.getByRole('table', { name: 'Товары' })
+    const row = table.getByRole('row').filter({ hasText: 'Night Blocks' })
+    await expect(row.getByText('распродано: 2')).toBeVisible()
+    await expect(row.getByText('на исходе: 1')).toBeVisible()
+    // The page does not overflow when a note leaves its cell, so the text itself is measured against the cell.
+    const outside = await table.locator('tbody tr').evaluateAll(rows => rows.flatMap(tr => {
+      const cell = tr.children[4] as HTMLElement
+      const note = cell.querySelector('span')
+      if (!note) return []
+      const range = document.createRange()
+      range.selectNodeContents(note)
+      const text = range.getBoundingClientRect()
+      const box = cell.getBoundingClientRect()
+      return text.left < box.left || text.right > box.right ? [tr.querySelector('a')?.textContent ?? ''] : []
+    }))
+    expect(outside).toEqual([])
+  })
 })

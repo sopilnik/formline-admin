@@ -31,15 +31,18 @@ function SortHeader({ query, sort, label, align = 'left' }: { query: ProductsQue
   )
 }
 
-/** "2 sold out · 1 low" under the stock figure; nothing when every variant is above its threshold. */
-function StockNote({ row }: { row: ProductRowView }) {
+/**
+ * "2 sold out · 1 low" under the stock figure; nothing when every variant is above its threshold. Stacked, each note
+ * takes its own line: the table's stock column has no room for both on one ("распродано: 2 · на исходе: 1").
+ */
+function StockNote({ row, stacked = false }: { row: ProductRowView; stacked?: boolean }) {
   const t = useTranslations('products.stockNote')
   if (row.soldOut === 0 && row.low === 0) return null
   return (
     <span className="block text-xs whitespace-nowrap">
-      {row.soldOut > 0 ? <span className="text-status-bad">{t('soldOut', { count: row.soldOut })}</span> : null}
-      {row.soldOut > 0 && row.low > 0 ? <span aria-hidden className="text-muted-foreground"> · </span> : null}
-      {row.low > 0 ? <span className="text-status-warn">{t('low', { count: row.low })}</span> : null}
+      {row.soldOut > 0 ? <span className={cn('text-status-bad', stacked && 'block')}>{t('soldOut', { count: row.soldOut })}</span> : null}
+      {row.soldOut > 0 && row.low > 0 && !stacked ? <span aria-hidden className="text-muted-foreground"> · </span> : null}
+      {row.low > 0 ? <span className={cn('text-status-warn', stacked && 'block')}>{t('low', { count: row.low })}</span> : null}
     </span>
   )
 }
@@ -86,7 +89,7 @@ export function ProductsTable({ rows, query }: { rows: ProductRowView[]; query: 
               <td className={cn(TD, 'text-right whitespace-nowrap tabular-nums')}>{row.priceFrom ?? t('noVariants')}</td>
               <td className={cn(TD, 'text-right tabular-nums')}>
                 {row.stock}
-                <StockNote row={row} />
+                <StockNote row={row} stacked />
               </td>
               <td className={cn(TD, 'whitespace-nowrap tabular-nums')}>{row.updated}</td>
             </tr>
