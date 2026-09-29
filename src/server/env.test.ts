@@ -35,4 +35,13 @@ describe('readEnv', () => {
     expect(() => readEnv({ ...base, TOTP_ENCRYPTION_KEYS: 'k1:not-base64' })).toThrow(/TOTP_ENCRYPTION_KEYS/)
     expect(() => readEnv({ ...base, OWNER_SETUP_TOKEN: 'too-short' })).toThrow(/OWNER_SETUP_TOKEN/)
   })
+
+  it('takes the media zone as three variables together, on a bunny storage host', () => {
+    const zone = { BUNNY_STORAGE_ZONE: 'formline-admin-media', BUNNY_STORAGE_HOST: 'storage.bunnycdn.com', BUNNY_STORAGE_KEY: 'k'.repeat(36) }
+    expect(readEnv({ ...base, ...zone }).BUNNY_STORAGE_ZONE).toBe('formline-admin-media')
+    expect(readEnv({ ...base, ...zone, BUNNY_STORAGE_HOST: 'uk.storage.bunnycdn.com' }).BUNNY_STORAGE_HOST).toBe('uk.storage.bunnycdn.com')
+    expect(() => readEnv({ ...base, ...zone, BUNNY_STORAGE_HOST: 'storage.example.com' })).toThrow(/BUNNY_STORAGE_HOST/)
+    expect(() => readEnv({ ...base, BUNNY_STORAGE_ZONE: 'formline-admin-media' })).toThrow(/go together/)
+    expect(readEnv({ ...base, MEDIA_STORAGE_DIR: '.media' }).MEDIA_STORAGE_DIR).toBe('.media')
+  })
 })

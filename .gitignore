@@ -5,6 +5,8 @@
 /test-results/
 /playwright-report/
 /blob-report/
+/test-media/
+/.media/
 .env
 .env.*
 !.env.example

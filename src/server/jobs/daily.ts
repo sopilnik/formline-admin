@@ -3,7 +3,7 @@ import type { Pool } from 'pg'
 import { getPool } from '@/server/db/pool'
 import { log } from '@/server/log'
 import { drainPendingDeletions } from '@/server/media/deletions'
-import { unavailableStorage, type MediaStorage } from '@/server/media/storage'
+import { mediaStorage, unavailableStorage, type MediaStorage } from '@/server/media/storage'
 import { cleanupExpiredSandboxes } from '@/server/sandbox/cleanup'
 
 /** The daily job's hour, away from midnight roll-overs and Neon's own maintenance. */
@@ -32,7 +32,7 @@ export async function runDailyJob(deps: { pool?: Pool; storage?: MediaStorage } 
   const sandboxes = await cleanupExpiredSandboxes(pool)
   const { rows } = await pool.query<PurgeRow>('select * from fa.purge_housekeeping()')
   const purged = rows[0]!
-  const media = await drainPendingDeletions(deps.storage ?? unavailableStorage, pool)
+  const media = await drainPendingDeletions(deps.storage ?? mediaStorage() ?? unavailableStorage, pool)
   const report: DailyReport = {
     sandboxes,
     purged: { rateLimits: purged.purged_rate_limits, challenges: purged.purged_challenges, sessions: purged.purged_sessions, failedSignIns: purged.purged_failed_sign_ins },

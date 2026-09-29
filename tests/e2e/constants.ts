@@ -1,3 +1,5 @@
+import { resolve } from 'node:path'
+
 export const E2E_PORT = 4331
 // localhost, not 127.0.0.1: passkeys need a host name as the relying party (task 2.8).
 export const E2E_BASE_URL = `http://localhost:${E2E_PORT}`
@@ -5,6 +7,11 @@ export const E2E_ORIGIN_SECRET = 'e2e-origin-secret-0123456789abcdef0123456789ab
 export const E2E_CLIENT_IP = '203.0.113.10'
 export const E2E_SESSION_COOKIE = '__Host-formline_session'
 export const E2E_DEMO_COOKIE = '__Host-formline_demo'
+/**
+ * The folder that stands in for the media zone while the e2e server runs (spec §8.4). Absolute, from the
+ * repository root the test commands run in: the standalone server changes its own directory.
+ */
+export const E2E_MEDIA_DIR = resolve('test-media')
 
 export const E2E_DB = 'formline_e2e'
 export const E2E_ADMIN_URL = 'postgres://postgres:postgres@127.0.0.1:55432/postgres'

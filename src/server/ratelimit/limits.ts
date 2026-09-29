@@ -11,6 +11,7 @@ export const LIMITS = {
   setupIp: { purpose: 'setup.ip', limit: 5, windowSeconds: 15 * 60 },
   recoverIp: { purpose: 'recover.ip', limit: 5, windowSeconds: 15 * 60 },
   csvExport: { purpose: 'csv.export', limit: 10, windowSeconds: 60 },
+  upload: { purpose: 'media.upload', limit: 20, windowSeconds: 60 * 60 },
 } as const satisfies Record<string, Limit>
 
 export const LOCKS = {
