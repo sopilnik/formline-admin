@@ -4,7 +4,8 @@ import { compareVariants } from '@/lib/catalog'
 import { pageCount } from '@/lib/pagination'
 import { SIZE_IDS, SIZE_SURCHARGE_CENTS, variantPriceCents, type SizeId } from '@/lib/products/price'
 import type { ProductsQuery } from '@/lib/products/query'
-import { PRODUCT_STATUSES, type ProductStatus } from '@/lib/products/status'
+import { canDeleteProduct, canTransitionProduct, PRODUCT_STATUSES, type ProductStatus } from '@/lib/products/status'
+import { releaseImage } from '@/server/dal/images'
 import { containsPattern } from '@/server/db/like'
 import { collections, images, orderLines, products, productVariants } from '@/server/db/schema'
 import type { Tx } from '@/server/db/with-workspace'
@@ -312,4 +313,45 @@ export async function saveVariants(tx: Tx, workspaceId: string, productId: strin
     changes.push(change)
   }
   return { ok: true, slug: product.slug, changes: changes.sort((a, b) => a.sku.localeCompare(b.sku)) }
+}
+
+export type ProductStatusChange =
+  | { ok: true; slug: string; from: ProductStatus; to: ProductStatus }
+  | { ok: false; reason: 'not_found' }
+  | { ok: false; reason: 'invalid_transition'; from: ProductStatus }
+
+/** One status step (spec §8.3): the row is locked and the machine checked; the step counts as a change of the product. */
+export async function changeProductStatus(tx: Tx, workspaceId: string, input: { productId: string; to: ProductStatus }): Promise<ProductStatusChange> {
+  const [row] = await tx.select({ slug: products.slug, status: products.status }).from(products)
+    .where(and(eq(products.workspaceId, workspaceId), eq(products.id, input.productId))).for('update')
+  if (!row) return { ok: false, reason: 'not_found' }
+  if (!canTransitionProduct(row.status, input.to)) return { ok: false, reason: 'invalid_transition', from: row.status }
+  await tx.update(products).set({ status: input.to, updatedAt: sql`now()` })
+    .where(and(eq(products.workspaceId, workspaceId), eq(products.id, input.productId)))
+  return { ok: true, slug: row.slug, from: row.status, to: input.to }
+}
+
+export type ProductDeletion =
+  | { ok: true; slug: string; name: string; variants: number; queued: string | null }
+  | { ok: false; reason: 'not_found' | 'not_draft' | 'has_orders' }
+
+/**
+ * Deletes a draft without orders (spec §8.3) with its variants and its image; the image's
+ * stored file, if it is an upload, is queued for deletion. Anything else is archived instead.
+ */
+export async function deleteProduct(tx: Tx, workspaceId: string, productId: string): Promise<ProductDeletion> {
+  const [row] = await tx.select({ slug: products.slug, name: products.name, status: products.status, imageId: products.imageId }).from(products)
+    .where(and(eq(products.workspaceId, workspaceId), eq(products.id, productId))).for('update')
+  if (!row) return { ok: false, reason: 'not_found' }
+  const variantRows = await tx.select({ id: productVariants.id }).from(productVariants)
+    .where(and(eq(productVariants.workspaceId, workspaceId), eq(productVariants.productId, productId)))
+  const ids = variantRows.map(v => v.id)
+  const [ordered] = ids.length === 0 ? [] : await tx.select({ id: orderLines.id }).from(orderLines)
+    .where(and(eq(orderLines.workspaceId, workspaceId), inArray(orderLines.variantId, ids))).limit(1)
+  // Orders first: moving a product with orders to drafts would not make it deletable.
+  if (ordered) return { ok: false, reason: 'has_orders' }
+  if (!canDeleteProduct(row.status, false)) return { ok: false, reason: 'not_draft' }
+  await tx.delete(products).where(and(eq(products.workspaceId, workspaceId), eq(products.id, productId)))
+  const queued = row.imageId ? await releaseImage(tx, workspaceId, row.imageId) : null
+  return { ok: true, slug: row.slug, name: row.name, variants: ids.length, queued }
 }

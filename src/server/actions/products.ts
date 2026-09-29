@@ -7,12 +7,15 @@ import {
   DETAIL_FIELDS, VARIANT_FIELDS, variantFieldName, type DetailField, type DetailIssue, type NewProductField, type NewProductIssue,
 } from '@/lib/products/fields'
 import { parsePalettes, parseProductDetails } from '@/lib/products/form'
+import { PRODUCT_STATUSES, type ProductStatus } from '@/lib/products/status'
 import { parseVariants, type VariantErrors } from '@/lib/products/variants'
+import { ok, type ActionResult, type ErrorCode } from '@/lib/result'
 import { actorOf } from '@/server/actor'
 import { requireSession } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'
 import { createProductWithLog } from '@/server/products/create'
 import { saveProductDetails } from '@/server/products/details'
+import { changeProductStatusWithLog, deleteProductWithLog } from '@/server/products/status'
 import { saveVariantsWithLog } from '@/server/products/variants'
 
 const VERSION = /^\d{1,20}$/
@@ -111,4 +114,33 @@ export async function saveVariantsAction(previous: VariantsState, form: FormData
   if (!result.ok) return result.reason === 'stock_conflict' ? fail('stock_conflict', {}, result.skus) : fail('not_found')
   refresh()
   return { status: 'done', count: previous.status === 'done' ? previous.count + 1 : 1 }
+}
+
+const statusInput = z.strictObject({ productId: z.uuid(), to: z.enum(PRODUCT_STATUSES) })
+const refused = (code: ErrorCode): ActionResult<never> => ({ ok: false, code })
+
+/** The status control of the product page (spec §8.3): `conflict` when the product moved on meanwhile. */
+export async function changeProductStatusAction(input: unknown): Promise<ActionResult<{ to: ProductStatus }>> {
+  const session = await requireSession()
+  if (!can(session.role, 'catalog.write', session.workspaceKind)) return refused('forbidden')
+  const parsed = statusInput.safeParse(input)
+  if (!parsed.success) return refused('invalid')
+  const result = await changeProductStatusWithLog(await actorOf(session), parsed.data.productId, parsed.data.to)
+  refresh()
+  if (result.ok) return ok({ to: result.to })
+  return refused(result.reason === 'invalid_transition' ? 'conflict' : 'not_found')
+}
+
+const deleteInput = z.strictObject({ productId: z.uuid() })
+
+/** "Delete product" (spec §8.3): only a draft without orders; `conflict` when the product is no longer one. */
+export async function deleteProductAction(input: unknown): Promise<ActionResult<{ name: string }>> {
+  const session = await requireSession()
+  if (!can(session.role, 'catalog.delete', session.workspaceKind)) return refused('forbidden')
+  const parsed = deleteInput.safeParse(input)
+  if (!parsed.success) return refused('invalid')
+  const result = await deleteProductWithLog(await actorOf(session), parsed.data.productId)
+  if (result.ok) return ok({ name: result.name })
+  refresh()
+  return refused(result.reason === 'not_found' ? 'not_found' : 'conflict')
 }

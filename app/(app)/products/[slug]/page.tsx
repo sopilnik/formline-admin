@@ -4,15 +4,17 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { cache } from 'react'
 import { getLocale, getTranslations } from 'next-intl/server'
+import { DeleteProduct } from '@/components/products/delete-product'
 import { ProductDetailsForm } from '@/components/products/product-details-form'
 import { ProductFacts } from '@/components/products/product-facts'
 import { ProductImage } from '@/components/products/product-image'
-import { ProductStatusBadge } from '@/components/products/product-status-badge'
+import { ProductStatusControl } from '@/components/products/product-status-control'
 import { VariantsForm } from '@/components/products/variants-form'
 import { VariantsTable, type VariantView } from '@/components/products/variants-table'
 import { imageSrc, variantLabel } from '@/lib/catalog'
 import { formatDateTime, formatMoney } from '@/lib/intl'
 import { priceField, variantPriceCents } from '@/lib/products/price'
+import { canDeleteProduct } from '@/lib/products/status'
 import { SLUG_PATTERN } from '@/lib/slug'
 import { cn } from '@/lib/utils'
 import { requireSession, workspaceContext } from '@/server/auth/sessions'
@@ -73,7 +75,7 @@ export default async function ProductPage({ params }: Params) {
             {t('detail.subtitle', { collection: product.collection.name, date: formatDateTime(product.updatedAt, locale, timeZone) })}
           </p>
         </div>
-        <ProductStatusBadge status={product.status} />
+        <ProductStatusControl productId={product.id} name={product.name} status={product.status} canWrite={canWrite} />
       </div>
       <div className="grid items-start gap-5 lg:grid-cols-[2fr_1fr]">
         <div className="flex min-w-0 flex-col gap-5">
@@ -117,10 +119,24 @@ export default async function ProductPage({ params }: Params) {
             )}
           </section>
         </div>
-        <section aria-labelledby="image-title" className={CARD}>
-          <h2 id="image-title" className={CARD_TITLE}>{t('detail.image')}</h2>
-          <ProductImage src={product.image ? imageSrc(product.image) : null} width={product.image?.width ?? 0} height={product.image?.height ?? 0} />
-        </section>
+        <div className="flex min-w-0 flex-col gap-5">
+          <section aria-labelledby="image-title" className={CARD}>
+            <h2 id="image-title" className={CARD_TITLE}>{t('detail.image')}</h2>
+            <ProductImage src={product.image ? imageSrc(product.image) : null} width={product.image?.width ?? 0} height={product.image?.height ?? 0} />
+          </section>
+          {can(session.role, 'catalog.delete', session.workspaceKind) ? (
+            <section aria-labelledby="delete-title" className={CARD}>
+              <h2 id="delete-title" className={CARD_TITLE}>{t('delete.title')}</h2>
+              <DeleteProduct
+                productId={product.id}
+                name={product.name}
+                variants={product.variants.length}
+                hasImage={product.image !== null}
+                blocked={canDeleteProduct(product.status, product.hasOrders) ? null : product.hasOrders ? 'has_orders' : 'not_draft'}
+              />
+            </section>
+          ) : null}
+        </div>
       </div>
     </div>
   )

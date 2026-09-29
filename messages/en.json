@@ -557,6 +557,40 @@
         "cap": "This workspace holds 200 products, the most it can. Delete a draft to add another.",
         "forbidden": "Your role cannot add products."
       }
+    },
+    "statusControl": {
+      "change": "Change status",
+      "changing": "Changing…",
+      "to": {
+        "published": "Publish",
+        "draft": "Move to drafts",
+        "archived": "Archive"
+      },
+      "done": {
+        "published": "{name} is published.",
+        "draft": "{name} is a draft now.",
+        "archived": "{name} is archived."
+      },
+      "conflict": "This product changed while the page was open. It now shows its current status.",
+      "failed": "The status could not be changed. Try again."
+    },
+    "delete": {
+      "title": "Delete product",
+      "body": "A draft without orders can be deleted with its variants and its image. This cannot be undone.",
+      "button": "Delete product",
+      "blocked": {
+        "has_orders": "This product has orders, so it cannot be deleted. Archive it to take it out of the catalog.",
+        "not_draft": "Only a draft can be deleted. Move the product to drafts first, or archive it."
+      },
+      "confirmTitle": "Delete {name}?",
+      "confirmBody": "The product and its {count, plural, one {# variant} other {# variants}} are deleted. This cannot be undone.",
+      "confirmBodyImage": "The product, its {count, plural, one {# variant} other {# variants}} and its image are deleted. This cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete product",
+      "deleting": "Deleting…",
+      "done": "{name} deleted.",
+      "conflict": "This product can no longer be deleted: it is not a draft, or it has orders now.",
+      "failed": "The product could not be deleted. Try again."
     }
   }
 }
