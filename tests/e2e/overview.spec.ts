@@ -20,7 +20,9 @@ test.describe('overview', () => {
     const orders = await one(`select count(*) as n from fa.orders o where o.workspace_id = $1 and ${REVENUE} and ${LAST_30_DAYS}`, [workspaceId])
     await page.goto('/overview')
     await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
-    await expect(page.getByText(/^\d{1,2} \w{3,4}[  ]–[  ]\d{1,2} \w{3,4}, compared with \d{1,2} \w{3,4}[  ]–[  ]\d{1,2} \w{3,4}$/)).toBeVisible()
+    // Inside one month a range names the month once ("1 – 30 Aug"); across a new year both ends name their year.
+    const range = String.raw`\d{1,2}(?: \w{3,4}(?: \d{4})?)?[\u2009 ]–[\u2009 ]\d{1,2} \w{3,4}(?: \d{4})?`
+    await expect(page.getByText(new RegExp(`^${range}, compared with ${range}$`))).toBeVisible()
     const periods = page.getByRole('navigation', { name: 'Period' })
     await expect(periods.getByRole('link', { name: '30 days' })).toHaveAttribute('aria-current', 'page')
     const figures = page.getByRole('region', { name: 'Key figures' })

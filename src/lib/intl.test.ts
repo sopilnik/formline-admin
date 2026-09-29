@@ -33,6 +33,11 @@ describe('money, numbers and dates (spec §11)', () => {
     // English ranges put thin spaces (U+2009) around the dash; Russian ones plain spaces (ICU, checked on Node 26).
     expect(formatDayRange(new Date('2026-08-25T22:00:00Z'), new Date('2026-09-24T12:00:00Z'), 'en', 'Europe/Berlin')).toMatch(/^26 Aug – 24 Sept?$/)
     expect(formatDayRange(new Date('2026-08-25T22:00:00Z'), new Date('2026-09-24T12:00:00Z'), 'ru', 'Europe/Berlin')).toBe('26 авг. – 24 сент.')
+    // Inside one month the month is named once, and Russian drops the spaces; across a new year both ends name their year.
+    expect(formatDayRange(new Date('2026-07-31T22:00:00Z'), new Date('2026-08-30T12:00:00Z'), 'en', 'Europe/Berlin')).toBe('1 – 30 Aug')
+    expect(formatDayRange(new Date('2026-07-31T22:00:00Z'), new Date('2026-08-30T12:00:00Z'), 'ru', 'Europe/Berlin')).toBe('1–30 авг.')
+    expect(formatDayRange(new Date('2026-12-30T23:00:00Z'), new Date('2027-01-29T12:00:00Z'), 'en', 'Europe/Berlin')).toBe('31 Dec 2026 – 29 Jan 2027')
+    expect(formatDayRange(new Date('2026-12-30T23:00:00Z'), new Date('2027-01-29T12:00:00Z'), 'ru', 'Europe/Berlin')).toBe('31 дек. 2026 г. – 29 янв. 2027 г.')
   })
 
   it('formats a share without a sign', () => {

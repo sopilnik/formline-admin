@@ -6,11 +6,16 @@ import { expect } from './test'
 export async function expectNoSeriousA11yViolations(page: Page): Promise<void> {
   // A transition in progress is blended with what lies behind it: axe once read the opening drawer's
   // text against the page under it. Finite animations finish first; an infinite one is left running.
-  await page.evaluate(() => Promise.all(
-    document.getAnimations()
-      .filter(animation => animation.effect?.getTiming().iterations !== Infinity)
-      .map(animation => animation.finished.catch(() => undefined)),
-  ))
+  // A transition replaced midway is cancelled and a new one runs in its place — a theme switch does
+  // that to a confirmation dialog's button colour — so the wait goes round until none is running.
+  await page.evaluate(async () => {
+    for (;;) {
+      const running = document.getAnimations()
+        .filter(animation => animation.effect?.getTiming().iterations !== Infinity && animation.playState === 'running')
+      if (running.length === 0) return
+      await Promise.all(running.map(animation => animation.finished.catch(() => undefined)))
+    }
+  })
   const { violations } = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']).analyze()
   const serious = violations
     .filter(v => v.impact === 'serious' || v.impact === 'critical')
