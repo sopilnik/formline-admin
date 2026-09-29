@@ -22,7 +22,7 @@ describe('toProductRowView', () => {
     const view = toProductRowView({ ...row, image: { id: 'i9', storagePath: 'ws/w/i9.webp', source: 'upload' }, priceFromCents: null }, 'ru', 'Europe/Berlin')
     expect(view.imageSrc).toBe('/media/i9')
     expect(view.priceFrom).toBeNull()
-    expect(view.stock).toBe('1\u00a0234')
+    expect(view.stock).toBe('1 234')
   })
 
   it('links the product by its slug', () => {
