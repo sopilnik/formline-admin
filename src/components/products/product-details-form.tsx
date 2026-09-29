@@ -64,7 +64,7 @@ function DetailsForm({ productId, slug, version, values, collections, reloading,
         <div role="alert" tabIndex={-1} className="rounded-md border border-destructive px-3 py-2 text-sm text-destructive">
           {t(`failed.${failure}`)}
           {failure === 'conflict' ? (
-            <Button type="button" variant="link" disabled={reloading} className="ml-1 h-auto p-0 text-sm" onClick={onReload}>{t('reload')}</Button>
+            <Button type="button" variant="link" disabled={reloading} className="ml-1 h-auto p-0 text-sm underline" onClick={onReload}>{t('reload')}</Button>
           ) : null}
         </div>
       ) : null}

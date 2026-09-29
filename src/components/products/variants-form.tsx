@@ -83,7 +83,7 @@ function Variants({ productId, rows, reloading, onReload }: Props & { reloading:
         <div role="alert" tabIndex={-1} className="rounded-md border border-destructive px-3 py-2 text-sm text-destructive">
           {error.error === 'stock_conflict' ? t('failed.stock_conflict', { skus: error.skus.join(', ') }) : t(`failed.${error.error}`)}
           {error.error === 'stock_conflict' ? (
-            <Button type="button" variant="link" disabled={reloading} className="ml-1 h-auto p-0 text-sm" onClick={onReload}>{t('reload')}</Button>
+            <Button type="button" variant="link" disabled={reloading} className="ml-1 h-auto p-0 text-sm underline" onClick={onReload}>{t('reload')}</Button>
           ) : null}
         </div>
       ) : null}
