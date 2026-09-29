@@ -65,7 +65,7 @@ function productFilters(workspaceId: string, query: ProductsQuery, collectionId:
     const pattern = containsPattern(query.q)
     parts.push(or(ilike(products.name, pattern), ilike(products.slug, pattern))!)
   }
-  // An unknown collection slug keeps nothing, as the in-code filter did.
+  // A collection slug the workspace does not have keeps no product.
   if (query.collection) parts.push(collectionId ? eq(products.collectionId, collectionId) : sql`false`)
   if (query.stock !== 'any') parts.push(ne(products.status, 'archived'))
   return and(...parts)!
