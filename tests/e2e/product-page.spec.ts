@@ -112,4 +112,17 @@ test.describe('product page', () => {
     await expect(page.getByRole('list', { name: 'Variants' }).getByRole('listitem').first()).toBeVisible()
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375)
   })
+
+  test('spells the stock out on a phone, where no column header names it', async ({ page, context }) => {
+    const { workspaceId } = await signInAsSandboxUser(context, 'viewer')
+    const variant = await asSchemaOwner(async c => (await c.query<{ sku: string; stock: number }>(
+      `select v.sku, v.stock from fa.product_variants v
+         join fa.products p on p.workspace_id = v.workspace_id and p.id = v.product_id
+        where v.workspace_id = $1 and p.slug = 'after-dark' and v.stock > v.low_stock_threshold
+        order by v.sku limit 1`, [workspaceId])).rows[0]!)
+    await page.setViewportSize({ width: 375, height: 800 })
+    await page.goto('/products/after-dark')
+    const item = page.getByRole('list', { name: 'Variants' }).getByRole('listitem').filter({ hasText: variant.sku })
+    await expect(item).toContainText(`${variant.stock} in stock`)
+  })
 })

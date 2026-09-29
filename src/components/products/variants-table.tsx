@@ -7,12 +7,15 @@ export type VariantView = { id: string; label: string; sku: string; price: strin
 const TH = 'h-9 border-b px-3 text-left font-medium whitespace-nowrap text-muted-foreground first:pl-0 last:pr-0'
 const TD = 'border-b px-3 py-2 first:pl-0 last:pr-0 group-last/row:border-b-0'
 
-/** "Sold out", "2 left" or the count, coloured as on the overview's low-stock card. */
-export function StockLevel({ stock, threshold }: { stock: number; threshold: number }) {
-  const t = useTranslations('products.variants')
-  if (stock === 0) return <span className="font-semibold text-status-bad">{t('soldOut')}</span>
-  if (stock <= threshold) return <span className="font-semibold text-status-warn">{t('left', { count: stock })}</span>
-  return <span>{stock}</span>
+/**
+ * "Sold out", "2 left" or the count, coloured as on the overview's low-stock card. Spelled, the count carries its
+ * word ("31 in stock"): the phone list has no column header to name it.
+ */
+export function StockLevel({ stock, threshold, spelled = false }: { stock: number; threshold: number; spelled?: boolean }) {
+  const t = useTranslations('products')
+  if (stock === 0) return <span className="font-semibold text-status-bad">{t('variants.soldOut')}</span>
+  if (stock <= threshold) return <span className="font-semibold text-status-warn">{t('variants.left', { count: stock })}</span>
+  return <span>{spelled ? t('inStock', { stock }) : stock}</span>
 }
 
 /** The variants (spec §8.3) for a role that cannot change them: a table while the card is 36 rem wide, a list below. */
@@ -51,7 +54,7 @@ export function VariantsTable({ variants }: { variants: VariantView[] }) {
             <span className="font-medium">{v.label}</span>
             <span className="text-right whitespace-nowrap">{v.price}</span>
             <span className="text-xs break-all text-muted-foreground">{v.sku}</span>
-            <span className="text-right text-xs whitespace-nowrap"><StockLevel stock={v.stock} threshold={v.lowStockThreshold} /></span>
+            <span className="text-right text-xs whitespace-nowrap"><StockLevel stock={v.stock} threshold={v.lowStockThreshold} spelled /></span>
           </li>
         ))}
       </ul>
