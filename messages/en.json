@@ -306,7 +306,7 @@
     },
     "reauth": {
       "title": "Confirm it's you",
-      "intro": "This change needs a fresh sign-in: your password and a code, or a passkey.",
+      "intro": "Changes on this page need a fresh sign-in: your password and a code, or a passkey.",
       "submit": "Confirm",
       "pending": "Confirming…",
       "passkey": "Use a passkey"

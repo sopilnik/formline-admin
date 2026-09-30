@@ -142,6 +142,7 @@ test('a sensitive change asks for the password and a code once ten minutes have 
   // The page asks once, at its top, for every sensitive section; the password section waits for it.
   await expect(page.getByLabel('New password')).toHaveCount(0)
   const reauth = page.getByRole('region', { name: "Confirm it's you" })
+  await expect(reauth).toContainText('Changes on this page need a fresh sign-in')
   await reauth.getByLabel('Password').fill(owner.password)
   await reauth.getByLabel('6-digit code').fill(await codeFor(totp))
   await reauth.getByRole('button', { name: 'Confirm' }).click()
