@@ -1239,5 +1239,41 @@
       "size": "Notifications per page",
       "sizeOption": "{size} per page"
     }
+  },
+  "palette": {
+    "open": "Search…",
+    "title": "Search and commands",
+    "input": "Search pages, actions, orders, customers and products",
+    "placeholder": "A page, an action, an order number, a name…",
+    "groups": {
+      "pages": "Pages",
+      "actions": "Actions",
+      "orders": "Orders",
+      "customers": "Customers",
+      "products": "Products"
+    },
+    "actions": {
+      "newProduct": "New product",
+      "invite": "Invite a member",
+      "theme": {
+        "system": "Follow the system theme",
+        "light": "Use the light theme",
+        "dark": "Use the dark theme"
+      },
+      "language": {
+        "en": "Switch to English",
+        "ru": "Switch to Russian"
+      },
+      "signOut": "Sign out"
+    },
+    "orderLabel": "#{number} · {customer}",
+    "searching": "Searching…",
+    "failed": "The search could not be completed. Try again.",
+    "empty": "Nothing found for “{query}”.",
+    "hints": {
+      "move": "↑ ↓ to move",
+      "open": "Enter to open",
+      "close": "Esc to close"
+    }
   }
 }
