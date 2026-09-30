@@ -18,7 +18,7 @@ describe('toCustomerRowView', () => {
   it('writes Russian numbers and country names, and no date without orders', () => {
     const view = toCustomerRowView({ ...row, orders: 0, spentCents: 0, lastOrderAt: null }, 'ru', 'Europe/Berlin')
     expect(view.location).toBe('Berlin, Германия')
-    expect(view.spent).toBe('0,00 $')
+    expect(view.spent).toBe('0,00\u00a0$')
     expect(view.last).toBeNull()
   })
 })
