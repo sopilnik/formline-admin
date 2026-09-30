@@ -681,5 +681,40 @@
       "conflict": "В коллекции уже есть товары, поэтому она не удалена.",
       "failed": "Не удалось удалить коллекцию. Попробуйте ещё раз."
     }
+  },
+  "customers": {
+    "title": "Покупатели",
+    "count": "{total, plural, one {# покупатель} few {# покупателя} many {# покупателей} other {# покупателя}}",
+    "countFiltered": "{filtered, number} из {total, plural, one {# покупателя} few {# покупателей} many {# покупателей} other {# покупателя}}",
+    "loading": "Загружаем покупателей…",
+    "columns": {
+      "customer": "Покупатель",
+      "location": "Город, страна",
+      "orders": "Заказы",
+      "spent": "Потрачено",
+      "last": "Последний заказ"
+    },
+    "noOrders": "Заказов пока нет",
+    "cardOrders": "{count, plural, one {# заказ} few {# заказа} many {# заказов} other {# заказа}} · последний {last}",
+    "search": {
+      "label": "Поиск покупателей",
+      "placeholder": "Имя или email",
+      "clear": "Сбросить поиск"
+    },
+    "empty": {
+      "noneTitle": "Покупателей пока нет",
+      "noneBody": "Покупатель появляется здесь с первым заказом.",
+      "filteredTitle": "Никого не нашли",
+      "filteredBody": "Попробуйте другое имя или email либо сбросьте поиск."
+    },
+    "pager": {
+      "label": "Страницы",
+      "range": "{from, number}–{to, number} из {total, number}",
+      "previous": "Предыдущая страница",
+      "next": "Следующая страница",
+      "page": "Страница {page}",
+      "size": "Покупателей на странице",
+      "sizeOption": "{size} на странице"
+    }
   }
 }

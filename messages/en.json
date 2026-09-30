@@ -681,5 +681,40 @@
       "conflict": "This collection holds products now, so it was not deleted.",
       "failed": "The collection could not be deleted. Try again."
     }
+  },
+  "customers": {
+    "title": "Customers",
+    "count": "{total, plural, one {# customer} other {# customers}}",
+    "countFiltered": "{filtered, number} of {total, plural, one {# customer} other {# customers}}",
+    "loading": "Loading customers…",
+    "columns": {
+      "customer": "Customer",
+      "location": "Location",
+      "orders": "Orders",
+      "spent": "Total spent",
+      "last": "Last order"
+    },
+    "noOrders": "No orders yet",
+    "cardOrders": "{count, plural, one {# order} other {# orders}} · last {last}",
+    "search": {
+      "label": "Search customers",
+      "placeholder": "Name or email",
+      "clear": "Clear search"
+    },
+    "empty": {
+      "noneTitle": "No customers yet",
+      "noneBody": "Customers appear here with their first order.",
+      "filteredTitle": "No customers match this search",
+      "filteredBody": "Try another name or email, or clear the search."
+    },
+    "pager": {
+      "label": "Pagination",
+      "range": "{from, number}–{to, number} of {total, number}",
+      "previous": "Previous page",
+      "next": "Next page",
+      "page": "Page {page}",
+      "size": "Customers per page",
+      "sizeOption": "{size} per page"
+    }
   }
 }

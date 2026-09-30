@@ -10,8 +10,8 @@ const CURRENT = 'bg-selected text-selected-foreground hover:bg-selected hover:te
 const OFF = 'grid h-[30px] min-w-[30px] place-items-center text-border-strong'
 
 type Props = {
-  /** The list's own words ("Orders per page", "Products per page"); the other keys read the same. */
-  namespace: 'orders.pager' | 'products.pager'
+  /** The list's own words ("Orders per page", "Customers per page"); the other keys read the same. */
+  namespace: 'orders.pager' | 'products.pager' | 'customers.pager'
   /** The id of the page-size select. */
   sizeId: string
   page: number
