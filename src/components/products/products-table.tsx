@@ -60,7 +60,8 @@ export function ProductsTable({ rows, query }: { rows: ProductRowView[]; query: 
         <colgroup>
           <col />
           <col className="w-32" />
-          <col className="w-32" />
+          {/* The status column fits the widest badge, the Russian "Опубликован" with its icon (w-32 left it 4 px outside). */}
+          <col className="w-36" />
           <col className="w-28" />
           <col className="w-32" />
           <col className="w-32" />

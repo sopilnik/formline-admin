@@ -147,4 +147,19 @@ test.describe('products list', () => {
     }))
     expect(outside).toEqual([])
   })
+
+  test('keeps every status badge inside the status column in Russian', async ({ page, context }) => {
+    await signInAsSandboxUser(context)
+    await page.goto('/products?lang=ru')
+    const table = page.getByRole('table', { name: 'Товары' })
+    await expect(table.getByText('Опубликован').first()).toBeVisible()
+    // "Опубликован" is the widest badge; a badge that runs past its cell leaves no page overflow to see.
+    const outside = await table.locator('tbody tr').evaluateAll(rows => rows.flatMap(tr => {
+      const cell = tr.children[2] as HTMLElement
+      const badge = cell.querySelector('span')!.getBoundingClientRect()
+      const box = cell.getBoundingClientRect()
+      return badge.left < box.left || badge.right > box.right ? [tr.querySelector('a')?.textContent ?? ''] : []
+    }))
+    expect(outside).toEqual([])
+  })
 })
