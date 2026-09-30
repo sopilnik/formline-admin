@@ -45,6 +45,8 @@ test.describe('team', () => {
     await page.getByRole('menuitem', { name: 'Deactivate…' }).click()
     const dialog = page.getByRole('dialog', { name: 'Deactivate Noah Becker?' })
     await expect(dialog).toBeVisible()
+    // A title that wraps on a phone needs air between its lines: 16 px text on a 22 px line.
+    await expect(dialog.getByRole('heading', { name: 'Deactivate Noah Becker?' })).toHaveCSS('line-height', '22px')
     await dialog.getByRole('button', { name: 'Deactivate' }).click()
     await expect(page.getByRole('region', { name: 'Notifications' }).getByText('Noah Becker is deactivated.')).toBeVisible()
     const table = page.getByRole('table', { name: 'Members' })
