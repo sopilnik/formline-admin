@@ -49,3 +49,12 @@ export async function getMemberFactor(tx: Tx, userId: string): Promise<MemberFac
     .from(users).where(eq(users.id, userId))
   return row ?? null
 }
+
+/** The profile form's save (spec §8.8): only what changed is written; the fields it changed come back. */
+export async function updateProfile(tx: Tx, userId: string, profile: { name: string; locale: Locale; theme: Theme }): Promise<('name' | 'locale' | 'theme')[] | null> {
+  const [current] = await tx.select({ name: users.name, locale: users.locale, theme: users.theme }).from(users).where(eq(users.id, userId))
+  if (!current) return null
+  const changed = (['name', 'locale', 'theme'] as const).filter(field => current[field] !== profile[field])
+  if (changed.length > 0) await tx.update(users).set(profile).where(eq(users.id, userId))
+  return changed
+}

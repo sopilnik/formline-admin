@@ -19,13 +19,19 @@ function Messages({ id, hint, error }: { id: string; hint?: string; error?: stri
   )
 }
 
-/** A native select with its label, hint and error, in the inputs' look: it opens the system picker on phones. */
+/**
+ * A native select with its label, hint and error, in the inputs' look: it opens the system picker on phones.
+ * React resets a form after every action result, and a select then returns to the option that was its default
+ * when it mounted — a later default value is not written back. Keyed by its default value, the select mounts
+ * again with the choice an error brings back, so the choice is not lost.
+ */
 export function SelectField({ id, label, hint, error, children, className, ...select }: Common & ComponentProps<'select'> & { children: ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
       <Label htmlFor={id}>{label}</Label>
       <div className="relative">
         <select
+          key={String(select.defaultValue ?? '')}
           id={id}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy(id, hint, error)}

@@ -15,3 +15,16 @@ export async function getStoreSettings(tx: Tx, workspaceId: string): Promise<Sto
   if (!row) return DEFAULT_SETTINGS
   return { storeName: row.storeName, supportEmail: row.supportEmail, timezone: validTimeZone(row.timezone), lowStockDefault: row.lowStockDefault }
 }
+
+/**
+ * The store form's save (spec §8.8): owners and admins, as row-level security allows. Only what changed is
+ * written; the fields it changed come back, or null when the workspace has no settings row to change.
+ */
+export async function updateStoreSettings(tx: Tx, workspaceId: string, input: StoreSettings): Promise<(keyof StoreSettings)[] | null> {
+  const [current] = await tx.select().from(storeSettings).where(eq(storeSettings.workspaceId, workspaceId))
+  if (!current) return null
+  const changed = (['storeName', 'supportEmail', 'timezone', 'lowStockDefault'] as const).filter(field => current[field] !== input[field])
+  if (changed.length === 0) return changed
+  const updated = await tx.update(storeSettings).set(input).where(eq(storeSettings.workspaceId, workspaceId)).returning({ id: storeSettings.workspaceId })
+  return updated.length === 1 ? changed : null
+}

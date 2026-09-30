@@ -412,6 +412,53 @@
         "renamedToast": "Passkey renamed.",
         "sandbox": "Passkeys are available in a real account. A passkey made here would stay in your password manager after the demo is deleted."
       }
+    },
+    "tabs": {
+      "label": "Settings sections",
+      "profile": "Profile",
+      "security": "Security",
+      "store": "Store"
+    },
+    "profile": {
+      "title": "Profile",
+      "account": "Your account",
+      "email": "Signed in as {email}. The email cannot be changed.",
+      "name": "Name",
+      "language": "Language",
+      "theme": "Theme",
+      "save": "Save profile",
+      "saving": "Saving…",
+      "saved": "Profile saved.",
+      "errors": {
+        "required": "Enter your name.",
+        "too_long": "Keep the name to 120 characters.",
+        "invalid": "Choose one of the options.",
+        "forbidden": "Your role cannot change the profile."
+      }
+    },
+    "store": {
+      "title": "Store",
+      "details": "Store details",
+      "intro": "The time zone draws the day boundaries of the overview and the order dates; the threshold is what new variants start with.",
+      "name": "Store name",
+      "supportEmail": "Support email",
+      "supportEmailHint": "Letters from the panel show it as their sender.",
+      "timezone": "Time zone",
+      "timezoneHint": "Days, weeks and months are counted in this zone.",
+      "lowStock": "Low-stock threshold",
+      "lowStockHint": "From 0 to {max, number}; new variants start with it.",
+      "save": "Save settings",
+      "saving": "Saving…",
+      "saved": "Store settings saved.",
+      "errors": {
+        "required": "Enter the store's name.",
+        "too_long": "Keep the name to 80 characters.",
+        "email_invalid": "Enter an email address such as help@example.com.",
+        "timezone_invalid": "Choose a time zone from the list.",
+        "number_invalid": "Enter a whole number from 0 to 999.",
+        "forbidden": "Your role cannot change the store settings.",
+        "failed": "The settings could not be saved. Try again."
+      }
     }
   },
   "products": {

@@ -66,6 +66,7 @@ test.describe('product page', () => {
     await details(page).getByLabel('Name').fill('  ')
     await details(page).getByLabel('Base price, $').fill('12,345')
     await details(page).getByLabel('Tags').fill('dark, #bold')
+    await details(page).getByLabel('Collection').selectOption({ label: 'Pastel' })
     await details(page).getByRole('button', { name: 'Save changes' }).click()
     await expect(details(page).getByText('Enter a name.')).toBeVisible()
     await expect(details(page).getByText('Enter a price from 0.01 to 9999.99.')).toBeVisible()
@@ -74,6 +75,8 @@ test.describe('product page', () => {
     await expect(details(page).getByLabel('Name')).toHaveAttribute('aria-invalid', 'true')
     await expect(details(page).getByLabel('Base price, $')).toHaveValue('12,345')
     await expect(details(page).getByLabel('Tags')).toHaveValue('dark, #bold')
+    // React resets the form after the result; the select keeps the chosen collection all the same.
+    await expect(details(page).getByLabel('Collection').locator('option:checked')).toHaveText('Pastel')
     await expect(page.getByRole('heading', { level: 1, name: 'Hush' })).toBeVisible()
   })
 
