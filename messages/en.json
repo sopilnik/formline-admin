@@ -763,5 +763,63 @@
       "last": "Last order",
       "since": "Customer since"
     }
+  },
+  "outbox": {
+    "title": "Outbox",
+    "count": "{total, plural, =0 {No letters} one {# letter} other {# letters}}",
+    "loading": "Loading the outbox…",
+    "intro": "Nothing is sent from this panel. Every letter it writes — sign-in notices, invitations — is kept here instead, with its links working.",
+    "toLine": "To {to} · {sent}",
+    "empty": {
+      "title": "No letters yet",
+      "sandbox": "Invite a team member and the invitation appears here.",
+      "owner": "Sign-in notices and other letters appear here."
+    },
+    "pager": {
+      "label": "Pagination",
+      "range": "{from, number}–{to, number} of {total, number}",
+      "previous": "Previous page",
+      "next": "Next page",
+      "page": "Page {page}",
+      "size": "Letters per page",
+      "sizeOption": "{size} per page"
+    },
+    "detail": {
+      "back": "Outbox",
+      "letter": "Letter",
+      "from": "From",
+      "to": "To",
+      "sent": "Written",
+      "notFoundTitle": "Letter not found",
+      "notFoundBody": "This outbox has no letter at this address.",
+      "all": "All letters"
+    }
+  },
+  "letters": {
+    "greeting": "Hello {person},",
+    "signOff": "Formline Admin",
+    "unknown": {
+      "subject": "Letter",
+      "body": "This letter cannot be shown."
+    },
+    "newSignIn": {
+      "subject": "New sign-in to your account",
+      "body": "There was a new sign-in to your account on {date} from {device}.",
+      "bodyNoDevice": "There was a new sign-in to your account on {date}.",
+      "ifNotYou": "If this was you, there is nothing to do. If it was not, change your password and sign out the other sessions.",
+      "action": "Review your sessions"
+    },
+    "secondFactorLocked": {
+      "subject": "Sign-in locked for an hour",
+      "body": "On {date} a wrong code was entered for your account for the tenth time within an hour. The second step of sign-in is locked for one hour.",
+      "ifNotYou": "If this was not you, someone knows your password: change it as soon as you can sign in.",
+      "action": "Open the security settings"
+    },
+    "recoveryCodeUsed": {
+      "subject": "A recovery code was used",
+      "body": "A recovery code was used to sign in to your account on {date}. {remaining, plural, =0 {No codes are left.} one {# code is left.} other {# codes are left.}}",
+      "ifNotYou": "If this was not you, change your password and make new recovery codes.",
+      "action": "Open the security settings"
+    }
   }
 }
