@@ -19,7 +19,7 @@ async function turnShortcutsOff(page: Page): Promise<void> {
   await expect(box).toBeChecked()
   await box.uncheck()
   await page.getByRole('button', { name: 'Save profile' }).click()
-  await expect(page.getByRole('region', { name: 'Notifications' }).getByText('Profile saved.')).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Messages' }).getByText('Profile saved.')).toBeVisible()
   await expect(box).not.toBeChecked()
 }
 

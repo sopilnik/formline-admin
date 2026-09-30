@@ -18,7 +18,7 @@ export function ThemeMenu({ theme }: { theme: Theme }) {
     <DropdownMenu>
       <DropdownMenuTrigger render={<Button variant="ghost" size="sm" aria-label={t('label', { name: t(theme) })} />}>
         <Icon aria-hidden />
-        <span className="hidden sm:inline">{t(theme)}</span>
+        <span className="hidden lg:inline">{t(theme)}</span>
         <ChevronDown aria-hidden className="size-3.5" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">

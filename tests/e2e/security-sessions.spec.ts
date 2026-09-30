@@ -34,10 +34,10 @@ test.describe('security settings in a sandbox', () => {
     const devices = page.getByRole('list', { name: 'Signed-in devices' }).getByRole('listitem')
     await expect(devices).toHaveCount(3)
     await page.getByRole('button', { name: 'Sign out Safari, iOS' }).click()
-    await expect(page.getByRole('region', { name: 'Notifications' }).getByText('The device is signed out.')).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText('The device is signed out.')).toBeVisible()
     await expect(devices).toHaveCount(2)
     await page.getByRole('button', { name: 'Sign out of all other devices' }).click()
-    await expect(page.getByRole('region', { name: 'Notifications' }).getByText('1 other device is signed out.')).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText('1 other device is signed out.')).toBeVisible()
     await expect(devices).toHaveCount(1)
     await expect(page.getByRole('button', { name: 'Sign out of all other devices' })).toHaveCount(0)
     const logged = await asSchemaOwner(async c => (await c.query<{ action: string }>(

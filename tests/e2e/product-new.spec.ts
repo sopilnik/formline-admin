@@ -21,7 +21,7 @@ test.describe('new product', () => {
     await page.getByLabel('Sand', { exact: true }).check()
     await page.getByRole('button', { name: 'Create product' }).click()
     await expect(page).toHaveURL(/\/products\/tide-pool$/)
-    await expect(page.getByRole('region', { name: 'Notifications' }).getByText('Product created.')).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText('Product created.')).toBeVisible()
     await expect(page.getByRole('heading', { level: 1, name: 'Tide Pool' })).toBeVisible()
     await expect(page.getByText('Draft', { exact: true })).toBeVisible()
     const variants = page.getByRole('region', { name: 'Variants' })

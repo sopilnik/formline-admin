@@ -11,9 +11,9 @@ export function KpiCard({ kpi }: { kpi: KpiView }) {
   const labelId = `kpi-${kpi.id}-label`
   const hintId = `kpi-${kpi.id}-hint`
   return (
-    <div role="group" aria-labelledby={labelId} className="flex min-w-0 flex-col rounded-lg border bg-card p-4 sm:p-5">
-      <div className="flex items-center gap-1 text-muted-foreground">
-        <h2 id={labelId} className="font-sans text-[13px] font-normal">{kpi.label}</h2>
+    <div role="group" aria-labelledby={labelId} className="row-span-3 grid min-w-0 grid-rows-subgrid gap-y-0 rounded-lg border bg-card p-4 sm:p-5">
+      <div className="flex items-start gap-1 text-muted-foreground">
+        <h2 id={labelId} className="pt-0.5 font-sans text-[13px] font-normal">{kpi.label}</h2>
         <Tooltip>
           <TooltipTrigger
             render={<button type="button" aria-label={t('about', { label: kpi.label.toLowerCase() })} aria-describedby={hintId} className="grid size-6 place-items-center rounded-full hover:text-foreground" />}

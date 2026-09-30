@@ -59,7 +59,7 @@ test.describe('app frame', () => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'ru')
     await expect(page.getByRole('heading', { level: 1, name: 'Обзор' })).toBeVisible()
     await expect(page.getByRole('link', { name: /^Заказы/ })).toBeVisible()
-    await expect(page.getByRole('region', { name: 'Уведомления' })).toBeAttached()
+    await expect(page.getByRole('region', { name: 'Сообщения' })).toBeAttached()
   })
 
   test('a viewer does not see the team, the activity log or the outbox', async ({ page, context }) => {

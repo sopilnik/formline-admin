@@ -25,7 +25,7 @@ test.describe('product image', () => {
     await expect(page).toHaveURL(/\/products\/tide-pool$/)
     await expect(image(page).getByText('No image')).toBeVisible()
     await image(page).locator('input[type="file"]').setInputFiles(await poster())
-    await expect(page.getByRole('region', { name: 'Notifications' }).getByText('Image updated.')).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText('Image updated.')).toBeVisible()
     const shown = image(page).locator('img')
     await expect(shown).toHaveAttribute('src', /^\/media\/[0-9a-f-]{36}$/)
     await expect.poll(() => shown.evaluate(img => (img as HTMLImageElement).naturalWidth)).toBe(720)
@@ -66,7 +66,7 @@ test.describe('product image', () => {
     await image(page).getByRole('button', { name: 'Remove image' }).click()
     const dialog = page.getByRole('dialog', { name: 'Remove the image of Hush?' })
     await dialog.getByRole('button', { name: 'Remove image' }).click()
-    await expect(page.getByRole('region', { name: 'Notifications' }).getByText('Image removed.')).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText('Image removed.')).toBeVisible()
     await expect(image(page).getByText('No image')).toBeVisible()
     const queued = await asSchemaOwner(async c => (await c.query<{ storage_path: string }>(
       'select storage_path from fa.pending_media_deletions where storage_path = $1', [`ws/${workspaceId}/${first}.webp`])).rows)

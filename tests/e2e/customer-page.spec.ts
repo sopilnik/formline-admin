@@ -41,7 +41,7 @@ test.describe('customer page', () => {
     const field = page.getByLabel('Notes about this customer')
     await field.fill('Prefers express delivery.\nWraps every poster as a gift.')
     await page.getByRole('button', { name: 'Save notes' }).click()
-    await expect(page.getByRole('region', { name: 'Notifications' }).getByText('Notes saved.')).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText('Notes saved.')).toBeVisible()
     await page.reload()
     await expect(page.getByLabel('Notes about this customer')).toHaveValue('Prefers express delivery.\nWraps every poster as a gift.')
     const entries = await asSchemaOwner(async c => (await c.query<{ n: number }>(

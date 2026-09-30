@@ -15,14 +15,14 @@ type Props = {
 /** A native select in the panel's look: it works in a plain form and opens the system picker on phones. */
 export function FilterSelect({ id, label, value, active = false, onChange, children }: Props) {
   return (
-    <div className="relative">
+    <div className="relative max-w-full min-w-0">
       <label htmlFor={id} className="sr-only">{label}</label>
       <select
         id={id}
         value={value}
         onChange={onChange}
         className={cn(
-          'h-8 appearance-none rounded-lg border border-input bg-card pr-8 pl-3 text-[13px] text-ink-2 [&>option]:bg-card [&>option]:text-foreground',
+          'h-8 max-w-full appearance-none truncate rounded-lg border border-input bg-card pr-8 pl-3 text-[13px] text-ink-2 [&>option]:bg-card [&>option]:text-foreground',
           active && 'border-selected bg-selected text-selected-foreground',
         )}
       >

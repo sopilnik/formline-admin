@@ -39,7 +39,7 @@ test.describe('collections', () => {
     await expect(page.getByLabel('Slug')).toHaveAttribute('placeholder', 'deep-sea')
     await page.getByRole('button', { name: 'Create collection' }).click()
     await expect(page).toHaveURL(/\/collections\/deep-sea$/)
-    await expect(page.getByRole('region', { name: 'Notifications' }).getByText('Collection created.')).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText('Collection created.')).toBeVisible()
     await expect(page.getByText('No products are in this collection.')).toBeVisible()
     await page.getByLabel('Name').fill('Deeper Sea')
     await page.getByLabel('Slug').fill('deeper-sea')
@@ -50,7 +50,7 @@ test.describe('collections', () => {
     await expect(page.getByRole('dialog', { name: 'Delete Deeper Sea?' })).toBeVisible()
     await page.getByRole('dialog').getByRole('button', { name: 'Delete collection' }).click()
     await expect(page).toHaveURL(/\/collections$/)
-    await expect(page.getByRole('region', { name: 'Notifications' }).getByText('Deeper Sea deleted.')).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText('Deeper Sea deleted.')).toBeVisible()
     await expect(names(page)).toHaveText(['Monochrome', 'Primary', 'Pastel', 'Night'])
   })
 

@@ -68,8 +68,9 @@ export function CollectionsList({ rows, canWrite }: { rows: CollectionItem[]; ca
                 {row.name}
               </Link>
               {row.description ? <span className="truncate text-xs text-muted-foreground">{row.description}</span> : null}
+              <span className="text-xs text-muted-foreground tabular-nums sm:hidden">{t('products', { count: row.products })}</span>
             </div>
-            <span className="shrink-0 text-[13px] text-muted-foreground tabular-nums">{t('products', { count: row.products })}</span>
+            <span className="hidden shrink-0 text-[13px] text-muted-foreground tabular-nums sm:inline">{t('products', { count: row.products })}</span>
             {canWrite ? (
               <span className="relative z-10 flex shrink-0 gap-1">
                 <Button

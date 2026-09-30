@@ -21,7 +21,7 @@ test.describe('product variants', () => {
     await variants(page).getByLabel('Stock, A3 · Ocean').fill('40')
     await variants(page).getByLabel('Low at, A3 · Ocean').fill('6')
     await variants(page).getByRole('button', { name: 'Save variants' }).click()
-    await expect(page.getByRole('region', { name: 'Notifications' }).getByText('Variants saved.')).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText('Variants saved.')).toBeVisible()
     await expect(variants(page).getByLabel('Own price, $, A1 · Ink')).toHaveValue('65.00')
     await expect(variants(page).getByLabel('Stock, A3 · Ocean')).toHaveValue('40')
     expect(await stockOf(workspaceId, 'far-orbit-a3-ocean')).toBe(40)

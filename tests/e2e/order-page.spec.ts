@@ -59,7 +59,7 @@ test.describe('order page', () => {
     await page.getByRole('button', { name: 'Change status' }).click()
     await page.getByRole('menuitem', { name: 'Processing' }).click()
     // Base UI announces an error toast through a separate alert and hides the visible copy from the accessibility tree.
-    await expect(page.getByRole('region', { name: 'Notifications' }).getByText('This order changed while the page was open. It now shows its current status.')).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText('This order changed while the page was open. It now shows its current status.')).toBeVisible()
     await expect(page.getByRole('main').getByText('Cancelled', { exact: true }).first()).toBeVisible()
     await expect(page.getByRole('button', { name: 'Change status' })).toHaveCount(0)   // nothing follows "cancelled"
   })

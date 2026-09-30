@@ -15,7 +15,7 @@ test.describe('product status and deletion', () => {
     await expect(remove.getByRole('button')).toHaveCount(0)
     await page.getByRole('button', { name: 'Change status' }).click()
     await page.getByRole('menuitem', { name: 'Archive' }).click()
-    await expect(page.getByRole('region', { name: 'Notifications' }).getByText('Far Orbit is archived.')).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText('Far Orbit is archived.')).toBeVisible()
     await expect(page.getByText('Archived', { exact: true })).toBeVisible()
     await page.getByRole('button', { name: 'Change status' }).click()
     await expect(page.getByRole('menuitem')).toHaveText(['Move to drafts'])
@@ -45,7 +45,7 @@ test.describe('product status and deletion', () => {
     await page.getByRole('region', { name: 'Delete product' }).getByRole('button', { name: 'Delete product' }).click()
     await page.getByRole('dialog').getByRole('button', { name: 'Delete product' }).click()
     await expect(page).toHaveURL(/\/products$/)
-    await expect(page.getByRole('region', { name: 'Notifications' }).getByText('Short Lived deleted.')).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText('Short Lived deleted.')).toBeVisible()
     await page.goto('/products/short-lived')
     await expect(page.getByRole('heading', { name: 'Product not found' })).toBeVisible()
   })
@@ -58,7 +58,7 @@ test.describe('product status and deletion', () => {
     await page.getByRole('button', { name: 'Change status' }).click()
     await page.getByRole('menuitem', { name: 'Publish' }).click()
     await expect(page.getByText('Published', { exact: true })).toBeVisible()
-    await expect(page.getByRole('region', { name: 'Notifications' }).getByText('Hush is published.')).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText('Hush is published.')).toBeVisible()
   })
 
   test('shows a viewer the status only', async ({ page, context }) => {

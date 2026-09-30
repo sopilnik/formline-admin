@@ -12,7 +12,7 @@ test.describe('activity log', () => {
     await page.goto('/team')
     await page.getByRole('button', { name: 'Actions for Priya Nair' }).click()
     await page.getByRole('menuitem', { name: 'Make viewer' }).click()
-    await expect(page.getByRole('region', { name: 'Notifications' }).getByText('Priya Nair is now a viewer.')).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText('Priya Nair is now a viewer.')).toBeVisible()
     await page.goto('/activity')
     await expect(page.getByRole('heading', { level: 1, name: 'Activity' })).toBeVisible()
     await expect(page).toHaveTitle('Activity · Formline Admin')

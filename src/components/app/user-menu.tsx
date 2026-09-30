@@ -22,9 +22,9 @@ export function UserMenu({ user }: { user: FrameUser }) {
         <span aria-hidden className="grid size-8 place-items-center rounded-full bg-selected text-xs font-semibold text-selected-foreground">
           {initials}
         </span>
-        <span className="hidden text-left text-[13px] leading-tight sm:block">
-          <span className="block">{user.name}</span>
-          <span className="block text-xs text-muted-foreground">{role}</span>
+        <span className="hidden max-w-40 min-w-0 text-left text-[13px] leading-tight lg:block">
+          <span className="block truncate">{user.name}</span>
+          <span className="block truncate text-xs text-muted-foreground">{role}</span>
         </span>
         <ChevronDown aria-hidden className="size-3.5" />
       </DropdownMenuTrigger>

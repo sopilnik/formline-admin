@@ -36,7 +36,7 @@ test.describe('product page', () => {
     await details(page).getByLabel('Base price, $').fill('33.5')
     await details(page).getByLabel('Tags').fill('calm, Sea Glass')
     await details(page).getByRole('button', { name: 'Save changes' }).click()
-    await expect(page.getByRole('region', { name: 'Notifications' }).getByText('Changes saved.')).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText('Changes saved.')).toBeVisible()
     await expect(page.getByRole('heading', { level: 1, name: 'Low Tide, Revisited' })).toBeVisible()
     await expect(details(page).getByLabel('Base price, $')).toHaveValue('33.50')
     await expect(details(page).getByLabel('Tags')).toHaveValue('calm, sea-glass')

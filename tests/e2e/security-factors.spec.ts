@@ -28,7 +28,7 @@ test.describe('second factors in a sandbox', () => {
     await expect(authenticator.getByText('The code is not correct. Check it and try again.')).toBeVisible()
     await authenticator.getByLabel('6-digit code').fill(await codeFor(totp))
     await authenticator.getByRole('button', { name: 'Turn on' }).click()
-    await expect(page.getByRole('region', { name: 'Notifications' }).getByText('Authenticator app turned on. Your other devices are signed out.')).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText('Authenticator app turned on. Your other devices are signed out.')).toBeVisible()
     const codes = page.getByRole('list', { name: 'Save your recovery codes' }).getByRole('listitem')
     await expect(codes).toHaveCount(10)
     // Until the codes are closed the card offers nothing else.
@@ -84,7 +84,7 @@ test.describe('second factors in a sandbox', () => {
     await replaceSection.getByRole('button', { name: 'Cancel' }).click()
     await section(page, 'Authenticator app On').getByRole('button', { name: 'Turn off…' }).click()
     await page.getByRole('dialog', { name: 'Turn off the authenticator app?' }).getByRole('button', { name: 'Turn off' }).click()
-    await expect(page.getByRole('region', { name: 'Notifications' }).getByText('Authenticator app turned off.')).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText('Authenticator app turned off.')).toBeVisible()
     await expect(section(page, 'Authenticator app Off')).toBeVisible()
     await expect(section(page, 'Authenticator app Off').getByText('The code is not correct. Check it and try again.')).toHaveCount(0)
     await expect(page.getByRole('list', { name: 'Save your recovery codes' })).toHaveCount(0)

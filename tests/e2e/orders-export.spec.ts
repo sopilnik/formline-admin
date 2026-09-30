@@ -80,6 +80,6 @@ test.describe('CSV export', () => {
     await page.getByRole('button', { name: /^Export \d+ as CSV$/ }).click()
     // Base UI announces an error toast through a separate alert and hides the visible copy from the accessibility
     // tree, so the text is looked up by its text inside the toast list.
-    await expect(page.getByRole('region', { name: 'Notifications' }).getByText(/^Too many exports\. Try again in \d+ seconds?\.$/)).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText(/^Too many exports\. Try again in \d+ seconds?\.$/)).toBeVisible()
   })
 })

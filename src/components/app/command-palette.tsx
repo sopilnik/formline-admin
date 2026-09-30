@@ -58,11 +58,11 @@ export function CommandPalette({ items, access }: { items: NavItem[]; access: Pa
   return (
     <Dialog.Root open={open} onOpenChange={openChange}>
       <Dialog.Trigger
-        render={<Button variant="outline" className="justify-start gap-2 px-2.5 text-muted-foreground sm:w-56" aria-keyshortcuts={apple ? 'Meta+K' : 'Control+K'} />}
+        render={<Button variant="outline" className="justify-start gap-2 px-2.5 text-muted-foreground lg:w-56" aria-keyshortcuts={apple ? 'Meta+K' : 'Control+K'} />}
       >
         <Search aria-hidden />
-        <span className="sr-only sm:not-sr-only sm:flex-1 sm:text-left">{t('open')}</span>
-        <kbd aria-hidden className="hidden rounded-sm border px-1.5 font-sans text-[11px] leading-5 text-muted-foreground sm:inline">{apple ? '⌘K' : 'Ctrl K'}</kbd>
+        <span className="sr-only lg:not-sr-only lg:flex-1 lg:text-left">{t('open')}</span>
+        <kbd aria-hidden className="hidden rounded-sm border px-1.5 font-sans text-[11px] leading-5 text-muted-foreground lg:inline">{apple ? '⌘K' : 'Ctrl K'}</kbd>
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 isolate z-50 bg-black/10 supports-backdrop-filter:backdrop-blur-xs" />
@@ -203,10 +203,10 @@ function PaletteSearch({ items, access, close }: { items: NavItem[]; access: Pal
                       close()
                       entry.run()
                     }}
-                    className="flex min-h-9 cursor-default items-center gap-3 rounded-md px-3 py-1.5 text-sm outline-none select-none data-highlighted:bg-secondary"
+                    className="flex min-h-9 cursor-default flex-col items-start gap-x-3 rounded-md px-3 py-1.5 text-sm outline-none select-none data-highlighted:bg-secondary sm:flex-row sm:items-center"
                   >
-                    <span className="min-w-0 flex-1 wrap-anywhere">{entry.label}</span>
-                    {entry.hint ? <span className="max-w-[45%] shrink-0 truncate text-[13px] text-muted-foreground">{entry.hint}</span> : null}
+                    <span className="max-w-full min-w-0 flex-1 wrap-anywhere">{entry.label}</span>
+                    {entry.hint ? <span className="max-w-full shrink-0 truncate text-[13px] text-muted-foreground sm:max-w-[45%]">{entry.hint}</span> : null}
                   </Autocomplete.Item>
                 )}
               </Autocomplete.Collection>

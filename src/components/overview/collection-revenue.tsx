@@ -20,7 +20,7 @@ export function CollectionRevenue({ rows, other, posters, shipping }: Props) {
   return (
     <section aria-labelledby="collections-title" className="flex min-w-0 flex-col rounded-lg border bg-card p-5">
       <h2 id="collections-title" className="mb-3.5 font-sans text-[15px] font-semibold">{t('title')}</h2>
-      <ul className="mb-4 grid grid-cols-[max-content_1fr_auto] items-center gap-x-3 gap-y-4.5 text-[13px]">
+      <ul className="mb-4 grid grid-cols-[fit-content(50%)_minmax(2.5rem,1fr)_auto] items-center gap-x-3 gap-y-4.5 text-[13px]">
         {rows.map(row => (
           <li key={row.slug} className="col-span-3 grid grid-cols-subgrid items-center">
             <span className="min-w-[5.75rem]">

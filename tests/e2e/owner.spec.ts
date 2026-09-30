@@ -214,7 +214,7 @@ test('the owner changes the password, and the new one signs in', async ({ page }
   await expect(page.getByText('Use at least 12 characters.')).toBeVisible()
   await page.getByLabel('New password').fill(next)
   await page.getByRole('button', { name: 'Change password' }).click()
-  await expect(page.getByRole('region', { name: 'Notifications' }).getByText('Password changed. Your other devices are signed out.')).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Messages' }).getByText('Password changed. Your other devices are signed out.')).toBeVisible()
   const oldPassword = owner.password
   owner.password = next
   await signOut(page)
