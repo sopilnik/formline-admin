@@ -3,7 +3,7 @@
 import { startRegistration } from '@simplewebauthn/browser'
 import { FingerprintPattern } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useState, useTransition, type ReactNode } from 'react'
+import { useState, useTransition } from 'react'
 import { TextField } from '@/components/auth/text-field'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -12,9 +12,10 @@ import { beginPasskeyRegistrationAction, finishPasskeyRegistrationAction, remove
 
 export type PasskeyView = { id: string; name: string; added: string; lastUsed: string | null }
 
-type Props = { available: boolean; recent: boolean; passkeys: PasskeyView[]; reauth: ReactNode }
+type Props = { available: boolean; recent: boolean; passkeys: PasskeyView[] }
 
-export function PasskeysSection({ available, recent, passkeys, reauth }: Props) {
+/** The owner's passkeys (spec §5.3); adding and removing wait until the owner has confirmed it is them, at the top of the page. */
+export function PasskeysSection({ available, recent, passkeys }: Props) {
   const t = useTranslations('settings.security.passkeys')
   const errors = useTranslations('auth.errors')
   const toast = useToast()
@@ -53,7 +54,6 @@ export function PasskeysSection({ available, recent, passkeys, reauth }: Props) 
         <h2 id="passkeys-title" className="text-base font-bold">{t('title')}</h2>
         <p className="mt-1 text-sm text-muted-foreground">{t('intro')}</p>
       </div>
-      {recent ? null : reauth}
       {passkeys.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t('empty')}</p>
       ) : (

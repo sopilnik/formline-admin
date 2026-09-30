@@ -411,6 +411,28 @@
         "removedToast": "Passkey removed.",
         "renamedToast": "Passkey renamed.",
         "sandbox": "Passkeys are available in a real account. A passkey made here would stay in your password manager after the demo is deleted."
+      },
+      "password": {
+        "title": "Password",
+        "intro": "A new password signs out your other devices.",
+        "confirmFirst": "Confirm it's you above to change your password.",
+        "sandbox": "Demo members enter through the demo and have no password; in a real account the owner signs in with one and changes it here.",
+        "change": "Change password",
+        "changing": "Changing…",
+        "changed": "Password changed. Your other devices are signed out."
+      },
+      "sessions": {
+        "title": "Signed-in devices",
+        "intro": "Every device where your account is signed in. Sign out the ones you do not recognise.",
+        "unknownDevice": "Unknown device",
+        "thisDevice": "This device",
+        "times": "Signed in {signedIn} · active {lastActive}",
+        "revoke": "Sign out",
+        "revokeNamed": "Sign out {device}",
+        "revokeOthers": "Sign out of all other devices",
+        "revoked": "The device is signed out.",
+        "revokedOthers": "{count, plural, =0 {There were no other devices.} one {# other device is signed out.} other {# other devices are signed out.}}",
+        "failed": "The device could not be signed out. Try again."
       }
     },
     "tabs": {
