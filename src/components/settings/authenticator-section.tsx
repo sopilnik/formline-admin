@@ -36,7 +36,9 @@ export function AuthenticatorSection({ enabled, recent, canDisable, secret, qr }
   // until a new success; the codes of a success show until they are closed.
   const [replacingAfter, setReplacingAfter] = useState<FormState<'code'> | null>(null)
   const [closed, setClosed] = useState<FormState<'code'> | null>(null)
-  const errorFor = useErrorText(state)
+  // A form opened after a result does not show that result's error; an error from a submit inside it is a new state.
+  const shown = state === replacingAfter ? (IDLE as FormState<'code'>) : state
+  const errorFor = useErrorText(shown)
   useFocusOnError(state, 'totp', 'code')
   const settle = useEffectEvent((result: FormState<'code'>) => {
     if (result.status === 'done') toast.success(result.recoveryCodes ? t('enabled') : t('replaced'))
@@ -66,7 +68,7 @@ export function AuthenticatorSection({ enabled, recent, canDisable, secret, qr }
       {codes ? <RecoveryCodesView codes={codes} done={{ label: t('codesDone'), onClick: () => setClosed(state) }} /> : null}
       {recent && !codes && enrolling ? (
         <form action={action} noValidate className="flex max-w-xl flex-col gap-4">
-          <FormAlert state={state} />
+          <FormAlert state={shown} />
           <TotpEnrolment id="totp-code" secret={secret} qr={qr} error={errorFor('code')} />
           <div className="flex flex-wrap gap-2">
             <Button type="submit" disabled={submitting}>{submitting ? t('saving') : enabled ? t('replace') : t('enable')}</Button>
