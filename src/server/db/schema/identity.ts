@@ -30,6 +30,7 @@ export const sessions = fa.table('sessions', {
   reauthAt: ts('reauth_at'),
   userAgentSummary: text('user_agent_summary'),
   ipHash: text('ip_hash'),
+  signInId: uuid('sign_in_id').notNull().defaultRandom(),
 }, t => [primaryKey({ columns: [t.workspaceId, t.id] })])
 
 export const passkeys = fa.table('passkeys', {

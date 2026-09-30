@@ -5,6 +5,7 @@ import { generateRecoveryCodes, hashRecoveryCode } from '@/server/auth/recovery-
 import { verifySecondFactor } from '@/server/auth/second-factor'
 import { validateSessionToken, type Session } from '@/server/auth/sessions'
 import { signInWithPassword, type SignInInput } from '@/server/auth/sign-in'
+import { hashToken } from '@/server/auth/tokens'
 import { clearSubject, lockRemaining } from '@/server/ratelimit/consume'
 import { accountSubject, userSubject } from '@/server/ratelimit/ip'
 import { adminPool, appPool, closeAll } from './db'
@@ -97,6 +98,11 @@ describe('second-factor step', () => {
     expect(await sessionExists(pending)).toBe(false)
     expect(await letters('auth.new_sign_in')).toBe(lettersBefore + 1)
     expect(await count("select count(*)::int as n from fa.notifications where user_id = $1 and kind = 'auth.new_sign_in'", [ownerId])).toBeGreaterThan(0)
+    // The bell's copy names the sign-in, which the new session carries (migration 0014).
+    const notice = await admin.query<{ sign_in: string }>(
+      "select payload->>'signIn' as sign_in from fa.notifications where user_id = $1 and kind = 'auth.new_sign_in' order by created_at desc limit 1", [ownerId])
+    const signedIn = await admin.query<{ sign_in_id: string }>('select sign_in_id from fa.sessions where id = $1', [hashToken(done.token)])
+    expect(notice.rows[0]!.sign_in).toBe(signedIn.rows[0]!.sign_in_id)
     const again = await pendingSession()
     expect(await verifySecondFactor(again, { code: totp.code, ip: nextIp(), userAgent: null }, { pool: app, now: totp.now }))
       .toEqual({ ok: false, error: 'code_invalid', field: 'code' })

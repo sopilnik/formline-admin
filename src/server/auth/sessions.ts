@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import type { Pool } from 'pg'
 import { cache } from 'react'
 import { generateToken, hashToken, TOKEN_PATTERN } from '@/server/auth/tokens'
+import { sessionSignInId } from '@/server/dal/sessions'
 import { getPool } from '@/server/db/pool'
 import { sessions } from '@/server/db/schema'
 import type { Role, Tx, WorkspaceContext } from '@/server/db/with-workspace'
@@ -33,6 +34,9 @@ export type Session = {
 }
 
 export type NewSession = { token: string; id: string; expiresAt: Date }
+
+/** A session this code wrote, with the id of the sign-in it belongs to (it survives every rotation). */
+export type CreatedSession = NewSession & { signInId: string }
 
 type SessionRow = {
   workspace_id: string
@@ -69,12 +73,13 @@ export function workspaceContext(session: Session): WorkspaceContext {
 
 /**
  * Inserts a session in the caller's transaction. A pending session (second factor
- * not yet given) lives 10 minutes; a verified one 7 days (spec §5.1).
+ * not yet given) lives 10 minutes; a verified one 7 days (spec §5.1). A new sign-in
+ * gets a new sign-in id; a rotation passes the old one on.
  */
 export async function createSession(
   tx: Tx,
-  input: { workspaceId: string; userId: string; verified: boolean; userAgentSummary: string | null; ipHash: string | null },
-): Promise<NewSession> {
+  input: { workspaceId: string; userId: string; verified: boolean; userAgentSummary: string | null; ipHash: string | null; signInId?: string },
+): Promise<CreatedSession> {
   const token = generateToken()
   const id = hashToken(token)
   const [row] = await tx.insert(sessions).values({
@@ -86,16 +91,19 @@ export async function createSession(
     reauthAt: input.verified ? sql`now()` : null,
     userAgentSummary: input.userAgentSummary,
     ipHash: input.ipHash,
-  }).returning({ expiresAt: sessions.expiresAt })
-  return { token, id, expiresAt: row!.expiresAt }
+    ...(input.signInId ? { signInId: input.signInId } : {}),
+  }).returning({ expiresAt: sessions.expiresAt, signInId: sessions.signInId })
+  return { token, id, expiresAt: row!.expiresAt, signInId: row!.signInId }
 }
 
 /**
  * A fresh token for a full authentication (the second factor, or a re-authentication):
  * the new session is verified with a new lifetime, the old row is deleted (spec §5.1).
+ * The sign-in id stays, so the device is still the one that signed in.
  */
-export async function rotateSession(tx: Tx, session: Session, meta: { userAgentSummary: string | null; ipHash: string | null }): Promise<NewSession> {
-  const fresh = await createSession(tx, { workspaceId: session.workspaceId, userId: session.userId, verified: true, ...meta })
+export async function rotateSession(tx: Tx, session: Session, meta: { userAgentSummary: string | null; ipHash: string | null }): Promise<CreatedSession> {
+  const signInId = await sessionSignInId(tx, session.id)
+  const fresh = await createSession(tx, { workspaceId: session.workspaceId, userId: session.userId, verified: true, ...meta, ...(signInId ? { signInId } : {}) })
   await deleteSession(tx, session)
   return fresh
 }

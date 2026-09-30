@@ -7,7 +7,7 @@ import { authDeps, type AuthDeps } from '@/server/auth/deps'
 import { securityNotice } from '@/server/auth/notices'
 import { ownerWorkspaceId } from '@/server/auth/owner'
 import { verifyAgainstDummy, verifyPassword } from '@/server/auth/passwords'
-import { createSession, rotateSession, type NewSession, type Session } from '@/server/auth/sessions'
+import { createSession, rotateSession, type CreatedSession, type Session } from '@/server/auth/sessions'
 import { summariseUserAgent } from '@/server/auth/user-agent'
 import { logActivity } from '@/server/dal/activity'
 import { getSelf } from '@/server/dal/users'
@@ -99,11 +99,11 @@ export async function finishSignIn(tx: Tx, input: {
   pending?: Session
 }): Promise<SignedIn> {
   const meta = { userAgentSummary: summariseUserAgent(input.userAgent), ipHash: input.ipHash }
-  const fresh: NewSession = input.pending
+  const fresh: CreatedSession = input.pending
     ? await rotateSession(tx, input.pending, meta)
     : await createSession(tx, { workspaceId: input.workspaceId, userId: input.userId, verified: true, ...meta })
   const self = (await getSelf(tx, input.userId))!
   await logActivity(tx, input.workspaceId, { actorUserId: input.userId, action: 'auth.sign_in', details: { method: input.method }, ipHash: input.ipHash })
-  await securityNotice(tx, input.workspaceId, self, 'auth.new_sign_in', { device: meta.userAgentSummary })
+  await securityNotice(tx, input.workspaceId, self, 'auth.new_sign_in', { device: meta.userAgentSummary }, { signInId: fresh.signInId })
   return { token: fresh.token, expiresAt: fresh.expiresAt, locale: self.locale, theme: self.theme }
 }
