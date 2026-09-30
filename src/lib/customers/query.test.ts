@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { customersHref, DEFAULT_CUSTOMERS_QUERY, isCustomersFiltered, parseCustomersQuery } from '@/lib/customers/query'
+import { customersExportHref, customersHref, DEFAULT_CUSTOMERS_QUERY, isCustomersFiltered, parseCustomersQuery } from '@/lib/customers/query'
 
 describe('parseCustomersQuery', () => {
   it('reads the search, the sort and the page', () => {
@@ -54,5 +54,12 @@ describe('isCustomersFiltered', () => {
     expect(isCustomersFiltered(DEFAULT_CUSTOMERS_QUERY)).toBe(false)
     expect(isCustomersFiltered({ ...DEFAULT_CUSTOMERS_QUERY, sort: 'name', dir: 'asc', page: 2 })).toBe(false)
     expect(isCustomersFiltered({ ...DEFAULT_CUSTOMERS_QUERY, q: 'ben' })).toBe(true)
+  })
+})
+
+describe('customersExportHref', () => {
+  it('carries the search and the sort, never the page or its size', () => {
+    expect(customersExportHref(DEFAULT_CUSTOMERS_QUERY)).toBe('/api/customers/export')
+    expect(customersExportHref({ q: 'anna', sort: 'spent', dir: 'desc', page: 4, size: 100 })).toBe('/api/customers/export?q=anna&sort=spent')
   })
 })

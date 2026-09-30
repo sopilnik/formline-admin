@@ -2,16 +2,19 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getLocale, getTranslations } from 'next-intl/server'
+import { ExportButton } from '@/components/app/export-button'
 import { Pager } from '@/components/app/pager'
 import { CustomersSearch } from '@/components/customers/customers-search'
 import { CustomersTable } from '@/components/customers/customers-table'
-import { customersHref, DEFAULT_CUSTOMERS_QUERY, isCustomersFiltered, parseCustomersQuery, type SearchParams } from '@/lib/customers/query'
+import { customersExportHref, customersHref, DEFAULT_CUSTOMERS_QUERY, isCustomersFiltered, parseCustomersQuery, type SearchParams } from '@/lib/customers/query'
 import { toCustomerRowView } from '@/lib/customers/view'
 import { requireSession, workspaceContext } from '@/server/auth/sessions'
 import { authorize } from '@/server/authz/authorize'
+import { can } from '@/server/authz/matrix'
 import { listCustomers } from '@/server/dal/customers'
 import { getStoreSettings } from '@/server/dal/settings'
 import { withWorkspace } from '@/server/db/with-workspace'
+import { EXPORT_CAP } from '@/server/orders/export'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('customers')
@@ -40,6 +43,13 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
             {filtered ? t('countFiltered', { filtered: list.filtered, total: list.total }) : t('count', { total: list.total })}
           </p>
         </div>
+        {list.filtered > 0 && can(session.role, 'csv.export', session.workspaceKind) ? (
+          <ExportButton
+            namespace="customers.export"
+            href={customersExportHref(query)}
+            label={list.filtered > EXPORT_CAP ? t('export.first', { count: EXPORT_CAP }) : t('export.all', { count: list.filtered })}
+          />
+        ) : null}
       </div>
       <CustomersSearch query={query} />
       <section aria-label={t('title')} className="@container rounded-lg border bg-card p-2 pb-3">

@@ -24,17 +24,17 @@ export type CustomersList = {
 }
 
 /** Orders join their customer inside the same workspace (composite keys, spec §6.1). */
-const orderJoin = and(eq(orders.workspaceId, customers.workspaceId), eq(orders.customerId, customers.id))!
+export const orderJoin = and(eq(orders.workspaceId, customers.workspaceId), eq(orders.customerId, customers.id))!
 
 const revenueStatuses = sql.join(REVENUE_STATUSES.map(status => sql`${status}`), sql`, `)
-const ordersSql = sql<number>`count(${orders.id})::int`
-const spentSql = sql<number>`coalesce(sum(${orders.totalCents}) filter (where ${orders.status} in (${revenueStatuses})), 0)::int`
-const lastSql = sql<Date | null>`max(${orders.placedAt})`
+export const ordersSql = sql<number>`count(${orders.id})::int`
+export const spentSql = sql<number>`coalesce(sum(${orders.totalCents}) filter (where ${orders.status} in (${revenueStatuses})), 0)::int`
+export const lastSql = sql<Date | null>`max(${orders.placedAt})`
 /** Names sort in the Unicode root order, whatever the database's own collation is (as on the products). */
 const nameSql = sql`${customers.name} collate "unicode"`
 
 /** The search: a case-insensitive part of the name or the email (spec §8.5). */
-function customerFilters(workspaceId: string, query: CustomersQuery): SQL {
+export function customerFilters(workspaceId: string, query: CustomersQuery): SQL {
   const parts: SQL[] = [eq(customers.workspaceId, workspaceId)]
   if (query.q) {
     const pattern = containsPattern(query.q)
@@ -44,7 +44,7 @@ function customerFilters(workspaceId: string, query: CustomersQuery): SQL {
 }
 
 /** The ORDER BY: its column, then the name and the id, so pages never overlap; customers without orders come last by date. */
-function customerSort(query: CustomersQuery): SQL[] {
+export function customerSort(query: CustomersQuery): SQL[] {
   const direction = query.dir === 'asc' ? asc : desc
   const tail = [direction(nameSql), direction(customers.id)]
   if (query.sort === 'name') return tail

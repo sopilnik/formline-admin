@@ -743,6 +743,25 @@
       "notFoundTitle": "Customer not found",
       "notFoundBody": "This workspace has no customer at this address.",
       "allCustomers": "All customers"
+    },
+    "export": {
+      "all": "Export {count, number} as CSV",
+      "first": "Export the first {count, number} as CSV",
+      "pending": "Preparing the file…",
+      "rateLimited": "Too many exports. Try again in {seconds, plural, one {# second} other {# seconds}}.",
+      "failed": "The export failed. Try again.",
+      "truncated": "The file holds the first {count, number} customers."
+    },
+    "csv": {
+      "customer": "Customer",
+      "email": "Email",
+      "city": "City",
+      "country": "Country",
+      "orders": "Orders",
+      "spent": "Total spent",
+      "first": "First order",
+      "last": "Last order",
+      "since": "Customer since"
     }
   }
 }

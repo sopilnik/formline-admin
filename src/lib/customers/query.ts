@@ -66,3 +66,10 @@ export function customersHref(query: CustomersQuery, changes: Partial<CustomersQ
 export function isCustomersFiltered(query: CustomersQuery): boolean {
   return query.q !== ''
 }
+
+/** The CSV of the list: its search and sort, without the page (spec §8.5). */
+export function customersExportHref(query: CustomersQuery): string {
+  const params = customersParams({ ...query, page: 1, size: DEFAULT_CUSTOMERS_QUERY.size }, {})
+  const text = params.toString()
+  return text ? `/api/customers/export?${text}` : '/api/customers/export'
+}
