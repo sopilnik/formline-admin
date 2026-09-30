@@ -12,6 +12,7 @@ const rows: [Action, (typeof ALL)[number][], 'sandbox' | 'owner'][] = [
   ['customers.notes', ['owner', 'admin', 'manager'], 'sandbox'],
   ['activity.read', ['owner', 'admin'], 'sandbox'],
   ['outbox.read', ['owner', 'admin'], 'sandbox'],
+  ['team.read', ['owner', 'admin'], 'sandbox'],
   ['team.manage', ['owner', 'admin'], 'sandbox'],
   ['settings.store', ['owner', 'admin'], 'sandbox'],
   ['stripe.import', ['owner'], 'owner'],
@@ -24,7 +25,8 @@ describe('can', () => {
     for (const role of ALL) expect([action, role, can(role, action, kind)]).toEqual([action, role, allowed.includes(role)])
   })
 
-  it('keeps the team and the sandbox tools out of the owner workspace', () => {
+  it('keeps the team and the sandbox tools out of the owner workspace, but shows the owner the team page', () => {
+    expect(can('owner', 'team.read', 'owner')).toBe(true)
     expect(can('owner', 'team.manage', 'owner')).toBe(false)
     expect(can('owner', 'sandbox.tools', 'owner')).toBe(false)
   })

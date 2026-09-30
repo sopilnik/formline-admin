@@ -62,10 +62,11 @@ test.describe('app frame', () => {
     await expect(page.getByRole('region', { name: 'Уведомления' })).toBeAttached()
   })
 
-  test('a viewer does not see the activity log or the outbox', async ({ page, context }) => {
+  test('a viewer does not see the team, the activity log or the outbox', async ({ page, context }) => {
     await signInAsSandboxUser(context, 'viewer')
     await page.goto('/overview')
-    await expect(page.getByRole('link', { name: 'Team' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Team' })).toHaveCount(0)
     await expect(page.getByRole('link', { name: 'Activity' })).toHaveCount(0)
     await expect(page.getByRole('link', { name: 'Outbox' })).toHaveCount(0)
   })

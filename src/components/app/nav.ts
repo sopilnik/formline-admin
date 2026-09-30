@@ -10,7 +10,7 @@ const ITEMS: (NavItem & { action?: Action })[] = [
   { key: 'products', href: '/products', group: 'store' },
   { key: 'collections', href: '/collections', group: 'store' },
   { key: 'customers', href: '/customers', group: 'store' },
-  { key: 'team', href: '/team', group: 'admin' },
+  { key: 'team', href: '/team', group: 'admin', action: 'team.read' },
   { key: 'activity', href: '/activity', group: 'admin', action: 'activity.read' },
   { key: 'outbox', href: '/outbox', group: 'admin', action: 'outbox.read' },
   { key: 'settings', href: '/settings', group: 'admin' },

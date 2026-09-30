@@ -8,9 +8,9 @@ describe('navItems', () => {
     for (const role of ['owner', 'admin'] as const) expect(navItems(role, 'sandbox').map(i => i.key)).toEqual(ALL)
   })
 
-  it('leaves the activity log and the outbox out for managers and viewers', () => {
+  it('leaves the team, the activity log and the outbox out for managers and viewers', () => {
     for (const role of ['manager', 'viewer'] as const) {
-      expect(navItems(role, 'sandbox').map(i => i.key)).toEqual(ALL.filter(k => k !== 'activity' && k !== 'outbox'))
+      expect(navItems(role, 'sandbox').map(i => i.key)).toEqual(ALL.filter(k => k !== 'team' && k !== 'activity' && k !== 'outbox'))
     }
   })
 

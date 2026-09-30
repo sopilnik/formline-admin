@@ -3,7 +3,7 @@ import type { Role } from '@/server/db/with-workspace'
 export type WorkspaceKind = 'template' | 'owner' | 'sandbox'
 export type Action =
   | 'data.read' | 'csv.export' | 'orders.update' | 'catalog.write' | 'catalog.delete' | 'customers.notes'
-  | 'activity.read' | 'outbox.read' | 'team.manage' | 'settings.store' | 'stripe.import' | 'self.manage' | 'sandbox.tools'
+  | 'activity.read' | 'outbox.read' | 'team.read' | 'team.manage' | 'settings.store' | 'stripe.import' | 'self.manage' | 'sandbox.tools'
 
 const EVERYONE: readonly Role[] = ['owner', 'admin', 'manager', 'viewer']
 const EDITORS: readonly Role[] = ['owner', 'admin', 'manager']
@@ -21,6 +21,8 @@ const MATRIX: Record<Action, { roles: readonly Role[]; kinds: readonly Workspace
   'customers.notes': { roles: EDITORS, kinds: ['owner', 'sandbox'] },
   'activity.read': { roles: LEADS, kinds: ['owner', 'sandbox'] },
   'outbox.read': { roles: LEADS, kinds: ['owner', 'sandbox'] },
+  // The team page: owners and admins (his decision, 29 September); in the owner workspace it shows the owner and a note.
+  'team.read': { roles: LEADS, kinds: ['owner', 'sandbox'] },
   'team.manage': { roles: LEADS, kinds: ['sandbox'] },
   'settings.store': { roles: LEADS, kinds: ['owner', 'sandbox'] },
   'stripe.import': { roles: ['owner'], kinds: ['owner'] },

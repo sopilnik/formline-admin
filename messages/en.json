@@ -821,5 +821,52 @@
       "ifNotYou": "If this was not you, change your password and make new recovery codes.",
       "action": "Open the security settings"
     }
+  },
+  "team": {
+    "title": "Team",
+    "count": "{total, plural, one {# member} other {# members}}",
+    "members": "Members",
+    "ownerNote": "In your own workspace the team is you alone. Inviting colleagues, changing their roles and deactivating them is part of the demo: enter it to try the team in a sandbox of your own.",
+    "you": "You",
+    "columns": {
+      "member": "Member",
+      "role": "Role",
+      "twoFactor": "Two-factor",
+      "lastActive": "Last activity",
+      "actions": "Actions"
+    },
+    "twoFactorOn": "On",
+    "twoFactorOff": "Off",
+    "cardTwoFactorOn": "two-factor on",
+    "cardTwoFactorOff": "two-factor off",
+    "cardLastActive": "Last activity {at}",
+    "noActivity": "No activity yet",
+    "status": {
+      "deactivated": "Deactivated"
+    },
+    "actions": {
+      "label": "Actions for {person}",
+      "makeRole": {
+        "admin": "Make admin",
+        "manager": "Make manager",
+        "viewer": "Make viewer"
+      },
+      "roleChanged": {
+        "admin": "{person} is now an admin.",
+        "manager": "{person} is now a manager.",
+        "viewer": "{person} is now a viewer."
+      },
+      "deactivate": "Deactivate…",
+      "reactivate": "Reactivate",
+      "confirmTitle": "Deactivate {person}?",
+      "confirmBody": "They are signed out at once and cannot sign in, or be switched to, until they are reactivated. Their past activity stays in the log.",
+      "cancel": "Cancel",
+      "confirm": "Deactivate",
+      "deactivating": "Deactivating…",
+      "deactivated": "{person} is deactivated.",
+      "reactivated": "{person} is active again.",
+      "notAllowed": "This member cannot be changed.",
+      "failed": "The change could not be saved. Try again."
+    }
   }
 }
