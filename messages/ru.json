@@ -1032,5 +1032,151 @@
       "invalid": "Этим приглашением больше нельзя воспользоваться.",
       "taken": "Этот email уже есть у участника команды."
     }
+  },
+  "activity": {
+    "title": "Журнал",
+    "count": "{total, plural, one {# запись} few {# записи} many {# записей} other {# записи}}",
+    "countFiltered": "{filtered, number} из {total, plural, one {# записи} few {# записей} many {# записей} other {# записи}}",
+    "system": "Система",
+    "formerMember": "Бывший участник",
+    "columns": {
+      "when": "Когда",
+      "who": "Кто",
+      "action": "Действие",
+      "subject": "Объект",
+      "details": "Подробности"
+    },
+    "filters": {
+      "actor": "Кто",
+      "actorAll": "Все",
+      "system": "Система",
+      "action": "Действие",
+      "actionAll": "Все действия",
+      "when": "Когда",
+      "clear": "Сбросить фильтры"
+    },
+    "groups": {
+      "orders": "Заказы",
+      "catalog": "Каталог",
+      "customers": "Покупатели",
+      "team": "Команда",
+      "security": "Безопасность",
+      "settings": "Настройки",
+      "sandbox": "Песочница"
+    },
+    "actions": {
+      "order": {
+        "status_changed": "Изменён статус заказа",
+        "note_added": "Добавлена заметка к заказу"
+      },
+      "orders": {
+        "exported": "Выгрузка заказов"
+      },
+      "product": {
+        "created": "Создан товар",
+        "updated": "Изменён товар",
+        "variants_updated": "Изменены варианты",
+        "status_changed": "Изменён статус товара",
+        "image_changed": "Изменено изображение товара",
+        "image_removed": "Удалено изображение товара",
+        "deleted": "Удалён товар"
+      },
+      "collection": {
+        "created": "Создана коллекция",
+        "updated": "Изменена коллекция",
+        "moved": "Перемещена коллекция",
+        "deleted": "Удалена коллекция"
+      },
+      "customer": {
+        "notes_updated": "Изменены заметки о покупателе"
+      },
+      "customers": {
+        "exported": "Выгрузка покупателей"
+      },
+      "team": {
+        "invited": "Отправлено приглашение",
+        "invitation_resent": "Приглашение отправлено повторно",
+        "invitation_revoked": "Приглашение отозвано",
+        "invitation_accepted": "Вход в команду по приглашению",
+        "role_changed": "Изменена роль участника",
+        "deactivated": "Участник отключён",
+        "reactivated": "Участник снова включён"
+      },
+      "auth": {
+        "sign_in": "Вход",
+        "sign_in_failed": "Неудачный вход",
+        "sign_out": "Выход",
+        "second_factor_failed": "Неверный код",
+        "second_factor_locked": "Второй шаг заблокирован",
+        "recovery_code_used": "Использован код восстановления",
+        "reauthenticated": "Повторное подтверждение входа",
+        "password_changed": "Изменён пароль",
+        "totp_enabled": "Включено приложение-аутентификатор",
+        "totp_replaced": "Заменено приложение-аутентификатор",
+        "totp_disabled": "Выключено приложение-аутентификатор",
+        "recovery_codes_regenerated": "Созданы новые коды восстановления",
+        "passkey_added": "Добавлен ключ доступа",
+        "passkey_removed": "Удалён ключ доступа",
+        "session_revoked": "Завершён сеанс на устройстве",
+        "other_sessions_revoked": "Завершены другие сеансы",
+        "owner_created": "Создан аккаунт владельца",
+        "owner_recovered": "Восстановлен аккаунт владельца"
+      },
+      "profile": {
+        "updated": "Изменён профиль"
+      },
+      "settings": {
+        "store_updated": "Изменены настройки магазина"
+      },
+      "sandbox": {
+        "created": "Вход в демо",
+        "switched_user": "Смена пользователя"
+      }
+    },
+    "details": {
+      "transition": "{from} → {to}",
+      "inBulk": "{transition}, массово",
+      "rows": "{count, plural, one {# строка} few {# строки} many {# строк} other {# строки}}",
+      "rowsCut": "Первые {count, number} строк",
+      "fields": "Изменено: {fields}",
+      "variants": "{count, plural, one {# вариант} few {# варианта} many {# вариантов} other {# варианта}}",
+      "image": "{width} × {height} px",
+      "position": "Место {from} → {to}",
+      "invited": "Роль: {role}",
+      "joined": "Роль: {role}",
+      "method": {
+        "password": "С паролем",
+        "passkey": "С ключом доступа"
+      },
+      "remaining": "{count, plural, =0 {Кодов не осталось} one {Остался # код} few {Осталось # кода} many {Осталось # кодов} other {Осталось # кода}}",
+      "devices": "{count, plural, =0 {Других устройств нет} one {# другое устройство} few {# других устройства} many {# других устройств} other {# другого устройства}}"
+    },
+    "fields": {
+      "name": "название",
+      "slug": "адрес",
+      "collection": "коллекция",
+      "basePrice": "базовая цена",
+      "tags": "теги",
+      "description": "описание",
+      "locale": "язык",
+      "theme": "тема",
+      "storeName": "название магазина",
+      "supportEmail": "email поддержки",
+      "timezone": "часовой пояс",
+      "lowStockDefault": "порог малого остатка"
+    },
+    "empty": {
+      "title": "Записей нет",
+      "body": "По этим фильтрам пока ничего нет."
+    },
+    "pager": {
+      "label": "Страницы",
+      "range": "{from, number}–{to, number} из {total, number}",
+      "previous": "Предыдущая страница",
+      "next": "Следующая страница",
+      "page": "Страница {page}",
+      "size": "Записей на странице",
+      "sizeOption": "{size} на странице"
+    }
   }
 }

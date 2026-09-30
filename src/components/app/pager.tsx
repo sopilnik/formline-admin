@@ -11,7 +11,7 @@ const OFF = 'grid h-[30px] min-w-[30px] place-items-center text-border-strong'
 
 type Props = {
   /** The list's own words ("Orders per page", "Customers per page"); the other keys read the same. */
-  namespace: 'orders.pager' | 'products.pager' | 'customers.pager' | 'outbox.pager'
+  namespace: 'orders.pager' | 'products.pager' | 'customers.pager' | 'outbox.pager' | 'activity.pager'
   /** The id of the page-size select. */
   sizeId: string
   page: number
