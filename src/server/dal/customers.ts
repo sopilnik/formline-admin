@@ -1,7 +1,7 @@
 import 'server-only'
 import { and, asc, count, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm'
 import type { CustomersQuery } from '@/lib/customers/query'
-import { REVENUE_STATUSES } from '@/lib/orders/status'
+import { REVENUE_STATUSES, type OrderStatus } from '@/lib/orders/status'
 import { pageCount } from '@/lib/pagination'
 import { containsPattern } from '@/server/db/like'
 import { customers, orders } from '@/server/db/schema'
@@ -71,4 +71,55 @@ export async function listCustomers(tx: Tx, workspaceId: string, query: Customer
   const total = totalRow?.n ?? 0
   const filtered = filteredRow?.n ?? 0
   return { rows, total, filtered, page: query.page, pages: pageCount(filtered, query.size) }
+}
+
+export type CustomerOrder = { id: string; number: number; placedAt: Date; totalCents: number; status: OrderStatus }
+
+export type CustomerDetail = {
+  id: string; name: string; email: string; city: string | null; country: string | null; notes: string; createdAt: Date
+  /** Every order; the revenue orders and what they brought, as the list counts them. */
+  orders: number; revenueOrders: number; spentCents: number
+  firstOrderAt: Date | null; lastOrderAt: Date | null
+  /** The latest orders, at most CUSTOMER_ORDERS_SHOWN. */
+  recent: CustomerOrder[]
+}
+
+/** The customer page lists this many orders; the orders list, searched by the email, has the rest. */
+export const CUSTOMER_ORDERS_SHOWN = 50
+
+/** One customer with the figures and the orders the page shows (spec §8.5); each query reads one table. */
+export async function getCustomer(tx: Tx, workspaceId: string, id: string): Promise<CustomerDetail | null> {
+  const [customer] = await tx.select({
+    id: customers.id, name: customers.name, email: customers.email, city: customers.city, country: customers.country,
+    notes: customers.notes, createdAt: customers.createdAt,
+  }).from(customers).where(and(eq(customers.workspaceId, workspaceId), eq(customers.id, id)))
+  if (!customer) return null
+  const own = and(eq(orders.workspaceId, workspaceId), eq(orders.customerId, id))
+  const [figures] = await tx.select({
+    orders: ordersSql,
+    revenueOrders: sql<number>`(count(*) filter (where ${orders.status} in (${revenueStatuses})))::int`,
+    spentCents: spentSql,
+    firstOrderAt: sql<Date | null>`min(${orders.placedAt})`.mapWith(orders.placedAt),
+    lastOrderAt: lastSql.mapWith(orders.placedAt),
+  }).from(orders).where(own)
+  const recent = await tx.select({ id: orders.id, number: orders.number, placedAt: orders.placedAt, totalCents: orders.totalCents, status: orders.status })
+    .from(orders).where(own).orderBy(desc(orders.placedAt), desc(orders.id)).limit(CUSTOMER_ORDERS_SHOWN)
+  return {
+    ...customer,
+    orders: figures?.orders ?? 0, revenueOrders: figures?.revenueOrders ?? 0, spentCents: figures?.spentCents ?? 0,
+    firstOrderAt: figures?.firstOrderAt ?? null, lastOrderAt: figures?.lastOrderAt ?? null,
+    recent,
+  }
+}
+
+/** Replaces the notes; last save wins (spec §8.5). Null when the workspace holds no such customer. */
+export async function updateCustomerNotes(tx: Tx, workspaceId: string, id: string, notes: string): Promise<{ name: string; changed: boolean } | null> {
+  const [current] = await tx.select({ name: customers.name, notes: customers.notes }).from(customers)
+    .where(and(eq(customers.workspaceId, workspaceId), eq(customers.id, id)))
+  if (!current) return null
+  if (current.notes === notes) return { name: current.name, changed: false }
+  // A role that may not write customers updates nothing under row-level security: that is not a save.
+  const updated = await tx.update(customers).set({ notes }).where(and(eq(customers.workspaceId, workspaceId), eq(customers.id, id)))
+    .returning({ id: customers.id })
+  return updated.length === 1 ? { name: current.name, changed: true } : null
 }

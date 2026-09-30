@@ -715,6 +715,34 @@
       "page": "Page {page}",
       "size": "Customers per page",
       "sizeOption": "{size} per page"
+    },
+    "detail": {
+      "back": "Customers",
+      "loading": "Loading the customer…",
+      "ordersTitle": "Orders",
+      "inOrders": "{count, plural, one {Show the order in Orders} other {Show all # in Orders}}",
+      "facts": "Summary",
+      "orders": "Orders",
+      "spent": "Total spent",
+      "average": "Average order value",
+      "first": "First order",
+      "last": "Last order",
+      "since": "Customer since",
+      "notes": "Notes",
+      "notesLabel": "Notes about this customer",
+      "notesHint": "Seen by the team only. Up to 2,000 characters.",
+      "saveNotes": "Save notes",
+      "saving": "Saving…",
+      "notesSaved": "Notes saved.",
+      "notesErrors": {
+        "too_long": "Keep the notes to 2,000 characters.",
+        "forbidden": "Your role cannot edit notes.",
+        "not_found": "This customer no longer exists."
+      },
+      "noNotes": "No notes.",
+      "notFoundTitle": "Customer not found",
+      "notFoundBody": "This workspace has no customer at this address.",
+      "allCustomers": "All customers"
     }
   }
 }
