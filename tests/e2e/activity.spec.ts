@@ -62,4 +62,15 @@ test.describe('activity log', () => {
     await expect(managerPage.getByRole('heading', { level: 1, name: /not found/ })).toBeVisible()
     await other.close()
   })
+
+  test('gives the member and the action room before the subject', async ({ page, context }) => {
+    await signInAsSandboxUser(context)
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/activity')
+    const widths = await page.getByRole('table', { name: 'Activity' }).getByRole('columnheader')
+      .evaluateAll(cells => cells.map(cell => Math.round(cell.getBoundingClientRect().width)))
+    // When 9 rem, Who 11 rem, Details 14 rem; Action and Subject share what is left.
+    expect([widths[0], widths[1], widths[4]]).toEqual([144, 176, 224])
+    expect(Math.abs(widths[2]! - widths[3]!)).toBeLessThanOrEqual(1)
+  })
 })

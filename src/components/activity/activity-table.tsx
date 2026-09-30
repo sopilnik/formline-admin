@@ -70,8 +70,8 @@ export function ActivityTable({ entries }: { entries: ActivityEntryView[] }) {
       <table aria-label={t('title')} className="hidden w-full table-fixed border-separate border-spacing-0 text-[13px] @4xl:table">
         <colgroup>
           <col className="w-36" />
-          <col className="w-40" />
-          <col className="w-56" />
+          <col className="w-44" />
+          <col />
           <col />
           <col className="w-56" />
         </colgroup>
