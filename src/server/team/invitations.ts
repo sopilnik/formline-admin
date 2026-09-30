@@ -1,13 +1,15 @@
 import 'server-only'
 import { sql } from 'drizzle-orm'
 import type { Pool } from 'pg'
+import type { Locale } from '@/i18n/locale'
 import type { AssignableRole } from '@/lib/team'
+import type { Theme } from '@/lib/theme'
 import { actorContext, type Actor } from '@/server/actor'
 import { workspaceContext, type NewSession, type Session } from '@/server/auth/sessions'
 import { generateToken, hashToken } from '@/server/auth/tokens'
 import { logActivity } from '@/server/dal/activity'
 import { createInvitation, getPendingInvitation, revokeInvitation, type NewInvitation } from '@/server/dal/invitations'
-import { getSelf } from '@/server/dal/users'
+import { getMemberFactor, getSelf, updateSelfPreferences } from '@/server/dal/users'
 import { getPool } from '@/server/db/pool'
 import { withWorkspace, type Tx } from '@/server/db/with-workspace'
 import { mail } from '@/server/mail/outbox'
@@ -67,19 +69,28 @@ export type Acceptance = ({ ok: true } & NewSession) | { ok: false; reason: 'inv
 /**
  * Accepting an invitation from a session in the same sandbox (his decision, 29 September):
  * `accept_invitation` creates the member and replaces the caller's session with theirs.
+ * The new member takes the language, the theme and the shortcut switch the visitor has,
+ * as "Switch user" hands them over.
  */
 export async function acceptInvitation(
   session: Session,
-  input: { token: string; name: string; userAgentSummary: string | null; ipHash: string | null },
+  input: { token: string; name: string; userAgentSummary: string | null; ipHash: string | null; preferences: { locale: Locale; theme: Theme } },
   pool: Pool = getPool(),
 ): Promise<Acceptance> {
   if (session.workspaceKind !== 'sandbox') return { ok: false, reason: 'invalid' }
   const token = generateToken()
   const id = hashToken(token)
-  const result = await withWorkspace(workspaceContext(session), tx => tx.execute<{ outcome: 'accepted' | 'invalid' | 'taken'; sandbox_expires_at: string | null }>(
-    sql`select outcome, sandbox_expires_at from fa.accept_invitation(${hashToken(input.token)}, ${input.name}, ${session.id}, ${id}, ${input.userAgentSummary}, ${input.ipHash})`), pool)
-  const row = result.rows[0]!
-  if (row.outcome !== 'accepted') return { ok: false, reason: row.outcome }
+  const ctx = workspaceContext(session)
+  const { row, shortcutsEnabled, member } = await withWorkspace(ctx, async tx => {
+    const shortcutsEnabled = (await getSelf(tx, session.userId))?.shortcutsEnabled ?? true
+    const result = await tx.execute<{ outcome: 'accepted' | 'invalid' | 'taken'; user_id: string | null; sandbox_expires_at: string | null }>(
+      sql`select outcome, user_id, sandbox_expires_at from fa.accept_invitation(${hashToken(input.token)}, ${input.name}, ${session.id}, ${id}, ${input.userAgentSummary}, ${input.ipHash})`)
+    const row = result.rows[0]!
+    return { row, shortcutsEnabled, member: row.user_id ? await getMemberFactor(tx, row.user_id) : null }
+  }, pool)
+  if (row.outcome !== 'accepted' || !member) return { ok: false, reason: row.outcome === 'accepted' ? 'invalid' : row.outcome }
+  // Row-level security lets a member write only their own row, so this runs as the new member.
+  await withWorkspace({ ...ctx, userId: member.id, role: member.role }, tx => updateSelfPreferences(tx, member.id, { ...input.preferences, shortcutsEnabled }), pool)
   // A raw statement through the workspace transaction returns a timestamptz column as text (task 3.4).
   return { ok: true, token, id, expiresAt: new Date(row.sandbox_expires_at!) }
 }

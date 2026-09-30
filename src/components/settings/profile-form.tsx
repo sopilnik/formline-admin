@@ -44,6 +44,14 @@ export function ProfileForm({ profile }: { profile: Record<ProfileField, string>
       <SelectField id="profile-theme" name="theme" label={t('theme')} defaultValue={values.theme} error={message('theme')}>
         {THEMES.map(option => <option key={option} value={option}>{theme(option)}</option>)}
       </SelectField>
+      {/* A plain checkbox: after a failed save the form's reset puts back exactly what was ticked. */}
+      <div className="flex flex-col gap-1">
+        <label className="flex min-h-6 items-center gap-2 text-sm font-medium">
+          <input type="checkbox" name="shortcuts" defaultChecked={values.shortcuts === 'on'} aria-describedby="profile-shortcuts-hint" className="size-4 accent-selected" />
+          {t('shortcuts')}
+        </label>
+        <p id="profile-shortcuts-hint" className="pl-6 text-xs text-muted-foreground">{t('shortcutsHint')}</p>
+      </div>
       <div>
         <Button type="submit" disabled={pending}>{pending ? t('saving') : t('save')}</Button>
       </div>

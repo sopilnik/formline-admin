@@ -2,14 +2,17 @@ import { describe, expect, it } from 'vitest'
 import { parseProfile, parseStoreSettings } from '@/lib/settings/form'
 
 describe('parseProfile', () => {
-  it('trims the name and takes a language and a theme', () => {
-    expect(parseProfile({ name: '  Dana Ortiz ', locale: 'ru', theme: 'dark' })).toEqual({ ok: true, data: { name: 'Dana Ortiz', locale: 'ru', theme: 'dark' } })
+  it('trims the name and takes a language, a theme and the shortcut switch', () => {
+    expect(parseProfile({ name: '  Dana Ortiz ', locale: 'ru', theme: 'dark', shortcuts: 'on' }))
+      .toEqual({ ok: true, data: { name: 'Dana Ortiz', locale: 'ru', theme: 'dark', shortcuts: true } })
+    expect(parseProfile({ name: 'Dana Ortiz', locale: 'en', theme: 'light', shortcuts: '' }))
+      .toEqual({ ok: true, data: { name: 'Dana Ortiz', locale: 'en', theme: 'light', shortcuts: false } })
   })
 
   it('names every wrong field', () => {
-    expect(parseProfile({ name: ' ', locale: 'de', theme: 'blue' })).toEqual({ ok: false, fieldErrors: { name: 'required', locale: 'invalid', theme: 'invalid' } })
-    expect(parseProfile({ name: 'ж'.repeat(121), locale: 'en', theme: 'system' })).toEqual({ ok: false, fieldErrors: { name: 'too_long' } })
-    expect(parseProfile({ name: 'ж'.repeat(120), locale: 'en', theme: 'system' }).ok).toBe(true)
+    expect(parseProfile({ name: ' ', locale: 'de', theme: 'blue', shortcuts: '' })).toEqual({ ok: false, fieldErrors: { name: 'required', locale: 'invalid', theme: 'invalid' } })
+    expect(parseProfile({ name: 'ж'.repeat(121), locale: 'en', theme: 'system', shortcuts: '' })).toEqual({ ok: false, fieldErrors: { name: 'too_long' } })
+    expect(parseProfile({ name: 'ж'.repeat(120), locale: 'en', theme: 'system', shortcuts: 'on' }).ok).toBe(true)
   })
 })
 

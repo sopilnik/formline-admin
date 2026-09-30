@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useRef, useState, useSyncExternalStore, useTransition } from 'react'
 import type { NavItem } from '@/components/app/nav'
+import { useShortcuts } from '@/components/app/shortcuts'
 import { useSignOut } from '@/components/app/sign-out'
 import { Button } from '@/components/ui/button'
 import { LOCALES } from '@/i18n/locale'
@@ -84,6 +85,7 @@ function PaletteSearch({ items, access, close }: { items: NavItem[]; access: Pal
   const locale = useLocale()
   const router = useRouter()
   const signOut = useSignOut()
+  const shortcuts = useShortcuts()
   const [, startTransition] = useTransition()
   const [query, setQuery] = useState('')
   const [found, setFound] = useState<{ term: string; results: SearchResults } | null>(null)
@@ -138,6 +140,7 @@ function PaletteSearch({ items, access, close }: { items: NavItem[]; access: Pal
       label: t(`actions.language.${other}`),
       run: () => startTransition(async () => { await setLocaleAction(other) }),
     })),
+    { value: 'action:shortcuts', label: t('actions.shortcuts'), run: shortcuts.showHelp },
     { value: 'action:sign-out', label: t('actions.signOut'), run: signOut.request },
   ]
   const term = searchTerm(query)

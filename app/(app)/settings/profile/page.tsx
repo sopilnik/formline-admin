@@ -26,7 +26,7 @@ export default async function ProfilePage() {
           <h2 id="profile-account" className="font-sans text-[15px] font-semibold">{t('account')}</h2>
           <p className="mt-1 text-[13px] wrap-anywhere text-muted-foreground">{t('email', { email: self.email })}</p>
         </div>
-        <ProfileForm profile={{ name: self.name, locale: self.locale, theme: self.theme }} />
+        <ProfileForm profile={{ name: self.name, locale: self.locale, theme: self.theme, shortcuts: self.shortcutsEnabled ? 'on' : '' }} />
       </section>
     </div>
   )

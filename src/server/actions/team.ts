@@ -1,12 +1,14 @@
 'use server'
 
 import { refresh } from 'next/cache'
-import { headers } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { getLocale } from 'next-intl/server'
 import { z } from 'zod'
 import { formText } from '@/lib/auth-form'
 import { fail, ok, type ActionResult } from '@/lib/result'
 import { ASSIGNABLE_ROLES, EMAIL_MAX, MEMBER_NAME_MAX, type InviteField } from '@/lib/team'
+import { parseTheme, THEME_COOKIE } from '@/lib/theme'
 import { actorOf } from '@/server/actor'
 import { requireSession, setSessionCookie } from '@/server/auth/sessions'
 import { TOKEN_PATTERN } from '@/server/auth/tokens'
@@ -99,7 +101,8 @@ export async function acceptInvitationAction(_previous: AcceptState, form: FormD
   if (!TOKEN_PATTERN.test(token)) return { status: 'error', error: 'invalid', name }
   if (name.length < 1 || [...name].length > MEMBER_NAME_MAX) return { status: 'error', error: 'name_required', name }
   const actor = await actorOf(session)
-  const result = await acceptInvitation(session, { token, name, userAgentSummary: summariseUserAgent((await headers()).get('user-agent')), ipHash: actor.ipHash })
+  const preferences = { locale: await getLocale(), theme: parseTheme((await cookies()).get(THEME_COOKIE)?.value) }
+  const result = await acceptInvitation(session, { token, name, userAgentSummary: summariseUserAgent((await headers()).get('user-agent')), ipHash: actor.ipHash, preferences })
   if (!result.ok) return { status: 'error', error: result.reason, name }
   await setSessionCookie(result.token, result.expiresAt, { demo: true })
   redirect('/overview')

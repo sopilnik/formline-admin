@@ -39,11 +39,21 @@ afterAll(closeAll)
 
 describe('saveProfile', () => {
   it('writes what changed and logs the changed fields', async () => {
-    expect(await saveProfile(owner, { name: 'Dana O.', locale: 'ru', theme: 'system' }, app)).toEqual(['name', 'locale'])
-    const { rows } = await admin.query<{ name: string; locale: string; theme: string }>('select name, locale, theme from fa.users where workspace_id = $1 and id = $2', [owner.workspaceId, owner.userId])
-    expect(rows[0]).toEqual({ name: 'Dana O.', locale: 'ru', theme: 'system' })
-    expect(await saveProfile(owner, { name: 'Dana O.', locale: 'ru', theme: 'system' }, app)).toEqual([])
+    expect(await saveProfile(owner, { name: 'Dana O.', locale: 'ru', theme: 'system', shortcuts: true }, app)).toEqual(['name', 'locale'])
+    const { rows } = await admin.query<{ name: string; locale: string; theme: string; shortcuts_enabled: boolean }>(
+      'select name, locale, theme, shortcuts_enabled from fa.users where workspace_id = $1 and id = $2', [owner.workspaceId, owner.userId])
+    expect(rows[0]).toEqual({ name: 'Dana O.', locale: 'ru', theme: 'system', shortcuts_enabled: true })
+    expect(await saveProfile(owner, { name: 'Dana O.', locale: 'ru', theme: 'system', shortcuts: true }, app)).toEqual([])
     expect(await logged(owner.workspaceId, 'profile.updated')).toEqual([{ actor: owner.userId, details: { changed: ['name', 'locale'] } }])
+  })
+
+  it('turns the single-key shortcuts off and on again', async () => {
+    const shortcuts = async () => (await admin.query<{ on: boolean }>(
+      'select shortcuts_enabled as on from fa.users where workspace_id = $1 and id = $2', [owner.workspaceId, owner.userId])).rows[0]!.on
+    expect(await saveProfile(owner, { name: 'Dana O.', locale: 'ru', theme: 'system', shortcuts: false }, app)).toEqual(['shortcuts'])
+    expect(await shortcuts()).toBe(false)
+    expect(await saveProfile(owner, { name: 'Dana O.', locale: 'ru', theme: 'system', shortcuts: true }, app)).toEqual(['shortcuts'])
+    expect(await shortcuts()).toBe(true)
   })
 })
 

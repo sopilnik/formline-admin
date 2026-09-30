@@ -1,6 +1,6 @@
 // The fields and limits the settings forms share with the server's parsers (spec §5.6: no Zod in the browser).
 
-export const PROFILE_FIELDS = ['name', 'locale', 'theme'] as const
+export const PROFILE_FIELDS = ['name', 'locale', 'theme', 'shortcuts'] as const
 export type ProfileField = (typeof PROFILE_FIELDS)[number]
 export type ProfileIssue = 'required' | 'too_long' | 'invalid'
 

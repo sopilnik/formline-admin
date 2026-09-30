@@ -39,7 +39,7 @@ async function sessionOf(actor: Actor, userId = actor.userId): Promise<Session> 
 const tokenOfLetter = async (workspaceId: string, email: string): Promise<string> => (await admin.query<{ token: string }>(
   "select payload->>'token' as token from fa.outbox_emails where workspace_id = $1 and to_address = $2 and template = 'team.invitation' order by created_at desc limit 1",
   [workspaceId, email])).rows[0]!.token
-const meta = { userAgentSummary: 'Vitest', ipHash: 'ip-hash-of-the-test' }
+const meta = { userAgentSummary: 'Vitest', ipHash: 'ip-hash-of-the-test', preferences: { locale: 'ru', theme: 'system' } } as const
 
 beforeAll(async () => {
   admin = adminPool()
@@ -109,6 +109,18 @@ describe('acceptInvitation', () => {
       "select user_id, payload from fa.notifications where workspace_id = $1 and kind = 'team.invitation_accepted'", [owner.workspaceId])
     expect(bell.rows).toEqual([{ user_id: owner.userId, payload: { name: 'Alex Kim', role: 'manager' } }])
     expect(await acceptInvitation(await sessionOf(owner), { token, name: 'Alex Again', ...meta }, app)).toEqual({ ok: false, reason: 'invalid' })
+  })
+
+  it('hands the visitor\'s language, theme and shortcut switch to the new member', async () => {
+    await inviteMember(owner, { email: 'sam.lee@example.test', role: 'viewer', expiresAt }, app)
+    const token = await tokenOfLetter(owner.workspaceId, 'sam.lee@example.test')
+    const admin2 = (await admin.query<{ id: string }>("select id from fa.users where workspace_id = $1 and role = 'admin'", [owner.workspaceId])).rows[0]!.id
+    await admin.query('update fa.users set shortcuts_enabled = false where workspace_id = $1 and id = $2', [owner.workspaceId, admin2])
+    const result = await acceptInvitation(await sessionOf(owner, admin2), { token, name: 'Sam Lee', ...meta, preferences: { locale: 'ru', theme: 'dark' } }, app)
+    expect(result.ok).toBe(true)
+    const member = await admin.query<{ locale: string; theme: string; shortcuts_enabled: boolean }>(
+      "select locale, theme, shortcuts_enabled from fa.users where workspace_id = $1 and email = 'sam.lee@example.test'", [owner.workspaceId])
+    expect(member.rows[0]).toEqual({ locale: 'ru', theme: 'dark', shortcuts_enabled: false })
   })
 
   it('refuses a revoked invitation and one the email of which became a member meanwhile', async () => {

@@ -61,7 +61,7 @@ test.describe('command palette', () => {
     await page.goto('/overview')
     await page.keyboard.press('Control+k')
     const actions = group(page, 'Actions').getByRole('option')
-    await expect(actions).toHaveText(['Follow the system theme', 'Use the light theme', 'Use the dark theme', 'Switch to Russian', 'Sign out'])
+    await expect(actions).toHaveText(['Follow the system theme', 'Use the light theme', 'Use the dark theme', 'Switch to Russian', 'Keyboard shortcuts', 'Sign out'])
     await expect(group(page, 'Pages').getByRole('option', { name: 'Team' })).toHaveCount(0)
     await actions.filter({ hasText: 'Sign out' }).click()
     await expect(page.getByRole('dialog', { name: 'Sign out and end the demo?' })).toBeVisible()

@@ -33,6 +33,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       locale={await getLocale()}
       user={{ name: self.name, role: session.role, kind: session.workspaceKind }}
       unread={unread}
+      shortcuts={self.shortcutsEnabled}
       banner={session.workspaceKind === 'sandbox' ? <DemoBanner hours={hoursLeft(session.expiresAt)} members={members.filter(m => m.id !== session.userId)} /> : null}
     >
       {children}

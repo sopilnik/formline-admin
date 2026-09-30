@@ -41,6 +41,14 @@ describe('switchUser', () => {
     expect(members).toEqual({ owner: 'en system', admin: 'ru dark', manager: 'en system', viewer: 'en system' })
   })
 
+  it('hands the visitor\'s shortcut switch to the member too', async () => {
+    const { session, users } = await enter()
+    await asSchemaOwner(admin, c => c.query('update fa.users set shortcuts_enabled = false where workspace_id = $1 and id = $2', [session.workspaceId, session.userId]))
+    expect((await switchUser(session, { targetUserId: users.manager!, code: '', ...meta }, { pool: app })).ok).toBe(true)
+    const rows = await admin.query<{ role: string; on: boolean }>('select role, shortcuts_enabled as on from fa.users where workspace_id = $1', [session.workspaceId])
+    expect(Object.fromEntries(rows.rows.map(r => [r.role, r.on]))).toEqual({ owner: false, admin: true, manager: false, viewer: true })
+  })
+
   it('replaces the session with one of the target user and logs the switch', async () => {
     const { session, token, users } = await enter()
     const result = await switchUser(session, { targetUserId: users.viewer!, code: '', ...meta }, { pool: app })

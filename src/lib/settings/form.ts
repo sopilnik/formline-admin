@@ -3,14 +3,17 @@ import { LOCALES, type Locale } from '@/i18n/locale'
 import { LOW_STOCK_MAX, NAME_MAX, STORE_NAME_MAX, SUPPORT_EMAIL_MAX, timeZones, type ProfileField, type ProfileIssue, type StoreField, type StoreIssue } from '@/lib/settings/fields'
 import { THEMES, type Theme } from '@/lib/theme'
 
-export type Profile = { name: string; locale: Locale; theme: Theme }
+export type Profile = { name: string; locale: Locale; theme: Theme; shortcuts: boolean }
 export type StoreSettingsInput = { storeName: string; supportEmail: string; timezone: string; lowStockDefault: number }
 
 type Parsed<T, F extends string, I extends string> = { ok: true; data: T } | { ok: false; fieldErrors: Partial<Record<F, I>> }
 
 const length = (value: string): number => [...value].length
 
-/** The profile form (spec §8.8): a name of 1 to 120 characters, one of the two languages, one of the three themes. */
+/**
+ * The profile form (spec §8.8): a name of 1 to 120 characters, one of the two languages, one of the three themes, and the
+ * single-key shortcuts on or off — a checkbox, which a form sends only when it is ticked.
+ */
 export function parseProfile(values: Record<ProfileField, string>): Parsed<Profile, ProfileField, ProfileIssue> {
   const fieldErrors: Partial<Record<ProfileField, ProfileIssue>> = {}
   const name = values.name.trim()
@@ -21,7 +24,7 @@ export function parseProfile(values: Record<ProfileField, string>): Parsed<Profi
   const theme = z.enum(THEMES).safeParse(values.theme)
   if (!theme.success) fieldErrors.theme = 'invalid'
   if (Object.keys(fieldErrors).length > 0 || !locale.success || !theme.success) return { ok: false, fieldErrors }
-  return { ok: true, data: { name, locale: locale.data, theme: theme.data } }
+  return { ok: true, data: { name, locale: locale.data, theme: theme.data, shortcuts: values.shortcuts === 'on' } }
 }
 
 /**

@@ -491,7 +491,9 @@
         "too_long": "Keep the name to 120 characters.",
         "invalid": "Choose one of the options.",
         "forbidden": "Your role cannot change the profile."
-      }
+      },
+      "shortcuts": "Single-key shortcuts",
+      "shortcutsHint": "/ searches the page, g and a letter moves between pages, ? lists them all. Ctrl+K and ⌘K work either way."
     },
     "store": {
       "title": "Store",
@@ -1163,7 +1165,8 @@
       "storeName": "store name",
       "supportEmail": "support email",
       "timezone": "time zone",
-      "lowStockDefault": "low-stock threshold"
+      "lowStockDefault": "low-stock threshold",
+      "shortcuts": "keyboard shortcuts"
     },
     "empty": {
       "title": "No entries",
@@ -1264,7 +1267,8 @@
         "en": "Switch to English",
         "ru": "Switch to Russian"
       },
-      "signOut": "Sign out"
+      "signOut": "Sign out",
+      "shortcuts": "Keyboard shortcuts"
     },
     "orderLabel": "#{number} · {customer}",
     "searching": "Searching…",
@@ -1275,5 +1279,14 @@
       "open": "Enter to open",
       "close": "Esc to close"
     }
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "intro": "Single keys work while no field has the focus.",
+    "off": "Single-key shortcuts are off. <profile>Turn them on in your profile</profile>; the palette works either way.",
+    "palette": "Open the search and commands",
+    "search": "Search on this page",
+    "goTo": "Go to {page}",
+    "help": "Show this list"
   }
 }
