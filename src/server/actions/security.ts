@@ -2,8 +2,9 @@
 
 import { refresh } from 'next/cache'
 import { z } from 'zod'
-import { failureState, formText, type FormState } from '@/lib/auth-form'
+import { failureState, formText, type AuthError, type FormState } from '@/lib/auth-form'
 import { fail, ok, type ActionResult } from '@/lib/result'
+import { disableOwnTotp, enableOwnTotp, regenerateOwnRecoveryCodes } from '@/server/auth/self-factors'
 import { changeOwnPassword, revokeOtherSessions, revokeOwnSession } from '@/server/auth/self-security'
 import { requireSession } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'
@@ -39,4 +40,35 @@ export async function revokeOtherSessionsAction(): Promise<ActionResult<{ count:
   const count = await revokeOtherSessions(session, { ip: await getClientIp() })
   refresh()
   return ok({ count })
+}
+
+/** Settings → Security → Authenticator app: turn it on or replace it with the key the page showed (spec §8.8). */
+export async function enableTotpAction(_previous: FormState<'code'>, form: FormData): Promise<FormState<'code'>> {
+  const session = await requireSession()
+  if (!can(session.role, 'self.manage', session.workspaceKind)) return { status: 'error', error: 'generic' }
+  const result = await enableOwnTotp(session, { secret: formText(form, 'totpSecret'), code: formText(form, 'code'), ip: await getClientIp() })
+  if (!result.ok) return failureState(result)
+  refresh()
+  return { status: 'done', recoveryCodes: result.recoveryCodes ?? undefined }
+}
+
+/** "Turn off" the authenticator. */
+export async function disableTotpAction(): Promise<{ ok: true } | { ok: false; error: AuthError }> {
+  const session = await requireSession()
+  if (!can(session.role, 'self.manage', session.workspaceKind)) return { ok: false, error: 'generic' }
+  const result = await disableOwnTotp(session, { ip: await getClientIp() })
+  if (!result.ok) return { ok: false, error: result.error }
+  refresh()
+  return { ok: true }
+}
+
+/** "Make new codes": ten recovery codes, shown once. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- useActionState requires this signature; the form carries no fields
+export async function regenerateRecoveryCodesAction(_previous: FormState, _form: FormData): Promise<FormState> {
+  const session = await requireSession()
+  if (!can(session.role, 'self.manage', session.workspaceKind)) return { status: 'error', error: 'generic' }
+  const result = await regenerateOwnRecoveryCodes(session, { ip: await getClientIp() })
+  if (!result.ok) return failureState(result)
+  refresh()
+  return { status: 'done', recoveryCodes: result.recoveryCodes }
 }

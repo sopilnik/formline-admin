@@ -433,6 +433,41 @@
         "revoked": "The device is signed out.",
         "revokedOthers": "{count, plural, =0 {There were no other devices.} one {# other device is signed out.} other {# other devices are signed out.}}",
         "failed": "The device could not be signed out. Try again."
+      },
+      "authenticator": {
+        "title": "Authenticator app",
+        "on": "On",
+        "off": "Off",
+        "introOn": "Codes from your authenticator app are your second step at sign-in.",
+        "introOff": "A second step at sign-in: a six-digit code from an app on your phone.",
+        "confirmFirst": "Confirm it's you above to change the authenticator.",
+        "enable": "Turn on",
+        "replace": "Replace the authenticator",
+        "replaceStart": "Replace the authenticator…",
+        "saving": "Checking the code…",
+        "cancel": "Cancel",
+        "disable": "Turn off…",
+        "disableTitle": "Turn off the authenticator app?",
+        "disableBody": "Its codes stop working at once, and your other devices are signed out.",
+        "disableConfirm": "Turn off",
+        "lastFactor": "It is your only second factor: add a passkey before you turn it off.",
+        "enabled": "Authenticator app turned on. Your other devices are signed out.",
+        "replaced": "Authenticator app replaced. Your other devices are signed out.",
+        "disabled": "Authenticator app turned off.",
+        "codesDone": "I have saved the codes"
+      },
+      "recoveryCodes": {
+        "title": "Recovery codes",
+        "remaining": "{count, plural, =0 {No unused codes left.} one {# unused code left of 10.} other {# unused codes left of 10.}}",
+        "noFactor": "Recovery codes stand in for a lost second factor; they come with the authenticator app.",
+        "confirmFirst": "Confirm it's you above to make new ones.",
+        "make": "Make new codes…",
+        "confirmTitle": "Make new recovery codes?",
+        "confirmBody": "The ten new codes replace every old one, used or not.",
+        "cancel": "Cancel",
+        "confirm": "Make new codes",
+        "making": "Making…",
+        "done": "I have saved the codes"
       }
     },
     "tabs": {
