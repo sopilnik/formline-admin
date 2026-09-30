@@ -36,8 +36,9 @@ export function AuthenticatorSection({ enabled, recent, canDisable, secret, qr }
   // until a new success; the codes of a success show until they are closed.
   const [replacingAfter, setReplacingAfter] = useState<FormState<'code'> | null>(null)
   const [closed, setClosed] = useState<FormState<'code'> | null>(null)
-  // A form opened after a result does not show that result's error; an error from a submit inside it is a new state.
-  const shown = state === replacingAfter ? (IDLE as FormState<'code'>) : state
+  // A form opened after a result does not show that result's error, whether it is the Replace form or the Off form that
+  // appears after "Turn off"; an error from a submit inside it is a new state.
+  const shown = state === replacingAfter || state === closed ? (IDLE as FormState<'code'>) : state
   const errorFor = useErrorText(shown)
   useFocusOnError(state, 'totp', 'code')
   const settle = useEffectEvent((result: FormState<'code'>) => {
