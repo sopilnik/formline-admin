@@ -9,8 +9,8 @@ const SYSTEMS: [RegExp, string][] = [
 const pick = (ua: string, list: [RegExp, string][], fallback: string): string =>
   list.find(([pattern]) => pattern.test(ua))?.[1] ?? fallback
 
-/** "Chrome on Linux": enough to recognise a device in a session list or a sign-in letter, nothing more. */
+/** "Chrome, Linux": enough to recognise a device in a session list or a sign-in letter, and the same in every language. */
 export function summariseUserAgent(ua: string | null): string | null {
   if (!ua) return null
-  return `${pick(ua, BROWSERS, 'Browser')} on ${pick(ua, SYSTEMS, 'an unknown system')}`
+  return `${pick(ua, BROWSERS, 'Browser')}, ${pick(ua, SYSTEMS, 'unknown system')}`
 }

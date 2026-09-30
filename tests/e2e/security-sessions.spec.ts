@@ -15,7 +15,7 @@ const otherDevice = (workspaceId: string, userId: string, agent: string) => asSc
 test.describe('security settings in a sandbox', () => {
   test('explains the password, lists the devices and passes axe', async ({ page, context }) => {
     const { workspaceId, userId } = await signInAsSandboxUser(context)
-    await otherDevice(workspaceId, userId, 'Safari on iOS')
+    await otherDevice(workspaceId, userId, 'Safari, iOS')
     await page.goto('/settings/security')
     await expect(page.getByText(/Demo members enter through the demo and have no password/)).toBeVisible()
     await expect(page.getByLabel('New password')).toHaveCount(0)
@@ -28,12 +28,12 @@ test.describe('security settings in a sandbox', () => {
 
   test('signs out one other device, then all the others, and logs both', async ({ page, context }) => {
     const { workspaceId, userId } = await signInAsSandboxUser(context)
-    await otherDevice(workspaceId, userId, 'Safari on iOS')
-    await otherDevice(workspaceId, userId, 'Firefox on Windows')
+    await otherDevice(workspaceId, userId, 'Safari, iOS')
+    await otherDevice(workspaceId, userId, 'Firefox, Windows')
     await page.goto('/settings/security')
     const devices = page.getByRole('list', { name: 'Signed-in devices' }).getByRole('listitem')
     await expect(devices).toHaveCount(3)
-    await page.getByRole('button', { name: 'Sign out Safari on iOS' }).click()
+    await page.getByRole('button', { name: 'Sign out Safari, iOS' }).click()
     await expect(page.getByRole('region', { name: 'Notifications' }).getByText('The device is signed out.')).toBeVisible()
     await expect(devices).toHaveCount(2)
     await page.getByRole('button', { name: 'Sign out of all other devices' }).click()

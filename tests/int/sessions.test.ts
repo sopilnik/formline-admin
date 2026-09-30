@@ -11,7 +11,7 @@ let app: pg.Pool
 let sandbox: string
 let member: string
 
-const meta = { userAgentSummary: 'Chrome on Linux', ipHash: null }
+const meta = { userAgentSummary: 'Chrome, Linux', ipHash: null }
 
 beforeAll(async () => {
   admin = adminPool()

@@ -14,7 +14,7 @@ async function writeLetters(workspaceId: string): Promise<string> {
       [workspaceId, to, template, JSON.stringify(payload), hoursAgo])
     await insert('noah.becker@formline.example', 'auth.recovery_code_used', { at: new Date(Date.now() - 3 * 3_600_000).toISOString(), remaining: 9, name: 'Noah Becker', locale: 'en' }, 3)
     await insert('dana.ortiz@formline.example', 'auth.second_factor_locked', { at: new Date(Date.now() - 2 * 3_600_000).toISOString(), name: 'Dana Ortiz', locale: 'en' }, 2)
-    const newest = await insert('dana.ortiz@formline.example', 'auth.new_sign_in', { at: new Date().toISOString(), device: 'Firefox on Linux', name: 'Dana Ortiz', locale: 'ru' }, 1)
+    const newest = await insert('dana.ortiz@formline.example', 'auth.new_sign_in', { at: new Date().toISOString(), device: 'Firefox, Linux', name: 'Dana Ortiz', locale: 'ru' }, 1)
     return newest.rows[0]!.id
   })
 }
@@ -52,7 +52,7 @@ test.describe('outbox', () => {
     await expect(letter).toContainText('FromFormline <support@formline.example>')
     await expect(letter).toContainText('Todana.ortiz@formline.example')
     await expect(letter).toContainText('Здравствуйте, Dana Ortiz!')
-    await expect(letter).toContainText('с устройства Firefox on Linux')
+    await expect(letter).toContainText('с устройства Firefox, Linux')
     await expectNoSeriousA11yViolationsInBothThemes(page)
     await letter.getByRole('link', { name: 'Проверить сеансы' }).click()
     await expect(page).toHaveURL(/\/settings\/security$/)

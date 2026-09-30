@@ -5,10 +5,10 @@ const tz = 'Europe/Berlin'
 
 describe('letterContent', () => {
   it('writes the new sign-in letter in the recipient’s language, with the date in the store zone and the device', () => {
-    expect(letterContent('auth.new_sign_in', { at: '2026-09-29T12:05:00.000Z', device: 'Chrome on macOS', name: 'Dana Ortiz', locale: 'ru' }, tz)).toEqual({
+    expect(letterContent('auth.new_sign_in', { at: '2026-09-29T12:05:00.000Z', device: 'Chrome, macOS', name: 'Dana Ortiz', locale: 'ru' }, tz)).toEqual({
       locale: 'ru', name: 'Dana Ortiz',
       subject: { key: 'newSignIn.subject' },
-      paragraphs: [{ key: 'newSignIn.body', values: { date: '29 сент., 14:05', device: 'Chrome on macOS' } }, { key: 'newSignIn.ifNotYou' }],
+      paragraphs: [{ key: 'newSignIn.body', values: { date: '29 сент., 14:05', device: 'Chrome, macOS' } }, { key: 'newSignIn.ifNotYou' }],
       action: { key: 'newSignIn.action', href: '/settings/security' },
     })
   })

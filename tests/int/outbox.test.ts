@@ -36,13 +36,13 @@ describe('securityNotice', () => {
   it('writes the bell entry and a letter in the recipient’s language that greets them by name', async () => {
     await withWorkspace(owner, async tx => {
       const self = (await getSelf(tx, owner.userId!))!
-      await securityNotice(tx, owner.workspaceId, self, 'auth.new_sign_in', { device: 'Firefox on Linux' })
+      await securityNotice(tx, owner.workspaceId, self, 'auth.new_sign_in', { device: 'Firefox, Linux' })
     }, app)
     const { rows } = await admin.query<{ to_address: string; template: string; payload: Record<string, unknown> }>(
       'select to_address, template, payload from fa.outbox_emails where workspace_id = $1', [owner.workspaceId])
     expect(rows).toHaveLength(1)
     expect(rows[0]).toMatchObject({ to_address: 'dana.ortiz@formline.example', template: 'auth.new_sign_in' })
-    expect(rows[0]!.payload).toMatchObject({ device: 'Firefox on Linux', name: 'Dana Ortiz', locale: 'ru' })
+    expect(rows[0]!.payload).toMatchObject({ device: 'Firefox, Linux', name: 'Dana Ortiz', locale: 'ru' })
     expect(Number.isNaN(Date.parse(String(rows[0]!.payload.at)))).toBe(false)
     const bell = await admin.query<{ payload: Record<string, unknown> }>(
       "select payload from fa.notifications where workspace_id = $1 and kind = 'auth.new_sign_in'", [owner.workspaceId])
