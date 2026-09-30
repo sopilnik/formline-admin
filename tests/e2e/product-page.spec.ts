@@ -128,4 +128,12 @@ test.describe('product page', () => {
     const item = page.getByRole('list', { name: 'Variants' }).getByRole('listitem').filter({ hasText: variant.sku })
     await expect(item).toContainText(`${variant.stock} in stock`)
   })
+
+  test('sends the title inside the head, with the page', async ({ page, context }) => {
+    await signInAsSandboxUser(context)
+    const html = await (await page.request.get('/products/after-dark')).text()
+    expect(html).toContain('<title>After Dark · Formline Admin</title>')
+    // Streamed behind the page, the title left the tab without one for up to 0.3 s after a refresh or a navigation.
+    expect(html.indexOf('<title>')).toBeLessThan(html.indexOf('</head>'))
+  })
 })

@@ -16,6 +16,10 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   output: 'standalone',
   poweredByHeader: false,
+  // Metadata arrives with the page for every browser, not streamed after it: a streamed title left the tab without one for
+  // up to 0.3 s after a refresh or a navigation. A page and its title read the same cached query, so nothing waits
+  // longer, and the panel is never indexed, so there is no crawler to tell apart.
+  htmlLimitedBots: /.*/,
   reactStrictMode: true,
   // pino loads its transports at run time and @node-rs/argon2 is a native module; bundling breaks both.
   serverExternalPackages: ['pino', '@node-rs/argon2'],
