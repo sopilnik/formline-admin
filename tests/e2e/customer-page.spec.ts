@@ -22,6 +22,8 @@ test.describe('customer page', () => {
     await expect(page.getByRole('heading', { level: 1, name: customer.name })).toBeVisible()
     await expect(page).toHaveTitle(`${customer.name} · Formline Admin`)
     await expect(page.getByText(customer.email)).toBeVisible()
+    await expect(page.getByText(customer.email)).toHaveCSS('word-break', 'normal')
+    await expect(page.getByText(customer.email)).toHaveCSS('overflow-wrap', 'anywhere')
     const orders = page.getByRole('list', { name: 'Orders' })
     await expect(orders.getByRole('listitem')).toHaveCount(customer.orders)
     await expect(orders.getByRole('listitem').first().getByRole('link')).toHaveText(`#${customer.latest}`)

@@ -20,6 +20,7 @@ test.describe('second factors in a sandbox', () => {
     const group = authenticator.getByRole('group', { name: 'Authenticator app' })
     await expect(group).toHaveCSS('border-top-width', '0px')
     expect((await group.locator('legend').boundingBox())!.width).toBeLessThanOrEqual(1)
+    await expect(page.locator('#totp-secret')).toHaveCSS('word-break', 'normal')
     await expectNoSeriousA11yViolationsInBothThemes(page)
     const totp: Totp = { secret: await readTotpSecret(page), lastStep: 0 }
     await authenticator.getByLabel('6-digit code').fill('000000')

@@ -86,4 +86,16 @@ test.describe('invitations', () => {
     await expect(other.getByRole('button', { name: 'Accept and continue' })).toHaveCount(0)
     await stranger.close()
   })
+
+  test('wraps a long address inside the toast on a phone', async ({ page, context }) => {
+    await signInAsSandboxUser(context)
+    await page.setViewportSize({ width: 375, height: 800 })
+    await page.goto('/team')
+    const email = 'alexandra.konstantinopolskaya@example.test'
+    await page.getByLabel('Email').fill(email)
+    await page.getByRole('button', { name: 'Send invitation' }).click()
+    const toast = page.getByRole('region', { name: 'Notifications' }).getByText(`The invitation to ${email} is in the Outbox.`)
+    await expect(toast).toBeVisible()
+    expect(await toast.evaluate(title => title.scrollWidth <= title.clientWidth)).toBe(true)
+  })
 })

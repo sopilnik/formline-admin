@@ -34,7 +34,7 @@ function ToastList({ closeLabel }: { closeLabel: string }) {
     >
       <Toast.Content className="flex items-start gap-3 p-3">
         <div className="min-w-0 flex-1">
-          <Toast.Title className="font-medium" />
+          <Toast.Title className="font-medium wrap-anywhere" />
           <Toast.Description className="text-muted-foreground" />
         </div>
         <Toast.Close

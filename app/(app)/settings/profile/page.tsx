@@ -24,7 +24,7 @@ export default async function ProfilePage() {
       <section aria-labelledby="profile-account" className="flex max-w-2xl flex-col gap-4 rounded-lg border bg-card p-5">
         <div>
           <h2 id="profile-account" className="font-sans text-[15px] font-semibold">{t('account')}</h2>
-          <p className="mt-1 text-[13px] break-all text-muted-foreground">{t('email', { email: self.email })}</p>
+          <p className="mt-1 text-[13px] wrap-anywhere text-muted-foreground">{t('email', { email: self.email })}</p>
         </div>
         <ProfileForm profile={{ name: self.name, locale: self.locale, theme: self.theme }} />
       </section>

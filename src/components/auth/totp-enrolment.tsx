@@ -25,7 +25,7 @@ export function TotpEnrolment({ id, secret, qr, error, bare = false }: Props) {
         {qr}
         <div className="flex min-w-0 flex-col gap-1 self-stretch">
           <p className="text-sm font-medium">{t('totp.key')}</p>
-          <code id="totp-secret" className="font-mono text-sm break-all">{secret}</code>
+          <code id="totp-secret" className="font-mono text-sm">{secret}</code>
         </div>
       </div>
       <input type="hidden" name="totpSecret" value={secret} />

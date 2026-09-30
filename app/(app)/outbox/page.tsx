@@ -51,7 +51,7 @@ export default async function OutboxPage({ searchParams }: { searchParams: Promi
               {letters.map(letter => (
                 <li key={letter.id} className="group/row relative flex flex-col gap-0.5 border-b px-3 py-3 last:border-b-0 hover:bg-secondary">
                   <Link href={`/outbox/${letter.id}`} prefetch={false} lang={letter.lang} className={`${SUBJECT_LINK} w-fit text-sm`}>{letter.subject}</Link>
-                  <span className="text-xs break-all text-muted-foreground tabular-nums">{t('toLine', { to: letter.to, sent: letter.sent })}</span>
+                  <span className="text-xs wrap-anywhere text-muted-foreground tabular-nums">{t('toLine', { to: letter.to, sent: letter.sent })}</span>
                 </li>
               ))}
             </ul>

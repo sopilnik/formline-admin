@@ -18,6 +18,10 @@ test.describe('settings', () => {
     await expect(tabs.getByRole('link')).toHaveText(['Profile', 'Security', 'Store'])
     await expect(tabs.getByRole('link', { name: 'Profile' })).toHaveAttribute('aria-current', 'page')
     await expect(page.getByText('Signed in as dana.ortiz@formline.example. The email cannot be changed.')).toBeVisible()
+    // Only the address may break inside the sentence, never an ordinary word.
+    const account = page.getByText('Signed in as dana.ortiz@formline.example. The email cannot be changed.')
+    await expect(account).toHaveCSS('word-break', 'normal')
+    await expect(account).toHaveCSS('overflow-wrap', 'anywhere')
     await expectNoSeriousA11yViolationsInBothThemes(page)
   })
 

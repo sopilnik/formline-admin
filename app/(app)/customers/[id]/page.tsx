@@ -74,7 +74,7 @@ export default async function CustomerPage({ params }: Params) {
       </Link>
       <div className="min-w-0">
         <h1 className="text-3xl font-bold tracking-tight break-words">{customer.name}</h1>
-        <p className="mt-1 text-[13px] break-all text-muted-foreground">{location ? `${customer.email} · ${location}` : customer.email}</p>
+        <p className="mt-1 text-[13px] wrap-anywhere text-muted-foreground">{location ? `${customer.email} · ${location}` : customer.email}</p>
       </div>
       <div className="grid items-start gap-5 lg:grid-cols-[2fr_1fr]">
         {/* The summary and the notes come first on a phone; on wide screens the orders take the left column. */}
