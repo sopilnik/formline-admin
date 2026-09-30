@@ -14,7 +14,7 @@ let admin: pg.Pool
 let app: pg.Pool
 
 const ipHash = () => createHash('sha256').update(randomUUID()).digest('hex')
-const meta = { userAgentSummary: 'Vitest', ipHash: null }
+const meta = { userAgentSummary: 'Vitest', ipHash: null, preferences: { locale: 'en' as const, theme: 'system' as const } }
 
 async function enter(): Promise<{ session: Session; token: string; users: Record<string, string> }> {
   const token = generateToken()
@@ -32,6 +32,15 @@ beforeAll(() => {
 afterAll(closeAll)
 
 describe('switchUser', () => {
+  it('hands the visitor\'s language and theme to the member it continues as, and to nobody else', async () => {
+    const { session, users } = await enter()
+    const result = await switchUser(session, { targetUserId: users.admin!, code: '', ...meta, preferences: { locale: 'ru', theme: 'dark' } }, { pool: app })
+    expect(result.ok).toBe(true)
+    const rows = await admin.query<{ role: string; locale: string; theme: string }>('select role, locale, theme from fa.users where workspace_id = $1', [session.workspaceId])
+    const members = Object.fromEntries(rows.rows.map(r => [r.role, `${r.locale} ${r.theme}`]))
+    expect(members).toEqual({ owner: 'en system', admin: 'ru dark', manager: 'en system', viewer: 'en system' })
+  })
+
   it('replaces the session with one of the target user and logs the switch', async () => {
     const { session, token, users } = await enter()
     const result = await switchUser(session, { targetUserId: users.viewer!, code: '', ...meta }, { pool: app })

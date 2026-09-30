@@ -1,11 +1,12 @@
 'use server'
 
-import { headers } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { after } from 'next/server'
 import { getLocale } from 'next-intl/server'
 import { z } from 'zod'
 import { failureState, formText, type FormState } from '@/lib/auth-form'
+import { parseTheme, THEME_COOKIE } from '@/lib/theme'
 import { requireSession, setSessionCookie } from '@/server/auth/sessions'
 import { summariseUserAgent } from '@/server/auth/user-agent'
 import { authConfig } from '@/server/config'
@@ -52,7 +53,11 @@ export async function switchUserAction(_previous: FormState<'code'>, form: FormD
   const target = z.uuid().safeParse(formText(form, 'user'))
   if (!target.success) return { status: 'error', error: 'generic' }
   const meta = await visitorMeta()
-  const result = await switchUser(session, { targetUserId: target.data, code: formText(form, 'code'), userAgentSummary: meta.userAgentSummary, ipHash: meta.ipHash })
+  const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value)
+  const result = await switchUser(session, {
+    targetUserId: target.data, code: formText(form, 'code'), userAgentSummary: meta.userAgentSummary, ipHash: meta.ipHash,
+    preferences: { locale: meta.locale, theme },
+  })
   if (!result.ok) return failureState(result)
   await setSessionCookie(result.token, result.expiresAt, { demo: true })
   redirect('/overview')
