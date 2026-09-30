@@ -27,6 +27,19 @@ describe('letterContent', () => {
     expect(letterContent('auth.second_factor_locked', {}, tz).action?.href).toBe('/settings/security')
   })
 
+  it('writes the invitation for someone who is not a member yet, with its link and the invited role', () => {
+    const token = 'abcdefghijklmnopqrstuvwxyz234567'
+    expect(letterContent('team.invitation', { inviter: 'Dana Ortiz', role: 'manager', token, locale: 'en' }, tz)).toEqual({
+      locale: 'en', name: null,
+      subject: { key: 'invitation.subject', values: { inviter: 'Dana Ortiz' } },
+      paragraphs: [{ key: 'invitation.body.manager', values: { inviter: 'Dana Ortiz' } }, { key: 'invitation.note' }],
+      action: { key: 'invitation.action', href: `/invite/${token}` },
+    })
+    const odd = letterContent('team.invitation', { inviter: 'Dana Ortiz', role: 'owner', token: '../settings' }, tz)
+    expect(odd.paragraphs[0]!.key).toBe('invitation.body.unknown')
+    expect(odd.action).toBeNull()
+  })
+
   it('falls back instead of failing on a malformed payload or an unknown template', () => {
     expect(letterContent('auth.second_factor_locked', { at: 'yesterday', locale: 'de' }, tz).paragraphs[0])
       .toEqual({ key: 'secondFactorLocked.body', values: { date: '—' } })

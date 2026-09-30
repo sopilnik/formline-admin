@@ -2,7 +2,7 @@ import { parseLocale, type Locale } from '@/i18n/locale'
 import { formatDateTime } from '@/lib/intl'
 
 /** Every letter the panel writes (spec §9); nothing is ever sent, the outbox keeps them. */
-export const LETTER_TEMPLATES = ['auth.new_sign_in', 'auth.second_factor_locked', 'auth.recovery_code_used'] as const
+export const LETTER_TEMPLATES = ['auth.new_sign_in', 'auth.second_factor_locked', 'auth.recovery_code_used', 'team.invitation'] as const
 export type LetterTemplate = (typeof LETTER_TEMPLATES)[number]
 
 /** A dictionary key under `letters` with its values, already formatted. */
@@ -13,6 +13,8 @@ export type LetterKey =
   | 'newSignIn.subject' | 'newSignIn.body' | 'newSignIn.bodyNoDevice' | 'newSignIn.ifNotYou' | 'newSignIn.action'
   | 'secondFactorLocked.subject' | 'secondFactorLocked.body' | 'secondFactorLocked.ifNotYou' | 'secondFactorLocked.action'
   | 'recoveryCodeUsed.subject' | 'recoveryCodeUsed.body' | 'recoveryCodeUsed.ifNotYou' | 'recoveryCodeUsed.action'
+  | 'invitation.subject' | 'invitation.body.admin' | 'invitation.body.manager' | 'invitation.body.viewer' | 'invitation.body.unknown'
+  | 'invitation.note' | 'invitation.action'
 
 /** What a letter says, independent of how it is shown: the outbox page renders it with the dictionaries. */
 export type LetterContent = {
@@ -46,6 +48,10 @@ function when(payload: Payload, locale: Locale, timeZone: string): string {
 }
 
 const SECURITY = '/settings/security'
+
+/** An invitation token: 32 characters of lower-case base32, as every token of the panel (src/server/auth/tokens.ts). */
+const INVITATION_TOKEN = /^[a-z2-7]{32}$/
+const ROLES = ['admin', 'manager', 'viewer'] as const
 
 /**
  * Reads a stored letter (spec §9). The payload is what the letter was written with; a missing or
@@ -84,6 +90,18 @@ export function letterContent(template: string, rawPayload: unknown, timeZone: s
         paragraphs: [{ key: 'recoveryCodeUsed.body', values: { date, remaining: count(payload, 'remaining') ?? 0 } }, { key: 'recoveryCodeUsed.ifNotYou' }],
         action: { key: 'recoveryCodeUsed.action', href: SECURITY },
       }
+    case 'team.invitation': {
+      // The letter goes to someone who is not a member yet: no greeting by name.
+      const inviter = text(payload, 'inviter') ?? '—'
+      const role = ROLES.find(r => r === payload.role)
+      const token = text(payload, 'token')
+      return {
+        locale, name: null,
+        subject: { key: 'invitation.subject', values: { inviter } },
+        paragraphs: [{ key: role ? `invitation.body.${role}` : 'invitation.body.unknown', values: { inviter } }, { key: 'invitation.note' }],
+        action: token && INVITATION_TOKEN.test(token) ? { key: 'invitation.action', href: `/invite/${token}` } : null,
+      }
+    }
     default:
       return { locale, name: null, subject: { key: 'unknown.subject' }, paragraphs: [{ key: 'unknown.body' }], action: null }
   }

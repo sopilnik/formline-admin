@@ -244,7 +244,7 @@ describe('functions', () => {
   it('the application may execute exactly the helper functions', async () => {
     const { rows } = await admin.query<{ name: string }>(
       "select p.proname as name from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'fa' and has_function_privilege('app', p.oid, 'execute') order by 1")
-    expect(rows.map(r => r.name)).toEqual(['app_role', 'app_user', 'app_workspace', 'app_workspace_kind', 'auth_session', 'create_owner', 'create_sandbox', 'delete_expired_sandboxes', 'end_sandbox', 'owner_workspace_id', 'purge_housekeeping', 'redeem_owner_recovery', 'reset_sandbox', 'sandbox_sign_in_as'])
+    expect(rows.map(r => r.name)).toEqual(['accept_invitation', 'app_role', 'app_user', 'app_workspace', 'app_workspace_kind', 'auth_session', 'create_owner', 'create_sandbox', 'delete_expired_sandboxes', 'end_sandbox', 'find_invitation', 'owner_workspace_id', 'purge_housekeeping', 'redeem_owner_recovery', 'reset_sandbox', 'sandbox_sign_in_as'])
   })
 
   it('closes a function created later by schema_owner to the application by default', async () => {

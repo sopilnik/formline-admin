@@ -3,6 +3,7 @@ import { notify, type NotificationKind } from '@/server/dal/notifications'
 import type { Self } from '@/server/dal/users'
 import type { Tx } from '@/server/db/with-workspace'
 import { mail } from '@/server/mail/outbox'
+import type { LetterTemplate } from '@/server/mail/transport'
 
 /**
  * A security event the user hears about twice: in the bell and in a letter (spec §8.9, §9).
@@ -12,7 +13,7 @@ export async function securityNotice(
   tx: Tx,
   workspaceId: string,
   user: Pick<Self, 'id' | 'email' | 'name' | 'locale'>,
-  kind: NotificationKind,
+  kind: NotificationKind & LetterTemplate,
   details: Record<string, unknown>,
 ): Promise<void> {
   const payload = { ...details, at: new Date().toISOString() }

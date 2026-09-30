@@ -820,6 +820,17 @@
       "body": "A recovery code was used to sign in to your account on {date}. {remaining, plural, =0 {No codes are left.} one {# code is left.} other {# codes are left.}}",
       "ifNotYou": "If this was not you, change your password and make new recovery codes.",
       "action": "Open the security settings"
+    },
+    "invitation": {
+      "subject": "{inviter} invited you to Formline Admin",
+      "body": {
+        "admin": "{inviter} invited you to join the Formline team as an admin: you will manage the store's orders, catalog, customers and team.",
+        "manager": "{inviter} invited you to join the Formline team as a manager: you will handle the store's orders, catalog and customers.",
+        "viewer": "{inviter} invited you to join the Formline team as a viewer: you will see the store's orders, catalog and customers without changing them.",
+        "unknown": "{inviter} invited you to join the Formline team."
+      },
+      "note": "The link works in the demo sandbox this letter was written in, until the sandbox ends.",
+      "action": "Accept the invitation"
     }
   },
   "team": {
@@ -867,6 +878,55 @@
       "reactivated": "{person} is active again.",
       "notAllowed": "This member cannot be changed.",
       "failed": "The change could not be saved. Try again."
+    },
+    "invite": {
+      "title": "Invite a member",
+      "intro": "The letter with the link goes to the Outbox. Open it there and accept the invitation to continue as the new member.",
+      "email": "Email",
+      "role": "Role",
+      "submit": "Send invitation",
+      "sending": "Sending…",
+      "sent": "The invitation to {email} is in the Outbox.",
+      "errors": {
+        "email_invalid": "Enter an email address such as alex@example.com.",
+        "member": "A member of this team already has this email.",
+        "pending": "This email already has an open invitation. Resend it instead.",
+        "cap": "A sandbox holds at most 20 members and open invitations.",
+        "forbidden": "Your role cannot invite members."
+      }
+    },
+    "invitations": {
+      "title": "Open invitations",
+      "line": "{role} · sent {sent}",
+      "resend": "Resend",
+      "revoke": "Revoke",
+      "resendLabel": "Resend the invitation to {email}",
+      "revokeLabel": "Revoke the invitation to {email}",
+      "resent": "A new letter to {email} is in the Outbox.",
+      "revoked": "The invitation to {email} is revoked.",
+      "failed": "The invitation could not be changed. Try again."
+    }
+  },
+  "invite": {
+    "title": "Invitation to the team",
+    "summary": "{inviter} invited {email} to join the Formline team. Role: {role}.",
+    "continue": "Accepting adds the new member to this sandbox and continues as them; the member you are now stays in the team.",
+    "name": "Your name",
+    "nameHint": "As the team will see it, up to 120 characters.",
+    "accept": "Accept and continue",
+    "accepting": "Accepting…",
+    "unusable": "This invitation cannot be used",
+    "state": {
+      "accepted": "It has already been accepted.",
+      "revoked": "It was revoked.",
+      "expired": "It has expired.",
+      "unknown": "This sandbox has no invitation at this address."
+    },
+    "toOverview": "Go to the overview",
+    "errors": {
+      "name_required": "Enter a name of up to 120 characters.",
+      "invalid": "This invitation can no longer be used.",
+      "taken": "A member of this team already has this email."
     }
   }
 }
