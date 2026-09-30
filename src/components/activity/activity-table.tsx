@@ -15,6 +15,8 @@ function SubjectText({ subject }: { subject: Subject | null }) {
   return subject.href ? <Link href={subject.href} prefetch={false} className={LINK}>{subject.text}</Link> : <span>{subject.text}</span>
 }
 
+type Translate = { (key: string): string; has: (key: string) => boolean }
+
 /** The short detail in words; statuses, roles and field names in the interface language. */
 function DetailText({ detail }: { detail: Detail | null }) {
   const t = useTranslations('activity.details')
@@ -23,25 +25,19 @@ function DetailText({ detail }: { detail: Detail | null }) {
   const role = useTranslations('user.roles')
   const field = useTranslations('activity.fields')
   if (!detail) return null
-  const label = (translate: (key: string) => string, value: string): string => {
-    try {
-      return translate(value)
-    } catch {
-      return value
-    }
-  }
+  const label = (translate: Translate, value: string): string => (translate.has(value) ? translate(value) : value)
   switch (detail.kind) {
     case 'orderStatus':
     case 'productStatus':
     case 'role': {
-      const translate = (detail.kind === 'orderStatus' ? order : detail.kind === 'productStatus' ? product : role) as (key: string) => string
+      const translate = (detail.kind === 'orderStatus' ? order : detail.kind === 'productStatus' ? product : role) as unknown as Translate
       const text = t('transition', { from: label(translate, detail.from), to: label(translate, detail.to) })
       return <>{detail.kind === 'orderStatus' && detail.bulk ? t('inBulk', { transition: text }) : text}</>
     }
     case 'rows':
       return <>{detail.truncated ? t('rowsCut', { count: detail.count }) : t('rows', { count: detail.count })}</>
     case 'fields':
-      return <>{t('fields', { fields: detail.fields.map(name => label(field as (key: string) => string, name)).join(', ') })}</>
+      return <>{t('fields', { fields: detail.fields.map(name => label(field as unknown as Translate, name)).join(', ') })}</>
     case 'variants':
       return <>{t('variants', { count: detail.count })}</>
     case 'image':
@@ -49,9 +45,9 @@ function DetailText({ detail }: { detail: Detail | null }) {
     case 'position':
       return <>{t('position', { from: detail.from, to: detail.to })}</>
     case 'invited':
-      return <>{t('invited', { role: label(role as (key: string) => string, detail.role) })}</>
+      return <>{t('invited', { role: label(role as unknown as Translate, detail.role) })}</>
     case 'joined':
-      return <>{t('joined', { role: label(role as (key: string) => string, detail.role) })}</>
+      return <>{t('joined', { role: label(role as unknown as Translate, detail.role) })}</>
     case 'method':
       return <>{t(`method.${detail.method}`)}</>
     case 'remaining':
