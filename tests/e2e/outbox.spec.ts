@@ -70,9 +70,11 @@ test.describe('outbox', () => {
     const id = await writeLetters(workspaceId)
     await page.goto('/overview')
     await expect(page.getByRole('link', { name: 'Outbox' })).toHaveCount(0)
+    // The general page at both addresses: the letter's own view would offer "All letters", which this role may not open.
     for (const path of ['/outbox', `/outbox/${id}`]) {
       await page.goto(path)
-      await expect(page.getByRole('heading', { level: 1, name: /not found/ })).toBeVisible()
+      await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible()
+      await expect(page.getByRole('link', { name: 'All letters' })).toHaveCount(0)
     }
   })
 })
