@@ -1178,5 +1178,66 @@
       "size": "Entries per page",
       "sizeOption": "{size} per page"
     }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "bell": "Notifications{count, plural, =0 {} one {, # unread} other {, # unread}}",
+    "latest": "Latest notifications",
+    "markAll": "Mark all as read",
+    "all": "All notifications",
+    "empty": "No notifications yet.",
+    "loading": "Loading the notifications…",
+    "failed": "The notifications could not be loaded.",
+    "unread": "Unread",
+    "thisDevice": "This device",
+    "count": "{unread, plural, =0 {All read} one {# unread} other {# unread}} · {total, plural, one {# notification} other {# notifications}}",
+    "markedAll": "Every notification is marked as read.",
+    "kinds": {
+      "order": {
+        "title": "New order #{number}",
+        "detail": "{customer} · {total}"
+      },
+      "lowStock": {
+        "title": "Low stock: {product}",
+        "detail": "{variant} — {stock, number} left, threshold {threshold, number}",
+        "left": "{variant} — {stock, number} left"
+      },
+      "soldOut": {
+        "title": "Sold out: {product}",
+        "detail": "{variant} — none left"
+      },
+      "oversold": {
+        "title": "Oversold: {product}",
+        "detail": "{variant} — {count, number} more ordered than was in stock"
+      },
+      "joined": {
+        "title": "{person} joined the team",
+        "detail": "As {role}",
+        "noRole": "Accepted an invitation"
+      },
+      "signIn": {
+        "title": "New sign-in to your account",
+        "detail": "From {device}",
+        "noDevice": "From an unknown device"
+      },
+      "locked": {
+        "title": "Sign-in locked for an hour",
+        "detail": "A wrong code was entered ten times."
+      },
+      "recovery": {
+        "title": "A recovery code was used",
+        "detail": "{remaining, plural, =0 {No codes left} one {# code left} other {# codes left}}",
+        "detailUnknown": "Make new codes if this was not you."
+      }
+    },
+    "pager": {
+      "label": "Pagination",
+      "range": "{from, number}–{to, number} of {total, number}",
+      "previous": "Previous page",
+      "next": "Next page",
+      "page": "Page {page}",
+      "size": "Notifications per page",
+      "sizeOption": "{size} per page"
+    }
   }
 }

@@ -7,9 +7,9 @@ import type { FrameUser } from '@/components/app/user-menu'
 import type { Locale } from '@/i18n/locale'
 import type { Theme } from '@/lib/theme'
 
-type Props = { items: NavItem[]; collapsed: boolean; theme: Theme; locale: Locale; user: FrameUser; banner?: ReactNode; children: ReactNode }
+type Props = { items: NavItem[]; collapsed: boolean; theme: Theme; locale: Locale; user: FrameUser; unread: number; banner?: ReactNode; children: ReactNode }
 
-export async function AppFrame({ items, collapsed, theme, locale, user, banner, children }: Props) {
+export async function AppFrame({ items, collapsed, theme, locale, user, unread, banner, children }: Props) {
   const t = await getTranslations('common')
   return (
     <div className="flex min-h-dvh">
@@ -21,7 +21,7 @@ export async function AppFrame({ items, collapsed, theme, locale, user, banner, 
       </a>
       <Sidebar items={items} collapsed={collapsed} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar items={items} theme={theme} locale={locale} user={user} />
+        <TopBar items={items} theme={theme} locale={locale} user={user} unread={unread} />
         {banner}
         <main id="main" tabIndex={-1} className="flex-1 px-4 py-6 outline-none md:px-8 md:py-7">
           {children}

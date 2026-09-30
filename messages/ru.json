@@ -1178,5 +1178,66 @@
       "size": "Записей на странице",
       "sizeOption": "{size} на странице"
     }
+  },
+  "notifications": {
+    "title": "Уведомления",
+    "bell": "Уведомления{count, plural, =0 {} one {, # непрочитанное} few {, # непрочитанных} many {, # непрочитанных} other {, # непрочитанного}}",
+    "latest": "Последние уведомления",
+    "markAll": "Отметить все прочитанными",
+    "all": "Все уведомления",
+    "empty": "Уведомлений пока нет.",
+    "loading": "Загружаем уведомления…",
+    "failed": "Не удалось загрузить уведомления.",
+    "unread": "Не прочитано",
+    "thisDevice": "Это устройство",
+    "count": "{unread, plural, =0 {Всё прочитано} one {# непрочитанное} few {# непрочитанных} many {# непрочитанных} other {# непрочитанного}} · {total, plural, one {# уведомление} few {# уведомления} many {# уведомлений} other {# уведомления}}",
+    "markedAll": "Все уведомления отмечены прочитанными.",
+    "kinds": {
+      "order": {
+        "title": "Новый заказ #{number}",
+        "detail": "{customer} · {total}"
+      },
+      "lowStock": {
+        "title": "Мало на складе: {product}",
+        "detail": "{variant} — осталось {stock, number}, порог {threshold, number}",
+        "left": "{variant} — осталось {stock, number}"
+      },
+      "soldOut": {
+        "title": "Распродано: {product}",
+        "detail": "{variant} — ничего не осталось"
+      },
+      "oversold": {
+        "title": "Не хватило на складе: {product}",
+        "detail": "{variant} — заказано на {count, number} больше, чем было"
+      },
+      "joined": {
+        "title": "{person} теперь в команде",
+        "detail": "Роль: {role}",
+        "noRole": "Приглашение принято"
+      },
+      "signIn": {
+        "title": "Новый вход в ваш аккаунт",
+        "detail": "С устройства {device}",
+        "noDevice": "С неизвестного устройства"
+      },
+      "locked": {
+        "title": "Вход заблокирован на час",
+        "detail": "Неверный код ввели десять раз."
+      },
+      "recovery": {
+        "title": "Использован код восстановления",
+        "detail": "{remaining, plural, =0 {Кодов не осталось} one {Остался # код} few {Осталось # кода} many {Осталось # кодов} other {Осталось # кода}}",
+        "detailUnknown": "Если это были не вы, создайте новые коды."
+      }
+    },
+    "pager": {
+      "label": "Страницы",
+      "range": "{from, number}–{to, number} из {total, number}",
+      "previous": "Предыдущая страница",
+      "next": "Следующая страница",
+      "page": "Страница {page}",
+      "size": "Уведомлений на странице",
+      "sizeOption": "{size} на странице"
+    }
   }
 }

@@ -19,6 +19,9 @@ export type NotificationView =
   | { kind: 'auth.second_factor_locked' }
   | { kind: 'auth.recovery_code_used'; remaining: number | null }
 
+/** One notification as the bell and the page show it, in the reader's language and the store's time zone. */
+export type NotificationItem = { id: string; kind: NotificationKind; title: string; detail: string; time: string; read: boolean; thisDevice: boolean }
+
 /** Where a notification leads; a product is found by its id when it is opened, since its slug can change. */
 export type NotificationTarget =
   | { type: 'order'; number: number }
