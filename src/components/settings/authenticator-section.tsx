@@ -70,14 +70,14 @@ export function AuthenticatorSection({ enabled, recent, canDisable, secret, qr }
       {recent && !codes && enrolling ? (
         <form action={action} noValidate className="flex max-w-xl flex-col gap-4">
           <FormAlert state={shown} />
-          <TotpEnrolment id="totp-code" secret={secret} qr={qr} error={errorFor('code')} />
+          <TotpEnrolment id="totp-code" secret={secret} qr={qr} error={errorFor('code')} bare />
           <div className="flex flex-wrap gap-2">
             <Button type="submit" disabled={submitting}>{submitting ? t('saving') : enabled ? t('replace') : t('enable')}</Button>
             {enabled ? <Button type="button" variant="outline" onClick={() => setReplacingAfter(null)}>{t('cancel')}</Button> : null}
           </div>
         </form>
       ) : null}
-      {recent && enabled && !enrolling ? (
+      {recent && enabled && !codes && !enrolling ? (
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="outline" onClick={() => setReplacingAfter(state)}>{t('replaceStart')}</Button>

@@ -19,6 +19,7 @@ test('owner setup creates the owner with an authenticator and shows ten recovery
   await expect(page.getByRole('heading', { level: 1, name: 'Set up the owner account' })).toBeVisible()
   await expectNoSeriousA11yViolations(page)
   totp.secret = await readTotpSecret(page)
+  await expect(page.getByRole('group', { name: 'Authenticator app' })).toHaveCSS('border-top-width', '1px')
   await page.getByLabel('Setup token').fill(E2E_AUTH_ENV.OWNER_SETUP_TOKEN)
   await page.getByLabel('Your name').fill(owner.name)
   await page.getByLabel('Email').fill(owner.email)

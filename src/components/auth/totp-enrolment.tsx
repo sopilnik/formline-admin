@@ -3,13 +3,23 @@
 import { useTranslations } from 'next-intl'
 import type { ReactNode } from 'react'
 import { TextField } from '@/components/auth/text-field'
+import { cn } from '@/lib/utils'
 
-/** A new authenticator: the QR code and the key to type, then its first code (setup and recovery). */
-export function TotpEnrolment({ id, secret, qr, error }: { id: string; secret: string; qr: ReactNode; error?: string }) {
+type Props = {
+  id: string
+  secret: string
+  qr: ReactNode
+  error?: string
+  /** Inside a card that already carries the title (settings): no box, and the title for screen readers only. */
+  bare?: boolean
+}
+
+/** A new authenticator: the QR code and the key to type, then its first code (setup, recovery and the security settings). */
+export function TotpEnrolment({ id, secret, qr, error, bare = false }: Props) {
   const t = useTranslations('auth')
   return (
-    <fieldset className="flex flex-col gap-3 rounded-lg border p-4">
-      <legend className="px-1 text-sm font-medium">{t('totp.title')}</legend>
+    <fieldset className={cn('flex flex-col gap-3', !bare && 'rounded-lg border p-4')}>
+      <legend className={bare ? 'sr-only' : 'px-1 text-sm font-medium'}>{t('totp.title')}</legend>
       <p className="text-sm text-muted-foreground">{t('totp.intro')}</p>
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
         {qr}
