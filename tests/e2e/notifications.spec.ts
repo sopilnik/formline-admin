@@ -85,6 +85,25 @@ test.describe('notifications', () => {
     await expect(bell(page)).toHaveAccessibleName('Notifications')
   })
 
+  test('a two-digit count sits at the bell\'s corner and leaves most of the bell in view', async ({ page, context }) => {
+    const { workspaceId } = await signInAsSandboxUser(context)
+    // Two more "Low stock" for every member: the new sandbox's eight become ten.
+    await asSchemaOwner(c => c.query(
+      `insert into fa.notifications (workspace_id, user_id, kind, payload)
+       select workspace_id, null, kind, payload from fa.notifications where workspace_id = $1 and kind = 'stock.low' limit 2`, [workspaceId]))
+    await page.goto('/overview')
+    await expect(bell(page)).toHaveAccessibleName('Notifications, 10 unread')
+    await expect(bell(page).locator('span[aria-hidden]')).toHaveText('10')
+    const covered = await bell(page).evaluate(button => {
+      const icon = button.querySelector('svg')!.getBoundingClientRect()
+      const count = button.querySelector('span')!.getBoundingClientRect()
+      const width = Math.max(0, Math.min(icon.right, count.right) - Math.max(icon.left, count.left))
+      const height = Math.max(0, Math.min(icon.bottom, count.bottom) - Math.max(icon.top, count.top))
+      return (width * height) / (icon.width * icon.height)
+    })
+    expect(covered, 'the share of the bell under the count').toBeLessThanOrEqual(0.3)
+  })
+
   test('the count follows a navigation without a reload', async ({ page, context }) => {
     const { workspaceId, userId } = await signInAsSandboxUser(context)
     await page.goto('/overview')

@@ -72,7 +72,7 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
         {unread > 0 ? (
           <span
             aria-hidden
-            className="absolute top-0.5 right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] leading-none font-semibold text-primary-foreground tabular-nums"
+            className="absolute top-0 left-[calc(50%+1px)] grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] leading-none font-semibold text-primary-foreground tabular-nums"
           >
             {unread > 99 ? '99+' : unread}
           </span>
