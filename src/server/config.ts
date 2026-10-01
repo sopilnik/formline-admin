@@ -45,3 +45,29 @@ export function authConfig(source?: EnvSource): AuthConfig {
   if (!source) cached = config
   return config
 }
+
+/** The Stripe ingest's settings (spec §7); null when they are not set, and the webhook and the import then answer 503. */
+export type StripeConfig = {
+  webhookSecret: string
+  restrictedKey: string
+  pseudonymKey: string
+  /** A local stand-in for Stripe's API (development and the end-to-end tests); null means Stripe itself. */
+  apiBase: URL | null
+}
+
+let stripeCached: StripeConfig | null | undefined
+
+export function stripeConfig(source?: EnvSource): StripeConfig | null {
+  if (!source && stripeCached !== undefined) return stripeCached
+  const env = readEnv(source)
+  const config = env.STRIPE_WEBHOOK_SECRET && env.STRIPE_RESTRICTED_KEY && env.PSEUDONYM_KEY
+    ? {
+        webhookSecret: env.STRIPE_WEBHOOK_SECRET,
+        restrictedKey: env.STRIPE_RESTRICTED_KEY,
+        pseudonymKey: env.PSEUDONYM_KEY,
+        apiBase: env.STRIPE_API_BASE ? new URL(env.STRIPE_API_BASE) : null,
+      }
+    : null
+  if (!source) stripeCached = config
+  return config
+}

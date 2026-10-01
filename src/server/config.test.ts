@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { authConfig, parseKeyring } from '@/server/config'
+import { authConfig, parseKeyring, stripeConfig } from '@/server/config'
 
 const K1 = Buffer.alloc(32, 1).toString('base64')
 const K2 = Buffer.alloc(32, 2).toString('base64')
@@ -31,5 +31,26 @@ describe('authConfig', () => {
     expect(config.origin).toBe('https://formline-admin.sopilnik.dev')
     expect(config.setupToken).toBeNull()
     expect(config.totpKeys.current).toBe('k1')
+  })
+})
+
+describe('stripeConfig', () => {
+  const base = {
+    DATABASE_URL: 'postgres://app:secret@127.0.0.1:56432/formline_dev',
+    IP_HASH_KEY: 'i'.repeat(32),
+    COOKIE_SIGNING_KEY: 'c'.repeat(32),
+    TOTP_ENCRYPTION_KEYS: `k1:${K1}`,
+  }
+  const ingest = { STRIPE_WEBHOOK_SECRET: `whsec_${'w'.repeat(32)}`, STRIPE_RESTRICTED_KEY: `rk_test_${'r'.repeat(32)}`, PSEUDONYM_KEY: 'p'.repeat(32) }
+
+  it('is null until the ingest is configured', () => {
+    expect(stripeConfig(base)).toBeNull()
+  })
+
+  it('carries the three settings and the local stand-in for the API', () => {
+    expect(stripeConfig({ ...base, ...ingest })).toEqual({
+      webhookSecret: ingest.STRIPE_WEBHOOK_SECRET, restrictedKey: ingest.STRIPE_RESTRICTED_KEY, pseudonymKey: ingest.PSEUDONYM_KEY, apiBase: null,
+    })
+    expect(stripeConfig({ ...base, ...ingest, STRIPE_API_BASE: 'http://127.0.0.1:4334' })?.apiBase?.port).toBe('4334')
   })
 })

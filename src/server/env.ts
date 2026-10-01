@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 // id:base64 pairs; every key is 32 bytes (openssl rand -base64 32).
+const LOOPBACK = new Set(['127.0.0.1', '[::1]', 'localhost'])
 const KEYRING = /^[a-z0-9]{1,8}:[A-Za-z0-9+/]{43}=(,[a-z0-9]{1,8}:[A-Za-z0-9+/]{43}=)*$/
 
 const schema = z.object({
@@ -20,10 +21,25 @@ const schema = z.object({
   BUNNY_STORAGE_KEY: z.string().min(20).optional(),
   /** A local folder that stands in for the media zone in development and in the end-to-end tests. */
   MEDIA_STORAGE_DIR: z.string().min(1).optional(),
+  // The Stripe ingest (spec §7): the webhook's signing secret, a restricted test key that reads Checkout Sessions and
+  // the key that picks a store customer's pseudonym. The three go together; without them the ingest answers 503.
+  STRIPE_WEBHOOK_SECRET: z.string().regex(/^whsec_[A-Za-z0-9_-]{8,}$/, 'a webhook signing secret (whsec_…)').optional(),
+  STRIPE_RESTRICTED_KEY: z.string().regex(/^rk_test_[A-Za-z0-9_-]{8,}$/, 'a restricted test key (rk_test_…)').optional(),
+  PSEUDONYM_KEY: z.string().min(32).optional(),
+  /**
+   * A local stand-in for Stripe's API in development and the end-to-end tests, which run the production build: in
+   * production only a loopback address, so the restricted key can never be sent to another host.
+   */
+  STRIPE_API_BASE: z.url({ protocol: /^https?$/ }).optional(),
 }).superRefine((env, ctx) => {
   const bunny = [env.BUNNY_STORAGE_ZONE, env.BUNNY_STORAGE_HOST, env.BUNNY_STORAGE_KEY].filter(Boolean).length
   if (bunny !== 0 && bunny !== 3) ctx.addIssue({ code: 'custom', path: ['BUNNY_STORAGE_ZONE'], message: 'BUNNY_STORAGE_ZONE, BUNNY_STORAGE_HOST and BUNNY_STORAGE_KEY go together' })
+  const stripe = [env.STRIPE_WEBHOOK_SECRET, env.STRIPE_RESTRICTED_KEY, env.PSEUDONYM_KEY].filter(Boolean).length
+  if (stripe !== 0 && stripe !== 3) ctx.addIssue({ code: 'custom', path: ['STRIPE_WEBHOOK_SECRET'], message: 'STRIPE_WEBHOOK_SECRET, STRIPE_RESTRICTED_KEY and PSEUDONYM_KEY go together' })
   if (env.NODE_ENV !== 'production') return
+  if (env.STRIPE_API_BASE && !LOOPBACK.has(new URL(env.STRIPE_API_BASE).hostname)) {
+    ctx.addIssue({ code: 'custom', path: ['STRIPE_API_BASE'], message: 'only a loopback address in production' })
+  }
   if (!env.ORIGIN_AUTH_SECRET) ctx.addIssue({ code: 'custom', path: ['ORIGIN_AUTH_SECRET'], message: 'required in production' })
   if (env.ORIGIN_AUTH_DISABLED === '1') ctx.addIssue({ code: 'custom', path: ['ORIGIN_AUTH_DISABLED'], message: 'not allowed in production' })
   const site = new URL(env.SITE_URL)

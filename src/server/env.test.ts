@@ -44,4 +44,23 @@ describe('readEnv', () => {
     expect(() => readEnv({ ...base, BUNNY_STORAGE_ZONE: 'formline-admin-media' })).toThrow(/go together/)
     expect(readEnv({ ...base, MEDIA_STORAGE_DIR: '.media' }).MEDIA_STORAGE_DIR).toBe('.media')
   })
+
+  it('takes the Stripe ingest as three variables together, with a restricted test key', () => {
+    // Built from parts, so the source never holds a string shaped like a real key.
+    const ingest = { STRIPE_WEBHOOK_SECRET: `whsec_${'w'.repeat(32)}`, STRIPE_RESTRICTED_KEY: `rk_test_${'r'.repeat(32)}`, PSEUDONYM_KEY: 'p'.repeat(32) }
+    expect(readEnv({ ...base, ...ingest }).STRIPE_RESTRICTED_KEY).toBe(ingest.STRIPE_RESTRICTED_KEY)
+    expect(() => readEnv({ ...base, ...ingest, STRIPE_RESTRICTED_KEY: `rk_live_${'r'.repeat(32)}` })).toThrow(/rk_test_/)
+    expect(() => readEnv({ ...base, ...ingest, STRIPE_RESTRICTED_KEY: `sk_test_${'r'.repeat(32)}` })).toThrow(/rk_test_/)
+    expect(() => readEnv({ ...base, ...ingest, STRIPE_WEBHOOK_SECRET: 'w'.repeat(32) })).toThrow(/whsec_/)
+    expect(() => readEnv({ ...base, ...ingest, PSEUDONYM_KEY: 'short' })).toThrow(/PSEUDONYM_KEY/)
+    expect(() => readEnv({ ...base, STRIPE_WEBHOOK_SECRET: ingest.STRIPE_WEBHOOK_SECRET })).toThrow(/go together/)
+  })
+
+  it('takes a stand-in for the Stripe API anywhere in development, and only on a loopback address in production', () => {
+    expect(readEnv({ ...base, STRIPE_API_BASE: 'http://stripe-stub.test:4334' }).STRIPE_API_BASE).toBe('http://stripe-stub.test:4334')
+    expect(() => readEnv({ ...base, STRIPE_API_BASE: 'ftp://127.0.0.1' })).toThrow(/STRIPE_API_BASE/)
+    expect(readEnv({ ...production, STRIPE_API_BASE: 'http://127.0.0.1:4334' }).STRIPE_API_BASE).toBe('http://127.0.0.1:4334')
+    expect(readEnv({ ...production, STRIPE_API_BASE: 'http://[::1]:4334' }).STRIPE_API_BASE).toBe('http://[::1]:4334')
+    expect(() => readEnv({ ...production, STRIPE_API_BASE: 'https://api.example.com' })).toThrow(/loopback/)
+  })
 })
