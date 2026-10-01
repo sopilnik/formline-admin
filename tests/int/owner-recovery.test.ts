@@ -9,6 +9,8 @@ import { formatTotpSecret } from '@/server/auth/totp'
 import { withWorkspace } from '@/server/db/with-workspace'
 import { lockRemaining, setLock } from '@/server/ratelimit/consume'
 import { userSubject } from '@/server/ratelimit/ip'
+import { LIMITS } from '@/server/ratelimit/limits'
+import { roomInWindow } from '../windows'
 import { adminPool, appPool, closeAll } from './db'
 import { asSchemaOwner } from './fixtures'
 import { ensureOwner, nextTotp, noBreach, OWNER, OWNER_TOTP_SECRET } from './owner'
@@ -106,6 +108,7 @@ describe('owner recovery', () => {
   })
 
   it('limits attempts per address', async () => {
+    await roomInWindow(LIMITS.recoverIp.windowSeconds, 10)
     const results = []
     for (let i = 0; i < 6; i++) {
       const totp = await nextTotp(admin)

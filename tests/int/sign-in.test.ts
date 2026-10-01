@@ -8,6 +8,8 @@ import { signInWithPassword, type SignInInput } from '@/server/auth/sign-in'
 import { hashToken } from '@/server/auth/tokens'
 import { clearSubject, lockRemaining } from '@/server/ratelimit/consume'
 import { accountSubject, userSubject } from '@/server/ratelimit/ip'
+import { LIMITS } from '@/server/ratelimit/limits'
+import { roomInWindow } from '../windows'
 import { adminPool, appPool, closeAll } from './db'
 import { TEST_AUTH_ENV } from './env'
 import { ensureOwner, nextTotp, OWNER } from './owner'
@@ -67,6 +69,7 @@ describe('password step', () => {
   })
 
   it('locks the account for 15 minutes after five failures, from any address', async () => {
+    await roomInWindow(LIMITS.signInFailAccount.windowSeconds, 10)
     for (let i = 0; i < 5; i++) await signInWithPassword(correct({ password: `wrong-password-${i}` }), { pool: app })
     const locked = await signInWithPassword(correct(), { pool: app })
     if (locked.ok) throw new Error('not locked')
@@ -76,11 +79,13 @@ describe('password step', () => {
   })
 
   it('allows ten successful passwords an hour per account', async () => {
+    await roomInWindow(LIMITS.signInSuccessAccount.windowSeconds, 10)
     for (let i = 0; i < 10; i++) expect((await signInWithPassword(correct(), { pool: app })).ok).toBe(true)
     expect(await signInWithPassword(correct(), { pool: app })).toMatchObject({ ok: false, error: 'rate_limited' })
   })
 
   it('stops an address after twenty failures, even with the right password', async () => {
+    await roomInWindow(LIMITS.signInFailIp.windowSeconds, 10)
     const ip = nextIp()
     for (let i = 0; i < 20; i++) await signInWithPassword(correct({ email: `nobody.${i}@formline.test`, ip }), { pool: app })
     expect(await signInWithPassword(correct({ ip }), { pool: app })).toMatchObject({ ok: false, error: 'rate_limited' })
@@ -120,6 +125,7 @@ describe('second-factor step', () => {
   })
 
   it('ten wrong codes lock the second factor for an hour, end the session and notify', async () => {
+    await roomInWindow(LIMITS.secondFactorFail.windowSeconds, 10)
     const lettersBefore = await letters('auth.second_factor_locked')
     const pending = await pendingSession()
     const results = []

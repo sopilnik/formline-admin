@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises'
+import { roomInWindow } from '../windows'
 import { E2E_ORIGIN_SECRET } from './constants'
 import { asSchemaOwner } from './db'
 import { signInAsSandboxUser } from './sessions'
@@ -67,9 +68,10 @@ test.describe('CSV export', () => {
   })
 
   test('refuses exports past ten a minute with a message', async ({ page, context }) => {
+    // Fixed one-minute windows: the loop and the refused export below count in the same one.
+    await roomInWindow(60, 15)
     await signInAsSandboxUser(context)
     await page.goto('/orders?status=cancelled')
-    // Fixed one-minute windows: a run that crosses a window edge simply takes more requests to reach the limit.
     const statuses = await page.evaluate(async () => {
       const out: number[] = []
       while (out.length < 21 && out.at(-1) !== 429) out.push((await fetch('/api/orders/export?status=cancelled')).status)

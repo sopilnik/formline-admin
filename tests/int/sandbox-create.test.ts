@@ -3,6 +3,7 @@ import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { validateSessionToken } from '@/server/auth/sessions'
 import { generateToken, hashToken } from '@/server/auth/tokens'
+import { roomInWindow } from '../windows'
 import { adminPool, appPool, closeAll } from './db'
 import { asSchemaOwner } from './fixtures'
 
@@ -121,6 +122,8 @@ describe('create_sandbox', () => {
   })
 
   it('allows five sandboxes an hour per address, then reports the wait', async () => {
+    // create_sandbox counts the entries of an address in fixed hours.
+    await roomInWindow(60 * 60, 10)
     const ip = ipHash()
     for (let i = 0; i < 5; i++) expect((await create(ip)).outcome).toBe('created')
     const sixth = await create(ip)

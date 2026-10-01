@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { request as playwrightRequest, type Page } from '@playwright/test'
 import sharp from 'sharp'
+import { roomInWindow } from '../windows'
 import { E2E_BASE_URL, E2E_MEDIA_DIR, E2E_ORIGIN_SECRET, E2E_SESSION_COOKIE } from './constants'
 import { asSchemaOwner } from './db'
 import { signInAsSandboxUser } from './sessions'
@@ -76,6 +77,7 @@ test.describe('POST /api/media', () => {
   })
 
   test('allows twenty uploads an hour per session', async ({ page, context }) => {
+    await roomInWindow(60 * 60, 10)
     await signInAsSandboxUser(context)
     await page.goto('/products')
     const answers: Answer[] = []

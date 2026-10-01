@@ -4,6 +4,8 @@ import { validateSessionToken } from '@/server/auth/sessions'
 import { setupOwner, type SetupInput } from '@/server/auth/setup'
 import { formatTotpSecret } from '@/server/auth/totp'
 import { authConfig } from '@/server/config'
+import { LIMITS } from '@/server/ratelimit/limits'
+import { roomInWindow } from '../windows'
 import { adminPool, appPool, closeAll } from './db'
 import { TEST_AUTH_ENV } from './env'
 import { nextTotp, noBreach, OWNER, OWNER_TOTP_SECRET } from './owner'
@@ -69,6 +71,7 @@ describe('setupOwner before the owner exists', () => {
   })
 
   it('limits attempts per address', async () => {
+    await roomInWindow(LIMITS.setupIp.windowSeconds, 10)
     const results = []
     for (let i = 0; i < 6; i++) {
       const totp = await nextTotp(admin)

@@ -1,6 +1,7 @@
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { clearSubject, consume, lockRemaining, peek, setLock } from '@/server/ratelimit/consume'
+import { roomInWindow } from '../windows'
 import { adminPool, appPool, closeAll } from './db'
 
 let admin: pg.Pool
@@ -16,6 +17,7 @@ afterAll(closeAll)
 
 describe('fixed windows', () => {
   it('count attempts and refuse beyond the limit', async () => {
+    await roomInWindow(LIMIT.windowSeconds, 10)
     const s = subject()
     const verdicts = []
     for (let i = 0; i < 4; i++) verdicts.push(await consume(LIMIT, s, app))
@@ -28,6 +30,7 @@ describe('fixed windows', () => {
   })
 
   it('peek reads without counting', async () => {
+    await roomInWindow(LIMIT.windowSeconds, 10)
     const s = subject()
     expect(await peek(LIMIT, s, app)).toMatchObject({ count: 0, allowed: true })
     for (let i = 0; i < 3; i++) await consume(LIMIT, s, app)
@@ -42,6 +45,7 @@ describe('fixed windows', () => {
   })
 
   it('count concurrent attempts exactly', async () => {
+    await roomInWindow(LIMIT.windowSeconds, 10)
     const s = subject()
     const counts = (await Promise.all(Array.from({ length: 10 }, () => consume({ ...LIMIT, limit: 100 }, s, app)))).map(v => v.count)
     expect(counts.sort((a, b) => a - b)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])

@@ -6,6 +6,7 @@ import { validateSessionToken, workspaceContext, type Session } from '@/server/a
 import { generateToken, hashToken } from '@/server/auth/tokens'
 import { withWorkspace } from '@/server/db/with-workspace'
 import { endSandbox, resetSandbox } from '@/server/sandbox/lifecycle'
+import { roomInWindow } from '../windows'
 import { adminPool, appPool, closeAll } from './db'
 import { asSchemaOwner, errorText } from './fixtures'
 
@@ -90,6 +91,8 @@ describe('reset_sandbox', () => {
   })
 
   it('keeps the sandbox when the address limit refuses the new copy', async () => {
+    // create_sandbox counts the entries of an address in fixed hours.
+    await roomInWindow(60 * 60, 10)
     const ip = ipHash()
     const a = await enter(ip)
     for (let i = 0; i < 4; i++) await enter(ip)

@@ -1,3 +1,4 @@
+import { roomInWindow } from '../windows'
 import { expectNoSeriousA11yViolations } from './a11y'
 import { E2E_DEMO_COOKIE, E2E_ORIGIN_SECRET, E2E_SESSION_COOKIE } from './constants'
 import { expect, test } from './test'
@@ -6,6 +7,9 @@ import { expect, test } from './test'
 test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip': '203.0.113.21' } })
 
 test.describe('Enter the demo', () => {
+  // The six entries of this file count in one fixed hour of create_sandbox.
+  test.beforeAll(() => roomInWindow(60 * 60, 20))
+
   test('opens a fresh sandbox on the overview as the demo owner', async ({ page, context }) => {
     await page.goto('/sign-in')
     await expect(page.getByRole('heading', { level: 2, name: 'Try the demo' })).toBeVisible()

@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process'
 import type { Page } from '@playwright/test'
+import { roomInWindow } from '../windows'
 import { expectNoSeriousA11yViolations } from './a11y'
 import { E2E_AUTH_ENV, E2E_MIGRATOR_URL, E2E_SESSION_COOKIE } from './constants'
 import { ageOwnerAuthentication } from './db'
@@ -156,6 +157,8 @@ test('a sensitive change asks for the password and a code once ten minutes have 
 test('ten wrong codes lock the second factor', async ({ page }) => {
   test.setTimeout(120_000)
   await signInWithPassword(page)
+  // The ten wrong codes count in one fixed hour.
+  await roomInWindow(60 * 60, 20)
   for (let attempt = 1; attempt <= 10; attempt++) {
     await page.getByLabel('6-digit code').fill('12345')
     const answered = page.waitForResponse(r => r.request().method() === 'POST' && r.request().headers()['next-action'] !== undefined)
