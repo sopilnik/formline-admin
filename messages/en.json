@@ -1288,5 +1288,8 @@
     "search": "Search on this page",
     "goTo": "Go to {page}",
     "help": "Show this list"
+  },
+  "ingest": {
+    "oversold": "{line}: sold {count} more than there was in stock."
   }
 }
