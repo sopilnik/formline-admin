@@ -69,7 +69,7 @@ describe('the template build', () => {
     expect(await counts(template)).toEqual(before)
   })
 
-  it('rebuilds generated rows only: store-order copies, owner edits and sandboxes survive', async () => {
+  it('rebuilds generated rows only: store-order copies, owner edits and sandboxes survive, the copies numbered after the generated orders', async () => {
     // A store-order copy in the template (what stage 8 writes), an owner stock edit and a sandbox with data.
     const copy = await asSchemaOwner(admin, async c => {
       const customer = await c.query<{ id: string }>(
@@ -89,14 +89,14 @@ describe('the template build', () => {
     const c = await counts(template)
     expect(c.orders).toBe(ORDER_COUNT + 1)
     expect(c.customers).toBe(CUSTOMER_COUNT + 1)
-    const kept = await admin.query<{ placed_at: Date; customer_id: string }>('select placed_at, customer_id from fa.orders where workspace_id = $1 and id = $2', [template, copy.order])
-    expect(kept.rows[0]).toEqual({ placed_at: new Date('2026-03-03T10:00:00Z'), customer_id: copy.customer })
+    const kept = await admin.query<{ number: number; placed_at: Date; customer_id: string }>('select number, placed_at, customer_id from fa.orders where workspace_id = $1 and id = $2', [template, copy.order])
+    expect(kept.rows[0]).toEqual({ number: 1001 + ORDER_COUNT, placed_at: new Date('2026-03-03T10:00:00Z'), customer_id: copy.customer })
     const stock = await admin.query<{ stock: number }>('select stock from fa.product_variants where workspace_id = $1 and id = $2', [owner, variant])
     expect(stock.rows[0]?.stock).toBe(99)
     const collections = await admin.query('select 1 from fa.collections where workspace_id = $1', [sandbox])
     expect(collections.rowCount).toBe(1)
     const counters = await admin.query<{ next_order_number: number }>('select next_order_number from fa.workspace_counters where workspace_id = $1', [template])
-    expect(counters.rows[0]?.next_order_number).toBe(1001 + ORDER_COUNT)
+    expect(counters.rows[0]?.next_order_number).toBe(1002 + ORDER_COUNT)
 
     await asSchemaOwner(admin, async c => {
       await c.query('delete from fa.orders where workspace_id = $1 and id = $2', [template, copy.order])

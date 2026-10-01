@@ -1,10 +1,12 @@
 import 'server-only'
 import type { Pool } from 'pg'
+import { stripeConfig } from '@/server/config'
 import { getPool } from '@/server/db/pool'
 import { log } from '@/server/log'
 import { drainPendingDeletions } from '@/server/media/deletions'
 import { mediaStorage, unavailableStorage, type MediaStorage } from '@/server/media/storage'
 import { cleanupExpiredSandboxes } from '@/server/sandbox/cleanup'
+import { pseudonymiseOldCustomers } from '@/server/stripe/personal-data'
 
 /** The daily job's hour, away from midnight roll-overs and Neon's own maintenance. */
 export const DAILY_RUN_UTC = { hour: 3, minute: 17 } as const
@@ -14,6 +16,8 @@ export type DailyReport = {
   sandboxes: number
   purged: { rateLimits: number; challenges: number; sessions: number; failedSignIns: number }
   media: { deleted: number; retried: number }
+  /** Owner-workspace customers pseudonymised (spec §7.4); none while the Stripe ingest is not configured. */
+  customers: number
 }
 
 type PurgeRow = { purged_rate_limits: number; purged_challenges: number; purged_sessions: number; purged_failed_sign_ins: number }
@@ -26,17 +30,23 @@ export function msUntilNextRun(nowMs: number, at: { hour: number; minute: number
   return next.getTime() - nowMs
 }
 
-/** The daily job (spec §6.5): expired sandboxes, old counters, challenges and sessions, then the storage queue. */
-export async function runDailyJob(deps: { pool?: Pool; storage?: MediaStorage } = {}): Promise<DailyReport> {
+/**
+ * The daily job (spec §6.5, §7.4): expired sandboxes, old counters, challenges and sessions, the storage queue, then the
+ * store customers due for their pseudonym.
+ */
+export async function runDailyJob(deps: { pool?: Pool; storage?: MediaStorage; pseudonymKey?: string | null } = {}): Promise<DailyReport> {
   const pool = deps.pool ?? getPool()
   const sandboxes = await cleanupExpiredSandboxes(pool)
   const { rows } = await pool.query<PurgeRow>('select * from fa.purge_housekeeping()')
   const purged = rows[0]!
   const media = await drainPendingDeletions(deps.storage ?? mediaStorage() ?? unavailableStorage, pool)
+  const pseudonymKey = deps.pseudonymKey === undefined ? stripeConfig()?.pseudonymKey ?? null : deps.pseudonymKey
+  const customers = pseudonymKey ? await pseudonymiseOldCustomers(pseudonymKey, pool) : 0
   const report: DailyReport = {
     sandboxes,
     purged: { rateLimits: purged.purged_rate_limits, challenges: purged.purged_challenges, sessions: purged.purged_sessions, failedSignIns: purged.purged_failed_sign_ins },
     media,
+    customers,
   }
   log.info({ event: 'daily.done', ...report })
   return report

@@ -26,8 +26,9 @@ describe('catalog snapshot', () => {
     expect(unitPriceCents(loud, 'a3')).toBe(2900)
     expect(unitPriceCents(loud, 'a1')).toBe(6900)
     expect(shippingCents(14_999, 'standard')).toBe(900)
+    expect(shippingCents(15_000, 'standard')).toBe(0)
     expect(shippingCents(14_999, 'express')).toBe(1900)
-    expect(shippingCents(15_000, 'express')).toBe(0)
+    expect(shippingCents(15_000, 'express')).toBe(1900)
   })
 
   it('every poster file exists with the pinned size', () => {

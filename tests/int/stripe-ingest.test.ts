@@ -4,9 +4,11 @@ import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import type { IncomingLine, IncomingOrder } from '@/lib/stripe/checkout'
 import { parseLineName } from '@/lib/stripe/line-name'
-import { users } from '@/server/db/schema'
-import { withWorkspace } from '@/server/db/with-workspace'
+import { customers, users } from '@/server/db/schema'
+import { withWorkspace, withWorkspaces } from '@/server/db/with-workspace'
 import { ingestOrder } from '@/server/stripe/ingest'
+import { pseudonymiseOldCustomers } from '@/server/stripe/personal-data'
+import { pseudonymFor } from '@/server/stripe/pseudonym'
 import { adminPool, appPool, closeAll } from './db'
 import { ensureOwner } from './owner'
 
@@ -14,7 +16,9 @@ let admin: pg.Pool
 let app: pg.Pool
 let owner: string
 let ownerUser: string
+let template: string
 let startNumber: number
+let templateNumber: number
 let stocks: { id: string; stock: number; low_stock_threshold: number }[]
 
 // Every row this file makes carries the run's tag, and the file removes them all when it ends.
@@ -34,7 +38,8 @@ function storeOrder(over: Partial<IncomingOrder> = {}): IncomingOrder {
   }
 }
 
-const ingest = (order: IncomingOrder, eventId: string | null = `evt_${TAG}_${count}`) => ingestOrder(order, { eventId }, app)
+const PSEUDONYM_KEY = 'test-pseudonym-key-0123456789abcdef0123456789'
+const ingest = (order: IncomingOrder, eventId: string | null = `evt_${TAG}_${count}`) => ingestOrder(order, { eventId, pseudonymKey: PSEUDONYM_KEY }, app)
 
 async function variant(sku: string): Promise<{ id: string; product_id: string; stock: number }> {
   const { rows } = await admin.query<{ id: string; product_id: string; stock: number }>('select id, product_id, stock from fa.product_variants where workspace_id = $1 and sku = $2', [owner, sku])
@@ -60,14 +65,18 @@ beforeAll(async () => {
   app = appPool()
   ownerUser = await ensureOwner(admin, app)
   owner = (await admin.query<{ id: string }>("select id from fa.workspaces where kind = 'owner'")).rows[0]!.id
+  template = (await admin.query<{ id: string }>("select id from fa.workspaces where kind = 'template'")).rows[0]!.id
   startNumber = (await admin.query<{ n: number }>('select next_order_number as n from fa.workspace_counters where workspace_id = $1', [owner])).rows[0]!.n
+  templateNumber = (await admin.query<{ n: number }>('select next_order_number as n from fa.workspace_counters where workspace_id = $1', [template])).rows[0]!.n
   stocks = (await admin.query<{ id: string; stock: number; low_stock_threshold: number }>('select id, stock, low_stock_threshold from fa.product_variants where workspace_id = $1', [owner])).rows
   await admin.query("delete from fa.notifications where workspace_id = $1 and kind in ('order.created', 'stock.low')", [owner])
 })
 
 afterAll(async () => {
-  await admin.query("delete from fa.orders where workspace_id = $1 and source = 'stripe'", [owner])
-  await admin.query('delete from fa.customers where workspace_id = $1 and email like $2', [owner, `%${TAG}@ingest.test`])
+  await admin.query("delete from fa.orders where workspace_id = any($1::uuid[]) and source = 'stripe'", [[owner, template]])
+  await admin.query("delete from fa.customers where workspace_id = $1 and (email like $2 or email like '%@pseudonym.example')", [owner, `%${TAG}@ingest.test`])
+  await admin.query("delete from fa.customers where workspace_id = $1 and email like '%@pseudonym.example'", [template])
+  await admin.query('update fa.workspace_counters set next_order_number = $2 where workspace_id = $1', [template, templateNumber])
   await admin.query("delete from fa.notifications where workspace_id = $1 and kind in ('order.created', 'stock.low')", [owner])
   await admin.query('delete from fa.stripe_events where event_id like $1', [`evt_${TAG}_%`])
   await admin.query('update fa.workspace_counters set next_order_number = $2 where workspace_id = $1', [owner, startNumber])
@@ -176,5 +185,106 @@ describe('the Stripe ingest', () => {
     expect((await admin.query('select 1 from fa.orders where workspace_id = $1 and stripe_session_id = $2', [owner, order.sessionId])).rowCount).toBe(1)
     expect((await variant('far-orbit-a2-ink')).stock).toBe(9)
     expect(await notificationsOf('order.created')).toHaveLength(1)
+  })
+})
+
+describe('the copy in the template', () => {
+  it('writes the order again for the demo, pseudonymised, without Stripe ids, notes or later events, and takes no stock', async () => {
+    await setStock('far-orbit-a2-ink', 1, 3)
+    const templateStock = (await admin.query<{ stock: number }>("select stock from fa.product_variants where workspace_id = $1 and sku = 'far-orbit-a2-ink'", [template])).rows[0]!.stock
+    const order = storeOrder({ email: `lena.${TAG}@ingest.test`, lines: [line('Far Orbit · A2 · Ink', 2, 4700), line('Gift wrap', 1, 500)] })
+    const before = (await admin.query('select count(*)::int as n from fa.orders where workspace_id = $1', [template])).rows[0]!.n
+    const number = (await admin.query<{ n: number }>('select next_order_number as n from fa.workspace_counters where workspace_id = $1', [template])).rows[0]!.n
+    expect((await ingest(order)).status).toBe('created')
+    const person = pseudonymFor(order.email, PSEUDONYM_KEY)
+    const copies = await admin.query(
+      `select o.id, o.number, o.status, o.source, o.stripe_session_id, o.external_ref, o.delivery, o.subtotal_cents, o.shipping_cents, o.total_cents,
+              o.shipping_address, o.placed_at, c.email, c.name, c.city, c.country, c.pseudonymised_at is not null as pseudonymised
+         from fa.orders o join fa.customers c on c.workspace_id = o.workspace_id and c.id = o.customer_id
+        where o.workspace_id = $1 and c.email = $2`, [template, person.email])
+    expect(copies.rows).toEqual([{
+      id: expect.any(String), number, status: 'paid', source: 'stripe', stripe_session_id: null, external_ref: null, delivery: 'standard',
+      subtotal_cents: 9900, shipping_cents: 900, total_cents: 10_800, shipping_address: null, placed_at: order.placedAt,
+      email: person.email, name: person.name, city: person.city, country: person.country, pseudonymised: true,
+    }])
+    expect((await admin.query('select count(*)::int as n from fa.orders where workspace_id = $1', [template])).rows[0]!.n).toBe(before + 1)
+    const copy = copies.rows[0]!.id as string
+    const templateVariant = (await admin.query<{ id: string }>("select id from fa.product_variants where workspace_id = $1 and sku = 'far-orbit-a2-ink'", [template])).rows[0]!.id
+    const lines = await admin.query('select variant_id, sku, name, qty, unmatched from fa.order_lines where workspace_id = $1 and order_id = $2 order by name', [template, copy])
+    expect(lines.rows).toEqual([
+      { variant_id: templateVariant, sku: 'far-orbit-a2-ink', name: 'Far Orbit · A2 · Ink', qty: 2, unmatched: false },
+      { variant_id: null, sku: null, name: 'Gift wrap', qty: 1, unmatched: true },
+    ])
+    const events = await admin.query('select kind, to_status, actor_user_id from fa.order_events where workspace_id = $1 and order_id = $2', [template, copy])
+    expect(events.rows).toEqual([{ kind: 'status', to_status: 'paid', actor_user_id: null }])
+    expect((await admin.query<{ stock: number }>("select stock from fa.product_variants where workspace_id = $1 and sku = 'far-orbit-a2-ink'", [template])).rows[0]!.stock).toBe(templateStock)
+    expect((await admin.query('select 1 from fa.notifications where workspace_id = $1', [template])).rowCount).toBe(0)
+  })
+
+  it('keeps one store customer one demo customer', async () => {
+    const email = `lena.${TAG}@ingest.test`
+    await ingest(storeOrder({ email }))
+    const { rows } = await admin.query<{ n: number }>(
+      'select count(distinct o.customer_id)::int as n from fa.orders o join fa.customers c on c.workspace_id = o.workspace_id and c.id = o.customer_id where o.workspace_id = $1 and c.email = $2',
+      [template, pseudonymFor(email, PSEUDONYM_KEY).email])
+    expect(rows[0]!.n).toBe(1)
+  })
+
+  it('keeps nothing when the copy fails: the owner\'s order, its stock and its event are rolled back with it', async () => {
+    await setStock('far-orbit-a2-ink', 6, 3)
+    const order = storeOrder()
+    const eventId = `evt_${TAG}_rolled_back`
+    // Without its counter the template cannot number the copy, and the copy is the last step of the transaction.
+    await admin.query('delete from fa.workspace_counters where workspace_id = $1', [template])
+    try {
+      await expect(ingest(order, eventId)).rejects.toThrow()
+    } finally {
+      await admin.query('insert into fa.workspace_counters (workspace_id, next_order_number) values ($1, $2)', [template, templateNumber + 100])
+    }
+    expect((await admin.query('select 1 from fa.orders where workspace_id = $1 and stripe_session_id = $2', [owner, order.sessionId])).rowCount).toBe(0)
+    expect((await admin.query('select 1 from fa.stripe_events where event_id = $1', [eventId])).rowCount).toBe(0)
+    expect((await variant('far-orbit-a2-ink')).stock).toBe(6)
+    expect((await ingest(order, eventId)).status).toBe('created')
+    expect((await variant('far-orbit-a2-ink')).stock).toBe(5)
+  })
+
+  it('checks every statement against the workspace entered last', async () => {
+    await expect(withWorkspaces(async enter => {
+      await enter({ workspaceId: owner, userId: null, role: 'system' })
+      const tx = await enter({ workspaceId: template, userId: null, role: 'system' })
+      await tx.insert(customers).values({ workspaceId: owner, email: `stray.${TAG}@ingest.test`, name: 'Stray' })
+    }, app)).rejects.toThrow()
+    expect((await admin.query('select 1 from fa.customers where email = $1', [`stray.${TAG}@ingest.test`])).rowCount).toBe(0)
+  })
+})
+
+describe('the daily pseudonymisation', () => {
+  it('turns an owner-workspace customer into their pseudonym after 30 days, in the "New order" too, and keeps the orders', async () => {
+    const email = `old.${TAG}@ingest.test`
+    const result = await ingest(storeOrder({ email, name: 'Olga Old' }))
+    const orderId = result.status === 'created' ? result.orderId : ''
+    const young = await ingest(storeOrder({ email: `young.${TAG}@ingest.test`, name: 'Yuri Young' }))
+    await admin.query("update fa.customers set created_at = now() - interval '31 days' where workspace_id = $1 and email = $2", [owner, email])
+    await admin.query("update fa.customers set created_at = now() - interval '29 days' where workspace_id = $1 and email = $2", [owner, `young.${TAG}@ingest.test`])
+    expect(await pseudonymiseOldCustomers(PSEUDONYM_KEY, app)).toBeGreaterThanOrEqual(1)
+    const person = pseudonymFor(email, PSEUDONYM_KEY)
+    const changed = await admin.query(
+      'select c.email, c.name, c.city, c.country, c.pseudonymised_at is not null as done, o.total_cents from fa.orders o join fa.customers c on c.workspace_id = o.workspace_id and c.id = o.customer_id where o.workspace_id = $1 and o.id = $2',
+      [owner, orderId])
+    expect(changed.rows[0]).toEqual({ email: person.email, name: person.name, city: person.city, country: person.country, done: true, total_cents: 5600 })
+    const notice = await admin.query<{ customer: string }>("select payload->>'customer' as customer from fa.notifications where workspace_id = $1 and kind = 'order.created' and payload->>'orderId' = $2", [owner, orderId])
+    expect(notice.rows).toEqual([{ customer: person.name }])
+    const kept = await admin.query<{ name: string }>('select c.name from fa.orders o join fa.customers c on c.workspace_id = o.workspace_id and c.id = o.customer_id where o.workspace_id = $1 and o.id = $2',
+      [owner, young.status === 'created' ? young.orderId : ''])
+    expect(kept.rows[0]!.name).toBe('Yuri Young')
+    expect(await pseudonymiseOldCustomers(PSEUDONYM_KEY, app)).toBe(0)
+  })
+
+  it('finds a returning customer under their pseudonym, so they stay one customer', async () => {
+    const email = `old.${TAG}@ingest.test`
+    const before = await admin.query<{ id: string }>('select id from fa.customers where workspace_id = $1 and email = $2', [owner, pseudonymFor(email, PSEUDONYM_KEY).email])
+    const again = await ingest(storeOrder({ email }))
+    const customer = await admin.query<{ customer_id: string }>('select customer_id from fa.orders where workspace_id = $1 and id = $2', [owner, again.status === 'created' ? again.orderId : ''])
+    expect(customer.rows[0]!.customer_id).toBe(before.rows[0]!.id)
   })
 })

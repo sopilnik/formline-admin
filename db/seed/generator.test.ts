@@ -4,13 +4,13 @@ import { CUSTOMER_COUNT, FIRST_ORDER_NUMBER, generateTemplate, HISTORY_DAYS, ORD
 import { TEMPLATE_EPOCH } from './version.ts'
 
 const DAY = 86_400_000
-const data = generateTemplate(1)
+const data = generateTemplate()
 const epoch = TEMPLATE_EPOCH.getTime()
 
 describe('generateTemplate', () => {
-  it('is deterministic: the same version gives the same template, another version a different one', () => {
-    expect(JSON.stringify(generateTemplate(1))).toBe(JSON.stringify(data))
-    expect(JSON.stringify(generateTemplate(2))).not.toBe(JSON.stringify(data))
+  it('is deterministic, and a new version draws from the random stream of the first', () => {
+    expect(JSON.stringify(generateTemplate())).toBe(JSON.stringify(data))
+    expect({ ...generateTemplate(1), version: data.version }).toEqual(data)
   })
 
   it('has the agreed volumes and one demo user per role', () => {
@@ -63,7 +63,7 @@ describe('generateTemplate', () => {
       expect(lines.length).toBeLessThanOrEqual(3)
       const subtotal = lines.reduce((sum, l) => sum + l.unitCents * l.qty, 0)
       expect(o.subtotalCents).toBe(subtotal)
-      expect(o.shippingCents).toBe(subtotal >= 15_000 ? 0 : o.delivery === 'express' ? 1900 : 900)
+      expect(o.shippingCents).toBe(o.delivery === 'express' ? 1900 : subtotal >= 15_000 ? 0 : 900)
       expect(o.totalCents).toBe(o.subtotalCents + o.shippingCents)
     })
   })

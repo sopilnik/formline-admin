@@ -93,9 +93,15 @@ function stockLevel(random: Random): number {
   return between(random, 13, 40)
 }
 
+/**
+ * The seed of the random stream: the one version 1 drew from. A later version keeps it, so it changes only the rows its
+ * own fix touches — version 2 changed the shipping of seven express orders and nothing else.
+ */
+const SEED = 7936
+
 /** The whole template from one seed. Pure: no clock, no randomness beyond the seed. */
 export function generateTemplate(version: number = TEMPLATE_VERSION): TemplateData {
-  const random = createRandom(version * 7919 + 17)
+  const random = createRandom(SEED)
   const epoch = TEMPLATE_EPOCH.getTime()
   const longAgo = new Date(epoch - 200 * DAY)
 

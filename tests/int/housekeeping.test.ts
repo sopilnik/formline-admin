@@ -129,6 +129,7 @@ describe('drainPendingDeletions', () => {
       sandboxes: expect.any(Number),
       purged: { rateLimits: expect.any(Number), challenges: expect.any(Number), sessions: expect.any(Number), failedSignIns: expect.any(Number) },
       media: { deleted: expect.any(Number), retried: expect.any(Number) },
+      customers: expect.any(Number),
     })
   })
 })
