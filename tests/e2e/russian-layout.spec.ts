@@ -127,6 +127,12 @@ test.describe('the Russian layout', () => {
     }
     await page.getByRole('button', { name: /^Уведомления/ }).click()
     await inside('Уведомления')
+    // The header's button keeps inside the header's padding: the Russian label is as short as the English one.
+    const bell = page.getByRole('dialog', { name: 'Уведомления' })
+    const markAll = bell.getByRole('button').first()
+    const [popup, button] = [(await bell.boundingBox())!, (await markAll.boundingBox())!]
+    expect(button.x + button.width, 'the bell header keeps its padding').toBeLessThanOrEqual(popup.x + popup.width - 16)
+    await expect(markAll).toHaveText('Прочитать все')
     await page.keyboard.press('Escape')
     await page.keyboard.press('Control+k')
     await page.keyboard.type('Преображ')
