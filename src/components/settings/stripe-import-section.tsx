@@ -1,0 +1,44 @@
+'use client'
+
+import { useTranslations } from 'next-intl'
+import { useActionState } from 'react'
+import { Button } from '@/components/ui/button'
+import type { ImportState } from '@/lib/stripe/import'
+import { importStripeOrdersAction } from '@/server/actions/stripe'
+
+const IDLE: ImportState = { status: 'idle' }
+
+/** Settings → Store → Store orders (spec §7.5): the owner imports the paid store orders the webhook missed. */
+export function StripeImportSection({ recent }: { recent: boolean }) {
+  const t = useTranslations('settings.store.stripe')
+  const [state, action, pending] = useActionState(importStripeOrdersAction, IDLE)
+  return (
+    <section aria-labelledby="store-orders" className="flex max-w-2xl flex-col gap-4 rounded-lg border bg-card p-5">
+      <div>
+        <h2 id="store-orders" className="font-sans text-[15px] font-semibold">{t('title')}</h2>
+        <p className="mt-1 text-[13px] text-muted-foreground">
+          {t('intro')}
+          {recent ? null : ` ${t('confirmFirst')}`}
+        </p>
+      </div>
+      {state.status === 'error' ? (
+        <p role="alert" className="rounded-md border border-destructive px-3 py-2 text-sm text-destructive">
+          {t(`errors.${state.error}`, { minutes: state.retryAfterMinutes ?? 1 })}
+        </p>
+      ) : null}
+      {state.status === 'done' ? (
+        <div role="status" className="flex flex-col gap-1 rounded-md border px-3 py-2 text-sm">
+          <p>{state.imported.length > 0 ? t('imported', { count: state.imported.length, numbers: state.imported.map(n => `#${n}`).join(', ') }) : t('nothing')}</p>
+          {state.already > 0 ? <p className="text-muted-foreground">{t('already', { count: state.already })}</p> : null}
+          {state.skipped > 0 ? <p className="text-muted-foreground">{t('skipped', { count: state.skipped })}</p> : null}
+          {state.more ? <p className="text-muted-foreground">{t('more')}</p> : null}
+        </div>
+      ) : null}
+      {recent ? (
+        <form action={action}>
+          <Button type="submit" variant="outline" disabled={pending}>{pending ? t('importing') : t('import')}</Button>
+        </form>
+      ) : null}
+    </section>
+  )
+}

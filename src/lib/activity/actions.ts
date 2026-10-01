@@ -3,7 +3,7 @@
  * `tests/unit/activity-actions.test.ts` holds this list against the code that writes the log.
  */
 export const ACTIVITY_GROUPS = [
-  { group: 'orders', actions: ['order.status_changed', 'order.note_added', 'orders.exported'] },
+  { group: 'orders', actions: ['order.status_changed', 'order.note_added', 'orders.exported', 'orders.imported'] },
   {
     group: 'catalog',
     actions: [

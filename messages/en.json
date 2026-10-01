@@ -518,6 +518,25 @@
         "number_invalid": "Enter a whole number from 0 to 999.",
         "forbidden": "Your role cannot change the store settings.",
         "failed": "The settings could not be saved. Try again."
+      },
+      "stripe": {
+        "title": "Store orders",
+        "intro": "Paid orders from the store's checkout arrive by themselves. If the panel was away for more than three days — as long as Stripe keeps trying — import the ones it missed from the last 30 days.",
+        "import": "Import missed orders",
+        "importing": "Importing…",
+        "confirmFirst": "Confirm it's you above to import.",
+        "reauthIntro": "Importing needs a fresh sign-in: your password and a code, or a passkey.",
+        "imported": "{count, plural, one {Imported # order: {numbers}.} other {Imported # orders: {numbers}.}}",
+        "nothing": "No missed orders.",
+        "already": "{count, plural, one {# order of the last 30 days was already here.} other {# orders of the last 30 days were already here.}}",
+        "skipped": "{count, plural, one {# session was left out: it is not a paid store order.} other {# sessions were left out: they are not paid store orders.}}",
+        "more": "Stripe has more sessions in these 30 days than one import reads; the oldest were not checked.",
+        "errors": {
+          "unavailable": "Stripe is not connected on this server.",
+          "rate_limited": "Too many imports. Try again in {minutes, plural, one {# minute} other {# minutes}}.",
+          "reauth_required": "Confirm it's you first.",
+          "failed": "Stripe could not be reached. Try again in a few minutes."
+        }
       }
     }
   },
@@ -1073,7 +1092,8 @@
         "note_added": "Added a note to an order"
       },
       "orders": {
-        "exported": "Exported orders"
+        "exported": "Exported orders",
+        "imported": "Imported missed store orders"
       },
       "product": {
         "created": "Created a product",
@@ -1152,7 +1172,8 @@
         "passkey": "With a passkey"
       },
       "remaining": "{count, plural, =0 {No codes left} one {# code left} other {# codes left}}",
-      "devices": "{count, plural, =0 {No other devices} one {# other device} other {# other devices}}"
+      "devices": "{count, plural, =0 {No other devices} one {# other device} other {# other devices}}",
+      "imported": "{count, plural, =0 {Nothing missed} one {# order} other {# orders}}"
     },
     "fields": {
       "name": "name",

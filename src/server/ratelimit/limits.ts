@@ -12,6 +12,7 @@ export const LIMITS = {
   recoverIp: { purpose: 'recover.ip', limit: 5, windowSeconds: 15 * 60 },
   csvExport: { purpose: 'csv.export', limit: 10, windowSeconds: 60 },
   upload: { purpose: 'media.upload', limit: 20, windowSeconds: 60 * 60 },
+  stripeImport: { purpose: 'stripe.import', limit: 3, windowSeconds: 60 * 60 },
 } as const satisfies Record<string, Limit>
 
 export const LOCKS = {

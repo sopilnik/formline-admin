@@ -14,7 +14,7 @@ import { reauthAction } from '@/server/actions/reauth'
 import type { ReauthField } from '@/server/auth/reauth'
 
 /** "Confirm it's you": the password and a code, or a passkey, before a sensitive change (spec §5.1). */
-export function ReauthForm() {
+export function ReauthForm({ intro }: { intro?: string } = {}) {
   const t = useTranslations('auth')
   const router = useRouter()
   const [state, action, pending] = useActionState(reauthAction, IDLE as FormState<ReauthField>)
@@ -36,7 +36,7 @@ export function ReauthForm() {
   return (
     <section aria-labelledby="reauth-title" className="rounded-lg border bg-secondary p-4">
       <h2 id="reauth-title" className="text-base font-bold">{t('reauth.title')}</h2>
-      <p className="mt-1 text-sm text-muted-foreground">{t('reauth.intro')}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{intro ?? t('reauth.intro')}</p>
       <form action={action} noValidate className="mt-4 flex flex-col gap-4">
         <FormAlert state={state} />
         <TextField id="reauth-password" name="password" type="password" autoComplete="current-password" label={t('fields.password')} error={errorFor('password')} />

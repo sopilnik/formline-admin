@@ -1,0 +1,50 @@
+import 'server-only'
+import { and, eq, inArray } from 'drizzle-orm'
+import type { Pool } from 'pg'
+import { readCheckout } from '@/lib/stripe/checkout'
+import { IMPORT_DAYS, IMPORT_MAX_SESSIONS, type ImportSummary } from '@/lib/stripe/import'
+import { ownerWorkspaceId } from '@/server/auth/owner'
+import { getPool } from '@/server/db/pool'
+import { orders } from '@/server/db/schema'
+import { withWorkspace } from '@/server/db/with-workspace'
+import type { StripeGateway } from '@/server/stripe/gateway'
+import { ingestOrder } from '@/server/stripe/ingest'
+
+const DAY_MS = 86_400_000
+
+/**
+ * The paid sessions of the last 30 days the owner workspace does not have yet, kept through the same ingest as the
+ * webhook (spec §7.5), oldest first so their numbers follow time. A session the webhook keeps meanwhile counts as
+ * already there.
+ */
+export async function importMissedOrders(deps: { gateway: StripeGateway; pseudonymKey: string; pool?: Pool; now?: Date }): Promise<ImportSummary> {
+  const pool = deps.pool ?? getPool()
+  const since = new Date((deps.now ?? new Date()).getTime() - IMPORT_DAYS * DAY_MS)
+  const { sessions, more } = await deps.gateway.completedSessions(since, IMPORT_MAX_SESSIONS)
+  const workspaceId = await ownerWorkspaceId(pool)
+  const ids = sessions.map(s => s.id)
+  const kept = ids.length === 0 ? [] : await withWorkspace({ workspaceId, userId: null, role: 'system' }, tx => tx
+    .select({ id: orders.stripeSessionId }).from(orders)
+    .where(and(eq(orders.workspaceId, workspaceId), inArray(orders.stripeSessionId, ids))), pool)
+  const known = new Set(kept.map(row => row.id))
+  const summary: ImportSummary = { imported: [], already: 0, skipped: 0, more }
+  for (const session of [...sessions].sort((a, b) => a.created - b.created || a.id.localeCompare(b.id))) {
+    if (known.has(session.id)) {
+      summary.already += 1
+      continue
+    }
+    if (session.payment_status !== 'paid') {
+      summary.skipped += 1
+      continue
+    }
+    const reading = readCheckout(session, await deps.gateway.lineItems(session.id))
+    if (!reading.ok) {
+      summary.skipped += 1
+      continue
+    }
+    const result = await ingestOrder(reading.order, { eventId: null, pseudonymKey: deps.pseudonymKey }, pool)
+    if (result.status === 'created') summary.imported.push(result.number)
+    else summary.already += 1
+  }
+  return summary
+}

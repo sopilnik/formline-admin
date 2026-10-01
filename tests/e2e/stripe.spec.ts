@@ -3,7 +3,7 @@ import type { APIRequestContext } from '@playwright/test'
 import Stripe from 'stripe'
 import { expectNoSeriousA11yViolations } from './a11y'
 import { E2E_ORIGIN_SECRET, E2E_STRIPE_ENV, E2E_STRIPE_PORT } from './constants'
-import { asSchemaOwner } from './db'
+import { ageOwnerAuthentication, asSchemaOwner } from './db'
 import { signInAsOwner, signInAsSandboxUser } from './sessions'
 import { expect, test } from './test'
 
@@ -89,4 +89,27 @@ test('a delivery without Stripe\'s signature, signed with another secret or too 
   const large = await request.post('/api/stripe/webhook', { data: 'x'.repeat(70 * 1024), headers: { 'stripe-signature': 't=1,v1=0' } })
   expect(large.status()).toBe(413)
   expect(await numberOf(order.session.id)).toBeUndefined()
+})
+
+test('the owner imports a store order the webhook missed, after a fresh sign-in, and the log keeps it', async ({ page, context, request }) => {
+  const missed = checkout(3, 5)
+  await offer(request, missed)
+  await signInAsOwner(context)
+  await ageOwnerAuthentication()
+  await page.goto('/settings/store')
+  const section = page.getByRole('region', { name: 'Store orders' })
+  await expect(section).toContainText("Confirm it's you above to import.")
+  await expect(section.getByRole('button', { name: 'Import missed orders' })).toHaveCount(0)
+  await expect(page.getByText('Importing needs a fresh sign-in: your password and a code, or a passkey.')).toBeVisible()
+
+  await signInAsOwner(context)
+  await page.goto('/settings/store')
+  await section.getByRole('button', { name: 'Import missed orders' }).click()
+  await expect(section.getByRole('status')).toContainText(/Imported 1 order: #\d+\./)
+  const number = await numberOf(missed.session.id)
+  await expect(section.getByRole('status')).toContainText(`Imported 1 order: #${number}.`)
+  await expect(section.getByRole('status')).toContainText('1 order of the last 30 days was already here.')
+  await expectNoSeriousA11yViolations(page)
+  await page.goto('/activity')
+  await expect(page.getByRole('table').getByRole('row').filter({ hasText: 'Imported missed store orders' }).first()).toContainText('1 order')
 })

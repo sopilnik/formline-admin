@@ -37,6 +37,8 @@ describe('describeEntry', () => {
       .toEqual({ kind: 'devices', count: 2 })
     expect(describeEntry({ action: 'orders.exported', entityType: null, entityId: null, details: { rows: 10000, truncated: true } }, lookups).detail)
       .toEqual({ kind: 'rows', count: 10000, truncated: true })
+    expect(describeEntry({ action: 'orders.imported', entityType: null, entityId: null, details: { imported: 2, numbers: [1023, 1024], already: 41, skipped: 0 } }, lookups))
+      .toEqual({ subject: null, detail: { kind: 'imported', count: 2 } })
   })
 
   it('shows nothing for a malformed entry instead of failing', () => {

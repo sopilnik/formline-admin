@@ -26,6 +26,7 @@ export type Detail =
   | { kind: 'remaining'; count: number }
   | { kind: 'device'; device: string }
   | { kind: 'devices'; count: number }
+  | { kind: 'imported'; count: number }
 
 type Details = Record<string, unknown>
 
@@ -78,6 +79,10 @@ function detailOf(action: string, details: Details): Detail | null {
       return from && to ? { kind: 'productStatus', from, to } : null
     case 'team.role_changed':
       return from && to ? { kind: 'role', from, to } : null
+    case 'orders.imported': {
+      const count = whole(details, 'imported')
+      return count === null ? null : { kind: 'imported', count }
+    }
     case 'orders.exported':
     case 'customers.exported': {
       const rows = whole(details, 'rows')

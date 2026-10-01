@@ -1,8 +1,11 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
+import { ReauthForm } from '@/components/auth/reauth-form'
 import { StoreSettingsForm } from '@/components/settings/store-settings-form'
+import { StripeImportSection } from '@/components/settings/stripe-import-section'
 import { timeZones } from '@/lib/settings/fields'
+import { isRecentAuth } from '@/server/auth/reauth'
 import { requireSession, workspaceContext } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'
 import { getStoreSettings } from '@/server/dal/settings'
@@ -13,12 +16,17 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t('title') }
 }
 
-/** Settings → Store (spec §8.8): owners and admins; for other roles the address does not exist. */
+/**
+ * Settings → Store (spec §8.8): owners and admins; for other roles the address does not exist. The owner of the owner
+ * workspace also imports the store orders the webhook missed, after a fresh sign-in (spec §7.5).
+ */
 export default async function StoreSettingsPage() {
   const session = await requireSession()
   if (!can(session.role, 'settings.store', session.workspaceKind)) notFound()
   const settings = await withWorkspace(workspaceContext(session), tx => getStoreSettings(tx, session.workspaceId))
   const t = await getTranslations('settings.store')
+  const importing = can(session.role, 'stripe.import', session.workspaceKind)
+  const recent = isRecentAuth(session)
   return (
     <div className="flex flex-col gap-5">
       <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
@@ -32,6 +40,8 @@ export default async function StoreSettingsPage() {
           zones={timeZones()}
         />
       </section>
+      {importing && !recent ? <ReauthForm intro={t('stripe.reauthIntro')} /> : null}
+      {importing ? <StripeImportSection recent={recent} /> : null}
     </div>
   )
 }

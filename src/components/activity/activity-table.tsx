@@ -56,6 +56,8 @@ function DetailText({ detail }: { detail: Detail | null }) {
       return <>{detail.device}</>
     case 'devices':
       return <>{t('devices', { count: detail.count })}</>
+    case 'imported':
+      return <>{t('imported', { count: detail.count })}</>
   }
 }
 
