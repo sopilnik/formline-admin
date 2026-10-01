@@ -146,4 +146,35 @@ test.describe('the Russian layout', () => {
     await page.getByRole('menuitem', { name: 'Сменить пользователя' }).click()
     await inside('Сменить пользователя')
   })
+
+  test('keeps a tall dialog inside a 640 × 400 screen and scrolls it inside', async ({ page, context }) => {
+    const { workspaceId } = await signInAsSandboxUser(context)
+    // Sixteen more members: "Switch user" lists nineteen.
+    await asSchemaOwner(c => c.query(
+      "insert into fa.users (workspace_id, email, name, role) select $1, 'member.' || g || '@formline.test', 'Участник ' || g, 'manager' from generate_series(1, 16) g",
+      [workspaceId]))
+    await page.setViewportSize({ width: 640, height: 400 })
+    await page.goto('/overview?lang=ru')
+    const fits = async (name: string) => {
+      const dialog = page.getByRole('dialog', { name })
+      await expect(dialog).toBeVisible()
+      // Measured once its opening zoom has finished.
+      await dialog.evaluate(el => Promise.all(el.getAnimations().map(animation => animation.finished)))
+      const box = (await dialog.boundingBox())!
+      expect(box.y, name).toBeGreaterThanOrEqual(0)
+      expect(box.y + box.height, name).toBeLessThanOrEqual(400)
+      return dialog
+    }
+    await page.getByRole('heading', { level: 1 }).click()
+    await page.keyboard.press('Shift+?')
+    await fits('Горячие клавиши')
+    await page.keyboard.press('Escape')
+    await page.getByRole('button', { name: 'Сменить пользователя' }).click()
+    const dialog = await fits('Сменить пользователя')
+    const cancel = dialog.getByRole('button', { name: 'Отмена' })
+    await cancel.scrollIntoViewIfNeeded()
+    await expect(cancel).toBeInViewport()
+    await cancel.click()
+    await expect(dialog).toBeHidden()
+  })
 })
