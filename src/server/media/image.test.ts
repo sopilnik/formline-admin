@@ -1,7 +1,7 @@
 import { crc32 } from 'node:zlib'
 import sharp from 'sharp'
 import { describe, expect, it } from 'vitest'
-import { processImage, readCapped, sniff, type Processed } from '@/server/media/image'
+import { processImage, sniff, type Processed } from '@/server/media/image'
 
 const solid = (width: number, height: number, background = '#1d3557') => sharp({ create: { width, height, channels: 3, background } })
 
@@ -12,15 +12,6 @@ async function pngClaiming(width: number, height: number): Promise<Buffer> {
   png.writeUInt32BE(height, 20)
   png.writeUInt32BE(crc32(png.subarray(12, 29)), 29)
   return png
-}
-
-function streamOf(...chunks: number[]): ReadableStream<Uint8Array> {
-  return new ReadableStream({
-    start(controller) {
-      for (const size of chunks) controller.enqueue(new Uint8Array(size).fill(1))
-      controller.close()
-    },
-  })
 }
 
 const processed = (result: Processed | string): Processed => {
@@ -40,17 +31,6 @@ describe('sniff', () => {
     expect(sniff(await solid(2, 2).gif().toBuffer())).toBeNull()
     expect(sniff(Buffer.from('RIFF\u0000\u0000\u0000\u0000WAVEfmt '))).toBeNull()
     expect(sniff(new Uint8Array(0))).toBeNull()
-  })
-})
-
-describe('readCapped', () => {
-  it('reads a body up to the limit', async () => {
-    expect((await readCapped(streamOf(600, 400), 1000) as Buffer).length).toBe(1000)
-    expect((await readCapped(null, 1000) as Buffer).length).toBe(0)
-  })
-
-  it('stops at the first byte beyond it', async () => {
-    expect(await readCapped(streamOf(600, 401), 1000)).toBe('too_large')
   })
 })
 

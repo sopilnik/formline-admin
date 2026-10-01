@@ -18,6 +18,17 @@ export const E2E_ADMIN_URL = 'postgres://postgres:postgres@127.0.0.1:55432/postg
 export const E2E_MIGRATOR_URL = `postgres://postgres:postgres@127.0.0.1:55432/${E2E_DB}`
 export const E2E_APP_URL = `postgres://app:app-local-password@127.0.0.1:56432/${E2E_DB}`
 
+/** The local stand-in for Stripe's API (tests/e2e/stripe-stub.ts), which the e2e server reads instead of Stripe. */
+export const E2E_STRIPE_PORT = 4334
+
+/** The Stripe ingest's settings of the e2e server (spec §7); local test values only. */
+export const E2E_STRIPE_ENV = {
+  STRIPE_WEBHOOK_SECRET: 'whsec_e2e-webhook-secret-0123456789abcdef',
+  STRIPE_RESTRICTED_KEY: 'rk_test_e2e-restricted-key-0123456789abcdef',
+  PSEUDONYM_KEY: 'e2e-pseudonym-key-0123456789abcdef0123456789',
+  STRIPE_API_BASE: `http://127.0.0.1:${E2E_STRIPE_PORT}`,
+}
+
 /** The auth settings of the e2e server; local test values only. */
 export const E2E_AUTH_ENV = {
   SITE_URL: E2E_BASE_URL,

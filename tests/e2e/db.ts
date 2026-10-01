@@ -73,6 +73,29 @@ export async function enrolAuthenticator(workspaceId: string, userId: string, se
   await asSchemaOwner(client => client.query('update fa.users set totp_secret_enc = $3 where workspace_id = $1 and id = $2', [workspaceId, userId, value]))
 }
 
+/**
+ * A verified session for the owner, signed in a moment ago. In a whole run the owner tests have created the owner through
+ * /setup before this runs; a run of one file creates an owner whose password and authenticator nobody knows.
+ */
+export function createOwnerSession(): Promise<{ token: string; workspaceId: string; userId: string }> {
+  return asSchemaOwner(async client => {
+    const sha256 = (value: string) => createHash('sha256').update(value).digest('hex')
+    const workspaceId = (await client.query<{ id: string }>("select id from fa.workspaces where kind = 'owner'")).rows[0]!.id
+    let userId = (await client.query<{ id: string }>("select id from fa.users where workspace_id = $1 and role = 'owner'", [workspaceId])).rows[0]?.id
+    if (!userId) {
+      userId = randomUUID()
+      const codes = Array.from({ length: 10 }, () => sha256(randomUUID()))
+      await client.query('select fa.create_owner($1, $2, $3, $4, null, null, $5, $6, $7, $8)',
+        [userId, 'owner@formline.test', 'Alex Owner', `$argon2id$v=19$m=19456,t=2,p=1$${randomUUID()}`, codes, sha256(randomUUID()), 'Playwright', sha256(randomUUID())])
+    }
+    const token = encodeBase32LowerCaseNoPadding(randomBytes(20))
+    await client.query(
+      "insert into fa.sessions (workspace_id, id, user_id, expires_at, second_factor_verified, reauth_at) values ($1, $2, $3, now() + interval '1 day', true, now())",
+      [workspaceId, sha256(token), userId])
+    return { token, workspaceId, userId }
+  })
+}
+
 /** Moves the owner's last authentication an hour back, as if the ten minutes had long passed. */
 export async function ageOwnerAuthentication(): Promise<void> {
   await asSchemaOwner(client => client.query(

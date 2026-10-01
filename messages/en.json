@@ -248,6 +248,7 @@
       "customerPage": "Customer page",
       "address": "Shipping address",
       "noAddress": "No shipping address was given.",
+      "notCollected": "The store does not collect shipping addresses.",
       "delivery": "Delivery: {delivery}",
       "notFoundTitle": "Order not found",
       "notFoundBody": "This workspace has no order with that number.",

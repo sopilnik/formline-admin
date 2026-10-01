@@ -156,7 +156,7 @@ export default async function OrderPage({ params }: Params) {
                 <span className="block">{order.address.country}</span>
               </address>
             ) : (
-              <p className="text-[13px] text-muted-foreground">{t('detail.noAddress')}</p>
+              <p className="text-[13px] text-muted-foreground">{t(order.source === 'stripe' ? 'detail.notCollected' : 'detail.noAddress')}</p>
             )}
             <p className="text-[13px] text-muted-foreground">{t('detail.delivery', { delivery: t(`delivery.${order.delivery}`) })}</p>
           </section>
