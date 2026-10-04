@@ -31,11 +31,24 @@ const schema = z.object({
    * production only a loopback address, so the restricted key can never be sent to another host.
    */
   STRIPE_API_BASE: z.url({ protocol: /^https?$/ }).optional(),
+  /** Set by the image (Dockerfile): the deployed container, where the media zone and the Stripe ingest are required. */
+  FORMLINE_RUNTIME: z.enum(['container']).optional(),
+  /** Set by the container start while the database is unreachable: every page answers 503 until it is back (spec §13). */
+  FORMLINE_MAINTENANCE: z.enum(['1']).optional(),
 }).superRefine((env, ctx) => {
   const bunny = [env.BUNNY_STORAGE_ZONE, env.BUNNY_STORAGE_HOST, env.BUNNY_STORAGE_KEY].filter(Boolean).length
   if (bunny !== 0 && bunny !== 3) ctx.addIssue({ code: 'custom', path: ['BUNNY_STORAGE_ZONE'], message: 'BUNNY_STORAGE_ZONE, BUNNY_STORAGE_HOST and BUNNY_STORAGE_KEY go together' })
   const stripe = [env.STRIPE_WEBHOOK_SECRET, env.STRIPE_RESTRICTED_KEY, env.PSEUDONYM_KEY].filter(Boolean).length
   if (stripe !== 0 && stripe !== 3) ctx.addIssue({ code: 'custom', path: ['STRIPE_WEBHOOK_SECRET'], message: 'STRIPE_WEBHOOK_SECRET, STRIPE_RESTRICTED_KEY and PSEUDONYM_KEY go together' })
+  // The deployed container runs the real thing only: the media zone and the Stripe ingest, no local stand-ins.
+  if (env.FORMLINE_RUNTIME === 'container') {
+    if (env.NODE_ENV !== 'production') ctx.addIssue({ code: 'custom', path: ['NODE_ENV'], message: 'must be production in the container' })
+    if (bunny === 0) ctx.addIssue({ code: 'custom', path: ['BUNNY_STORAGE_ZONE'], message: 'the media zone is required in the container' })
+    if (stripe === 0) ctx.addIssue({ code: 'custom', path: ['STRIPE_WEBHOOK_SECRET'], message: 'the Stripe ingest is required in the container' })
+    if (env.STRIPE_API_BASE) ctx.addIssue({ code: 'custom', path: ['STRIPE_API_BASE'], message: 'not allowed in the container' })
+    if (env.MEDIA_STORAGE_DIR) ctx.addIssue({ code: 'custom', path: ['MEDIA_STORAGE_DIR'], message: 'not allowed in the container' })
+    if (new URL(env.SITE_URL).protocol !== 'https:') ctx.addIssue({ code: 'custom', path: ['SITE_URL'], message: 'must be https in the container' })
+  }
   if (env.NODE_ENV !== 'production') return
   if (env.STRIPE_API_BASE && !LOOPBACK.has(new URL(env.STRIPE_API_BASE).hostname)) {
     ctx.addIssue({ code: 'custom', path: ['STRIPE_API_BASE'], message: 'only a loopback address in production' })

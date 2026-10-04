@@ -1313,5 +1313,10 @@
   },
   "ingest": {
     "oversold": "{line}: sold {count} more than there was in stock."
+  },
+  "maintenance": {
+    "title": "Formline Admin is starting",
+    "heading": "The panel is starting",
+    "body": "The database is waking up or being updated. Try again in a minute."
   }
 }

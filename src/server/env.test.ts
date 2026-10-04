@@ -63,4 +63,39 @@ describe('readEnv', () => {
     expect(readEnv({ ...production, STRIPE_API_BASE: 'http://[::1]:4334' }).STRIPE_API_BASE).toBe('http://[::1]:4334')
     expect(() => readEnv({ ...production, STRIPE_API_BASE: 'https://api.example.com' })).toThrow(/loopback/)
   })
+
+  describe('in the container', () => {
+    const container = {
+      ...production,
+      FORMLINE_RUNTIME: 'container',
+      BUNNY_STORAGE_ZONE: 'formline-admin-media',
+      BUNNY_STORAGE_HOST: 'storage.bunnycdn.com',
+      BUNNY_STORAGE_KEY: 'k'.repeat(36),
+      STRIPE_WEBHOOK_SECRET: `whsec_${'w'.repeat(32)}`,
+      STRIPE_RESTRICTED_KEY: `rk_test_${'r'.repeat(32)}`,
+      PSEUDONYM_KEY: 'p'.repeat(32),
+    }
+
+    it('accepts the deployed configuration', () => {
+      expect(readEnv(container).FORMLINE_RUNTIME).toBe('container')
+    })
+
+    it('requires the media zone and the Stripe ingest', () => {
+      expect(() => readEnv({ ...container, BUNNY_STORAGE_ZONE: undefined, BUNNY_STORAGE_HOST: undefined, BUNNY_STORAGE_KEY: undefined })).toThrow(/media zone is required/)
+      expect(() => readEnv({ ...container, STRIPE_WEBHOOK_SECRET: undefined, STRIPE_RESTRICTED_KEY: undefined, PSEUDONYM_KEY: undefined })).toThrow(/Stripe ingest is required/)
+    })
+
+    it('refuses the local stand-ins, a site without https and a build that is not production', () => {
+      expect(() => readEnv({ ...container, STRIPE_API_BASE: 'http://127.0.0.1:4334' })).toThrow(/STRIPE_API_BASE/)
+      expect(() => readEnv({ ...container, MEDIA_STORAGE_DIR: '.media' })).toThrow(/MEDIA_STORAGE_DIR/)
+      expect(() => readEnv({ ...container, SITE_URL: 'http://localhost:3000' })).toThrow(/https in the container/)
+      expect(() => readEnv({ ...container, NODE_ENV: 'development' })).toThrow(/production in the container/)
+    })
+
+    it('knows the maintenance flag and nothing else', () => {
+      expect(readEnv({ ...container, FORMLINE_MAINTENANCE: '1' }).FORMLINE_MAINTENANCE).toBe('1')
+      expect(() => readEnv({ ...container, FORMLINE_MAINTENANCE: 'yes' })).toThrow(/FORMLINE_MAINTENANCE/)
+      expect(() => readEnv({ ...container, FORMLINE_RUNTIME: 'vm' })).toThrow(/FORMLINE_RUNTIME/)
+    })
+  })
 })

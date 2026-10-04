@@ -2,6 +2,7 @@ import { timingSafeEqual } from 'node:crypto'
 import { isIP } from 'node:net'
 import { NextResponse, type NextRequest } from 'next/server'
 import { LOCALE_COOKIE } from '@/i18n/locale'
+import { maintenancePage } from '@/lib/maintenance'
 
 // The container is reachable only through the bunny edge, which sets both
 // headers on every request and overwrites whatever a client sent. Anything
@@ -33,6 +34,11 @@ function sameSecret(given: string, expected: string): boolean {
   return a.length === b.length && timingSafeEqual(a, b)
 }
 
+// Liveness alone, without a query: the readiness check (`?db=1`) reaches the database and comes through the edge like any page.
+function isLiveness(request: NextRequest): boolean {
+  return request.nextUrl.pathname === LIVENESS && request.nextUrl.search === ''
+}
+
 function fromEdge(request: NextRequest): boolean {
   if (process.env.NODE_ENV !== 'production' && process.env.ORIGIN_AUTH_DISABLED === '1') return true
   const secret = process.env.ORIGIN_AUTH_SECRET ?? ''
@@ -43,10 +49,24 @@ function fromEdge(request: NextRequest): boolean {
 
 export function proxy(request: NextRequest): NextResponse {
   const requestId = crypto.randomUUID()
-  if (request.nextUrl.pathname !== LIVENESS && !fromEdge(request)) {
+  const liveness = isLiveness(request)
+  if (!liveness && !fromEdge(request)) {
     return new NextResponse('Forbidden', {
       status: 403,
       headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'X-Request-Id': requestId },
+    })
+  }
+  // The container start sets the flag while the database is unreachable and restarts the server once it is back.
+  if (!liveness && process.env.FORMLINE_MAINTENANCE === '1') {
+    return new NextResponse(maintenancePage(request.cookies.get(LOCALE_COOKIE)?.value), {
+      status: 503,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-store',
+        'Retry-After': '30',
+        'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
+        'X-Request-Id': requestId,
+      },
     })
   }
   const lang = request.nextUrl.searchParams.get('lang')
@@ -60,6 +80,13 @@ export function proxy(request: NextRequest): NextResponse {
   headers.set('x-nonce', nonce)
   headers.set('x-request-id', requestId)
   headers.set('Content-Security-Policy', csp)
+  if (process.env.NODE_ENV === 'production') {
+    // Behind the edge the Host header may name bunny's endpoint rather than the panel, and Server Actions compare the
+    // browser's Origin with the forwarded host. The request passed the edge check, so the panel's own address stands in.
+    const site = new URL(process.env.SITE_URL ?? 'http://localhost:3000')
+    headers.set('x-forwarded-host', site.host)
+    headers.set('x-forwarded-proto', site.protocol.replace(':', ''))
+  }
   const response = NextResponse.next({ request: { headers } })
   response.headers.set('Content-Security-Policy', csp)
   response.headers.set('X-Request-Id', requestId)

@@ -23,6 +23,11 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   // pino loads its transports at run time and @node-rs/argon2 is a native module; bundling breaks both.
   serverExternalPackages: ['pino', '@node-rs/argon2'],
+  experimental: {
+    // proxy.ts sees every request, so Next.js keeps a copy of each body for it, by default up to 10 MB, and cuts the rest.
+    // An upload may be 2 MB (spec §8.4): 3 MB keeps the copy small while the media route still refuses anything larger.
+    proxyClientMaxBodySize: '3mb',
+  },
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }]
   },

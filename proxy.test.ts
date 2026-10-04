@@ -48,6 +48,38 @@ describe('origin check', () => {
     vi.stubEnv('ORIGIN_AUTH_DISABLED', '1')
     expect(proxy(req('/overview')).status).toBe(200)
   })
+
+  it('lets only the bare liveness path through: the readiness check needs the edge', () => {
+    production()
+    expect(proxy(req('/api/health?db=1')).status).toBe(403)
+    expect(proxy(req('/api/health?db=1', good)).status).toBe(200)
+  })
+})
+
+describe('maintenance mode', () => {
+  function maintenance() {
+    production()
+    vi.stubEnv('FORMLINE_MAINTENANCE', '1')
+  }
+
+  it('answers every page with 503 and a short page in the visitor\'s language', async () => {
+    maintenance()
+    const res = proxy(req('/overview', good))
+    expect(res.status).toBe(503)
+    expect(res.headers.get('content-type')).toBe('text/html; charset=utf-8')
+    expect(res.headers.get('cache-control')).toBe('no-store')
+    expect(res.headers.get('retry-after')).toBe('30')
+    expect(res.headers.get('content-security-policy')).toContain("default-src 'none'")
+    expect(await res.text()).toContain('<h1>The panel is starting</h1>')
+    const ru = proxy(req('/sign-in', { ...good, cookie: 'NEXT_LOCALE=ru' }))
+    expect(await ru.text()).toContain('<html lang="ru">')
+  })
+
+  it('keeps liveness answering and the edge check in front', () => {
+    maintenance()
+    expect(proxy(req('/api/health')).status).toBe(200)
+    expect(proxy(req('/overview')).status).toBe(403)
+  })
 })
 
 describe('request decoration', () => {
@@ -65,6 +97,16 @@ describe('request decoration', () => {
     production()
     expect(proxy(req('/?lang=ru', good)).cookies.get('NEXT_LOCALE')?.value).toBe('ru')
     expect(proxy(req('/?lang=de', good)).cookies.get('NEXT_LOCALE')).toBeUndefined()
+  })
+
+  it('forwards the panel\'s own host in production, so Server Actions match the browser\'s Origin', () => {
+    production()
+    vi.stubEnv('SITE_URL', 'https://formline-admin.sopilnik.dev')
+    const res = proxy(req('/overview', { ...good, host: 'formline-admin.b-cdn.run', 'x-forwarded-host': 'formline-admin.b-cdn.run' }))
+    expect(res.headers.get('x-middleware-request-x-forwarded-host')).toBe('formline-admin.sopilnik.dev')
+    expect(res.headers.get('x-middleware-request-x-forwarded-proto')).toBe('https')
+    vi.stubEnv('NODE_ENV', 'development')
+    expect(proxy(req('/overview', good)).headers.get('x-middleware-request-x-forwarded-host')).toBeNull()
   })
 
   it('lets the request that carries ?lang render in that language already', () => {
