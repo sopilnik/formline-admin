@@ -1,0 +1,23 @@
+# The image is built from the sources alone; everything local, generated, secret or only for tests stays out.
+.git
+.github
+node_modules
+.next
+dist
+blob-report
+coverage
+docs
+playwright-report
+test-media
+test-results
+tests
+.media
+**/*.test.ts
+**/*.test.tsx
+playwright.config.ts
+vitest.config.ts
+vitest.int.config.ts
+.env
+.env.*
+*.tsbuildinfo
+next-env.d.ts

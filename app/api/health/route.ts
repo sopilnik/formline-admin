@@ -10,7 +10,11 @@ export const dynamic = 'force-dynamic'
 const NO_STORE = { 'Cache-Control': 'no-store' }
 
 export async function GET(request: Request): Promise<Response> {
-  if (new URL(request.url).searchParams.get('db') !== '1') return Response.json({ status: 'ok' }, { headers: NO_STORE })
+  if (new URL(request.url).searchParams.get('db') !== '1') {
+    // The image's commit (Dockerfile): a deploy waits until the new container answers with it.
+    const version = process.env.FORMLINE_VERSION
+    return Response.json({ status: 'ok', ...(version ? { version } : {}) }, { headers: NO_STORE })
+  }
   const result = await readiness(getPool())
   if (result.status !== 'ok') log.warn({ event: 'health.not_ready', failed: result.failed })
   return Response.json(result, { status: result.status === 'ok' ? 200 : 503, headers: NO_STORE })

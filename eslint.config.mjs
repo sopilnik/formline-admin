@@ -5,7 +5,7 @@ import nextTs from 'eslint-config-next/typescript'
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
-  globalIgnores(['public/**', 'coverage/**', 'playwright-report/**', 'test-results/**']),
+  globalIgnores(['public/**', 'coverage/**', 'playwright-report/**', 'test-results/**', 'dist/**']),
   {
     // The authored style: single quotes, no semicolons. The vendored shadcn/ui
     // primitives keep the CLI's own style, so they stay out of this block.

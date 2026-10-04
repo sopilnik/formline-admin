@@ -1,10 +1,10 @@
 // Applies the SQL migrations as schema_owner, keeps the two database roles in
 // shape and builds the template workspace. Runs at container start before the
-// server listens (stage 9) and by hand with `pnpm db:migrate`.
+// server listens (scripts/start.ts) and by hand with `pnpm db:migrate`
+// (scripts/db-migrate.ts).
 import pg from 'pg'
 import { readdir, readFile } from 'node:fs/promises'
 import { setTimeout as sleep } from 'node:timers/promises'
-import { pathToFileURL } from 'node:url'
 import { buildTemplate } from '../db/seed/build.ts'
 
 export type MigrateOptions = {
@@ -20,9 +20,13 @@ const DEFAULT_DIR = new URL('../src/server/db/migrations/', import.meta.url)
 const DEFAULT_RETRY_DELAYS_MS = [1_000, 2_000, 4_000, 8_000, 15_000, 30_000, 30_000, 30_000]
 const MIGRATE_LOCK = 7_201_326
 
+/** A setting no retry can mend: the container start refuses to run on it rather than wait (scripts/start.ts). */
+export class MigrateConfigError extends Error {}
+
 async function connect(url: string, delays: number[]): Promise<pg.Client> {
   for (let attempt = 0; ; attempt++) {
-    const client = new pg.Client({ connectionString: url })
+    // A host that swallows packets would otherwise hold the attempt for minutes.
+    const client = new pg.Client({ connectionString: url, connectionTimeoutMillis: 10_000 })
     try {
       await client.connect()
       return client
@@ -37,9 +41,9 @@ async function connect(url: string, delays: number[]): Promise<pg.Client> {
 
 function appCredentials(appUrl: string): { password: string } {
   const url = new URL(appUrl)
-  if (decodeURIComponent(url.username) !== 'app') throw new Error('DATABASE_URL must connect as the app role')
+  if (decodeURIComponent(url.username) !== 'app') throw new MigrateConfigError('DATABASE_URL must connect as the app role')
   const password = decodeURIComponent(url.password)
-  if (password.length < 16) throw new Error('the app role password must be at least 16 characters')
+  if (password.length < 16) throw new MigrateConfigError('the app role password must be at least 16 characters')
   return { password }
 }
 
@@ -104,20 +108,4 @@ export async function migrate(options: MigrateOptions): Promise<{ applied: strin
     await client.query('select pg_advisory_unlock_all()').catch(() => undefined)
     await client.end()
   }
-}
-
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const migratorUrl = process.env.DATABASE_URL_MIGRATOR
-  const appUrl = process.env.DATABASE_URL
-  if (!migratorUrl || !appUrl) {
-    console.error(JSON.stringify({ event: 'migrate.failed', message: 'DATABASE_URL_MIGRATOR and DATABASE_URL are required' }))
-    process.exit(1)
-  }
-  migrate({ migratorUrl, appUrl, log: e => console.log(JSON.stringify(e)) }).then(
-    r => console.log(JSON.stringify({ event: 'migrate.done', applied: r.applied })),
-    e => {
-      console.error(JSON.stringify({ event: 'migrate.failed', message: e instanceof Error ? e.message : String(e) }))
-      process.exitCode = 1
-    },
-  )
 }
