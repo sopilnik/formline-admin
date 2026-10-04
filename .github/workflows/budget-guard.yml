@@ -1,0 +1,37 @@
+name: Budget guard
+
+# Every hour at minute 17, the top of the hour being GitHub's most delayed slot (spec §10): stops the panel's
+# application at $4 of this month's cost and fails — which emails the owner — on anything it cannot vouch for.
+# deploy.yml switches this workflow back on after every deploy, in case GitHub disabled it for inactivity.
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: budget-guard
+  cancel-in-progress: false
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # The bunny key lives in the production environment; reading it is not a deployment.
+    environment:
+      name: production
+      deployment: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      - run: node scripts/guard.ts
+        env:
+          BUNNY_API_KEY: ${{ secrets.BUNNY_API_KEY }}
+          MC_APP_ID: ${{ vars.MC_APP_ID }}
+          SITE_URL: ${{ vars.SITE_URL }}

@@ -91,3 +91,15 @@ The command prints a one-time code, valid for 30 minutes; only the schema owner 
 role cannot. Open `/recover`, enter the code, a new password and the first code of a new authenticator app, and keep
 the new recovery codes the page shows. Recovery removes every passkey and signs out every session of the owner, and it
 lifts the password and second-factor lockouts.
+
+## Budget guard
+
+`.github/workflows/budget-guard.yml` runs `scripts/guard.ts` every hour at minute 17 with the bunny account key of the
+`production` environment. It reads what the panel's application has cost this month — `monthlyCost` of
+`GET /mc/apps/{id}/summary` and the account's Magic Containers charges from `GET /billing`, the larger of the two — stops
+the application with `POST /mc/apps/{id}/undeploy` at $4, and fails, so GitHub emails the owner, whenever it stopped the
+application, could not read a figure, found the balance under $3 or got no answer from the panel's liveness check. An
+application that is already stopped is left alone and the run passes. To bring the panel back, find the cause first, then
+deploy the application again in the bunny dashboard (Magic Containers → the application → Deploy); the next run checks it
+again. Every deploy switches the guard back on, because GitHub disables a scheduled workflow after 60 days without
+activity in a public repository.
