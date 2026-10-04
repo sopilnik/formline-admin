@@ -46,6 +46,13 @@ export function classify(error: unknown): 'unreachable' | 'refused' {
   return 'unreachable'
 }
 
+/** The innermost reason behind an error: "database unreachable after 5 attempts" may hide a refused password. */
+function causeOf(error: unknown): string | undefined {
+  let reason: string | undefined
+  for (let e = error instanceof Error ? error.cause : undefined; e instanceof Error; e = e.cause) reason = e.message
+  return reason
+}
+
 export function withoutMigrator(env: Env): Env {
   const rest = { ...env }
   delete rest.DATABASE_URL_MIGRATOR
@@ -59,7 +66,12 @@ async function prepare(deps: StartDeps, retryDelaysMs: number[]): Promise<'ready
     return 'ready'
   } catch (error) {
     const verdict = classify(error)
-    deps.log({ event: verdict === 'refused' ? 'start.refused' : 'start.unreachable', message: error instanceof Error ? error.message : String(error) })
+    const cause = causeOf(error)
+    deps.log({
+      event: verdict === 'refused' ? 'start.refused' : 'start.unreachable',
+      message: error instanceof Error ? error.message : String(error),
+      ...(cause === undefined ? {} : { cause }),
+    })
     return verdict
   }
 }

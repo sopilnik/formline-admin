@@ -137,6 +137,22 @@ describe('runStart', () => {
     expect(h.servers).toHaveLength(1)
   })
 
+  it('names the reason behind a refusal or an unreachable database in its log', async () => {
+    const password = Object.assign(new pg.DatabaseError('password authentication failed for user "owner"', 1, 'error'), { code: '28P01' })
+    const refused = harness([new Error('database unreachable after 5 attempts', { cause: password })])
+    expect(await runStart(refused.deps)).toBe(1)
+    expect(refused.events.at(-1)).toEqual({ event: 'start.refused', message: 'database unreachable after 5 attempts', cause: 'password authentication failed for user "owner"' })
+    const away = harness([unreachable()])
+    const running = runStart(away.deps)
+    await away.flush()
+    expect(away.events[0]).toEqual({ event: 'start.unreachable', message: 'database unreachable after 1 attempts', cause: 'connect ECONNREFUSED' })
+    away.stop('SIGTERM')
+    expect(await running).toBe(143)
+    const role = harness(['ok'], new AppRoleError('over-privileged'))
+    expect(await runStart(role.deps)).toBe(1)
+    expect(role.events.at(-1)).toEqual({ event: 'start.refused', message: 'over-privileged' })
+  })
+
   it('stops with the server when the server stops by itself', async () => {
     const h = harness(['ok'])
     const running = runStart(h.deps)
