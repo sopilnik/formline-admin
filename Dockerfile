@@ -1,9 +1,7 @@
-# syntax=docker/dockerfile:1
 # The panel's image (spec §13): built with the repository's pnpm, run on Node 26 as the unprivileged node user. Its start,
 # scripts/start.ts bundled as scripts/start.mjs, migrates the database, checks the role and then runs the standalone server.
-ARG NODE_IMAGE=node:26-slim@sha256:ec7758ee051e457b468b32bde57b0879010b325bb9862718e9615225ce4aaae1
-
-FROM ${NODE_IMAGE} AS build
+# Both stages name the same Node image by digest, so Dependabot moves them together (tests/unit/versions.test.ts).
+FROM node:26-slim@sha256:ec7758ee051e457b468b32bde57b0879010b325bb9862718e9615225ce4aaae1 AS build
 ARG PNPM_VERSION=11.28.3
 ENV NEXT_TELEMETRY_DISABLED=1
 WORKDIR /src
@@ -13,7 +11,7 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm build && pnpm build:start
 
-FROM ${NODE_IMAGE}
+FROM node:26-slim@sha256:ec7758ee051e457b468b32bde57b0879010b325bb9862718e9615225ce4aaae1
 WORKDIR /app
 # Root owns the files; the node user reads them and writes only Next.js's cache.
 COPY --from=build /src/.next/standalone ./
