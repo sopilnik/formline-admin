@@ -92,6 +92,27 @@ role cannot. Open `/recover`, enter the code, a new password and the first code 
 the new recovery codes the page shows. Recovery removes every passkey and signs out every session of the owner, and it
 lifts the password and second-factor lockouts.
 
+## Deployment
+
+The panel runs as one container on bunny Magic Containers behind bunny's edge (spec §4.1). The image (`Dockerfile`)
+holds the standalone server and its start, `scripts/start.ts`, bundled with its dependencies by `pnpm build:start`. The
+start runs the migrations with `DATABASE_URL_MIGRATOR`, checks the `app` role and then starts the server without the
+migrator's address. When the database cannot be reached it serves every page but liveness as a 503 maintenance page
+and keeps retrying every 30 seconds, then restarts the server normally; a refused login, a failed migration or a role
+with too many rights stops the container instead. In the container (`FORMLINE_RUNTIME=container`) the media zone and the
+three Stripe variables are required, and the local stand-ins are refused.
+
+`GET /api/health` is liveness: it never touches the database, answers without the edge headers and names the image's
+commit. `GET /api/health?db=1` is readiness — the database within five seconds and the role check — and like every other
+request it must come through the edge.
+
+A push to `main` runs `.github/workflows/deploy.yml`: the checks of `ci.yml`, the image to
+`ghcr.io/sopilnik/formline-admin:<commit>` with provenance and an SBOM, `scripts/deploy-image.ts` (it points the
+container at the new image by tag and digest through bunny's API and waits until liveness answers with the new commit),
+the budget guard switched on again, and `scripts/smoke.ts` through the edge. The workflows read the bunny account key
+from the `production` environment's secret `BUNNY_API_KEY` and three repository variables: `MC_APP_ID`,
+`MC_CONTAINER_NAME` and `SITE_URL`.
+
 ## Budget guard
 
 `.github/workflows/budget-guard.yml` runs `scripts/guard.ts` every hour at minute 17 with the bunny account key of the
