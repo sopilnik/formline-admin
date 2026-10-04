@@ -177,8 +177,10 @@ export async function ingestOrder(order: IncomingOrder, options: { eventId: stri
       if (oversold.length > 0) {
         const locale = await ownerLocale(tx, owner)
         const t = createTranslator({ locale, messages: locale === 'ru' ? ru : en, namespace: 'ingest' })
+        // A moment after the status event, so the history lists the payment first; with the same time their order was random.
         await tx.insert(orderEvents).values({
-          workspaceId: owner, orderId: created.id, kind: 'note', note: oversold.map(o => t('oversold', { line: o.label, count: o.count })).join('\n'), actorUserId: null, at: order.placedAt,
+          workspaceId: owner, orderId: created.id, kind: 'note', note: oversold.map(o => t('oversold', { line: o.label, count: o.count })).join('\n'), actorUserId: null,
+          at: new Date(order.placedAt.getTime() + 1),
         })
       }
       const [customer] = await tx.select({ name: customers.name }).from(customers).where(and(eq(customers.workspaceId, owner), eq(customers.id, customerId)))

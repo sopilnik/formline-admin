@@ -155,6 +155,16 @@ describe('the Stripe ingest', () => {
     }
   })
 
+  it('writes the oversold note a moment after the payment, so the order\'s history lists the payment first', async () => {
+    await setStock('far-orbit-a2-ink', 1, 3)
+    const result = await ingest(storeOrder({ lines: [line('Far Orbit · A2 · Ink', 3, 4700)] }))
+    const { rows } = await admin.query<{ kind: string; at: Date }>('select kind, at from fa.order_events where workspace_id = $1 and order_id = $2 order by at, id',
+      [owner, result.status === 'created' ? result.orderId : ''])
+    const at = Object.fromEntries(rows.map(r => [r.kind, r.at.getTime()]))
+    expect(at.note! - at.status!).toBe(1)
+    expect(rows.map(r => r.kind)).toEqual(['status', 'note'])
+  })
+
   it('keeps a line it cannot match as free text and takes no stock for it', async () => {
     await setStock('far-orbit-a2-ink', 9, 3)
     const result = await ingest(storeOrder({ lines: [line('Far Orbit · A2 · Ink', 1, 4700), line('Gift wrap', 1, 500)] }))
