@@ -113,6 +113,11 @@ the budget guard switched on again, and `scripts/smoke.ts` through the edge. The
 from the `production` environment's secret `BUNNY_API_KEY` and three repository variables: `MC_APP_ID`,
 `MC_CONTAINER_NAME` and `SITE_URL`.
 
+`.github/workflows/probe.yml` runs one probe of spec §15 at a time by hand (`scripts/probe.ts`): `p1` the usage figures
+and how old bunny's newest statistics are, `p2` that the edge overwrites a forged origin secret and client address and the
+raw endpoint refuses them, `p3` the endpoint and its pull zone, `p4` the edge cache, `p5` readiness through the edge, `p6`
+"Enter the demo" timed twice. Each prints field names, figures, timings and statuses, never a key or the raw hostname.
+
 ## Budget guard
 
 `.github/workflows/budget-guard.yml` runs `scripts/guard.ts` every hour at minute 17 with the bunny account key of the
