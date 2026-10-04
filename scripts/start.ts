@@ -46,10 +46,19 @@ export function classify(error: unknown): 'unreachable' | 'refused' {
   return 'unreachable'
 }
 
+/**
+ * An error's own text. Node tries every address of a host and, when all refuse, rejects with an AggregateError without a
+ * message; its reasons are the errors it holds.
+ */
+function messageOf(error: Error): string {
+  if (!(error instanceof AggregateError) || error.message) return error.message
+  return error.errors.map(e => (e instanceof Error ? e.message : String(e))).join('; ')
+}
+
 /** The innermost reason behind an error: "database unreachable after 5 attempts" may hide a refused password. */
 function causeOf(error: unknown): string | undefined {
   let reason: string | undefined
-  for (let e = error instanceof Error ? error.cause : undefined; e instanceof Error; e = e.cause) reason = e.message
+  for (let e = error instanceof Error ? error.cause : undefined; e instanceof Error; e = e.cause) reason = messageOf(e)
   return reason
 }
 
@@ -69,7 +78,7 @@ async function prepare(deps: StartDeps, retryDelaysMs: number[]): Promise<'ready
     const cause = causeOf(error)
     deps.log({
       event: verdict === 'refused' ? 'start.refused' : 'start.unreachable',
-      message: error instanceof Error ? error.message : String(error),
+      message: error instanceof Error ? messageOf(error) : String(error),
       ...(cause === undefined ? {} : { cause }),
     })
     return verdict

@@ -164,6 +164,24 @@ describe('runStart', () => {
     expect(role.events.at(-1)).toEqual({ event: 'start.refused', message: 'over-privileged' })
   })
 
+  it('spells out a connection refused at every address of the host', async () => {
+    // Node tries every address of a host and, when all refuse, rejects with an AggregateError that has no message.
+    const everyAddress = () => new AggregateError([new Error('connect ECONNREFUSED ::1:5432'), new Error('connect ECONNREFUSED 127.0.0.1:5432')], '')
+    const reason = 'connect ECONNREFUSED ::1:5432; connect ECONNREFUSED 127.0.0.1:5432'
+    const migration = harness([new Error('database unreachable after 1 attempts', { cause: everyAddress() })])
+    const migrating = runStart(migration.deps)
+    await migration.flush()
+    expect(migration.events[0]).toEqual({ event: 'start.unreachable', message: 'database unreachable after 1 attempts', cause: reason })
+    migration.stop('SIGTERM')
+    expect(await migrating).toBe(143)
+    const role = harness(['ok'], everyAddress())
+    const checking = runStart(role.deps)
+    await role.flush()
+    expect(role.events[0]).toEqual({ event: 'start.unreachable', message: reason })
+    role.stop('SIGTERM')
+    expect(await checking).toBe(143)
+  })
+
   it('stops with the server when the server stops by itself', async () => {
     const h = harness(['ok'])
     const running = runStart(h.deps)
