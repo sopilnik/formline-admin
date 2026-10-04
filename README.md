@@ -6,7 +6,7 @@ workspace apart.
 
 ## Development
 
-Requirements: Node.js 24 or later, pnpm 11, Docker.
+Requirements: Node.js 26 or later, pnpm 11, Docker.
 
     pnpm install
     pnpm dev
