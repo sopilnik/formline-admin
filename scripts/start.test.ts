@@ -98,6 +98,17 @@ describe('runStart', () => {
     expect(h.servers[0]!.signals).toEqual(['SIGTERM'])
   })
 
+  it('stops at once when asked to while it is still reaching the database', async () => {
+    const h = harness([])
+    h.deps.migrate = () => new Promise(() => undefined)
+    const running = runStart(h.deps)
+    await h.flush()
+    h.stop('SIGTERM')
+    expect(await running).toBe(143)
+    expect(h.servers).toEqual([])
+    expect(h.events.at(-1)).toEqual({ event: 'start.stopped', signal: 'SIGTERM' })
+  })
+
   it('refuses to serve on a role with too many rights or a failed migration', async () => {
     const role = harness(['ok'], new AppRoleError('over-privileged'))
     expect(await runStart(role.deps)).toBe(1)

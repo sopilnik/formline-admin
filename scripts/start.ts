@@ -86,7 +86,13 @@ export async function runStart(deps: StartDeps): Promise<number> {
     return 1
   }
   const serverEnv = withoutMigrator(deps.env)
-  const first = await prepare(deps, FIRST_RETRIES_MS)
+  // A stop during the first attempts ends the start at once: nothing is served yet, and Postgres rolls back a migration
+  // that the exit cuts off.
+  const first = await Promise.race([prepare(deps, FIRST_RETRIES_MS), deps.stopped.then(signal => ({ signal }))])
+  if (typeof first === 'object') {
+    deps.log({ event: 'start.stopped', signal: first.signal })
+    return 128 + constants.signals[first.signal]
+  }
   if (first === 'refused') return 1
   let maintenance = first === 'unreachable'
   let server = deps.serve(maintenance ? { ...serverEnv, FORMLINE_MAINTENANCE: '1' } : serverEnv)
