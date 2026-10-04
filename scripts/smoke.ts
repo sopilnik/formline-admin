@@ -1,8 +1,9 @@
 // The smoke test after every deploy (spec §13), run by deploy.yml against the live panel through the edge: liveness and
 // readiness, the security headers of the sign-in page, nothing private served from the edge's cache, the container's raw
-// bunny hostname refusing a request that went around the edge, and "Enter the demo" timed and then ended, so the
-// sandbox it opened is deleted at once. One JSON line per check; exit 1 when any fails.
-import { chromium } from '@playwright/test'
+// bunny hostname refusing a request that went around the edge, and "Enter the demo" timed, an image uploaded in the
+// sandbox and read back — sharp and the storage zone at work in the container — and the demo ended, so the sandbox it
+// opened is deleted at once. One JSON line per check; exit 1 when any fails.
+import { chromium, type Page } from '@playwright/test'
 
 export type Check = { check: string; ok: boolean; detail?: string }
 
@@ -18,6 +19,12 @@ export const SECURITY_HEADERS: Record<string, RegExp> = {
 /** "Enter the demo" may take longer than the 3 s of spec §1 here: the database may have slept until this deploy. */
 export const DEMO_ENTRY_LIMIT_MS = 10_000
 
+/** A template product with a poster (spec §6.3); the upload replaces the poster inside the sandbox only. */
+export const UPLOAD_PRODUCT = 'hush'
+/** An 8 × 8 PNG, small enough to sit in the source; the panel re-encodes it to WebP like any upload. */
+const UPLOAD_PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAEUlEQVQImWNYeXYTVsQwtCQA6aOKASzfMAMAAAAASUVORK5CYII='
+const UPLOAD_CHECK = 'upload an image and read it back'
+
 export function securityHeaders(headers: Headers): Check[] {
   return Object.entries(SECURITY_HEADERS).map(([name, pattern]) => {
     const value = headers.get(name)
@@ -31,6 +38,17 @@ export function notCached(check: string, headers: Headers): Check {
   const control = headers.get('cache-control') ?? ''
   return { check, ok: edge !== 'HIT' && /no-store/.test(control), detail: `cdn-cache ${edge ?? 'none'}, cache-control ${control || 'none'}` }
 }
+
+export type Served = { status: number; type: string | null; cache: string | null; edge: string | null }
+
+/** An upload read back through /media: the panel's own WebP, private, never an answer of the edge's cache. */
+export function imageServed(served: Served): Check {
+  const ok = served.status === 200 && served.type === 'image/webp' && /no-store/.test(served.cache ?? '') && served.edge !== 'HIT'
+  const detail = `HTTP ${served.status}, ${served.type ?? 'no type'}, cache-control ${served.cache ?? 'none'}, cdn-cache ${served.edge ?? 'none'}`
+  return { check: UPLOAD_CHECK, ok, detail }
+}
+
+const firstLine = (error: unknown) => (error instanceof Error ? error.message.split('\n')[0] : String(error))
 
 export type SmokeOptions = {
   siteUrl: string
@@ -70,8 +88,28 @@ export async function requestChecks(o: SmokeOptions): Promise<Check[]> {
   return checks
 }
 
-/** "Enter the demo" in a real browser, timed, and the sandbox ended at once by signing out. */
-export async function demoChecks(o: Pick<SmokeOptions, 'siteUrl' | 'headers'>): Promise<Check[]> {
+/** An image uploaded to a product of the sandbox and read back through /media, as the browser would ask for it. */
+async function uploadCheck(page: Page, siteUrl: string): Promise<Check> {
+  await page.goto(new URL(`/products/${UPLOAD_PRODUCT}`, siteUrl).href)
+  const card = page.getByRole('region', { name: 'Image' })
+  await card.locator('input[type="file"]').setInputFiles({ name: 'smoke.png', mimeType: 'image/png', buffer: Buffer.from(UPLOAD_PNG, 'base64') })
+  const shown = card.locator('img[src^="/media/"]')
+  const refused = card.getByRole('alert')
+  await shown.or(refused).first().waitFor({ timeout: 30_000 })
+  if (await refused.isVisible()) return { check: UPLOAD_CHECK, ok: false, detail: (await refused.innerText()).trim() }
+  const src = await shown.getAttribute('src')
+  return imageServed(await page.evaluate(async url => {
+    const response = await fetch(url)
+    const header = (name: string) => response.headers.get(name)
+    return { status: response.status, type: header('content-type'), cache: header('cache-control'), edge: header('cdn-cache') }
+  }, src ?? ''))
+}
+
+/**
+ * "Enter the demo" in a real browser, timed, and the sandbox ended at once by signing out; with `upload`, an image uploaded
+ * and read back in between (the smoke test; the probes leave it out).
+ */
+export async function demoChecks(o: Pick<SmokeOptions, 'siteUrl' | 'headers'>, steps: { upload?: boolean } = {}): Promise<Check[]> {
   const checks: Check[] = []
   const browser = await chromium.launch()
   try {
@@ -82,13 +120,14 @@ export async function demoChecks(o: Pick<SmokeOptions, 'siteUrl' | 'headers'>): 
     await page.getByRole('heading', { level: 1, name: 'Overview' }).waitFor({ timeout: 30_000 })
     const elapsed = Date.now() - started
     checks.push({ check: 'enter the demo', ok: elapsed < DEMO_ENTRY_LIMIT_MS, detail: `${elapsed} ms` })
+    if (steps.upload) checks.push(await uploadCheck(page, o.siteUrl).catch(error => ({ check: UPLOAD_CHECK, ok: false, detail: firstLine(error) })))
     await page.getByRole('button', { name: /^Account menu: / }).click()
     await page.getByRole('menuitem', { name: 'Sign out' }).click()
     await page.getByRole('dialog', { name: 'Sign out and end the demo?' }).getByRole('button', { name: 'Sign out' }).click()
     await page.waitForURL(url => url.pathname === '/sign-in', { timeout: 30_000 })
     checks.push({ check: 'end the demo', ok: true })
   } catch (error) {
-    checks.push({ check: 'demo', ok: false, detail: error instanceof Error ? error.message.split('\n')[0] : String(error) })
+    checks.push({ check: 'demo', ok: false, detail: firstLine(error) })
   } finally {
     await browser.close()
   }
@@ -96,7 +135,7 @@ export async function demoChecks(o: Pick<SmokeOptions, 'siteUrl' | 'headers'>): 
 }
 
 export async function smoke(o: SmokeOptions): Promise<Check[]> {
-  return [...(await requestChecks(o)), ...(await demoChecks(o))]
+  return [...(await requestChecks(o)), ...(await demoChecks(o, { upload: true }))]
 }
 
 /** The CDN endpoint's hostname from bunny's API, so the raw-endpoint check needs no extra setting. */

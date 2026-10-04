@@ -109,7 +109,9 @@ request it must come through the edge.
 A push to `main` runs `.github/workflows/deploy.yml`: the checks of `ci.yml`, the image to
 `ghcr.io/sopilnik/formline-admin:<commit>` with provenance and an SBOM, `scripts/deploy-image.ts` (it points the
 container at the new image by tag and digest through bunny's API and waits until liveness answers with the new commit),
-the budget guard switched on again, and `scripts/smoke.ts` through the edge. The workflows read the bunny account key
+the budget guard switched on again, and `scripts/smoke.ts` through the edge (liveness, readiness, the headers, nothing
+private cached, and in a demo sandbox an image uploaded and read back, so sharp and the storage zone are proven in the
+container on every deploy). The workflows read the bunny account key
 from the `production` environment's secret `BUNNY_API_KEY` and three repository variables: `MC_APP_ID`,
 `MC_CONTAINER_NAME` and `SITE_URL`.
 

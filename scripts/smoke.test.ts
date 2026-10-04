@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { notCached, securityHeaders } from './smoke.ts'
+import { imageServed, notCached, securityHeaders } from './smoke.ts'
 
 const good = new Headers({
   'Strict-Transport-Security': 'max-age=63072000; includeSubDomains',
@@ -29,5 +29,18 @@ describe('notCached', () => {
     expect(notCached('page', new Headers({ 'Cache-Control': 'private, no-cache, no-store, max-age=0, must-revalidate' })).ok).toBe(true)
     expect(notCached('page', new Headers({ 'CDN-Cache': 'HIT', 'Cache-Control': 'private, no-store' })).ok).toBe(false)
     expect(notCached('page', new Headers({ 'CDN-Cache': 'MISS', 'Cache-Control': 'public, max-age=60' })).ok).toBe(false)
+  })
+})
+
+describe('imageServed', () => {
+  it('passes the panel\'s private WebP read back from a sandbox and fails anything else', () => {
+    const webp = { status: 200, type: 'image/webp', cache: 'private, no-store', edge: 'BYPASS' }
+    expect(imageServed(webp)).toEqual({
+      check: 'upload an image and read it back', ok: true, detail: 'HTTP 200, image/webp, cache-control private, no-store, cdn-cache BYPASS',
+    })
+    expect(imageServed({ ...webp, edge: null }).ok).toBe(true)
+    expect(imageServed({ ...webp, edge: 'HIT' }).ok).toBe(false)
+    expect(imageServed({ ...webp, cache: 'public, max-age=60' }).ok).toBe(false)
+    expect(imageServed({ ...webp, status: 404, type: 'text/html; charset=utf-8' }).ok).toBe(false)
   })
 })
