@@ -50,20 +50,27 @@ function appCredentials(appUrl: string): { password: string } {
 async function bootstrap(client: pg.Client, password: string): Promise<void> {
   const lit = client.escapeLiteral(password)
   const attrs = 'nosuperuser nobypassrls nocreatedb nocreaterole noinherit'
+
   await client.query(`do $$ begin
     if not exists (select 1 from pg_catalog.pg_roles where rolname = 'schema_owner') then
       create role schema_owner nologin ${attrs};
     end if;
   end $$`)
   await client.query('grant schema_owner to current_user')
+
+  // The attributes are set once, when the role is created. A later start only keeps the password in step: a migrator that
+  // is not a superuser, as Neon's owner role is, may not name SUPERUSER in ALTER ROLE at all, and the server's own role
+  // check refuses to start on a role that has gained a privilege since.
   const exists = await client.query("select 1 from pg_catalog.pg_roles where rolname = 'app'")
   await client.query(exists.rowCount
-    ? `alter role app with login password ${lit} ${attrs}`
+    ? `alter role app with login password ${lit}`
     : `create role app login password ${lit} ${attrs}`)
+
   const { rows } = await client.query<{ db: string }>('select current_database() as db')
   await client.query(`grant connect on database ${client.escapeIdentifier(rows[0]!.db)} to app`)
   await client.query('create schema if not exists fa authorization schema_owner')
   await client.query('grant usage on schema fa to app')
+
   await client.query('set role schema_owner')
   await client.query('create table if not exists fa.schema_migrations (version text primary key, applied_at timestamptz not null default now())')
   await client.query('reset role')

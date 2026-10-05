@@ -52,6 +52,32 @@ describe('migrate', () => {
     await client.end()
   })
 
+  it('starts again under a migrator that is not a superuser, as Neon\'s owner role is', async () => {
+    // Neon's migrator owns the database and holds ADMIN on the roles it created, without being a superuser. Roles belong
+    // to the whole cluster, so app and schema_owner exist here already: both runs take the path of a later start.
+    const owner = 'formline_owner_test'
+    const ownerDb = `${DB}_owner`
+    const ownerUrl = `postgres://${owner}:owner-local-password@127.0.0.1:55432/${ownerDb}`
+    const ownerAppUrl = `postgres://app:${APP_PASSWORD}@127.0.0.1:56432/${ownerDb}`
+    await admin(async c => {
+      await c.query(`create role ${owner} login createrole password 'owner-local-password'`)
+      await c.query(`grant app, schema_owner to ${owner} with admin option`)
+      await c.query(`create database ${ownerDb} owner ${owner}`)
+    })
+
+    try {
+      const first = await migrate({ migratorUrl: ownerUrl, appUrl: ownerAppUrl, dir: fixtures('migrations-ok'), retryDelaysMs: [] })
+      const again = await migrate({ migratorUrl: ownerUrl, appUrl: ownerAppUrl, dir: fixtures('migrations-ok'), retryDelaysMs: [] })
+      expect(first.applied).toEqual(['0001_first.sql', '0002_second.sql'])
+      expect(again.applied).toEqual([])
+    } finally {
+      await admin(async c => {
+        await c.query(`drop database if exists ${ownerDb} with (force)`)
+        await c.query(`drop role ${owner}`)
+      })
+    }
+  })
+
   it('refuses an application URL that is not the app role', async () => {
     await expect(migrate({ migratorUrl, appUrl: appUrl.replace('app:', 'other:'), dir: fixtures('migrations-ok'), retryDelaysMs: [] })).rejects.toThrow(/must connect as the app role/)
   })
