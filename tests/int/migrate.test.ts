@@ -60,6 +60,9 @@ describe('migrate', () => {
     const ownerUrl = `postgres://${owner}:owner-local-password@127.0.0.1:55432/${ownerDb}`
     const ownerAppUrl = `postgres://app:${APP_PASSWORD}@127.0.0.1:56432/${ownerDb}`
     await admin(async c => {
+      // A run stopped halfway may have left both behind; the database goes first, as the role owns it.
+      await c.query(`drop database if exists ${ownerDb} with (force)`)
+      await c.query(`drop role if exists ${owner}`)
       await c.query(`create role ${owner} login createrole password 'owner-local-password'`)
       await c.query(`grant app, schema_owner to ${owner} with admin option`)
       await c.query(`create database ${ownerDb} owner ${owner}`)
