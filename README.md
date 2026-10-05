@@ -75,9 +75,11 @@ JSON line with the number.
 
 ## Security model
 
-The container is reachable only through the bunny edge, which adds a shared secret and the visitor's real IP as
-headers to every request; the edge proxy checks both on every page and refuses anything without them, so the raw origin
-stays closed. Each response carries a Content Security Policy built with a fresh per-request nonce, so only scripts
+The container is reachable only through the bunny edge. On the panel's own address the edge adds a shared secret and the
+visitor's real IP as headers; the edge proxy checks both on every page and refuses anything without them, so the raw
+origin and the pull zone's other hostnames stay closed. The edge also marks every answer but the built files and the
+posters `Cache-Control: private, no-store`, which bunny would otherwise hand the browser as its own `no-cache`. Each
+response carries a Content Security Policy built with a fresh per-request nonce, so only scripts
 the server itself emitted can run. Inside the database, row-level security keeps every workspace's rows apart, and
 the `app` role is checked at startup so the server can never fall back to a role that bypasses it.
 
@@ -110,15 +112,16 @@ A push to `main` runs `.github/workflows/deploy.yml`: the checks of `ci.yml`, th
 `ghcr.io/sopilnik/formline-admin:<commit>` with provenance and an SBOM, `scripts/deploy-image.ts` (it points the
 container at the new image by tag and digest through bunny's API and waits until liveness answers with the new commit),
 the budget guard switched on again, and `scripts/smoke.ts` through the edge (liveness, readiness, the headers, nothing
-private cached, and in a demo sandbox an image uploaded and read back, so sharp and the storage zone are proven in the
-container on every deploy). The workflows read the bunny account key
+private cached, the pull zone's own hostnames refused, and in a demo sandbox an image uploaded and read back, so sharp and
+the storage zone are proven in the container on every deploy). The workflows read the bunny account key
 from the `production` environment's secret `BUNNY_API_KEY` and three repository variables: `MC_APP_ID`,
 `MC_CONTAINER_NAME` and `SITE_URL`.
 
 `.github/workflows/probe.yml` runs one probe of spec §15 at a time by hand (`scripts/probe.ts`): `p1` the usage figures
 and how old bunny's newest statistics are, `p2` that the edge overwrites a forged origin secret and client address and the
-raw endpoint refuses them, `p3` the endpoint and its pull zone, `p4` the edge cache, `p5` readiness through the edge, `p6`
-"Enter the demo" timed twice. Each prints field names, figures, timings and statuses, never a key or the raw hostname.
+pull zone's own hostnames refuse a request with or without them, `p3` the endpoint and its pull zone, `p4` the edge cache,
+`p5` readiness through the edge, `p6` "Enter the demo" timed twice. Each prints field names, figures, timings and statuses,
+never a key or a raw hostname.
 
 ## Budget guard
 

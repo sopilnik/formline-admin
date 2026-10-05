@@ -31,7 +31,7 @@ describe('runProbe', () => {
         if (!(path in answers)) throw new Error(`bunny GET ${path}: HTTP 404`)
         return answers[path]!
       },
-      rawHost: async () => null,
+      rawHosts: async () => [],
       fetch: (async () => site ?? new Response('', { status: 500 })) as typeof fetch,
       log: e => { events.push(e) },
       now: () => Date.parse('2026-10-04T12:00:00Z'),
@@ -52,6 +52,24 @@ describe('runProbe', () => {
       monthlyCost: 0.42, magicContainers: 0.5, newestPoint: '2026-10-04T11:45:00Z', ageMinutes: 15,
     }])
     expect(JSON.stringify(events)).not.toContain('Balance')
+  })
+
+  it('p2 passes when the edge takes forged headers and every raw hostname refuses, and names no hostname', async () => {
+    const hosts = ['mc-abc.b-cdn.net', 'mc-abc.bunny.run']
+    const answering = (raw: number) =>
+      (async (input: string | URL | Request) => new Response('', { status: String(input).startsWith('https://formline-admin.test/') ? 200 : raw })) as typeof fetch
+    const refused = options('p2', {})
+    refused.o.rawHosts = async () => hosts
+    refused.o.fetch = answering(403)
+    expect(await runProbe(refused.o)).toBe(true)
+    expect(refused.events).toEqual([{ probe: 'p2', viaEdgeWithForgedHeaders: 200, rawHosts: 2, rawWithForgedHeaders: [403, 403], rawWithout: [403, 403] }])
+    expect(JSON.stringify(refused.events)).not.toContain('mc-abc')
+    const served = options('p2', {})
+    served.o.rawHosts = async () => hosts
+    served.o.fetch = answering(200)
+    expect(await runProbe(served.o)).toBe(false)
+    const none = options('p2', {}, new Response('', { status: 200 }))
+    expect(await runProbe(none.o)).toBe(false)
   })
 
   it('p3 tells the endpoint\'s type and whether a pull zone carries it, without its hostname', async () => {

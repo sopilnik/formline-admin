@@ -1,12 +1,14 @@
 // The probes of spec §15 against the live panel, run by hand from .github/workflows/probe.yml. Each prints JSON lines of
-// field names, figures, timings and statuses — never a key, a secret or the container's raw hostname — and exits 1 when
+// field names, figures, timings and statuses — never a key, a secret or the pull zone's raw hostnames — and exits 1 when
 // what it found contradicts the design.
 //   p1 — usage: the fields of the summary, the statistics and the billing, and how old the newest statistics point is.
-//   p2 — the edge: forged X-Origin-Auth and X-Client-IP are overwritten at the edge, and the raw endpoint refuses them.
+//   p2 — the edge: forged X-Origin-Auth and X-Client-IP are overwritten at the edge, and the pull zone's own hostnames refuse
+//        a request with or without them.
 //   p3 — the endpoint: its type and whether a pull zone carries it.
 //   p4 — the cache: dynamic pages and /media never come from the edge's cache, built files do.
 //   p5 — the database: readiness through the edge (the app role through Neon's pooler) and its time.
 //   p6 — the demo: "Enter the demo" timed twice and ended.
+import { fetchRawHosts } from './raw-hosts.ts'
 import { demoChecks, requestChecks } from './smoke.ts'
 
 type Fetch = typeof fetch
@@ -30,7 +32,7 @@ export function shape(body: Record<string, unknown>): Record<string, string> {
   return Object.fromEntries(Object.entries(body).map(([key, value]) => [key, value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value]))
 }
 
-export type ProbeOptions = { probe: Probe; siteUrl: string; bunny: Bunny; rawHost: () => Promise<string | null>; fetch: Fetch; log: Log; now: () => number }
+export type ProbeOptions = { probe: Probe; siteUrl: string; bunny: Bunny; rawHosts: () => Promise<string[]>; fetch: Fetch; log: Log; now: () => number }
 
 export async function runProbe(o: ProbeOptions): Promise<boolean> {
   const site = (path: string, headers?: Record<string, string>) =>
@@ -44,14 +46,17 @@ export async function runProbe(o: ProbeOptions): Promise<boolean> {
     }
     case 'p2': {
       // Behind the edge a forged secret or address is replaced, so the answer is the ordinary one; were either passed on,
-      // the panel would refuse with 403.
+      // the panel would refuse with 403. The edge adds the secret on the panel's address only, so the pull zone's own
+      // hostnames are refused with or without forged headers.
       const forged = { 'x-origin-auth': 'forged-'.padEnd(64, 'x'), 'x-client-ip': 'not-an-address', 'x-real-ip': '198.51.100.1' }
       const viaEdge = await site('/sign-in', forged)
-      const raw = await o.rawHost()
-      const direct = raw ? await o.fetch(`https://${raw}/sign-in`, { headers: forged, redirect: 'manual', signal: AbortSignal.timeout(20_000) }).then(r => r.status, () => null) : null
-      const bare = raw ? await o.fetch(`https://${raw}/sign-in`, { redirect: 'manual', signal: AbortSignal.timeout(20_000) }).then(r => r.status, () => null) : null
-      o.log({ probe: 'p2', viaEdgeWithForgedHeaders: viaEdge.status, rawWithForgedHeaders: direct, rawWithout: bare, rawHostKnown: raw !== null })
-      return viaEdge.status === 200 && raw !== null && direct === 403 && bare === 403
+      const hosts = await o.rawHosts()
+      const status = (host: string, headers?: Record<string, string>) =>
+        o.fetch(`https://${host}/sign-in`, { headers, redirect: 'manual', signal: AbortSignal.timeout(20_000) }).then(r => r.status, () => null)
+      const direct = await Promise.all(hosts.map(host => status(host, forged)))
+      const bare = await Promise.all(hosts.map(host => status(host)))
+      o.log({ probe: 'p2', viaEdgeWithForgedHeaders: viaEdge.status, rawHosts: hosts.length, rawWithForgedHeaders: direct, rawWithout: bare })
+      return viaEdge.status === 200 && hosts.length > 0 && [...direct, ...bare].every(code => code === 403)
     }
     case 'p3': {
       const { items } = (await o.bunny('/mc/apps/{id}/endpoints')) as { items?: { type?: string; pullZoneId?: string; publicHost?: string }[] }
@@ -60,7 +65,7 @@ export async function runProbe(o: ProbeOptions): Promise<boolean> {
       return endpoints.some(e => e.type === 'cdn' && e.pullZone)
     }
     case 'p4': {
-      const checks = await requestChecks({ siteUrl: o.siteUrl, rawHost: null, fetch: o.fetch })
+      const checks = await requestChecks({ siteUrl: o.siteUrl, rawHosts: [], fetch: o.fetch })
       const html = await (await site('/sign-in')).text()
       const asset = html.match(/\/_next\/static\/[^"']+\.js/)?.[0]
       const first = asset ? await site(asset) : null
@@ -96,16 +101,14 @@ if (import.meta.main) {
   }
   const key = env.BUNNY_API_KEY
   const appId = env.MC_APP_ID
+  const siteUrl = env.SITE_URL
   const bunny: Bunny = async path => {
     const res = await fetch(`https://api.bunny.net${path.replace('{id}', appId)}`, { headers: { AccessKey: key, Accept: 'application/json' }, signal: AbortSignal.timeout(20_000) })
     if (!res.ok) throw new Error(`bunny GET ${path}: HTTP ${res.status}`)
     return (await res.json()) as Record<string, unknown>
   }
-  const rawHost = async () => {
-    const { items } = (await bunny('/mc/apps/{id}/endpoints')) as { items?: { type?: string; publicHost?: string }[] }
-    return items?.find(e => e.type === 'cdn')?.publicHost ?? null
-  }
-  runProbe({ probe, siteUrl: env.SITE_URL, bunny, rawHost, fetch, log, now: () => Date.now() }).then(
+  const rawHosts = () => fetchRawHosts({ key, appId, siteUrl, fetch })
+  runProbe({ probe, siteUrl, bunny, rawHosts, fetch, log, now: () => Date.now() }).then(
     ok => process.exit(ok ? 0 : 1),
     error => {
       log({ probe, ok: false, detail: error instanceof Error ? error.message : String(error) })

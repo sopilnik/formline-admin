@@ -1,9 +1,10 @@
 // The smoke test after every deploy (spec §13), run by deploy.yml against the live panel through the edge: liveness and
-// readiness, the security headers of the sign-in page, nothing private served from the edge's cache, the container's raw
-// bunny hostname refusing a request that went around the edge, and "Enter the demo" timed, an image uploaded in the
+// readiness, the security headers of the sign-in page, nothing private served from the edge's cache, the pull zone's own
+// bunny hostnames refusing a request that went around the panel's address, and "Enter the demo" timed, an image uploaded in the
 // sandbox and read back — sharp and the storage zone at work in the container — and the demo ended, so the sandbox it
 // opened is deleted at once. One JSON line per check; exit 1 when any fails.
 import { chromium, type Page } from '@playwright/test'
+import { fetchRawHosts } from './raw-hosts.ts'
 
 export type Check = { check: string; ok: boolean; detail?: string }
 
@@ -52,8 +53,8 @@ const firstLine = (error: unknown) => (error instanceof Error ? error.message.sp
 
 export type SmokeOptions = {
   siteUrl: string
-  /** The CDN endpoint's own hostname (bunny's `publicHost`); without it the check of the raw endpoint is skipped. */
-  rawHost: string | null
+  /** The pull zone's own hostnames besides the panel's address (bunny's `b-cdn.net` and `bunny.run` names); none skips their check. */
+  rawHosts: string[]
   /** Headers every request carries: the edge's own in a local run, none behind the real edge. */
   headers?: Record<string, string>
   fetch: typeof fetch
@@ -79,12 +80,13 @@ export async function requestChecks(o: SmokeOptions): Promise<Check[]> {
   checks.push({ check: 'media refused without a session', ok: media.status === 401, detail: `HTTP ${media.status}` })
   checks.push(notCached('media not cached', media.headers))
 
-  if (o.rawHost) {
-    const raw = await o.fetch(`https://${o.rawHost}/sign-in`, { redirect: 'manual', signal: AbortSignal.timeout(20_000) }).catch(() => null)
-    checks.push({ check: 'raw endpoint refuses a request around the edge', ok: raw?.status === 403, detail: raw ? `HTTP ${raw.status}` : 'no answer' })
-  } else {
-    checks.push({ check: 'raw endpoint refuses a request around the edge', ok: true, detail: 'skipped: no raw hostname' })
+  // The hostnames themselves stay out of the log: one numbered check each.
+  for (const [index, host] of o.rawHosts.entries()) {
+    const raw = await o.fetch(`https://${host}/sign-in`, { redirect: 'manual', signal: AbortSignal.timeout(20_000) }).catch(() => null)
+    const check = `raw hostname ${index + 1} of ${o.rawHosts.length} refuses a request around the panel's address`
+    checks.push({ check, ok: raw?.status === 403, detail: raw ? `HTTP ${raw.status}` : 'no answer' })
   }
+  if (o.rawHosts.length === 0) checks.push({ check: 'raw hostnames refuse a request around the panel\'s address', ok: true, detail: 'skipped: no raw hostname' })
   return checks
 }
 
@@ -138,23 +140,16 @@ export async function smoke(o: SmokeOptions): Promise<Check[]> {
   return [...(await requestChecks(o)), ...(await demoChecks(o, { upload: true }))]
 }
 
-/** The CDN endpoint's hostname from bunny's API, so the raw-endpoint check needs no extra setting. */
-async function rawHostOf(key: string, appId: string): Promise<string | null> {
-  const res = await fetch(`https://api.bunny.net/mc/apps/${appId}/endpoints`, { headers: { AccessKey: key, Accept: 'application/json' }, signal: AbortSignal.timeout(20_000) })
-  if (!res.ok) throw new Error(`bunny GET /apps/{id}/endpoints: HTTP ${res.status}`)
-  const { items } = (await res.json()) as { items?: { type?: string; publicHost?: string }[] }
-  return items?.find(item => item.type === 'cdn')?.publicHost ?? null
-}
-
 if (import.meta.main) {
   const env = process.env
   const log = (event: Record<string, unknown>) => console.log(JSON.stringify(event))
   const run = async (): Promise<number> => {
     if (!env.SITE_URL) throw new Error('SITE_URL is required')
-    const rawHost = env.BUNNY_API_KEY && env.MC_APP_ID ? await rawHostOf(env.BUNNY_API_KEY, env.MC_APP_ID) : null
+    // Read from bunny's API, so the check of the raw hostnames needs no extra setting.
+    const rawHosts = env.BUNNY_API_KEY && env.MC_APP_ID ? await fetchRawHosts({ key: env.BUNNY_API_KEY, appId: env.MC_APP_ID, siteUrl: env.SITE_URL, fetch }) : []
     // SMOKE_HEADERS stands in for the edge in a local run: a JSON object of request headers.
     const headers = env.SMOKE_HEADERS ? (JSON.parse(env.SMOKE_HEADERS) as Record<string, string>) : undefined
-    const checks = await smoke({ siteUrl: env.SITE_URL, rawHost, headers, fetch })
+    const checks = await smoke({ siteUrl: env.SITE_URL, rawHosts, headers, fetch })
     for (const check of checks) log(check)
     return checks.every(check => check.ok) ? 0 : 1
   }
