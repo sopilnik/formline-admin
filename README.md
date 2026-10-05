@@ -113,7 +113,8 @@ A push to `main` runs `.github/workflows/deploy.yml`: the checks of `ci.yml`, th
 container at the new image by tag and digest through bunny's API and waits until liveness answers with the new commit),
 the budget guard switched on again, and `scripts/smoke.ts` through the edge (liveness, readiness, the headers, nothing
 private cached, the pull zone's own hostnames refused, and in a demo sandbox an image uploaded and read back, so sharp and
-the storage zone are proven in the container on every deploy). The workflows read the bunny account key
+the storage zone are proven in the container on every deploy; a demo step that fails logs its name, the page's address and
+its accessibility snapshot). The workflows read the bunny account key
 from the `production` environment's secret `BUNNY_API_KEY` and three repository variables: `MC_APP_ID`,
 `MC_CONTAINER_NAME` and `SITE_URL`.
 

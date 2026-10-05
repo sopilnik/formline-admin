@@ -6,7 +6,8 @@
 import { chromium, type Page } from '@playwright/test'
 import { fetchRawHosts } from './raw-hosts.ts'
 
-export type Check = { check: string; ok: boolean; detail?: string }
+/** One line of the log; a failed demo also carries the page it stopped on, so the next failure explains itself. */
+export type Check = { check: string; ok: boolean; detail?: string; page?: { url: string; snapshot: string } }
 
 export const SECURITY_HEADERS: Record<string, RegExp> = {
   'strict-transport-security': /max-age=\d+/,
@@ -107,33 +108,51 @@ async function uploadCheck(page: Page, siteUrl: string): Promise<Check> {
   }, src ?? ''))
 }
 
+/** The longest accessibility snapshot a failed demo logs: enough to read the page, short enough for one log line. */
+export const SNAPSHOT_LIMIT = 2_000
+
 /**
- * "Enter the demo" in a real browser, timed, and the sandbox ended at once by signing out; with `upload`, an image uploaded
- * and read back in between (the smoke test; the probes leave it out).
+ * "Enter the demo" on an open page, timed, and the sandbox ended at once by signing out; with `upload`, an image uploaded
+ * and read back in between (the smoke test; the probes leave it out). A failure names the step it happened in and carries
+ * the page's address and accessibility snapshot.
  */
-export async function demoChecks(o: Pick<SmokeOptions, 'siteUrl' | 'headers'>, steps: { upload?: boolean } = {}): Promise<Check[]> {
+export async function demoSteps(page: Page, siteUrl: string, steps: { upload?: boolean } = {}): Promise<Check[]> {
   const checks: Check[] = []
-  const browser = await chromium.launch()
+  let step = 'open the sign-in page'
   try {
-    const page = await (await browser.newContext({ extraHTTPHeaders: o.headers })).newPage()
-    await page.goto(new URL('/sign-in', o.siteUrl).href)
+    await page.goto(new URL('/sign-in', siteUrl).href)
+    step = 'enter the demo'
     const started = Date.now()
     await page.getByRole('button', { name: 'Enter the demo' }).click()
     await page.getByRole('heading', { level: 1, name: 'Overview' }).waitFor({ timeout: 30_000 })
     const elapsed = Date.now() - started
     checks.push({ check: 'enter the demo', ok: elapsed < DEMO_ENTRY_LIMIT_MS, detail: `${elapsed} ms` })
-    if (steps.upload) checks.push(await uploadCheck(page, o.siteUrl).catch(error => ({ check: UPLOAD_CHECK, ok: false, detail: firstLine(error) })))
+    if (steps.upload) checks.push(await uploadCheck(page, siteUrl).catch(error => ({ check: UPLOAD_CHECK, ok: false, detail: firstLine(error) })))
+    step = 'open the account menu'
     await page.getByRole('button', { name: /^Account menu: / }).click()
+    step = 'choose Sign out'
     await page.getByRole('menuitem', { name: 'Sign out' }).click()
+    step = 'confirm the sign-out'
     await page.getByRole('dialog', { name: 'Sign out and end the demo?' }).getByRole('button', { name: 'Sign out' }).click()
+    step = 'return to the sign-in page'
     await page.waitForURL(url => url.pathname === '/sign-in', { timeout: 30_000 })
     checks.push({ check: 'end the demo', ok: true })
   } catch (error) {
-    checks.push({ check: 'demo', ok: false, detail: firstLine(error) })
+    const snapshot = await page.locator('body').ariaSnapshot({ timeout: 5_000 }).catch(() => '')
+    checks.push({ check: 'demo', ok: false, detail: `${step}: ${firstLine(error)}`, page: { url: page.url(), snapshot: snapshot.slice(0, SNAPSHOT_LIMIT) } })
+  }
+  return checks
+}
+
+/** The demo steps in a browser of their own, every request carrying `headers` (the edge's own in a local run). */
+export async function demoChecks(o: Pick<SmokeOptions, 'siteUrl' | 'headers'>, steps: { upload?: boolean } = {}): Promise<Check[]> {
+  const browser = await chromium.launch()
+  try {
+    const page = await (await browser.newContext({ extraHTTPHeaders: o.headers })).newPage()
+    return await demoSteps(page, o.siteUrl, steps)
   } finally {
     await browser.close()
   }
-  return checks
 }
 
 export async function smoke(o: SmokeOptions): Promise<Check[]> {
