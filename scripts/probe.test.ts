@@ -43,7 +43,8 @@ describe('runProbe', () => {
     const { o, events } = options('p1', {
       '/mc/apps/{id}': { status: 'active' },
       '/mc/apps/{id}/summary': { monthlyCost: 0.42, averageLatency: 12 },
-      '/mc/apps/{id}/statistics': { cpuUsageChart: { '2026-10-04T11:45:00Z': 0.1 } },
+      // The window and the granularity bunny requires: the last three hours before the probe's now, by the minute.
+      '/mc/apps/{id}/statistics?fromDate=2026-10-04T09%3A00%3A00.000Z&granularity=Minute': { cpuUsageChart: { '2026-10-04T11:45:00Z': 0.1 } },
       '/billing': { MonthlyChargesMagicContainers: 0.5, Balance: 9 },
     })
     expect(await runProbe(o)).toBe(true)

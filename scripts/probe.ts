@@ -39,7 +39,11 @@ export async function runProbe(o: ProbeOptions): Promise<boolean> {
     o.fetch(new URL(path, o.siteUrl), { headers, redirect: 'manual', signal: AbortSignal.timeout(20_000) })
   switch (o.probe) {
     case 'p1': {
-      const [app, summary, statistics, billing] = await Promise.all([o.bunny('/mc/apps/{id}'), o.bunny('/mc/apps/{id}/summary'), o.bunny('/mc/apps/{id}/statistics'), o.bunny('/billing')])
+      // bunny answers the statistics only for a window and a granularity, both required: the last three hours by the
+      // minute, so the newest point shows how far the figures lag behind.
+      const from = new Date(o.now() - 3 * 60 * 60_000).toISOString()
+      const statisticsPath = `/mc/apps/{id}/statistics?fromDate=${encodeURIComponent(from)}&granularity=Minute`
+      const [app, summary, statistics, billing] = await Promise.all([o.bunny('/mc/apps/{id}'), o.bunny('/mc/apps/{id}/summary'), o.bunny(statisticsPath), o.bunny('/billing')])
       const newest = newestPoint(statistics)
       o.log({ probe: 'p1', status: app.status, summary: shape(summary), statistics: Object.keys(statistics), monthlyCost: summary.monthlyCost, magicContainers: billing.MonthlyChargesMagicContainers, newestPoint: newest, ageMinutes: newest ? Math.round((o.now() - Date.parse(newest)) / 60_000) : null })
       return typeof summary.monthlyCost === 'number' && typeof billing.MonthlyChargesMagicContainers === 'number'
