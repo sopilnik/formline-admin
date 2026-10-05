@@ -59,16 +59,19 @@ describe('runProbe', () => {
     const hosts = ['mc-abc.b-cdn.net', 'mc-abc.bunny.run']
     const answering = (raw: number) =>
       (async (input: string | URL | Request) => new Response('', { status: String(input).startsWith('https://formline-admin.test/') ? 200 : raw })) as typeof fetch
+
     const refused = options('p2', {})
     refused.o.rawHosts = async () => hosts
     refused.o.fetch = answering(403)
     expect(await runProbe(refused.o)).toBe(true)
     expect(refused.events).toEqual([{ probe: 'p2', viaEdgeWithForgedHeaders: 200, rawHosts: 2, rawWithForgedHeaders: [403, 403], rawWithout: [403, 403] }])
     expect(JSON.stringify(refused.events)).not.toContain('mc-abc')
+
     const served = options('p2', {})
     served.o.rawHosts = async () => hosts
     served.o.fetch = answering(200)
     expect(await runProbe(served.o)).toBe(false)
+
     const none = options('p2', {}, new Response('', { status: 200 }))
     expect(await runProbe(none.o)).toBe(false)
   })

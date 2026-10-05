@@ -21,8 +21,10 @@ export async function fetchRawHosts(o: { key: string; appId: string; siteUrl: st
     if (!res.ok) throw new Error(`bunny GET ${label}: HTTP ${res.status}`)
     return res.json()
   }
+
   const { items } = (await get(`/mc/apps/${o.appId}/endpoints`, '/mc/apps/{id}/endpoints')) as { items?: { type?: string; pullZoneId?: string | number | null }[] }
   const zoneId = items?.find(item => item.type === 'cdn')?.pullZoneId
   if (zoneId === undefined || zoneId === null || zoneId === '') return []
+
   return rawHostsOf((await get(`/pullzone/${zoneId}`, '/pullzone/{id}')) as PullZone, o.siteUrl)
 }

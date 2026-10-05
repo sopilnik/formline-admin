@@ -20,7 +20,9 @@ test.describe('The smoke test\'s demo', () => {
     // A sign-in page without the demo: the click on "Enter the demo" finds nothing to press.
     await page.route('**/sign-in', route => route.fulfill({ contentType: 'text/html', body: '<!doctype html><title>Paused</title><h1>Back in a minute</h1>' }))
     page.setDefaultTimeout(2_000)
+
     const checks = await demoSteps(page, E2E_BASE_URL)
+
     expect(checks).toHaveLength(1)
     expect(checks[0]).toMatchObject({ check: 'demo', ok: false, page: { url: `${E2E_BASE_URL}/sign-in` } })
     expect(checks[0]?.detail).toMatch(/^enter the demo: locator\.click: Timeout 2000ms exceeded/)

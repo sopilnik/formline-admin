@@ -82,12 +82,13 @@ export async function requestChecks(o: SmokeOptions): Promise<Check[]> {
   checks.push(notCached('media not cached', media.headers))
 
   // The hostnames themselves stay out of the log: one numbered check each.
+  if (o.rawHosts.length === 0) checks.push({ check: 'raw hostnames refuse a request around the panel\'s address', ok: true, detail: 'skipped: no raw hostname' })
   for (const [index, host] of o.rawHosts.entries()) {
     const raw = await o.fetch(`https://${host}/sign-in`, { redirect: 'manual', signal: AbortSignal.timeout(20_000) }).catch(() => null)
     const check = `raw hostname ${index + 1} of ${o.rawHosts.length} refuses a request around the panel's address`
     checks.push({ check, ok: raw?.status === 403, detail: raw ? `HTTP ${raw.status}` : 'no answer' })
   }
-  if (o.rawHosts.length === 0) checks.push({ check: 'raw hostnames refuse a request around the panel\'s address', ok: true, detail: 'skipped: no raw hostname' })
+
   return checks
 }
 
@@ -118,29 +119,37 @@ export const SNAPSHOT_LIMIT = 2_000
  */
 export async function demoSteps(page: Page, siteUrl: string, steps: { upload?: boolean } = {}): Promise<Check[]> {
   const checks: Check[] = []
-  let step = 'open the sign-in page'
+  let current = ''
+  // Runs one named step, so a failure can say which step it happened in.
+  const step = async <T>(name: string, action: () => Promise<T>): Promise<T> => {
+    current = name
+    return action()
+  }
+
   try {
-    await page.goto(new URL('/sign-in', siteUrl).href)
-    step = 'enter the demo'
+    await step('open the sign-in page', () => page.goto(new URL('/sign-in', siteUrl).href))
+
     const started = Date.now()
-    await page.getByRole('button', { name: 'Enter the demo' }).click()
-    await page.getByRole('heading', { level: 1, name: 'Overview' }).waitFor({ timeout: 30_000 })
+    await step('enter the demo', async () => {
+      await page.getByRole('button', { name: 'Enter the demo' }).click()
+      await page.getByRole('heading', { level: 1, name: 'Overview' }).waitFor({ timeout: 30_000 })
+    })
     const elapsed = Date.now() - started
     checks.push({ check: 'enter the demo', ok: elapsed < DEMO_ENTRY_LIMIT_MS, detail: `${elapsed} ms` })
+
     if (steps.upload) checks.push(await uploadCheck(page, siteUrl).catch(error => ({ check: UPLOAD_CHECK, ok: false, detail: firstLine(error) })))
-    step = 'open the account menu'
-    await page.getByRole('button', { name: /^Account menu: / }).click()
-    step = 'choose Sign out'
-    await page.getByRole('menuitem', { name: 'Sign out' }).click()
-    step = 'confirm the sign-out'
-    await page.getByRole('dialog', { name: 'Sign out and end the demo?' }).getByRole('button', { name: 'Sign out' }).click()
-    step = 'return to the sign-in page'
-    await page.waitForURL(url => url.pathname === '/sign-in', { timeout: 30_000 })
+
+    await step('open the account menu', () => page.getByRole('button', { name: /^Account menu: / }).click())
+    await step('choose Sign out', () => page.getByRole('menuitem', { name: 'Sign out' }).click())
+    await step('confirm the sign-out', () => page.getByRole('dialog', { name: 'Sign out and end the demo?' }).getByRole('button', { name: 'Sign out' }).click())
+    await step('return to the sign-in page', () => page.waitForURL(url => url.pathname === '/sign-in', { timeout: 30_000 }))
     checks.push({ check: 'end the demo', ok: true })
   } catch (error) {
     const snapshot = await page.locator('body').ariaSnapshot({ timeout: 5_000 }).catch(() => '')
-    checks.push({ check: 'demo', ok: false, detail: `${step}: ${firstLine(error)}`, page: { url: page.url(), snapshot: snapshot.slice(0, SNAPSHOT_LIMIT) } })
+    const stopped = { url: page.url(), snapshot: snapshot.slice(0, SNAPSHOT_LIMIT) }
+    checks.push({ check: 'demo', ok: false, detail: `${current}: ${firstLine(error)}`, page: stopped })
   }
+
   return checks
 }
 
@@ -162,16 +171,20 @@ export async function smoke(o: SmokeOptions): Promise<Check[]> {
 if (import.meta.main) {
   const env = process.env
   const log = (event: Record<string, unknown>) => console.log(JSON.stringify(event))
+
   const run = async (): Promise<number> => {
     if (!env.SITE_URL) throw new Error('SITE_URL is required')
+
     // Read from bunny's API, so the check of the raw hostnames needs no extra setting.
     const rawHosts = env.BUNNY_API_KEY && env.MC_APP_ID ? await fetchRawHosts({ key: env.BUNNY_API_KEY, appId: env.MC_APP_ID, siteUrl: env.SITE_URL, fetch }) : []
     // SMOKE_HEADERS stands in for the edge in a local run: a JSON object of request headers.
     const headers = env.SMOKE_HEADERS ? (JSON.parse(env.SMOKE_HEADERS) as Record<string, string>) : undefined
+
     const checks = await smoke({ siteUrl: env.SITE_URL, rawHosts, headers, fetch })
     for (const check of checks) log(check)
     return checks.every(check => check.ok) ? 0 : 1
   }
+
   run().then(
     code => process.exit(code),
     error => {

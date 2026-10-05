@@ -22,6 +22,7 @@ describe('fetchRawHosts', () => {
       const answer = answers[url.replace('https://api.bunny.net', '')]
       return answer ? Response.json(answer.body, { status: answer.status ?? 200 }) : new Response('', { status: 404 })
     }) as typeof globalThis.fetch
+
     return { fetch, asked }
   }
 
@@ -46,6 +47,7 @@ describe('fetchRawHosts', () => {
   it('names the failed call without the app or the zone', async () => {
     const endpoints = bunny({ '/mc/apps/app1/endpoints': { status: 401, body: {} } })
     await expect(fetchRawHosts({ key: 'k1', appId: 'app1', siteUrl: SITE, fetch: endpoints.fetch })).rejects.toThrow('bunny GET /mc/apps/{id}/endpoints: HTTP 401')
+
     const zone = bunny({ '/mc/apps/app1/endpoints': { body: { items: [{ type: 'cdn', pullZoneId: 6700001 }] } } })
     await expect(fetchRawHosts({ key: 'k1', appId: 'app1', siteUrl: SITE, fetch: zone.fetch })).rejects.toThrow('bunny GET /pullzone/{id}: HTTP 404')
   })

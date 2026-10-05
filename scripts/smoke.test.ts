@@ -66,6 +66,7 @@ describe('requestChecks', () => {
       { check: 'raw hostname 2 of 2 refuses a request around the panel\'s address', ok: true, detail: 'HTTP 403' },
     ])
     expect(JSON.stringify(checks)).not.toContain('mc-abc')
+
     const none = await requestChecks({ siteUrl: SITE, rawHosts: [], fetch: panel })
     expect(none.at(-1)).toEqual({ check: 'raw hostnames refuse a request around the panel\'s address', ok: true, detail: 'skipped: no raw hostname' })
   })

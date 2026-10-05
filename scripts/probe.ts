@@ -43,7 +43,9 @@ export async function runProbe(o: ProbeOptions): Promise<boolean> {
       // minute, so the newest point shows how far the figures lag behind.
       const from = new Date(o.now() - 3 * 60 * 60_000).toISOString()
       const statisticsPath = `/mc/apps/{id}/statistics?fromDate=${encodeURIComponent(from)}&granularity=Minute`
+
       const [app, summary, statistics, billing] = await Promise.all([o.bunny('/mc/apps/{id}'), o.bunny('/mc/apps/{id}/summary'), o.bunny(statisticsPath), o.bunny('/billing')])
+
       const newest = newestPoint(statistics)
       o.log({ probe: 'p1', status: app.status, summary: shape(summary), statistics: Object.keys(statistics), monthlyCost: summary.monthlyCost, magicContainers: billing.MonthlyChargesMagicContainers, newestPoint: newest, ageMinutes: newest ? Math.round((o.now() - Date.parse(newest)) / 60_000) : null })
       return typeof summary.monthlyCost === 'number' && typeof billing.MonthlyChargesMagicContainers === 'number'
@@ -54,11 +56,13 @@ export async function runProbe(o: ProbeOptions): Promise<boolean> {
       // hostnames are refused with or without forged headers.
       const forged = { 'x-origin-auth': 'forged-'.padEnd(64, 'x'), 'x-client-ip': 'not-an-address', 'x-real-ip': '198.51.100.1' }
       const viaEdge = await site('/sign-in', forged)
+
       const hosts = await o.rawHosts()
       const status = (host: string, headers?: Record<string, string>) =>
         o.fetch(`https://${host}/sign-in`, { headers, redirect: 'manual', signal: AbortSignal.timeout(20_000) }).then(r => r.status, () => null)
       const direct = await Promise.all(hosts.map(host => status(host, forged)))
       const bare = await Promise.all(hosts.map(host => status(host)))
+
       o.log({ probe: 'p2', viaEdgeWithForgedHeaders: viaEdge.status, rawHosts: hosts.length, rawWithForgedHeaders: direct, rawWithout: bare })
       return viaEdge.status === 200 && hosts.length > 0 && [...direct, ...bare].every(code => code === 403)
     }
@@ -103,6 +107,7 @@ if (import.meta.main) {
     log({ probe: env.PROBE ?? null, ok: false, detail: `PROBE (${PROBES.join(', ')}), SITE_URL, BUNNY_API_KEY and MC_APP_ID are required` })
     process.exit(1)
   }
+
   const key = env.BUNNY_API_KEY
   const appId = env.MC_APP_ID
   const siteUrl = env.SITE_URL
@@ -112,6 +117,7 @@ if (import.meta.main) {
     return (await res.json()) as Record<string, unknown>
   }
   const rawHosts = () => fetchRawHosts({ key, appId, siteUrl, fetch })
+
   runProbe({ probe, siteUrl, bunny, rawHosts, fetch, log, now: () => Date.now() }).then(
     ok => process.exit(ok ? 0 : 1),
     error => {
