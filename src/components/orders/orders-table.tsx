@@ -69,9 +69,9 @@ export function OrdersTable({ rows, query, canUpdate }: { rows: OrderRowView[]; 
           <col className="w-20" />
           <col className="w-32" />
           <col />
-          <col className="w-20" />
           <col className="w-24" />
           <col className="w-36" />
+          <col className="w-20" />
           <col className="w-24" />
         </colgroup>
         <thead className="sticky top-0 z-20">
@@ -89,10 +89,10 @@ export function OrdersTable({ rows, query, canUpdate }: { rows: OrderRowView[]; 
               <SortHeader query={query} sortKey="number" label={t('columns.order')} />
               <SortHeader query={query} sortKey="placed" label={t('columns.placed')} />
               <th scope="col" className={TH}>{t('columns.customer')}</th>
-              <th scope="col" className={cn(TH, 'text-right')}>{t('columns.items')}</th>
-              <SortHeader query={query} sortKey="total" label={t('columns.total')} align="right" />
-              <th scope="col" className={TH}>{t('columns.status')}</th>
               <th scope="col" className={TH}>{t('columns.source')}</th>
+              <th scope="col" className={cn(TH, 'text-center')}>{t('columns.status')}</th>
+              <th scope="col" className={cn(TH, 'text-center')}>{t('columns.items')}</th>
+              <SortHeader query={query} sortKey="total" label={t('columns.total')} align="right" />
             </tr>
           )}
         </thead>
@@ -108,10 +108,10 @@ export function OrdersTable({ rows, query, canUpdate }: { rows: OrderRowView[]; 
                 <span className="block truncate font-medium">{row.customerName}</span>
                 <span className="block truncate text-xs text-muted-foreground">{row.customerEmail}</span>
               </td>
-              <td className={cn(TD, 'text-right tabular-nums')}>{row.items}</td>
-              <td className={cn(TD, 'text-right whitespace-nowrap tabular-nums')}>{row.total}</td>
-              <td className={TD}><StatusBadge status={row.status} /></td>
               <td className={TD}><SourceLabel source={row.source} /></td>
+              <td className={cn(TD, 'text-center')}><StatusBadge status={row.status} /></td>
+              <td className={cn(TD, 'text-center tabular-nums')}>{row.items}</td>
+              <td className={cn(TD, 'text-right whitespace-nowrap tabular-nums')}>{row.total}</td>
             </tr>
           ))}
         </tbody>

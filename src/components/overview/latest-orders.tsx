@@ -28,8 +28,9 @@ export function LatestOrders({ rows }: { rows: OrderRowView[] }) {
               <th scope="col" className={TH}>{columns('order')}</th>
               <th scope="col" className={TH}>{columns('placed')}</th>
               <th scope="col" className={TH}>{columns('customer')}</th>
+              {/* The status column takes the spare width, so its centred chip sits midway between the name and the total. */}
+              <th scope="col" className={cn(TH, 'w-full text-center')}>{columns('status')}</th>
               <th scope="col" className={cn(TH, 'text-right')}>{columns('total')}</th>
-              <th scope="col" className={TH}>{columns('status')}</th>
             </tr>
           </thead>
           <tbody>
@@ -38,8 +39,8 @@ export function LatestOrders({ rows }: { rows: OrderRowView[] }) {
                 <td className={cn(TD, 'tabular-nums')}><Link href={row.href} prefetch={false} className={ORDER_LINK}>#{row.number}</Link></td>
                 <td className={cn(TD, 'whitespace-nowrap tabular-nums')}>{row.placed}</td>
                 <td className={cn(TD, 'max-w-48 truncate')}>{row.customerName}</td>
+                <td className={cn(TD, 'text-center')}><StatusBadge status={row.status} /></td>
                 <td className={cn(TD, 'text-right whitespace-nowrap tabular-nums')}>{row.total}</td>
-                <td className={TD}><StatusBadge status={row.status} /></td>
               </tr>
             ))}
           </tbody>
