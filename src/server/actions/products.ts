@@ -61,7 +61,7 @@ export type CreateState =
     status: 'error'; error: 'invalid' | 'forbidden' | 'cap'
     fieldErrors: Partial<Record<NewProductField, NewProductIssue>>; values: Record<DetailField, string>; palettes: string[]
   }
-  | { status: 'done'; slug: string }
+  | { status: 'done'; slug: string; id: string }
 
 /** The new-product form (spec §8.3): a draft whose variants start without stock; the form then opens its page. */
 export async function createProductAction(_previous: CreateState, form: FormData): Promise<CreateState> {
@@ -82,7 +82,7 @@ export async function createProductAction(_previous: CreateState, form: FormData
     if (result.reason === 'collection_missing') return fail('invalid', { collection: 'collection_missing' })
     return fail('invalid', { slug: result.reason === 'slug_taken' ? 'slug_taken' : 'sku_taken' })
   }
-  return { status: 'done', slug: result.slug }
+  return { status: 'done', slug: result.slug, id: result.id }
 }
 
 export type VariantsState =

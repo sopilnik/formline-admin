@@ -680,6 +680,13 @@
       "create": "Create product",
       "creating": "Creating…",
       "created": "Product created.",
+      "image": "Image",
+      "imageDrop": "Drop an image here or",
+      "imageChoose": "Choose image",
+      "imageRemove": "Remove image",
+      "imageHint": "JPEG, PNG or WebP up to 2 MB. It is uploaded once the product is created.",
+      "imageUploading": "Uploading the image…",
+      "imageFailed": "The product is created, but its image was not uploaded: {reason}",
       "failed": {
         "cap": "This workspace holds 200 products, the most it can. Delete a draft to add another.",
         "forbidden": "Your role cannot add products."

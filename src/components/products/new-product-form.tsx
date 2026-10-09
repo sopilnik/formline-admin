@@ -2,8 +2,10 @@
 
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useActionState, useEffect, useEffectEvent, useRef, useState } from 'react'
+import { useActionState, useEffect, useEffectEvent, useRef, useState, useTransition } from 'react'
+import { NewProductImage } from '@/components/products/new-product-image'
 import { ProductDetailsFields } from '@/components/products/product-details-fields'
+import { sendProductImage } from '@/components/products/send-product-image'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { PALETTE_IDS, paletteName } from '@/lib/catalog'
@@ -19,21 +21,39 @@ type Props = { collections: { id: string; name: string }[] }
 /**
  * The new-product form (spec §8.3). The slug field shows the slug the name gives while it is
  * empty; the palettes are plain checkboxes, so a failed save puts back exactly what was ticked.
+ * An image chosen here is sent once the product exists (W.9); if the server refuses it, the
+ * product stays and the toast says why.
  */
 export function NewProductForm({ collections }: Props) {
   const t = useTranslations('products.new')
   const fieldText = useTranslations('products.form')
+  const imageErrors = useTranslations('products.image.errors')
   const toast = useToast()
   const router = useRouter()
   const form = useRef<HTMLFormElement>(null)
   const [name, setName] = useState('')
+  const [image, setImage] = useState<File | null>(null)
   const [state, action, pending] = useActionState(createProductAction, IDLE)
+  const [uploading, startUpload] = useTransition()
   const settle = useEffectEvent((result: CreateState) => {
     if (result.status === 'done') {
-      toast.success(t('created'))
       // The refresh after the move clears the pages the browser keeps for a minute (W.1), so the list shows the product.
-      router.push(productHref(result.slug))
-      router.refresh()
+      const moveOn = (): void => {
+        router.push(productHref(result.slug))
+        router.refresh()
+      }
+      if (!image) {
+        toast.success(t('created'))
+        moveOn()
+        return
+      }
+
+      startUpload(async () => {
+        const failed = await sendProductImage(result.id, image)
+        if (!failed) toast.success(t('created'))
+        else toast.error(t('imageFailed', { reason: failed.error === 'rate_limited' ? imageErrors('rate_limited', { minutes: failed.minutes }) : imageErrors(failed.error) }))
+        moveOn()
+      })
     }
     if (result.status === 'error') {
       const first = [...DETAIL_FIELDS, 'palettes' as const].find(field => result.fieldErrors[field])
@@ -56,6 +76,7 @@ export function NewProductForm({ collections }: Props) {
         slugPlaceholder={slugify(name || values.name, PRODUCT_SLUG_MAX)}
         onNameInput={setName}
       />
+      <NewProductImage file={image} onChange={setImage} disabled={pending || uploading} />
       <fieldset aria-describedby={palettesError ? 'palettes-hint palettes-error' : 'palettes-hint'} className="flex flex-col gap-2">
         <legend className="mb-1 text-sm font-medium">{t('palettes')}</legend>
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
@@ -77,7 +98,7 @@ export function NewProductForm({ collections }: Props) {
         {palettesError ? <p id="palettes-error" className="text-sm text-destructive">{palettesError}</p> : null}
       </fieldset>
       <div>
-        <Button type="submit" disabled={pending}>{pending ? t('creating') : t('create')}</Button>
+        <Button type="submit" disabled={pending || uploading}>{pending ? t('creating') : uploading ? t('imageUploading') : t('create')}</Button>
       </div>
     </form>
   )

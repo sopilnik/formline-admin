@@ -5,14 +5,14 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useRef, useState, useTransition, type ChangeEvent } from 'react'
 import { ProductImage } from '@/components/products/product-image'
+import { sendProductImage, type UploadProblem } from '@/components/products/send-product-image'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useToast } from '@/components/ui/toast'
-import { UPLOAD_ACCEPT, UPLOAD_MAX_BYTES, type UploadError } from '@/lib/uploads'
+import { precheckUpload, UPLOAD_ACCEPT } from '@/lib/uploads'
 import { removeProductImageAction } from '@/server/actions/products'
 
 type Props = { productId: string; name: string; src: string | null; width: number; height: number }
-type Problem = { error: Exclude<UploadError, 'rate_limited'> } | { error: 'rate_limited'; minutes: number }
 
 /**
  * The image of the product page for a role that may change it (spec §8.4). The file goes to
@@ -24,7 +24,7 @@ export function ProductImageEditor({ productId, name, src, width, height }: Prop
   const toast = useToast()
   const router = useRouter()
   const picker = useRef<HTMLInputElement>(null)
-  const [problem, setProblem] = useState<Problem | null>(null)
+  const [problem, setProblem] = useState<UploadProblem | null>(null)
   const [confirming, setConfirming] = useState(false)
   const [uploading, startUpload] = useTransition()
   const [removing, startRemove] = useTransition()
@@ -33,22 +33,21 @@ export function ProductImageEditor({ productId, name, src, width, height }: Prop
     const file = event.target.files?.[0]
     event.target.value = ''
     if (!file) return
-    if (!UPLOAD_ACCEPT.split(',').includes(file.type) || file.size > UPLOAD_MAX_BYTES) {
-      setProblem({ error: file.size > UPLOAD_MAX_BYTES ? 'too_large' : 'type' })
+    const refused = precheckUpload(file)
+    if (refused) {
+      setProblem({ error: refused })
       return
     }
+
     setProblem(null)
     startUpload(async () => {
-      const response = await fetch(`/api/media?product=${productId}`, { method: 'POST', body: file, headers: { 'X-Requested-With': 'formline' } }).catch(() => null)
-      if (response?.status === 201) {
-        toast.success(t('uploaded'))
-        router.refresh()
+      const failed = await sendProductImage(productId, file)
+      if (failed) {
+        setProblem(failed)
         return
       }
-      const body = response ? await response.json().catch(() => null) as { error?: UploadError } | null : null
-      const error = body?.error ?? 'unavailable'
-      if (error === 'rate_limited') setProblem({ error, minutes: Math.max(1, Math.ceil(Number(response?.headers.get('Retry-After') ?? 60) / 60)) })
-      else setProblem({ error })
+      toast.success(t('uploaded'))
+      router.refresh()
     })
   }
 
