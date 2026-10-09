@@ -76,6 +76,8 @@ export async function resendInvitationAction(input: unknown): Promise<ActionResu
   if (!parsed.success) return fail('invalid')
   const result = await resendInvitation(await actorOf(session), parsed.data.id)
   if (!result) return fail('not_found')
+  // The new letter and its log entry show on other pages, which the browser keeps for a minute (W.1).
+  refresh()
   return ok(result)
 }
 

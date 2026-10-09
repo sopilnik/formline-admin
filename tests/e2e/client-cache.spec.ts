@@ -173,4 +173,24 @@ test.describe('client cache', () => {
     await page.getByRole('link', { name: 'All notifications' }).click()
     await expect(page.getByText('7 unread · 8 notifications')).toBeVisible()
   })
+
+  test('a resent invitation is in the outbox opened a moment ago', async ({ page, context }) => {
+    await signInAsSandboxUser(context)
+    await page.goto('/team')
+    await page.getByLabel('Email').fill('sam.lee@example.test')
+    await page.getByRole('button', { name: 'Send invitation' }).click()
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText('The invitation to sam.lee@example.test is in the Outbox.')).toBeVisible()
+
+    const menu = page.getByRole('navigation', { name: 'Main menu' })
+    const letters = page.getByRole('list', { name: 'Outbox' }).getByRole('listitem')
+    await menu.getByRole('link', { name: 'Outbox' }).click()
+    await expect(letters).toHaveCount(1)
+
+    await menu.getByRole('link', { name: 'Team' }).click()
+    await page.getByRole('button', { name: 'Resend the invitation to sam.lee@example.test' }).click()
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText('A new letter to sam.lee@example.test is in the Outbox.')).toBeVisible()
+
+    await menu.getByRole('link', { name: 'Outbox' }).click()
+    await expect(letters).toHaveCount(2)
+  })
 })
