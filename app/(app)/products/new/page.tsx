@@ -21,7 +21,7 @@ export default async function NewProductPage() {
   const collections = await withWorkspace(workspaceContext(session), tx => listCollectionOptions(tx, session.workspaceId))
   const t = await getTranslations('products')
   return (
-    <div className="flex max-w-3xl flex-col gap-5">
+    <div className="mx-auto flex max-w-3xl flex-col gap-5">
       <Link href="/products" className="inline-flex w-fit items-center gap-1.5 rounded-sm text-[13px] font-medium text-ink-2 hover:text-foreground">
         <ArrowLeft aria-hidden className="size-4" />
         {t('detail.back')}

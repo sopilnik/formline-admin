@@ -21,7 +21,7 @@ export default async function ProfilePage() {
   return (
     <div className="flex flex-col gap-5">
       <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
-      <section aria-labelledby="profile-account" className="flex max-w-2xl flex-col gap-4 rounded-lg border bg-card p-5">
+      <section aria-labelledby="profile-account" className="flex flex-col gap-4 rounded-lg border bg-card p-5">
         <div>
           <h2 id="profile-account" className="font-sans text-[15px] font-semibold">{t('account')}</h2>
           <p className="mt-1 text-[13px] wrap-anywhere text-muted-foreground">{t('email', { email: self.email })}</p>

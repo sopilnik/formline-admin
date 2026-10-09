@@ -29,7 +29,7 @@ export default async function InvitePage({ params }: Params) {
   const t = await getTranslations('invite')
   const role = await getTranslations('user.roles')
   return (
-    <div className="flex max-w-xl flex-col gap-5">
+    <div className="mx-auto flex max-w-xl flex-col gap-5">
       <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
       {invitation?.state === 'pending' ? (
         <section aria-labelledby="invite-summary" className="flex flex-col gap-4 rounded-lg border bg-card p-5">

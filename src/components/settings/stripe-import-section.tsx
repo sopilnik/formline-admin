@@ -13,7 +13,7 @@ export function StripeImportSection({ recent }: { recent: boolean }) {
   const t = useTranslations('settings.store.stripe')
   const [state, action, pending] = useActionState(importStripeOrdersAction, IDLE)
   return (
-    <section aria-labelledby="store-orders" className="flex max-w-2xl flex-col gap-4 rounded-lg border bg-card p-5">
+    <section aria-labelledby="store-orders" className="flex flex-col gap-4 rounded-lg border bg-card p-5">
       <div>
         <h2 id="store-orders" className="font-sans text-[15px] font-semibold">{t('title')}</h2>
         <p className="mt-1 text-[13px] text-muted-foreground">

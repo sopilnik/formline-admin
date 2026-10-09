@@ -18,7 +18,7 @@ export default async function NewCollectionPage() {
   if (!can(session.role, 'catalog.write', session.workspaceKind)) notFound()
   const t = await getTranslations('collections')
   return (
-    <div className="flex max-w-3xl flex-col gap-5">
+    <div className="mx-auto flex max-w-3xl flex-col gap-5">
       <Link href="/collections" className="inline-flex w-fit items-center gap-1.5 rounded-sm text-[13px] font-medium text-ink-2 hover:text-foreground">
         <ArrowLeft aria-hidden className="size-4" />
         {t('back')}

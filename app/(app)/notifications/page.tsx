@@ -29,7 +29,7 @@ export default async function NotificationsPage({ searchParams }: { searchParams
   const items = await notificationItems(list.rows, await getLocale(), timeZone)
   const t = await getTranslations('notifications')
   return (
-    <div className="flex max-w-3xl flex-col gap-5">
+    <div className="mx-auto flex max-w-3xl flex-col gap-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>

@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 export default async function CollectionsLoading() {
   const t = await getTranslations('collections')
   return (
-    <div role="status" className="flex max-w-4xl flex-col gap-5">
+    <div role="status" className="mx-auto flex max-w-4xl flex-col gap-5">
       <span className="sr-only">{t('loading')}</span>
       <div className="flex flex-col gap-2">
         <Skeleton className="h-9 w-48" />
