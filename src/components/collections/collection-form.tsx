@@ -27,8 +27,15 @@ export function CollectionForm({ collection }: Props) {
   const settle = useEffectEvent((result: CollectionState) => {
     if (result.status === 'done') {
       toast.success(collection ? t('saved') : t('created'))
-      if (!collection) router.push(`/collections/${result.slug}`)
-      else if (result.slug !== collection.slug) router.replace(`/collections/${result.slug}`)
+      // The refresh after a move clears the pages the browser keeps for a minute (W.1), so the list shows the change.
+      // The action refreshes only when the address stays: refreshing there would draw the old address again.
+      if (!collection) {
+        router.push(`/collections/${result.slug}`)
+        router.refresh()
+      } else if (result.slug !== collection.slug) {
+        router.replace(`/collections/${result.slug}`)
+        router.refresh()
+      }
     }
     if (result.status === 'error') {
       const first = COLLECTION_FIELDS.find(field => result.fieldErrors[field])

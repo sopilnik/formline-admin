@@ -31,7 +31,9 @@ export function NewProductForm({ collections }: Props) {
   const settle = useEffectEvent((result: CreateState) => {
     if (result.status === 'done') {
       toast.success(t('created'))
+      // The refresh after the move clears the pages the browser keeps for a minute (W.1), so the list shows the product.
       router.push(productHref(result.slug))
+      router.refresh()
     }
     if (result.status === 'error') {
       const first = [...DETAIL_FIELDS, 'palettes' as const].find(field => result.fieldErrors[field])

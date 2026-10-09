@@ -27,6 +27,10 @@ const nextConfig: NextConfig = {
     // proxy.ts sees every request, so Next.js keeps a copy of each body for it, by default up to 10 MB, and cuts the rest.
     // An upload may be 2 MB (spec §8.4): 3 MB keeps the copy small while the media route still refuses anything larger.
     proxyClientMaxBodySize: '3mb',
+    // A page visited in the last minute opens again from the browser's memory instead of asking the server (the owner's
+    // walkthrough, W.1). An own change still shows at once: every save clears this memory — the action's refresh() or
+    // revalidatePath(), or the form's router.refresh() after it moves to a new address (tests/e2e/client-cache.spec.ts).
+    staleTimes: { dynamic: 60 },
   },
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }]

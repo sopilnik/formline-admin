@@ -1,6 +1,6 @@
 'use server'
 
-import { refresh } from 'next/cache'
+import { refresh, revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { formText } from '@/lib/auth-form'
@@ -21,6 +21,8 @@ export async function openNotificationAction(form: FormData): Promise<void> {
     const opened = await markNotificationRead(tx, await readerOf(tx, session), id.data)
     return opened ? notificationHref(tx, session.workspaceId, opened.kind, opened.payload) : '/notifications'
   })
+  // The page of notifications shows the mark; this also clears the pages the browser keeps for a minute (W.1).
+  revalidatePath('/notifications')
   redirect(href)
 }
 

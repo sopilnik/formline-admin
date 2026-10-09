@@ -47,7 +47,12 @@ function DetailsForm({ productId, slug, version, values, collections, reloading,
   const settle = useEffectEvent((result: DetailsState) => {
     if (result.status === 'done') {
       toast.success(t('saved'))
-      if (result.slug !== slug) router.replace(productHref(result.slug))
+      if (result.slug !== slug) {
+        // The refresh after the move clears the pages the browser keeps for a minute (W.1), so the list links to the new
+        // address. The action cannot refresh: that would draw the old address again.
+        router.replace(productHref(result.slug))
+        router.refresh()
+      }
     }
     if (result.status === 'error') {
       const first = DETAIL_FIELDS.find(field => result.fieldErrors[field])
