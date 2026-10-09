@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import type { NavItem, NavKey } from '@/components/app/nav'
+import { SIDEBAR_LABEL } from '@/components/app/sidebar-label'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 
@@ -37,31 +38,31 @@ export function NavLinks({ items, collapsed = false, onNavigate }: { items: NavI
             className={cn(
               'relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-strong',
               current && 'bg-sidebar-accent text-sidebar-strong shadow-[inset_3px_0_0_var(--sidebar-bar)]',
-              collapsed && 'justify-center',
             )}
           >
             <Icon className="size-[18px] shrink-0" aria-hidden />
-            <span className={cn(collapsed && 'sr-only')}>{t(item.key)}</span>
+            <span className={cn(SIDEBAR_LABEL, collapsed && 'opacity-0')}>{t(item.key)}</span>
             {item.count ? (
-              collapsed ? (
-                <span aria-hidden className="absolute top-1.5 right-1.5 size-2 rounded-full bg-sidebar-bar" />
-              ) : (
-                <span aria-hidden className="ml-auto text-xs text-sidebar-muted tabular-nums">{item.count}</span>
-              )
+              <>
+                <span aria-hidden className={cn('ml-auto text-xs text-sidebar-muted tabular-nums', SIDEBAR_LABEL, collapsed && 'opacity-0')}>{item.count}</span>
+                {/* The count's dot appears once the width has settled, and leaves at once when the menu expands. */}
+                <span
+                  aria-hidden
+                  className={cn('absolute top-1.5 right-1.5 size-2 rounded-full bg-sidebar-bar', collapsed ? 'transition-opacity delay-200 duration-150 ease-out' : 'opacity-0')}
+                />
+              </>
             ) : null}
           </Link>
         )
         const startsGroup = index > 0 && item.group !== items[index - 1]!.group
         return (
           <li key={item.key} className={cn(startsGroup && 'mt-2.5 border-t border-sidebar-border pt-2.5')}>
-            {collapsed ? (
-              <Tooltip>
-                <TooltipTrigger render={link} />
-                <TooltipContent side="right">{t(item.key)}</TooltipContent>
-              </Tooltip>
-            ) : (
-              link
-            )}
+            {/* Always inside the tooltip, which is off while the labels show: the link stays the same element across
+                a collapse, so its label fades instead of being drawn anew (W.2). */}
+            <Tooltip disabled={!collapsed}>
+              <TooltipTrigger render={link} />
+              <TooltipContent side="right">{t(item.key)}</TooltipContent>
+            </Tooltip>
           </li>
         )
       })}

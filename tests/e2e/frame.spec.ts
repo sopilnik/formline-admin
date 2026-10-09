@@ -81,6 +81,29 @@ test.describe('app frame', () => {
     await expect(page.getByRole('button', { name: 'Expand menu' })).toBeVisible()
   })
 
+  test('the menu moves between its widths in 200 ms with its icons in place', async ({ page, context }) => {
+    await signInAsSandboxUser(context)
+    await page.goto('/overview')
+    const aside = page.locator('aside')
+    const orders = aside.getByRole('link', { name: /^Orders/ })
+    const iconLeft = () => orders.locator('svg').evaluate(el => Math.round(el.getBoundingClientRect().left))
+    const before = await iconLeft()
+    expect(await aside.evaluate(el => [getComputedStyle(el).transitionProperty, getComputedStyle(el).transitionDuration])).toEqual(['width', '0.2s'])
+
+    // The same element before and after: a link drawn anew would show its label without the fade.
+    await orders.evaluate(el => el.setAttribute('data-before-collapse', ''))
+    await page.getByRole('button', { name: 'Collapse menu' }).click()
+    await expect(aside).toHaveCSS('width', '68px')
+    await expect(orders.getByText('Orders', { exact: true })).toHaveCSS('opacity', '0')
+    await expect(orders).toHaveAttribute('data-before-collapse', '')
+    expect(await iconLeft()).toBe(before)
+    await expect(page.getByRole('button', { name: 'Expand menu' }).locator('svg')).toHaveCSS('width', '16px')
+
+    // The system's "reduce motion" setting turns the move off (app/globals.css).
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    expect(await aside.evaluate(el => getComputedStyle(el).transitionDuration)).toBe('1e-05s')
+  })
+
   test('on a phone the menu is a drawer', async ({ page, context }) => {
     await page.setViewportSize({ width: 375, height: 800 })
     await signInAsSandboxUser(context)
