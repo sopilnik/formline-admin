@@ -4,7 +4,8 @@ import { expect, test } from './test'
 
 const cursorOf = (target: Locator) => target.evaluate(el => getComputedStyle(el).cursor)
 
-// Tailwind's base styles give buttons the arrow; app/globals.css gives everything that can be pressed the hand (W.3).
+// Browsers give buttons the arrow, and Tailwind v4 no longer overrides it; app/globals.css gives everything that can be
+// pressed the hand (W.3).
 test.describe('pointer cursor', () => {
   test('everything that can be pressed shows the hand, and a disabled button does not', async ({ page, context }) => {
     await signInAsSandboxUser(context)

@@ -171,7 +171,8 @@
   h3 {
     @apply font-heading;
   }
-  /* Tailwind's base styles give buttons the arrow; the hand marks everything that can be pressed, as in the store (W.3). */
+  /* Browsers give buttons the arrow, and Tailwind v4 no longer overrides it; the hand marks everything that can be pressed,
+     as in the store (W.3). */
   button:not(:disabled),
   [role='button']:not([aria-disabled='true']),
   [role='checkbox']:not([aria-disabled='true']),
