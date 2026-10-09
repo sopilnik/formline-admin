@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test'
 import sharp from 'sharp'
 import { E2E_ORIGIN_SECRET } from './constants'
+import { navigationsTo } from './navigations'
 import { signInAsSandboxUser } from './sessions'
 import { expect, test } from './test'
 
@@ -11,6 +12,19 @@ const poster = async () => ({
   buffer: await sharp({ create: { width: 640, height: 905, channels: 3, background: '#c9b28f' } }).png().toBuffer(),
 })
 const field = (page: Page) => page.getByRole('group', { name: 'Image' })
+
+/** Holds the image upload, as a slow connection would, until the test lets it go. */
+async function holdUpload(page: Page): Promise<() => void> {
+  let release = (): void => {}
+  const held = new Promise<void>(resolve => {
+    release = resolve
+  })
+  await page.route(/\/api\/media\?product=/, async route => {
+    await held
+    await route.continue()
+  })
+  return release
+}
 
 async function fillProduct(page: Page, name: string): Promise<void> {
   await page.goto('/products/new')
@@ -72,7 +86,44 @@ test.describe('new product image', () => {
     await page.getByRole('button', { name: 'Create product' }).click()
 
     await expect(page).toHaveURL(/\/products\/cracked-glass$/)
-    await expect(page.getByRole('region', { name: 'Messages' }).getByText('The product is created, but its image was not uploaded: The image could not be read. It may be damaged.')).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText('The product was created, but its image was not uploaded. The image could not be read. It may be damaged.')).toBeVisible()
     await expect(page.getByRole('region', { name: 'Image' }).getByText('No image')).toBeVisible()
+  })
+
+  test('keeps the form as typed while the image uploads', async ({ page, context }) => {
+    await signInAsSandboxUser(context)
+    const release = await holdUpload(page)
+    await fillProduct(page, 'Slow Tide')
+    await field(page).locator('input[type="file"]').setInputFiles(await poster())
+    await page.getByRole('button', { name: 'Create product' }).click()
+
+    await expect(page.getByRole('button', { name: 'Uploading the image…' })).toBeDisabled()
+    await expect(page.getByLabel('Name')).toHaveValue('Slow Tide')
+    await expect(page.getByLabel('Base price, $')).toHaveValue('24')
+    await expect(page.getByLabel('Ink', { exact: true })).toBeChecked()
+
+    release()
+    await expect(page).toHaveURL(/\/products\/slow-tide$/)
+  })
+
+  test('lets the owner go elsewhere while the image uploads, and leaves them there', async ({ page, context }) => {
+    await signInAsSandboxUser(context)
+    const release = await holdUpload(page)
+    await fillProduct(page, 'Night Ferry')
+    await field(page).locator('input[type="file"]').setInputFiles(await poster())
+    await page.getByRole('button', { name: 'Create product' }).click()
+    await expect(page.getByRole('button', { name: 'Uploading the image…' })).toBeVisible()
+
+    await page.getByRole('navigation', { name: 'Main menu' }).getByRole('link', { name: /^Orders/ }).click()
+    await expect(page.getByRole('heading', { level: 1, name: 'Orders' })).toBeVisible()
+
+    // Once the upload ends the form refreshes the page in view instead of opening the product.
+    const visits = navigationsTo(page, '/products/night-ferry')
+    const refreshed = page.waitForRequest(request => new URL(request.url()).pathname === '/orders' && new URL(request.url()).searchParams.has('_rsc'))
+    release()
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText('Product created.')).toBeVisible()
+    await (await refreshed).response()
+    expect(visits).toEqual([])
+    await expect(page).toHaveURL(/\/orders$/)
   })
 })

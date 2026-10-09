@@ -686,7 +686,7 @@
       "imageRemove": "Remove image",
       "imageHint": "JPEG, PNG or WebP up to 2 MB. It is uploaded once the product is created.",
       "imageUploading": "Uploading the image…",
-      "imageFailed": "The product is created, but its image was not uploaded: {reason}",
+      "imageFailed": "The product was created, but its image was not uploaded. {reason}",
       "failed": {
         "cap": "This workspace holds 200 products, the most it can. Delete a draft to add another.",
         "forbidden": "Your role cannot add products."
