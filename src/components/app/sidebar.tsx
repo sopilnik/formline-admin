@@ -30,7 +30,8 @@ export function Sidebar({ items, collapsed: initiallyCollapsed }: { items: NavIt
       )}
     >
       <Brand collapsed={collapsed} />
-      <nav aria-label={t('label')} className="min-h-0 flex-1 overflow-y-auto">
+      {/* Never sideways: the faded labels stick out to the right while collapsed, and a wheel would scroll the icons away. */}
+      <nav aria-label={t('label')} className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
         <NavLinks items={items} collapsed={collapsed} />
       </nav>
       <button

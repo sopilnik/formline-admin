@@ -99,6 +99,13 @@ test.describe('app frame', () => {
     expect(await iconLeft()).toBe(before)
     await expect(page.getByRole('button', { name: 'Expand menu' }).locator('svg')).toHaveCSS('width', '16px')
 
+    // The faded labels never wrap and stick out to the right, so a sideways wheel must not scroll the icons away; the
+    // scroll lands within two frames.
+    const nav = aside.locator('nav')
+    await nav.hover()
+    await page.mouse.wheel(60, 0)
+    expect(await nav.evaluate(el => new Promise<number>(done => requestAnimationFrame(() => requestAnimationFrame(() => done(el.scrollLeft)))))).toBe(0)
+
     // The system's "reduce motion" setting turns the move off (app/globals.css).
     await page.emulateMedia({ reducedMotion: 'reduce' })
     expect(await aside.evaluate(el => getComputedStyle(el).transitionDuration)).toBe('1e-05s')
