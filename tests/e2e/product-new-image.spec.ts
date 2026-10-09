@@ -79,6 +79,41 @@ test.describe('new product image', () => {
     await expect(field(page).locator('img')).toHaveCount(0)
   })
 
+  test('keeps the chosen image when a later file is refused', async ({ page, context }) => {
+    await signInAsSandboxUser(context)
+    await fillProduct(page, 'Second Thought')
+    const picker = field(page).locator('input[type="file"]')
+    await picker.setInputFiles(await poster())
+    await expect(field(page).locator('img')).toHaveAttribute('src', /^blob:/)
+
+    await picker.setInputFiles({ name: 'big.jpg', mimeType: 'image/jpeg', buffer: Buffer.alloc(2 * 1024 * 1024 + 10, 1) })
+    await expect(field(page).getByRole('alert')).toHaveText('The file is larger than 2 MB.')
+    await expect(field(page).locator('img')).toHaveAttribute('src', /^blob:/)
+    await expect(field(page)).toContainText('salt-flat.png')
+  })
+
+  test('does not light up for a file dragged over it while the image uploads', async ({ page, context }) => {
+    await signInAsSandboxUser(context)
+    const release = await holdUpload(page)
+    await fillProduct(page, 'Still Water')
+    await field(page).locator('input[type="file"]').setInputFiles(await poster())
+    const frame = field(page).locator('img').locator('xpath=..')
+    const clear = 'rgba(0, 0, 0, 0)'
+    await frame.dispatchEvent('dragover')
+    await expect(frame).not.toHaveCSS('background-color', clear)
+    await frame.dispatchEvent('dragleave')
+    await expect(frame).toHaveCSS('background-color', clear)
+
+    await page.getByRole('button', { name: 'Create product' }).click()
+    await expect(page.getByRole('button', { name: 'Uploading the image…' })).toBeDisabled()
+    await frame.dispatchEvent('dragover')
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)))
+    await expect(frame).toHaveCSS('background-color', clear)
+
+    release()
+    await expect(page).toHaveURL(/\/products\/still-water$/)
+  })
+
   test('keeps the product when the server refuses the image, and says so', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await fillProduct(page, 'Cracked Glass')

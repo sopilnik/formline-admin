@@ -27,11 +27,12 @@ export function NewProductImage({ file, onChange, disabled = false }: Props) {
     if (preview) URL.revokeObjectURL(preview)
   }, [preview])
 
+  // A refused file is named in the alert and leaves the image chosen before it in place.
   const take = (chosen: File | undefined): void => {
     if (!chosen) return
     const problem = precheckUpload(chosen)
     setRefused(problem)
-    onChange(problem ? null : chosen)
+    if (!problem) onChange(chosen)
   }
 
   const drop = (event: DragEvent<HTMLDivElement>): void => {
@@ -45,8 +46,9 @@ export function NewProductImage({ file, onChange, disabled = false }: Props) {
       <span id={labelId} className="text-sm leading-none font-medium">{t('image')}</span>
       <div
         onDragOver={event => {
+          // Always a drop target, so the browser never opens a dropped file itself; while the form is busy it takes none.
           event.preventDefault()
-          setOver(true)
+          if (!disabled) setOver(true)
         }}
         onDragLeave={() => setOver(false)}
         onDrop={drop}
