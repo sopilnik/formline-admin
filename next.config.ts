@@ -29,7 +29,7 @@ const nextConfig: NextConfig = {
     proxyClientMaxBodySize: '3mb',
     // A page visited in the last minute opens again from the browser's memory instead of asking the server (the owner's
     // walkthrough, W.1). An own change still shows at once: every save clears this memory — the action's refresh() or
-    // revalidatePath(), or the form's router.refresh() after it moves to a new address (tests/e2e/client-cache.spec.ts).
+    // revalidatePath(), or the client's router.refresh() after it moves to a new address (tests/e2e/client-cache.spec.ts).
     staleTimes: { dynamic: 60 },
   },
   async headers() {

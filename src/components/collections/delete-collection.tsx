@@ -21,6 +21,8 @@ export function DeleteCollection({ id, name, products }: { id: string; name: str
     if (result.ok) {
       toast.success(t('done', { name }))
       router.push('/collections')
+      // The refresh after the move clears the pages the browser keeps for a minute (W.1), so the list drops the deleted one.
+      router.refresh()
     } else {
       toast.error(result.code === 'conflict' ? t('conflict') : t('failed'))
     }

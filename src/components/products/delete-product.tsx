@@ -26,6 +26,8 @@ export function DeleteProduct({ productId, name, variants, hasImage, blocked }: 
       setOpen(false)
       toast.success(t('done', { name }))
       router.push('/products')
+      // The refresh after the move clears the pages the browser keeps for a minute (W.1), so the list drops the deleted one.
+      router.refresh()
     } else {
       setOpen(false)
       toast.error(result.code === 'conflict' ? t('conflict') : t('failed'))

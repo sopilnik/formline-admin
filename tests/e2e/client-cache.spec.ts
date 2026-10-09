@@ -119,6 +119,44 @@ test.describe('client cache', () => {
     await expect(list.locator('a[href="/collections/night-sky"]')).toBeVisible()
   })
 
+  test('a deleted collection is gone from the list opened a moment ago', async ({ page, context }) => {
+    await signInAsSandboxUser(context)
+    await page.goto('/collections/new')
+    await page.getByLabel('Name').fill('Deep Sea')
+    await page.getByRole('button', { name: 'Create collection' }).click()
+    await expect(page).toHaveURL(/\/collections\/deep-sea$/)
+
+    const menu = page.getByRole('navigation', { name: 'Main menu' })
+    const list = page.getByRole('list', { name: 'Collections' })
+    await menu.getByRole('link', { name: 'Collections' }).click()
+    await list.getByRole('link', { name: 'Deep Sea' }).click()
+    await page.getByRole('region', { name: 'Delete collection' }).getByRole('button', { name: 'Delete collection' }).click()
+    await page.getByRole('dialog').getByRole('button', { name: 'Delete collection' }).click()
+    await expect(page).toHaveURL(/\/collections$/)
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText('Deep Sea deleted.')).toBeVisible()
+    await expect(list.getByRole('link', { name: 'Deep Sea' })).toHaveCount(0)
+  })
+
+  test('a deleted product is gone from the list opened a moment ago', async ({ page, context }) => {
+    await signInAsSandboxUser(context)
+    await page.goto('/products/new')
+    await page.getByLabel('Name').fill('Short Lived')
+    await page.getByLabel('Base price, $').fill('20')
+    await page.getByLabel('Paper', { exact: true }).check()
+    await page.getByRole('button', { name: 'Create product' }).click()
+    await expect(page).toHaveURL(/\/products\/short-lived$/)
+
+    const menu = page.getByRole('navigation', { name: 'Main menu' })
+    const table = page.getByRole('table', { name: 'Products' })
+    await menu.getByRole('link', { name: 'Products' }).click()
+    await table.getByRole('link', { name: 'Short Lived' }).click()
+    await page.getByRole('region', { name: 'Delete product' }).getByRole('button', { name: 'Delete product' }).click()
+    await page.getByRole('dialog').getByRole('button', { name: 'Delete product' }).click()
+    await expect(page).toHaveURL(/\/products$/)
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText('Short Lived deleted.')).toBeVisible()
+    await expect(table.getByRole('link', { name: 'Short Lived' })).toHaveCount(0)
+  })
+
   test('an opened notification is read on the page opened a moment ago', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/overview')
