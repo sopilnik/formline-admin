@@ -171,6 +171,23 @@
   h3 {
     @apply font-heading;
   }
+  /* Tailwind's base styles give buttons the arrow; the hand marks everything that can be pressed, as in the store (W.3). */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  [role='checkbox']:not([aria-disabled='true']),
+  [role='switch']:not([aria-disabled='true']),
+  [role='radio']:not([aria-disabled='true']),
+  [role='tab']:not([aria-disabled='true']),
+  [role='option']:not([aria-disabled='true']),
+  [role='menuitem']:not([aria-disabled='true']),
+  [role='menuitemradio']:not([aria-disabled='true']),
+  [role='menuitemcheckbox']:not([aria-disabled='true']),
+  a[href],
+  label:has(input:not(:disabled)),
+  select:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
   /* One solid focus indicator everywhere (spec §11): the primary colour, 2 px, offset 2 px. */
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-ring;

@@ -203,7 +203,7 @@ function PaletteSearch({ items, access, close }: { items: NavItem[]; access: Pal
                       close()
                       entry.run()
                     }}
-                    className="flex min-h-9 cursor-default flex-col items-start gap-x-3 rounded-md px-3 py-1.5 text-sm outline-none select-none data-highlighted:bg-secondary sm:flex-row sm:items-center"
+                    className="flex min-h-9 flex-col items-start gap-x-3 rounded-md px-3 py-1.5 text-sm outline-none select-none data-highlighted:bg-secondary sm:flex-row sm:items-center"
                   >
                     <span className="max-w-full min-w-0 flex-1 wrap-anywhere">{entry.label}</span>
                     {entry.hint ? <span className="max-w-full shrink-0 truncate text-[13px] text-muted-foreground sm:max-w-[45%]">{entry.hint}</span> : null}

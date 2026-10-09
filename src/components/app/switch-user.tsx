@@ -35,7 +35,7 @@ export function SwitchUserDialog({ open, onOpenChange, members }: { open: boolea
           <fieldset className="flex flex-col gap-2">
             <legend className="sr-only">{t('title')}</legend>
             {members.map(member => (
-              <label key={member.id} className="flex cursor-pointer items-center gap-3 rounded-md border border-input px-3 py-2 has-checked:border-ring">
+              <label key={member.id} className="flex items-center gap-3 rounded-md border border-input px-3 py-2 has-checked:border-ring">
                 <input
                   type="radio"
                   name="user"
