@@ -111,6 +111,33 @@ test.describe('app frame', () => {
     expect(await aside.evaluate(el => getComputedStyle(el).transitionDuration)).toBe('1e-05s')
   })
 
+  test('the focus ring of every menu link is drawn whole, expanded and collapsed', async ({ page, context }) => {
+    await signInAsSandboxUser(context)
+    await page.goto('/overview')
+    const nav = page.locator('aside nav')
+    const orders = nav.getByRole('link', { name: /^Orders/ })
+    await orders.focus()
+    await page.keyboard.press('Shift+Tab')
+    await page.keyboard.press('Tab')
+    await expect(orders).toBeFocused()
+    // The ring reaches outline-width + outline-offset past the link; the nav clips whatever leaves its own box.
+    const reach = await orders.evaluate(el => parseFloat(getComputedStyle(el).outlineWidth) + parseFloat(getComputedStyle(el).outlineOffset))
+    expect(reach).toBe(4)
+    const cut = () => nav.evaluate((el, ring) => {
+      const box = el.getBoundingClientRect()
+      return [...el.querySelectorAll('a')].flatMap(link => {
+        const r = link.getBoundingClientRect()
+        const sides = [r.left - ring < box.left && 'left', r.right + ring > box.right && 'right', r.top - ring < box.top && 'top']
+        return sides.filter(Boolean).map(side => `${link.textContent}: ${side}`)
+      })
+    }, reach)
+    expect(await cut()).toEqual([])
+
+    await page.getByRole('button', { name: 'Collapse menu' }).click()
+    await expect(page.locator('aside')).toHaveCSS('width', '68px')
+    expect(await cut()).toEqual([])
+  })
+
   test('on a phone the menu is a drawer', async ({ page, context }) => {
     await page.setViewportSize({ width: 375, height: 800 })
     await signInAsSandboxUser(context)
