@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 export type ActivityEntryView = { id: string; at: string; iso: string; actor: string | null; action: string; subject: Subject | null; detail: Detail | null }
 
 const TH = 'h-10 border-b bg-card px-3 text-left font-medium whitespace-nowrap text-muted-foreground'
-const TD = 'border-b px-3 py-2.5 align-top group-last/row:border-b-0'
+const TD = 'h-11 border-b px-3 py-2.5 align-top group-last/row:border-b-0'
 const LINK = 'font-medium underline decoration-border-strong underline-offset-3 hover:decoration-current'
 
 function SubjectText({ subject }: { subject: Subject | null }) {

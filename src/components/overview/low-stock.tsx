@@ -10,7 +10,7 @@ export type LowStockView = { key: string; href: string; product: string; variant
 export function LowStock({ rows, total }: { rows: LowStockView[]; total: number }) {
   const t = useTranslations('overview.lowStock')
   return (
-    <section aria-labelledby="low-stock-title" className="flex min-w-0 flex-col rounded-lg border bg-card p-5">
+    <section aria-labelledby="low-stock-title" className="flex min-w-0 flex-col rounded-lg border bg-card p-4 sm:p-5">
       <div className="mb-1 flex items-baseline gap-2.5">
         <h2 id="low-stock-title" className="font-sans text-[15px] font-semibold">{t('title')}</h2>
         {total > 0 ? <span className="text-[13px] text-muted-foreground">{t('count', { count: total })}</span> : null}

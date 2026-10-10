@@ -5,8 +5,8 @@ import { StatusBadge } from '@/components/orders/status-badge'
 import type { OrderRowView } from '@/lib/orders/view'
 import { cn } from '@/lib/utils'
 
-const TH = 'h-9 border-b px-3 text-left font-medium whitespace-nowrap text-muted-foreground first:pl-0'
-const TD = 'h-11 border-b px-3 first:pl-0 group-last/row:border-b-0'
+const TH = 'h-9 border-b px-3 text-left font-medium whitespace-nowrap text-muted-foreground first:pl-0 last:pr-0'
+const TD = 'h-11 border-b px-3 first:pl-0 last:pr-0 group-last/row:border-b-0'
 
 /**
  * The eight newest orders (spec §8.1), in the columns and order of the orders table. The five columns need about
@@ -16,7 +16,7 @@ export function LatestOrders({ rows }: { rows: OrderRowView[] }) {
   const t = useTranslations('overview.latest')
   const columns = useTranslations('orders.columns')
   return (
-    <section aria-labelledby="latest-title" className="@container flex min-w-0 flex-col rounded-lg border bg-card p-5">
+    <section aria-labelledby="latest-title" className="@container flex min-w-0 flex-col rounded-lg border bg-card p-4 sm:p-5">
       <div className="mb-2 flex items-baseline gap-2.5">
         <h2 id="latest-title" className="font-sans text-[15px] font-semibold">{t('title')}</h2>
         <Link href="/orders" className="ml-auto text-[13px] font-medium text-primary hover:underline">{t('all')}</Link>

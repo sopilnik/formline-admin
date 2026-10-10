@@ -18,7 +18,7 @@ type Props = { rows: CollectionRow[]; other: string | null; posters: string; shi
 export function CollectionRevenue({ rows, other, posters, shipping }: Props) {
   const t = useTranslations('overview.collections')
   return (
-    <section aria-labelledby="collections-title" className="flex min-w-0 flex-col rounded-lg border bg-card p-5">
+    <section aria-labelledby="collections-title" className="flex min-w-0 flex-col rounded-lg border bg-card p-4 sm:p-5">
       <h2 id="collections-title" className="mb-3.5 font-sans text-[15px] font-semibold">{t('title')}</h2>
       <ul className="mb-4 grid grid-cols-[fit-content(50%)_minmax(2.5rem,1fr)_auto] items-center gap-x-3 gap-y-4.5 text-[13px]">
         {rows.map(row => (

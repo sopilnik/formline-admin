@@ -39,7 +39,7 @@ export function RevenueChart({ model, title, summary, legend }: Props) {
   const hovered = active === null ? null : model.bars[active]!
   const at = active === null ? 0 : (active + 0.5) / count
   return (
-    <section aria-labelledby="revenue-title" className="@container flex min-w-0 flex-col rounded-lg border bg-card p-5">
+    <section aria-labelledby="revenue-title" className="@container flex min-w-0 flex-col rounded-lg border bg-card p-4 sm:p-5">
       <div className="mb-3.5 flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
         <div className="flex items-baseline gap-2.5">
           <h2 id="revenue-title" className="font-sans text-[15px] font-semibold">{title}</h2>
