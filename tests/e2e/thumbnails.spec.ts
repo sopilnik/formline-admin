@@ -37,6 +37,8 @@ test.describe('thumbnails', () => {
   test('the products list shows the small copies of the posters', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/products')
+    // The list streams in behind the loading skeleton and is revealed a frame after the load event.
+    await expect(page.locator('main img').first()).toBeVisible()
     const sources = await page.locator('main img').evaluateAll(list => list.map(img => img.getAttribute('src') ?? ''))
     expect(sources.length).toBeGreaterThan(0)
     expect(sources.filter(src => !src.startsWith('/posters/thumb/'))).toEqual([])
