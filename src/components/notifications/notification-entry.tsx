@@ -28,7 +28,7 @@ export function NotificationEntry({ item, onOpen }: { item: NotificationItem; on
       <input type="hidden" name="id" value={item.id} />
       <button
         type="submit"
-        className="flex w-full gap-3 rounded-md px-3 py-2.5 text-left outline-none hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
+        className="flex w-full gap-3 rounded-md px-3 py-2.5 text-left outline-none hover:bg-secondary focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
       >
         <span aria-hidden className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-muted text-ink-2">
           <Icon className="size-4" />

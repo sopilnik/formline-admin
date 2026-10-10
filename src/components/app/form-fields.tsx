@@ -36,7 +36,7 @@ export function SelectField({ id, label, hint, error, children, className, ...se
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy(id, hint, error)}
           className={cn(
-            'h-8 w-full appearance-none rounded-lg border border-input bg-transparent pr-8 pl-2.5 text-base outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-invalid:border-destructive md:text-sm dark:bg-input/30 [&>option]:bg-card [&>option]:text-foreground',
+            'h-8 w-full appearance-none rounded-lg border border-input bg-transparent pr-8 pl-2.5 text-base outline-none focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-ring aria-invalid:border-destructive md:text-sm dark:bg-input/30 [&>option]:bg-card [&>option]:text-foreground',
             className,
           )}
           {...select}
@@ -60,7 +60,7 @@ export function TextAreaField({ id, label, hint, error, className, ...area }: Co
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(id, hint, error)}
         className={cn(
-          'w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-base outline-none placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-invalid:border-destructive md:text-sm dark:bg-input/30',
+          'w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-base outline-none placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-ring aria-invalid:border-destructive md:text-sm dark:bg-input/30',
           className,
         )}
         {...area}

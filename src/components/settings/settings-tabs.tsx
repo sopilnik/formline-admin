@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
 export function SettingsTabs({ label, tabs }: { label: string; tabs: { href: string; label: string }[] }) {
   const pathname = usePathname()
   return (
-    <nav aria-label={label} className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
+    <nav aria-label={label} className="-mx-4 -my-1 overflow-x-auto px-4 py-1 md:mx-0 md:my-0 md:overflow-visible md:px-0 md:py-0">
       <ul className="flex min-w-max gap-1 border-b">
         {tabs.map(tab => {
           const current = pathname === tab.href

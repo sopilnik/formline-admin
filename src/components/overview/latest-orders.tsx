@@ -21,7 +21,7 @@ export function LatestOrders({ rows }: { rows: OrderRowView[] }) {
         <h2 id="latest-title" className="font-sans text-[15px] font-semibold">{t('title')}</h2>
         <Link href="/orders" className="ml-auto text-[13px] font-medium text-primary hover:underline">{t('all')}</Link>
       </div>
-      <div className="hidden overflow-x-auto @xl:block">
+      <div className="-mx-1 hidden overflow-x-auto px-1 @xl:block">
         <table aria-labelledby="latest-title" className="w-full border-separate border-spacing-0 text-[13px]">
           <thead>
             <tr>

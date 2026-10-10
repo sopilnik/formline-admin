@@ -78,7 +78,7 @@ export function OrdersFilters({ query, statusCounts }: { query: OrdersQuery; sta
         aria-label={t('status')}
         value={view.status.length > 0 ? view.status : [ALL]}
         onValueChange={next => go({ status: statusesFrom(next, view.status) })}
-        className="-mx-4 w-auto flex-nowrap overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:overflow-visible md:px-0 md:pb-0"
+        className="-mx-4 w-auto flex-nowrap overflow-x-auto px-4 -mt-1 pt-1 pb-1 md:mx-0 md:mt-0 md:flex-wrap md:overflow-visible md:px-0 md:pt-0 md:pb-0"
       >
         <ToggleGroupItem value={ALL} aria-label={`${t('all')}, ${all}`} className={chip}>
           <Check aria-hidden className="hidden size-3.5 group-data-pressed/toggle:block" strokeWidth={2.5} />

@@ -185,7 +185,7 @@ function PaletteSearch({ items, access, close }: { items: NavItem[]; access: Pal
         />
       </div>
       {/* The arrows move the highlight and scroll the list; the list itself takes the focus too, as a scrolling region must. */}
-      <div tabIndex={0} className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-1.5 outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring">
+      <div tabIndex={0} className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-1.5 outline-none focus-visible:outline-2 focus-visible:outline-solid focus-visible:-outline-offset-2 focus-visible:outline-ring">
         <Autocomplete.Status className="px-3 py-2 text-[13px] text-muted-foreground empty:hidden">{status}</Autocomplete.Status>
         {!searching && groups.length === 0 ? (
           <p className="px-3 py-6 text-[13px] wrap-anywhere text-muted-foreground">{t('empty', { query: query.trim() })}</p>
@@ -203,7 +203,7 @@ function PaletteSearch({ items, access, close }: { items: NavItem[]; access: Pal
                       close()
                       entry.run()
                     }}
-                    className="flex min-h-9 flex-col items-start gap-x-3 rounded-md px-3 py-1.5 text-sm outline-none select-none data-highlighted:bg-secondary sm:flex-row sm:items-center"
+                    className="flex min-h-9 flex-col items-start gap-x-3 rounded-md px-3 py-1.5 text-sm outline-none select-none data-highlighted:bg-secondary data-highlighted:outline-2 data-highlighted:-outline-offset-2 data-highlighted:outline-solid data-highlighted:outline-ring sm:flex-row sm:items-center"
                   >
                     <span className="max-w-full min-w-0 flex-1 wrap-anywhere">{entry.label}</span>
                     {entry.hint ? <span className="max-w-full shrink-0 truncate text-[13px] text-muted-foreground sm:max-w-[45%]">{entry.hint}</span> : null}
