@@ -26,7 +26,7 @@ export function UserMenu({ user }: { user: FrameUser }) {
           <span className="block truncate">{user.name}</span>
           <span className="block truncate text-xs text-muted-foreground">{role}</span>
         </span>
-        <ChevronDown aria-hidden className="size-3.5" />
+        <ChevronDown aria-hidden className="size-3.5 max-[359px]:hidden" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuItem render={<Link href="/settings/security" />}>

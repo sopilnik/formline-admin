@@ -16,10 +16,10 @@ export function ThemeMenu({ theme }: { theme: Theme }) {
   const Icon = ICONS[theme]
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="ghost" size="sm" aria-label={t('label', { name: t(theme) })} />}>
+      <DropdownMenuTrigger render={<Button variant="ghost" aria-label={t('label', { name: t(theme) })} />}>
         <Icon aria-hidden />
         <span className="hidden lg:inline">{t(theme)}</span>
-        <ChevronDown aria-hidden className="size-3.5" />
+        <ChevronDown aria-hidden className="size-3.5 max-[359px]:hidden" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         <DropdownMenuRadioGroup value={theme} onValueChange={value => startTransition(async () => { await setThemeAction(String(value)) })}>

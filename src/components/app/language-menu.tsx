@@ -13,9 +13,9 @@ export function LanguageMenu({ locale }: { locale: Locale }) {
   const [, startTransition] = useTransition()
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="ghost" size="sm" aria-label={t('label', { name: t(locale) })} />}>
+      <DropdownMenuTrigger render={<Button variant="ghost" aria-label={t('label', { name: t(locale) })} />}>
         {locale.toUpperCase()}
-        <ChevronDown aria-hidden className="size-3.5" />
+        <ChevronDown aria-hidden className="size-3.5 max-[359px]:hidden" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         <DropdownMenuRadioGroup value={locale} onValueChange={value => startTransition(async () => { await setLocaleAction(String(value)) })}>
