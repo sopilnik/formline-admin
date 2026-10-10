@@ -130,7 +130,8 @@ never a key or a raw hostname.
 `production` environment. It reads what the panel's application has cost this month — `monthlyCost` of
 `GET /mc/apps/{id}/summary` and the account's Magic Containers charges from `GET /billing`, the larger of the two — stops
 the application with `POST /mc/apps/{id}/undeploy` at $4, and fails, so GitHub emails the owner, whenever it stopped the
-application, could not read a figure, found the balance under $3 or got no answer from the panel's liveness check. An
+application, could not read a figure, found the balance under $1 (the account tops itself up by $10 below $2, so this means
+a top-up failed) or got no answer from the panel's liveness check. An
 application that is already stopped is left alone and the run passes. To bring the panel back, find the cause first, then
 deploy the application again in the bunny dashboard (Magic Containers → the application → Deploy); the next run checks it
 again. Every deploy switches the guard back on, because GitHub disables a scheduled workflow after 60 days without

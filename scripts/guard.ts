@@ -1,10 +1,11 @@
 // The hourly budget guard (spec §10, .github/workflows/budget-guard.yml). It reads what the panel's application has cost
 // this month and the account's balance from bunny's API, stops the application at $4, and fails — so GitHub emails the
-// owner — whenever it stops the application, cannot read a figure, finds the balance under $3 or the panel silent.
+// owner — whenever it stops the application, cannot read a figure, finds the balance under $1 or the panel silent.
 // A stopped application is left alone: resuming it is the owner's step (README, "Budget guard").
 
 export const COST_LIMIT_USD = 4
-export const BALANCE_FLOOR_USD = 3
+/** Below the account's automatic top-up ($10 whenever the balance falls under $2), so it fires only when a top-up failed. */
+export const BALANCE_FLOOR_USD = 1
 
 const API = 'https://api.bunny.net'
 

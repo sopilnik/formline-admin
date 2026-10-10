@@ -20,8 +20,13 @@ describe('decide', () => {
     expect(decide({ ...calm, appCost: null, billingCost: 4.5 })).toMatchObject({ undeploy: true, cost: 4.5 })
   })
 
-  it('fails on a balance under $3 or unread, a suspended application and a silent panel', () => {
-    expect(decide({ ...calm, balance: 2.99 }).failures).toEqual(['the balance $2.99 is under $3'])
+  it('passes a balance between the floor and the top-up point, which the automatic top-up still has to reach', () => {
+    expect(decide({ ...calm, balance: 2.99 }).failures).toEqual([])
+    expect(decide({ ...calm, balance: 1 }).failures).toEqual([])
+  })
+
+  it('fails on a balance under $1 or unread, a suspended application and a silent panel', () => {
+    expect(decide({ ...calm, balance: 0.99 }).failures).toEqual(['the balance $0.99 is under $1'])
     expect(decide({ ...calm, balance: undefined }).failures).toEqual(['the billing carries no Balance'])
     expect(decide({ ...calm, status: 'suspended' }).failures).toEqual(['bunny reports the application suspended'])
     expect(decide({ ...calm, live: false }).failures).toEqual(['the panel does not answer its liveness check'])
