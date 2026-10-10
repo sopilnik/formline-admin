@@ -14,6 +14,7 @@ export type OrderRow = {
   id: string; number: number; placedAt: Date; customerName: string; customerEmail: string
   items: number; totalCents: number; status: OrderStatus; source: 'seed' | 'stripe'
 }
+
 export type OrdersPage = { rows: OrderRow[]; filtered: number; total: number; statusCounts: Record<OrderStatus, number>; page: number; pages: number }
 
 /** Customers join their orders inside the same workspace (composite keys, spec §6.1). */
@@ -114,12 +115,14 @@ export type OrderLineDetail = {
   /** The product the line's variant belongs to; null for a line the catalog does not know. */
   product: { slug: string; imageSrc: string | null } | null
 }
+
 export type OrderEventDetail = {
   id: string; kind: 'status' | 'note'; from: OrderStatus | null; to: OrderStatus | null; note: string | null
   /** Null for events without a person: the Stripe ingest and the seed's first event ("System"). */
   actorName: string | null
   at: Date
 }
+
 export type OrderDetail = {
   id: string; number: number; status: OrderStatus; source: 'seed' | 'stripe'; delivery: 'standard' | 'express'
   subtotalCents: number; shippingCents: number; totalCents: number; placedAt: Date

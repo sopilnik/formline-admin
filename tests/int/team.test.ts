@@ -27,9 +27,11 @@ beforeAll(async () => {
 afterAll(closeAll)
 
 const as = (role: keyof typeof ids): Actor => ({ ...owner, userId: ids[role], role })
+
 const logged = async (userId: string) => (await admin.query<{ action: string; actor: string; details: Record<string, string> }>(
   "select action, actor_user_id as actor, details from fa.activity_log where workspace_id = $1 and entity_type = 'user' and entity_id = $2 order by at",
   [owner.workspaceId, userId])).rows
+
 const roleOf = async (userId: string) => (await admin.query<{ role: string; deactivated: boolean }>(
   'select role, deactivated_at is not null as deactivated from fa.users where workspace_id = $1 and id = $2', [owner.workspaceId, userId])).rows[0]!
 

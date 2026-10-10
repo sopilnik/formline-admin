@@ -7,9 +7,11 @@ import { expect, test } from './test'
 test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip': '203.0.113.28' } })
 
 type Row = { id: string; number: number; name: string; city: string; total_cents: number }
+
 const newestPaid = (workspaceId: string) => asSchemaOwner(async c => (await c.query<Row>(
   "select o.id, o.number, c.name, c.city, o.total_cents from fa.orders o join fa.customers c on c.workspace_id = o.workspace_id and c.id = o.customer_id where o.workspace_id = $1 and o.status = 'paid' order by o.placed_at desc limit 1",
   [workspaceId])).rows[0]!)
+
 const money = (cents: number) => new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'USD', currencyDisplay: 'narrowSymbol' }).format(cents / 100)
 
 test.describe('order page', () => {

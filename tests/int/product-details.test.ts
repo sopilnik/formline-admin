@@ -27,10 +27,12 @@ beforeAll(async () => {
 afterAll(closeAll)
 
 const read = (slug: string) => withWorkspace(owner, tx => getProduct(tx, owner.workspaceId, slug), app)
+
 async function inputFor(slug: string): Promise<DetailsInput> {
   const p = (await read(slug))!
   return { productId: p.id, version: p.version, name: p.name, slug: p.slug, collectionId: p.collection.id, basePriceCents: p.basePriceCents, tags: p.tags, description: p.description }
 }
+
 const logged = async (productId: string) => (await admin.query<{ action: string; details: { slug: string; changed: string[] } }>(
   'select action, details from fa.activity_log where workspace_id = $1 and entity_id = $2 order by at', [owner.workspaceId, productId])).rows
 

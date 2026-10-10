@@ -26,6 +26,7 @@ async function member(actor: Actor, role: 'admin' | 'manager'): Promise<Actor> {
 
 const logged = async (workspaceId: string, action: string) => (await admin.query<{ actor: string; details: { changed: string[] } }>(
   'select actor_user_id as actor, details from fa.activity_log where workspace_id = $1 and action = $2 order by at', [workspaceId, action])).rows
+
 const settingsOf = async (workspaceId: string) => (await admin.query<{ store_name: string; support_email: string; timezone: string; low_stock_default: number }>(
   'select store_name, support_email, timezone, low_stock_default from fa.store_settings where workspace_id = $1', [workspaceId])).rows[0]!
 

@@ -12,6 +12,7 @@ const poster = async () => ({
   name: 'tide-pool.png', mimeType: 'image/png',
   buffer: await sharp({ create: { width: 720, height: 1018, channels: 3, background: '#a9cdb2' } }).png().toBuffer(),
 })
+
 const image = (page: import('@playwright/test').Page) => page.getByRole('region', { name: 'Image' })
 
 test.describe('product image', () => {

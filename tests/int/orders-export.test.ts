@@ -33,6 +33,7 @@ afterAll(closeAll)
 
 const idsWhere = async (where: string, orderBy: string) =>
   (await admin.query<{ id: string }>(`select id from fa.orders where workspace_id = $1 and (${where}) order by ${orderBy}`, [ctx.workspaceId])).rows.map(r => r.id)
+
 const read = async (stream: ReadableStream<Uint8Array>): Promise<{ bom: boolean; lines: string[] }> => {
   const bytes = new Uint8Array(await new Response(stream).arrayBuffer())
   const bom = bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf

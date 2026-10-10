@@ -32,10 +32,13 @@ async function device(workspaceId: string, userId: string, reauthAt: Date | null
 
 const self = async () => (await admin.query<{ totp_secret_enc: string | null; totp_last_step: string | null }>(
   'select totp_secret_enc, totp_last_step from fa.users where workspace_id = $1 and id = $2', [current.workspaceId, current.userId])).rows[0]!
+
 const codeHashes = async () => (await admin.query<{ code_hash: string }>(
   'select code_hash from fa.recovery_codes where workspace_id = $1 and user_id = $2 order by code_hash', [current.workspaceId, current.userId])).rows.map(r => r.code_hash)
+
 const actions = async () => (await admin.query<{ action: string }>(
   "select action from fa.activity_log where workspace_id = $1 and action like 'auth.%' order by at", [current.workspaceId])).rows.map(r => r.action)
+
 const exists = async (session: Session) => (await admin.query('select 1 from fa.sessions where id = $1', [session.id])).rowCount === 1
 
 beforeAll(async () => {

@@ -41,8 +41,10 @@ async function device(workspaceId: string, userId: string, agent: string, reauth
 }
 
 const exists = async (session: Session) => (await admin.query('select 1 from fa.sessions where id = $1', [session.id])).rowCount === 1
+
 const actions = async (workspaceId: string, action: string) => (await admin.query<{ details: Record<string, unknown> }>(
   'select details from fa.activity_log where workspace_id = $1 and action = $2 order by at', [workspaceId, action])).rows.map(r => r.details)
+
 const passwordHashOf = async () => (await admin.query<{ hash: string }>('select password_hash as hash from fa.users where workspace_id = $1 and id = $2', [ownerWorkspace, ownerId])).rows[0]!.hash
 
 describe('changeOwnPassword', () => {

@@ -9,6 +9,7 @@ export const NOTIFICATION_KINDS = [
   'auth.second_factor_locked',
   'auth.recovery_code_used',
 ] as const
+
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number]
 
 export type NotificationView =

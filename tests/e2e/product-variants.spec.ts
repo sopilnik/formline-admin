@@ -7,6 +7,7 @@ import { expect, test } from './test'
 test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip': '203.0.113.33' } })
 
 const variants = (page: import('@playwright/test').Page) => page.getByRole('region', { name: 'Variants' })
+
 const stockOf = (workspaceId: string, sku: string) => asSchemaOwner(async c => (await c.query<{ stock: number }>(
   'select stock from fa.product_variants where workspace_id = $1 and sku = $2', [workspaceId, sku])).rows[0]!.stock)
 

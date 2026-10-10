@@ -33,10 +33,13 @@ afterAll(async () => {
 })
 
 const webp = (size = 1000): Processed => ({ bytes: Buffer.alloc(size, 7), width: 720, height: 1018, thumb: Buffer.alloc(100, 3) })
+
 const productOf = async (actor: Actor, slug: string) => (await admin.query<{ id: string; image_id: string | null }>(
   'select id, image_id from fa.products where workspace_id = $1 and slug = $2', [actor.workspaceId, slug])).rows[0]!
+
 const imageRow = async (actor: Actor, id: string) => (await admin.query<{ storage_path: string; source: string; width: number; bytes: number }>(
   'select storage_path, source, width, bytes from fa.images where workspace_id = $1 and id = $2', [actor.workspaceId, id])).rows[0]
+
 const queued = async (path: string) => (await admin.query('select 1 from fa.pending_media_deletions where storage_path = $1', [path])).rowCount
 
 describe('storeProductImage', () => {

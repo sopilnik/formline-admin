@@ -11,6 +11,7 @@ const poster = async () => ({
   name: 'salt-flat.png', mimeType: 'image/png',
   buffer: await sharp({ create: { width: 640, height: 905, channels: 3, background: '#c9b28f' } }).png().toBuffer(),
 })
+
 const field = (page: Page) => page.getByRole('group', { name: 'Image' })
 
 /** Holds the image upload, as a slow connection would, until the test lets it go. */

@@ -3,6 +3,7 @@ export type PaletteId = 'paper' | 'ink' | 'signal' | 'ocean' | 'sage' | 'sand'
 export type SizeId = 'a3' | 'a2' | 'a1'
 
 export type CatalogCollection = { slug: CollectionSlug; name: string; description: string }
+
 export type CatalogProduct = {
   slug: string
   name: string
@@ -12,6 +13,7 @@ export type CatalogProduct = {
   tags: readonly string[]
   description: string
 }
+
 export type CatalogPoster = { width: number; height: number; bytes: number }
 
 export const COLLECTIONS: readonly CatalogCollection[] = [

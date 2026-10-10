@@ -13,6 +13,7 @@ export type ChartBar = {
   previousAmount: string | null
   today: boolean
 }
+
 export type ChartTick = { index: number; label: string; alternate: boolean }
 export type ChartModel = { bars: ChartBar[]; max: number; grid: { fraction: number; label: string }[]; ticks: ChartTick[] }
 

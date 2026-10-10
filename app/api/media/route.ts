@@ -15,6 +15,7 @@ import { readCapped } from '@/server/read-capped'
 export const dynamic = 'force-dynamic'
 
 const NO_STORE = { 'Cache-Control': 'private, no-store' }
+
 const refuse = (status: number, error: UploadError, headers: Record<string, string> = {}): Response =>
   Response.json({ ok: false, error }, { status, headers: { ...NO_STORE, ...headers } })
 

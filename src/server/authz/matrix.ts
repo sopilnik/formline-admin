@@ -1,6 +1,7 @@
 import type { Role } from '@/server/db/with-workspace'
 
 export type WorkspaceKind = 'template' | 'owner' | 'sandbox'
+
 export type Action =
   | 'data.read' | 'csv.export' | 'orders.update' | 'catalog.write' | 'catalog.delete' | 'customers.notes'
   | 'activity.read' | 'outbox.read' | 'team.read' | 'team.manage' | 'settings.store' | 'stripe.import' | 'self.manage' | 'sandbox.tools'

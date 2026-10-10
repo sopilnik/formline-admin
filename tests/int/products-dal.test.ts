@@ -31,8 +31,10 @@ beforeAll(async () => {
 afterAll(closeAll)
 
 const list = (query: Partial<ProductsQuery>, ctx = owner) => withWorkspace(ctx, tx => listProducts(tx, ctx.workspaceId, { ...DEFAULT_PRODUCTS_QUERY, ...query }), app)
+
 const slugsWhere = async (where: string, params: unknown[] = [], ws = owner.workspaceId) =>
   (await admin.query<{ slug: string }>(`select p.slug from fa.products p where p.workspace_id = $1 and (${where}) order by p.slug`, [ws, ...params])).rows.map(r => r.slug)
+
 const sorted = (slugs: string[]) => [...slugs].sort()
 
 describe('listProducts', () => {

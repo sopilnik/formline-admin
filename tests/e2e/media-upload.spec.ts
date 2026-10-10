@@ -12,6 +12,7 @@ const EDGE = { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip': '203.0.113.36'
 test.use({ extraHTTPHeaders: EDGE })
 
 const png = (width = 360, height = 509) => sharp({ create: { width, height, channels: 3, background: '#57826a' } }).png().toBuffer()
+
 const productId = (workspaceId: string, slug: string) => asSchemaOwner(async c => (await c.query<{ id: string }>(
   'select id from fa.products where workspace_id = $1 and slug = $2', [workspaceId, slug])).rows[0]!.id)
 

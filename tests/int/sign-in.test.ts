@@ -49,8 +49,10 @@ async function pendingSession(): Promise<Session> {
 async function count(sql: string, params: unknown[] = []): Promise<number> {
   return (await admin.query<{ n: number }>(sql, params)).rows[0]!.n
 }
+
 const letters = (template: string) =>
   count('select count(*)::int as n from fa.outbox_emails where template = $1 and to_address = $2', [template, OWNER.email])
+
 const sessionExists = async (session: Session) =>
   (await count('select count(*)::int as n from fa.sessions where id = $1', [session.id])) === 1
 

@@ -32,11 +32,13 @@ afterAll(async () => {
 
 const read = (slug: string) => withWorkspace(owner, tx => getProduct(tx, owner.workspaceId, slug), app)
 const idOf = async (slug: string) => (await read(slug))!.id
+
 const newDraft = async (slug: string) => {
   const result = await createProductWithLog(owner, { name: slug, slug, collectionId, basePriceCents: 2500, tags: [], description: '', palettes: ['ink'] }, app)
   if (!result.ok) throw new Error(result.reason)
   return result.id
 }
+
 const actions = async (entityId: string) => (await admin.query<{ action: string; details: Record<string, unknown> }>(
   'select action, details from fa.activity_log where workspace_id = $1 and entity_id = $2 order by at, id', [owner.workspaceId, entityId])).rows
 

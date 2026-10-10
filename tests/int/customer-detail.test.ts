@@ -48,8 +48,10 @@ beforeAll(async () => {
 afterAll(closeAll)
 
 const read = (id: string, actor: Actor = owner) => withWorkspace(actor, tx => getCustomer(tx, actor.workspaceId, id), app)
+
 const notesOf = async (id: string, workspaceId = owner.workspaceId) =>
   (await admin.query<{ notes: string }>('select notes from fa.customers where workspace_id = $1 and id = $2', [workspaceId, id])).rows[0]!.notes
+
 const logged = async (id: string) => (await admin.query<{ action: string; actor: string; details: { name: string }; ip_hash: string }>(
   "select action, actor_user_id as actor, details, ip_hash from fa.activity_log where workspace_id = $1 and entity_type = 'customer' and entity_id = $2 order by at",
   [owner.workspaceId, id])).rows

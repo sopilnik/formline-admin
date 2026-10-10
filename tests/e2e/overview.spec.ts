@@ -10,6 +10,7 @@ const one = (text: string, params: unknown[]) => asSchemaOwner(async c => Number
 const REVENUE = "o.status in ('paid', 'processing', 'shipped', 'delivered')"
 // The 30-day period: from midnight 29 days ago in the store's zone to now (amendment 4).
 const LAST_30_DAYS = "o.placed_at >= (date_trunc('day', now() at time zone 'Europe/Berlin') - interval '29 days') at time zone 'Europe/Berlin'"
+
 const dollars = (cents: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'USD', currencyDisplay: 'narrowSymbol', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(cents / 100)
 

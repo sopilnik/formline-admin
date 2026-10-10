@@ -17,22 +17,28 @@ export type OrderStatus = 'paid' | 'processing' | 'shipped' | 'delivered' | 'can
 export type SeedUser = { id: string; email: string; name: string; role: DemoRole; createdAt: Date }
 export type SeedCollection = { id: string; slug: string; name: string; description: string; position: number }
 export type SeedImage = { id: string; storagePath: string; width: number; height: number; bytes: number; createdAt: Date }
+
 export type SeedProduct = {
   id: string; slug: string; name: string; collectionId: string; description: string; basePriceCents: number
   status: 'published'; tags: string[]; imageId: string; createdAt: Date; updatedAt: Date
 }
+
 export type SeedVariant = { id: string; productId: string; sku: string; size: SizeId; palette: PaletteId; stock: number; lowStockThreshold: number }
 export type SeedCustomer = { id: string; email: string; name: string; city: string; country: string; postal: string; createdAt: Date }
 export type SeedAddress = { name: string; line1: string; postalCode: string; city: string; country: string }
+
 export type SeedOrder = {
   id: string; number: number; customerId: string; status: OrderStatus; delivery: 'standard' | 'express'
   subtotalCents: number; shippingCents: number; totalCents: number; shippingAddress: SeedAddress; placedAt: Date; updatedAt: Date
 }
+
 export type SeedLine = { id: string; orderId: string; variantId: string; sku: string; name: string; unitCents: number; qty: number }
+
 export type SeedEvent = {
   id: string; orderId: string; kind: 'status' | 'note'; fromStatus: OrderStatus | null; toStatus: OrderStatus | null
   note: string | null; actorUserId: string | null; at: Date
 }
+
 export type TemplateData = {
   version: number; epoch: Date; users: SeedUser[]; collections: SeedCollection[]; images: SeedImage[]; products: SeedProduct[]
   variants: SeedVariant[]; customers: SeedCustomer[]; orders: SeedOrder[]; lines: SeedLine[]; events: SeedEvent[]

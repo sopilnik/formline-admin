@@ -7,6 +7,7 @@ import { expect, test } from './test'
 test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip': '203.0.113.30' } })
 
 const count = (sql: string, params: unknown[]) => asSchemaOwner(async c => Number((await c.query<{ n: string }>(sql, params)).rows[0]!.n))
+
 const withSoldOut = (workspaceId: string) => count(
   "select count(*) as n from fa.products p where p.workspace_id = $1 and p.status <> 'archived' and exists (select 1 from fa.product_variants v where v.workspace_id = p.workspace_id and v.product_id = p.id and v.stock = 0)",
   [workspaceId])

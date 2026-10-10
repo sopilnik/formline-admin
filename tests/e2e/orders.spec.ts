@@ -9,10 +9,12 @@ test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip'
 // Expected values come from the sandbox's own rows, never typed in by hand.
 const count = (workspaceId: string, where = 'true') =>
   asSchemaOwner(async c => Number((await c.query<{ n: string }>(`select count(*) as n from fa.orders o where o.workspace_id = $1 and (${where})`, [workspaceId])).rows[0]!.n))
+
 const matching = (workspaceId: string, term: string) =>
   asSchemaOwner(async c => Number((await c.query<{ n: string }>(
     'select count(*) as n from fa.orders o join fa.customers c on c.workspace_id = o.workspace_id and c.id = o.customer_id where o.workspace_id = $1 and (c.name ilike $2 or c.email ilike $2)',
     [workspaceId, `%${term}%`])).rows[0]!.n))
+
 const firstNumber = (workspaceId: string, orderBy: string) =>
   asSchemaOwner(async c => (await c.query<{ number: number }>(`select number from fa.orders where workspace_id = $1 order by ${orderBy} limit 1`, [workspaceId])).rows[0]!.number)
 // Today and the six days before it in the store's zone, the way presetRange('7d') counts them.

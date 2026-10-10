@@ -24,6 +24,7 @@ afterAll(closeAll)
 
 const config = () => authConfig()
 const meta = { ip: '192.0.2.200', userAgent: null }
+
 const ownerSession = (reauthAt: Date | null = new Date()): Session => ({
   id: 'a'.repeat(64), workspaceId: ownerWorkspace, workspaceKind: 'owner', userId: ownerId, role: 'owner',
   secondFactorVerified: true, reauthAt, expiresAt: new Date(Date.now() + 3_600_000),

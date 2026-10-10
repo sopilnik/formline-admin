@@ -18,8 +18,10 @@ async function sandbox(): Promise<{ workspaceId: string; users: Record<string, s
 }
 
 const actor = (workspaceId: string, userId: string, role: StatusActor['role']): StatusActor => ({ workspaceId, userId, role, ipHash: null })
+
 const ordersWith = async (workspaceId: string, status: string, limit: number) =>
   (await admin.query<{ id: string; number: number }>('select id, number from fa.orders where workspace_id = $1 and status = $2 order by number limit $3', [workspaceId, status, limit])).rows
+
 const newestFirst = (a: number, b: number) => b - a
 
 beforeAll(() => {

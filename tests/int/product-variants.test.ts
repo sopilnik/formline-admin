@@ -24,6 +24,7 @@ beforeAll(async () => {
 afterAll(closeAll)
 
 const read = async (slug: string) => (await withWorkspace(owner, tx => getProduct(tx, owner.workspaceId, slug), app))!
+
 /** The form as the page would send it: every variant as loaded, with `edit` applied to the chosen SKUs. */
 async function formFor(slug: string, edit: Record<string, Partial<VariantRowInput>> = {}) {
   const product = await read(slug)
@@ -32,6 +33,7 @@ async function formFor(slug: string, edit: Record<string, Partial<VariantRowInpu
   }))
   return { product, rows }
 }
+
 const setStock = (sku: string, stock: number) => admin.query('update fa.product_variants set stock = $3 where workspace_id = $1 and sku = $2', [owner.workspaceId, sku, stock])
 
 describe('saveVariantsWithLog', () => {

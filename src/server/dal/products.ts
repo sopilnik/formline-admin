@@ -198,6 +198,7 @@ export async function getProduct(tx: Tx, workspaceId: string, slug: string): Pro
 }
 
 export type DetailsInput = { productId: string; version: string; name: string; slug: string; collectionId: string; basePriceCents: number; tags: string[]; description: string }
+
 export type DetailsChange =
   | { ok: true; slug: string; previousSlug: string; changed: string[] }
   | { ok: false; reason: 'not_found' | 'conflict' | 'slug_taken' | 'collection_missing' }
@@ -239,6 +240,7 @@ export type NewProductInput = {
   name: string; slug: string; collectionId: string; basePriceCents: number; tags: string[]; description: string
   palettes: string[]; lowStockThreshold: number
 }
+
 export type ProductCreation =
   | { ok: true; id: string; slug: string; variants: number }
   | { ok: false; reason: 'cap' | 'slug_taken' | 'sku_taken' | 'collection_missing' }
@@ -272,6 +274,7 @@ export async function createProduct(tx: Tx, workspaceId: string, input: NewProdu
 
 export type VariantRowInput = { id: string; priceOverrideCents: number | null; stock: number; stockWas: number; lowStockThreshold: number }
 export type VariantChange = { sku: string; price?: [number | null, number | null]; stock?: [number, number]; threshold?: [number, number] }
+
 export type VariantsSave =
   | { ok: true; slug: string; changes: VariantChange[] }
   | { ok: false; reason: 'not_found' }
