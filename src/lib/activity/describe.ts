@@ -35,35 +35,42 @@ const whole = (details: Details, key: string): number | null => (typeof details[
 
 function subjectOf(entry: EntryInput, details: Details, lookups: Lookups): Subject | null {
   const id = entry.entityId
+
   switch (entry.entityType) {
     case 'order': {
       const number = (id ? lookups.orders.get(id) : undefined) ?? whole(details, 'number')
       return number === null ? null : { text: `#${number}`, href: `/orders/${number}` }
     }
+
     case 'product': {
       const product = id ? lookups.products.get(id) : undefined
       if (product) return { text: product.name, href: `/products/${product.slug}` }
       const name = text(details, 'name') ?? text(details, 'slug')
       return name ? { text: name, href: null } : null
     }
+
     case 'collection': {
       const collection = id ? lookups.collections.get(id) : undefined
       if (collection) return { text: collection.name, href: `/collections/${collection.slug}` }
       const name = text(details, 'name') ?? text(details, 'slug')
       return name ? { text: name, href: null } : null
     }
+
     case 'customer': {
       const name = (id ? lookups.customers.get(id) : undefined) ?? text(details, 'name')
       return name ? { text: name, href: id && lookups.customers.has(id) ? `/customers/${id}` : null } : null
     }
+
     case 'user': {
       const name = (id ? lookups.users.get(id) : undefined) ?? text(details, 'name')
       return name ? { text: name, href: null } : null
     }
+
     case 'invitation': {
       const email = text(details, 'email')
       return email ? { text: email, href: null } : null
     }
+
     default:
       return null
   }
@@ -72,6 +79,7 @@ function subjectOf(entry: EntryInput, details: Details, lookups: Lookups): Subje
 function detailOf(action: string, details: Details): Detail | null {
   const from = text(details, 'from')
   const to = text(details, 'to')
+
   switch (action) {
     case 'order.status_changed':
       return from && to ? { kind: 'orderStatus', from, to, bulk: details.bulk === true } : null
@@ -79,21 +87,25 @@ function detailOf(action: string, details: Details): Detail | null {
       return from && to ? { kind: 'productStatus', from, to } : null
     case 'team.role_changed':
       return from && to ? { kind: 'role', from, to } : null
+
     case 'orders.imported': {
       const count = whole(details, 'imported')
       return count === null ? null : { kind: 'imported', count }
     }
+
     case 'orders.exported':
     case 'customers.exported': {
       const rows = whole(details, 'rows')
       return rows === null ? null : { kind: 'rows', count: rows, truncated: details.truncated === true }
     }
+
     case 'product.updated':
     case 'profile.updated':
     case 'settings.store_updated': {
       const fields = Array.isArray(details.changed) ? details.changed.filter((f): f is string => typeof f === 'string') : []
       return fields.length > 0 ? { kind: 'fields', fields } : null
     }
+
     case 'product.created':
     case 'product.deleted': {
       const count = whole(details, 'variants')
@@ -101,16 +113,19 @@ function detailOf(action: string, details: Details): Detail | null {
     }
     case 'product.variants_updated':
       return Array.isArray(details.variants) ? { kind: 'variants', count: details.variants.length } : null
+
     case 'product.image_changed': {
       const width = whole(details, 'width')
       const height = whole(details, 'height')
       return width !== null && height !== null ? { kind: 'image', width, height } : null
     }
+
     case 'collection.moved': {
       const a = whole(details, 'from')
       const b = whole(details, 'to')
       return a !== null && b !== null ? { kind: 'position', from: a, to: b } : null
     }
+
     case 'team.invited':
     case 'team.invitation_resent': {
       const email = text(details, 'email')
@@ -121,6 +136,7 @@ function detailOf(action: string, details: Details): Detail | null {
       const role = text(details, 'role')
       return role ? { kind: 'joined', role } : null
     }
+
     case 'auth.sign_in':
     case 'auth.sign_in_failed':
     case 'auth.reauthenticated': {
@@ -140,6 +156,7 @@ function detailOf(action: string, details: Details): Detail | null {
       const count = whole(details, 'count') ?? whole(details, 'signedOut')
       return count === null ? null : { kind: 'devices', count }
     }
+
     default:
       return null
   }

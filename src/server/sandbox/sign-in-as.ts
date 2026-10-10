@@ -33,17 +33,20 @@ export type SwitchInput = {
 export async function switchUser(session: Session, input: SwitchInput, overrides: Partial<AuthDeps> = {}): Promise<({ ok: true } & NewSession) | AuthFailure<'code'>> {
   const deps = authDeps(overrides)
   if (session.workspaceKind !== 'sandbox') return { ok: false, error: 'generic' }
+
   const ctx = workspaceContext(session)
   const { target, shortcutsEnabled } = await withWorkspace(ctx, async tx => ({
     target: await getMemberFactor(tx, input.targetUserId),
     shortcutsEnabled: (await getSelf(tx, session.userId))?.shortcutsEnabled ?? true,
   }), deps.pool)
   if (!target || target.deactivatedAt || target.id === session.userId) return { ok: false, error: 'generic' }
+
   let step: number | null = null
   if (target.totpSecretEnc) {
     const subject = userSubject(target.id)
     const locked = await lockRemaining(LOCKS.secondFactor, subject, SECOND_FACTOR_LOCK_SECONDS, deps.pool)
     if (locked > 0) return { ok: false, error: 'second_factor_locked', field: 'code', retryAfterSeconds: locked }
+
     const secret = decryptTotpSecret(target.totpSecretEnc, { workspaceId: session.workspaceId, userId: target.id }, deps.config.totpKeys)
     const verdict = verifyTotp(secret, input.code, target.totpLastStep, deps.now())
     if (!verdict.ok) {
@@ -56,12 +59,15 @@ export async function switchUser(session: Session, input: SwitchInput, overrides
     }
     step = verdict.step
   }
+
   const token = generateToken()
   const id = hashToken(token)
   const result = await withWorkspace(ctx, tx => tx.execute<{ expires_at: string }>(
     sql`select fa.sandbox_sign_in_as(${target.id}, ${session.id}, ${id}, ${step}, ${input.userAgentSummary}, ${input.ipHash}) as expires_at`), deps.pool)
+
   // Row-level security lets a member write only their own row, so this runs as the member just switched to.
   await withWorkspace({ ...ctx, userId: target.id, role: target.role }, tx => updateSelfPreferences(tx, target.id, { ...input.preferences, shortcutsEnabled }), deps.pool)
+
   // A raw statement through the workspace transaction returns a timestamptz column as
   // text rather than a Date, unlike a plain pool query; coerce it before it reaches the cookie.
   return { ok: true, token, id, expiresAt: new Date(result.rows[0]!.expires_at) }

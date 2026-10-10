@@ -24,6 +24,7 @@ export function CollectionForm({ collection }: Props) {
   const form = useRef<HTMLFormElement>(null)
   const [name, setName] = useState(collection?.name ?? '')
   const [state, action, pending] = useActionState(saveCollectionAction, IDLE)
+
   const settle = useEffectEvent((result: CollectionState) => {
     if (result.status === 'done') {
       toast.success(collection ? t('saved') : t('created'))
@@ -37,15 +38,18 @@ export function CollectionForm({ collection }: Props) {
         router.refresh()
       }
     }
+
     if (result.status === 'error') {
       const first = COLLECTION_FIELDS.find(field => result.fieldErrors[field])
       form.current?.querySelector<HTMLElement>(first ? `[name="${first}"]` : '[role="alert"]')?.focus()
     }
   })
   useEffect(() => settle(state), [state])
+
   const error = state.status === 'error' ? state : null
   const values = error?.values ?? (collection ? { name: collection.name, slug: collection.slug, description: collection.description } : EMPTY)
   const message = (field: CollectionField): string | undefined => (error?.fieldErrors[field] ? t(`errors.${error.fieldErrors[field]}`) : undefined)
+
   return (
     <form ref={form} action={action} noValidate className="flex flex-col gap-4">
       <input type="hidden" name="collectionId" value={collection?.id ?? ''} />

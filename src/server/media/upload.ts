@@ -42,10 +42,12 @@ export async function storeProductImage(actor: Actor, productId: string, image: 
   const imageId = randomUUID()
   const path = mediaPath(actor.workspaceId, imageId)
   await storage.put(path, image.bytes)
+
   const discard = async (): Promise<void> => {
     await Promise.all([storage.delete(path), storage.delete(thumbPath(path))])
       .catch(() => pool.query('insert into fa.pending_media_deletions (storage_path) values ($1) on conflict do nothing', [path]))
   }
+
   try {
     await storage.put(thumbPath(path), image.thumb)
     const result = await withWorkspace(ctx, async (tx): Promise<ImageUpload> => {
@@ -53,17 +55,20 @@ export async function storeProductImage(actor: Actor, productId: string, image: 
         .where(and(eq(products.workspaceId, actor.workspaceId), eq(products.id, productId))).for('update')
       if (!product) return { ok: false, reason: 'not_found' }
       if (!(await fits(tx, actor.workspaceId, product.imageId, image.bytes.length))) return { ok: false, reason: 'cap' }
+
       await tx.insert(images).values({
         workspaceId: actor.workspaceId, id: imageId, storagePath: path, source: 'upload', width: image.width, height: image.height, bytes: image.bytes.length,
       })
       await tx.update(products).set({ imageId, updatedAt: sql`now()` }).where(and(eq(products.workspaceId, actor.workspaceId), eq(products.id, productId)))
       if (product.imageId) await releaseImage(tx, actor.workspaceId, product.imageId)
+
       await logActivity(tx, actor.workspaceId, {
         actorUserId: actor.userId, action: 'product.image_changed', entityType: 'product', entityId: productId,
         details: { slug: product.slug, width: image.width, height: image.height, bytes: image.bytes.length }, ipHash: actor.ipHash,
       })
       return { ok: true, imageId, width: image.width, height: image.height }
     }, pool)
+
     if (!result.ok) await discard()
     return result
   } catch (error) {

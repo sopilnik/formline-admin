@@ -50,12 +50,14 @@ function fromEdge(request: NextRequest): boolean {
 export function proxy(request: NextRequest): NextResponse {
   const requestId = crypto.randomUUID()
   const liveness = isLiveness(request)
+
   if (!liveness && !fromEdge(request)) {
     return new NextResponse('Forbidden', {
       status: 403,
       headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'X-Request-Id': requestId },
     })
   }
+
   // The container start sets the flag while the database is unreachable and restarts the server once it is back.
   if (!liveness && process.env.FORMLINE_MAINTENANCE === '1') {
     return new NextResponse(maintenancePage(request.cookies.get(LOCALE_COOKIE)?.value), {
@@ -69,10 +71,12 @@ export function proxy(request: NextRequest): NextResponse {
       },
     })
   }
+
   const lang = request.nextUrl.searchParams.get('lang')
   const locale = lang === 'en' || lang === 'ru' ? lang : null
   // The request that carries ?lang renders in that language already, not only the next one.
   if (locale) request.cookies.set(LOCALE_COOKIE, locale)
+
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
   const csp = buildCsp(nonce, process.env.NODE_ENV === 'development')
   const headers = new Headers(request.headers)
@@ -80,6 +84,7 @@ export function proxy(request: NextRequest): NextResponse {
   headers.set('x-nonce', nonce)
   headers.set('x-request-id', requestId)
   headers.set('Content-Security-Policy', csp)
+
   if (process.env.NODE_ENV === 'production') {
     // Behind the edge the Host header may name bunny's endpoint rather than the panel, and Server Actions compare the
     // browser's Origin with the forwarded host. The request passed the edge check, so the panel's own address stands in.
@@ -87,6 +92,7 @@ export function proxy(request: NextRequest): NextResponse {
     headers.set('x-forwarded-host', site.host)
     headers.set('x-forwarded-proto', site.protocol.replace(':', ''))
   }
+
   const response = NextResponse.next({ request: { headers } })
   response.headers.set('Content-Security-Policy', csp)
   response.headers.set('X-Request-Id', requestId)

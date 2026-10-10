@@ -84,12 +84,15 @@ export async function migrate(options: MigrateOptions): Promise<{ applied: strin
   try {
     await client.query('select pg_advisory_lock($1)', [MIGRATE_LOCK])
     await bootstrap(client, password)
+
     const files = (await readdir(dir)).filter(f => f.endsWith('.sql')).sort()
     const done = new Set((await client.query<{ version: string }>('select version from fa.schema_migrations')).rows.map(r => r.version))
     const applied: string[] = []
+
     for (const file of files) {
       if (done.has(file)) continue
       const text = await readFile(new URL(file, dir), 'utf8')
+
       await client.query('begin')
       try {
         await client.query('set local role schema_owner')
@@ -101,15 +104,18 @@ export async function migrate(options: MigrateOptions): Promise<{ applied: strin
         await client.query('rollback')
         throw error
       }
+
       applied.push(file)
       log({ event: 'migrate.applied', version: file })
     }
+
     // Only against the real schema (the default migrations directory); a caller with its
     // own directory, such as the migration-runner tests, has no fa.workspaces to build into.
     if (!options.dir) {
       const template = await buildTemplate(client)
       if (template.rebuilt) log({ event: 'template.built', version: template.version })
     }
+
     return { applied }
   } finally {
     await client.query('select pg_advisory_unlock_all()').catch(() => undefined)

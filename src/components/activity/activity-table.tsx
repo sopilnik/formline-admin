@@ -24,8 +24,10 @@ function DetailText({ detail }: { detail: Detail | null }) {
   const product = useTranslations('products.status')
   const role = useTranslations('user.roles')
   const field = useTranslations('activity.fields')
+
   if (!detail) return null
   const label = (translate: Translate, value: string): string => (translate.has(value) ? translate(value) : value)
+
   switch (detail.kind) {
     case 'orderStatus':
     case 'productStatus':
@@ -34,6 +36,7 @@ function DetailText({ detail }: { detail: Detail | null }) {
       const text = t('transition', { from: label(translate, detail.from), to: label(translate, detail.to) })
       return <>{detail.kind === 'orderStatus' && detail.bulk ? t('inBulk', { transition: text }) : text}</>
     }
+
     case 'rows':
       return <>{detail.truncated ? t('rowsCut', { count: detail.count }) : t('rows', { count: detail.count })}</>
     case 'fields':

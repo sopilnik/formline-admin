@@ -21,8 +21,10 @@ type Pending = { storage_path: string; attempts: number }
 export async function drainPendingDeletions(storage: MediaStorage, pool: Pool = getPool(), limit: number = RETRY_BATCH): Promise<{ deleted: number; retried: number }> {
   const { rows } = await pool.query<Pending>(
     'select storage_path, attempts from fa.pending_media_deletions where next_attempt_at <= now() order by next_attempt_at limit $1', [limit])
+
   let deleted = 0
   let retried = 0
+
   for (const row of rows) {
     try {
       await storage.delete(row.storage_path)
@@ -33,6 +35,7 @@ export async function drainPendingDeletions(storage: MediaStorage, pool: Pool = 
     } catch {
       retried++
     }
+
     const client = await pool.connect()
     try {
       await client.query('begin')
@@ -48,5 +51,6 @@ export async function drainPendingDeletions(storage: MediaStorage, pool: Pool = 
       client.release()
     }
   }
+
   return { deleted, retried }
 }

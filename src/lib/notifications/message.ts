@@ -31,8 +31,10 @@ export function notificationMessage(view: NotificationView, locale: Locale, role
           values: { customer: view.customer ?? DASH, total: view.totalCents === null ? DASH : formatMoney(view.totalCents, locale) },
         },
       }
+
     case 'stock.low': {
       const variant = variantLabel(view.size, view.palette)
+
       if (view.oversold !== null && view.oversold > 0) {
         return { title: { key: 'oversold.title', values: { product: view.product } }, detail: { key: 'oversold.detail', values: { variant, count: view.oversold } } }
       }
@@ -46,16 +48,19 @@ export function notificationMessage(view: NotificationView, locale: Locale, role
           : { key: 'lowStock.detail', values: { variant, stock: view.stock, threshold: view.threshold } },
       }
     }
+
     case 'team.invitation_accepted':
       return {
         title: { key: 'joined.title', values: { person: view.person } },
         detail: view.role ? { key: 'joined.detail', values: { role: roleName(view.role) } } : { key: 'joined.noRole', values: {} },
       }
+
     case 'auth.new_sign_in':
       return {
         title: { key: 'signIn.title', values: {} },
         detail: view.device ? { key: 'signIn.detail', values: { device: view.device } } : { key: 'signIn.noDevice', values: {} },
       }
+
     case 'auth.second_factor_locked':
       return { title: { key: 'locked.title', values: {} }, detail: { key: 'locked.detail', values: {} } }
     case 'auth.recovery_code_used':

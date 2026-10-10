@@ -24,16 +24,19 @@ export function ShortcutsProvider({ enabled, items, children }: { enabled: boole
 
   useEffect(() => {
     if (!enabled) return
+
     const read = createShortcutReader()
     const onKey = (event: KeyboardEvent) => {
       // An open dialog or menu has the keyboard to itself.
       const inOverlay = event.target instanceof Element && event.target.closest('[role="dialog"], [role="alertdialog"], [role="menu"]') !== null
       if (event.defaultPrevented || event.repeat || inOverlay) return
+
       const shortcut = read({
         key: event.key, code: event.code, ctrlKey: event.ctrlKey, metaKey: event.metaKey, altKey: event.altKey,
         typing: isTypingTarget(event.target), time: event.timeStamp,
       })
       if (!shortcut) return
+
       if (shortcut.type === 'go') {
         const item = items.find(i => i.key === shortcut.page)
         if (!item) return
@@ -50,6 +53,7 @@ export function ShortcutsProvider({ enabled, items, children }: { enabled: boole
         setHelp(true)
       }
     }
+
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [enabled, items, router])

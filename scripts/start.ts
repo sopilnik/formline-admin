@@ -94,6 +94,7 @@ export async function runStart(deps: StartDeps): Promise<number> {
     deps.log({ event: 'start.refused', message: error instanceof Error ? error.message : String(error) })
     return 1
   }
+
   const serverEnv = withoutMigrator(deps.env)
   // A stop during the first attempts ends the start at once: nothing is served yet, and Postgres rolls back a migration
   // that the exit cuts off.
@@ -103,15 +104,18 @@ export async function runStart(deps: StartDeps): Promise<number> {
     return 128 + constants.signals[first.signal]
   }
   if (first === 'refused') return 1
+
   let maintenance = first === 'unreachable'
   let server = deps.serve(maintenance ? { ...serverEnv, FORMLINE_MAINTENANCE: '1' } : serverEnv)
   deps.log({ event: 'start.serving', maintenance })
+
   for (;;) {
     const next = await Promise.race([
       server.exited.then(code => ({ kind: 'exited' as const, code })),
       deps.stopped.then(signal => ({ kind: 'stop' as const, signal })),
       ...(maintenance ? [deps.sleep(RETRY_EVERY_MS).then(() => ({ kind: 'retry' as const }))] : []),
     ])
+
     if (next.kind === 'stop') {
       server.stop(next.signal)
       return await server.exited
@@ -120,6 +124,7 @@ export async function runStart(deps: StartDeps): Promise<number> {
       deps.log({ event: 'start.server_exited', code: next.code })
       return next.code
     }
+
     const verdict = await prepare(deps, [])
     if (verdict === 'unreachable') continue
     server.stop('SIGTERM')

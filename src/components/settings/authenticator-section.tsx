@@ -29,9 +29,11 @@ export function AuthenticatorSection({ enabled, recent, canDisable, secret, qr }
   const t = useTranslations('settings.security.authenticator')
   const errors = useTranslations('auth.errors')
   const toast = useToast()
+
   const [confirming, setConfirming] = useState(false)
   const [pending, startTransition] = useTransition()
   const [state, action, submitting] = useActionState(enableTotpAction, IDLE as FormState<'code'>)
+
   // The results decide what shows, without an effect: "Replace" remembers the result it was opened after and stays open
   // until a new success; the codes of a success show until they are closed.
   const [replacingAfter, setReplacingAfter] = useState<FormState<'code'> | null>(null)
@@ -41,10 +43,12 @@ export function AuthenticatorSection({ enabled, recent, canDisable, secret, qr }
   const shown = state === replacingAfter || state === closed ? (IDLE as FormState<'code'>) : state
   const errorFor = useErrorText(shown)
   useFocusOnError(state, 'totp', 'code')
+
   const settle = useEffectEvent((result: FormState<'code'>) => {
     if (result.status === 'done') toast.success(result.recoveryCodes ? t('enabled') : t('replaced'))
   })
   useEffect(() => settle(state), [state])
+
   const disable = (): void => startTransition(async () => {
     const result = await disableTotpAction()
     setConfirming(false)
@@ -54,9 +58,11 @@ export function AuthenticatorSection({ enabled, recent, canDisable, secret, qr }
       toast.success(t('disabled'))
     } else toast.error(errors(result.error, { minutes: 1 }))
   })
+
   const replacing = replacingAfter !== null && (state === replacingAfter || state.status === 'error')
   const enrolling = !enabled || replacing
   const codes = state.status === 'done' && state !== closed ? state.recoveryCodes : undefined
+
   return (
     <section aria-labelledby="authenticator-title" className="flex flex-col gap-4 rounded-lg border bg-card p-5">
       <div>

@@ -18,6 +18,7 @@ export async function buildTemplate(client: pg.ClientBase, options: { version?: 
   try {
     await client.query('set local role schema_owner')
     await client.query('set local search_path = pg_catalog')
+
     await client.query("insert into fa.workspaces (kind) select 'template' where not exists (select 1 from fa.workspaces w where w.kind = 'template')")
     const { rows } = await client.query<{ id: string; kind: 'template' | 'owner'; template_version: number | null }>(
       "select id, kind, template_version from fa.workspaces where kind in ('template', 'owner')")
@@ -25,34 +26,43 @@ export async function buildTemplate(client: pg.ClientBase, options: { version?: 
     const owner = rows.find(r => r.kind === 'owner')
     if (!owner) throw new Error('the owner workspace does not exist; the migrations create it')
     const result = { version, templateWorkspaceId: template.id, ownerWorkspaceId: owner.id }
+
     if (template.template_version === version && !options.force) {
       await client.query('commit')
       return { rebuilt: false, ...result }
     }
+
     const data = generateTemplate(version)
     // The order ingest numbers its copies from the template's counter; holding it keeps a copy out of the renumbering below.
     await client.query('select 1 from fa.workspace_counters where workspace_id = $1 for update', [template.id])
+
     await writeUsers(client, template.id, data)
     await writeCatalog(client, template.id, data, 'replace')
     await writeCatalog(client, owner.id, data, 'keep')
+
     await client.query("delete from fa.orders where workspace_id = $1 and source = 'seed'", [template.id])
     await client.query('delete from fa.customers where workspace_id = $1 and pseudonymised_at is null', [template.id])
+
     // Copies of store orders step aside while the generated orders take their numbers, then follow them in time order,
     // so a version with more generated orders never meets a copy's number.
     await client.query("update fa.orders set number = number + 1000000 where workspace_id = $1 and source = 'stripe'", [template.id])
     await writeOrders(client, template.id, data)
+
     const generated = data.orders.reduce((max, o) => Math.max(max, o.number), 0)
     const copies = await client.query(
       `with numbered as (select id, row_number() over (order by placed_at, id) as n from fa.orders where workspace_id = $1 and source = 'stripe')
        update fa.orders o set number = $2 + numbered.n from numbered where o.workspace_id = $1 and o.id = numbered.id`,
       [template.id, generated])
+
     await client.query(
       `insert into fa.workspace_counters (workspace_id, next_order_number) values ($1, $2)
        on conflict (workspace_id) do update set next_order_number = excluded.next_order_number`,
       [template.id, generated + (copies.rowCount ?? 0) + 1])
     await client.query('insert into fa.workspace_counters (workspace_id, next_order_number) values ($1, 1001) on conflict (workspace_id) do nothing', [owner.id])
+
     await client.query('insert into fa.store_settings (workspace_id) values ($1), ($2) on conflict (workspace_id) do nothing', [template.id, owner.id])
     await client.query('update fa.workspaces set template_version = $2, template_epoch = $3 where id = $1', [template.id, version, data.epoch])
+
     await client.query('commit')
     return { rebuilt: true, ...result }
   } catch (error) {

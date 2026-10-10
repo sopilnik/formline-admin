@@ -37,6 +37,7 @@ export type ProbeOptions = { probe: Probe; siteUrl: string; bunny: Bunny; rawHos
 export async function runProbe(o: ProbeOptions): Promise<boolean> {
   const site = (path: string, headers?: Record<string, string>) =>
     o.fetch(new URL(path, o.siteUrl), { headers, redirect: 'manual', signal: AbortSignal.timeout(20_000) })
+
   switch (o.probe) {
     case 'p1': {
       // bunny answers the statistics only for a window and a granularity, both required: the last three hours by the
@@ -50,6 +51,7 @@ export async function runProbe(o: ProbeOptions): Promise<boolean> {
       o.log({ probe: 'p1', status: app.status, summary: shape(summary), statistics: Object.keys(statistics), monthlyCost: summary.monthlyCost, magicContainers: billing.MonthlyChargesMagicContainers, newestPoint: newest, ageMinutes: newest ? Math.round((o.now() - Date.parse(newest)) / 60_000) : null })
       return typeof summary.monthlyCost === 'number' && typeof billing.MonthlyChargesMagicContainers === 'number'
     }
+
     case 'p2': {
       // Behind the edge a forged secret or address is replaced, so the answer is the ordinary one; were either passed on,
       // the panel would refuse with 403. The edge adds the secret on the panel's address only, so the pull zone's own
@@ -66,22 +68,27 @@ export async function runProbe(o: ProbeOptions): Promise<boolean> {
       o.log({ probe: 'p2', viaEdgeWithForgedHeaders: viaEdge.status, rawHosts: hosts.length, rawWithForgedHeaders: direct, rawWithout: bare })
       return viaEdge.status === 200 && hosts.length > 0 && [...direct, ...bare].every(code => code === 403)
     }
+
     case 'p3': {
       const { items } = (await o.bunny('/mc/apps/{id}/endpoints')) as { items?: { type?: string; pullZoneId?: string; publicHost?: string }[] }
       const endpoints = (items ?? []).map(e => ({ type: e.type, pullZone: Boolean(e.pullZoneId), publicHost: Boolean(e.publicHost) }))
       o.log({ probe: 'p3', endpoints })
       return endpoints.some(e => e.type === 'cdn' && e.pullZone)
     }
+
     case 'p4': {
       const checks = await requestChecks({ siteUrl: o.siteUrl, rawHosts: [], fetch: o.fetch })
+
       const html = await (await site('/sign-in')).text()
       const asset = html.match(/\/_next\/static\/[^"']+\.js/)?.[0]
       const first = asset ? await site(asset) : null
       const second = asset ? await site(asset) : null
       const cached = { check: 'built files come from the edge', ok: second?.headers.get('cdn-cache') === 'HIT', detail: `first ${first?.headers.get('cdn-cache') ?? 'none'}, second ${second?.headers.get('cdn-cache') ?? 'none'}` }
+
       for (const check of [...checks.filter(c => c.check.includes('cached') || c.check.startsWith('media')), cached]) o.log({ probe: 'p4', ...check })
       return checks.filter(c => c.check.includes('cached')).every(c => c.ok) && cached.ok
     }
+
     case 'p5': {
       const started = o.now()
       const res = await site('/api/health?db=1')
@@ -89,6 +96,7 @@ export async function runProbe(o: ProbeOptions): Promise<boolean> {
       o.log({ probe: 'p5', status: res.status, readiness: body, ms: o.now() - started })
       return res.status === 200 && body.role === 'ok'
     }
+
     case 'p6': {
       // The first entry may wake the database; the second shows the warm figure of spec §1.
       const first = await demoChecks({ siteUrl: o.siteUrl })
