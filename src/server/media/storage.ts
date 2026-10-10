@@ -13,11 +13,16 @@ export interface MediaStorage {
   delete(path: string): Promise<void>
 }
 
-/** Every upload is `ws/<workspace>/<image>.webp`; nothing else is ever written, read or deleted. */
-export const MEDIA_PATH = /^ws\/[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}\/[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}\.webp$/
+/** Every upload is `ws/<workspace>/<image>.webp`, its small copy `….thumb.webp` beside it; nothing else is ever written, read or deleted. */
+export const MEDIA_PATH = /^ws\/[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}\/[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}(\.thumb)?\.webp$/
 
 export function mediaPath(workspaceId: string, imageId: string): string {
   return `ws/${workspaceId}/${imageId}.webp`
+}
+
+/** Where an upload's small copy lives: beside it, under the same name (spec §8.4). */
+export function thumbPath(path: string): string {
+  return path.replace(/\.webp$/, '.thumb.webp')
 }
 
 function checked(path: string): string {

@@ -1,5 +1,6 @@
 import 'server-only'
 import sharp from 'sharp'
+import { THUMB } from '@/lib/thumbs'
 
 // Spec §8.4 and §4.1: the container caps itself, so image work is serialised and uncached.
 sharp.concurrency(1)
@@ -22,7 +23,7 @@ export function sniff(bytes: Uint8Array): ImageKind | null {
   return null
 }
 
-export type Processed = { bytes: Buffer; width: number; height: number }
+export type Processed = { bytes: Buffer; width: number; height: number; thumb: Buffer }
 export type ImageProblem = 'type' | 'pixels' | 'decode'
 
 // One image at a time, process-wide: a second upload waits for the first (spec §8.4).
@@ -38,7 +39,7 @@ function oneAtATime<T>(work: () => Promise<T>): Promise<T> {
  * Checks and re-encodes an upload (spec §8.4): the magic bytes and the decoder must agree on
  * JPEG, PNG or WebP; at most 40 megapixels; the first frame only; turned upright by its EXIF
  * orientation; at most 2000 px on the longest side; WebP at quality 82 with every piece of
- * metadata stripped.
+ * metadata stripped. Beside it, the small copy the lists show.
  */
 export function processImage(bytes: Buffer): Promise<Processed | ImageProblem> {
   const kind = sniff(bytes)
@@ -49,11 +50,12 @@ export function processImage(bytes: Buffer): Promise<Processed | ImageProblem> {
       const meta = await input.metadata()
       if (meta.format !== kind) return 'type'
       if ((meta.width ?? 0) * (meta.pageHeight ?? meta.height ?? 0) > MAX_PIXELS) return 'pixels'
-      const { data, info } = await input
+      const { data, info } = await input.clone()
         .resize({ width: LONGEST_SIDE, height: LONGEST_SIDE, fit: 'inside', withoutEnlargement: true })
         .webp({ quality: WEBP_QUALITY })
         .toBuffer({ resolveWithObject: true })
-      return { bytes: data, width: info.width, height: info.height }
+      const thumb = await input.clone().resize({ width: THUMB.width, height: THUMB.height, fit: 'cover' }).webp({ quality: THUMB.quality }).toBuffer()
+      return { bytes: data, width: info.width, height: info.height, thumb }
     } catch (error) {
       return error instanceof Error && /pixel limit/i.test(error.message) ? 'pixels' : 'decode'
     }

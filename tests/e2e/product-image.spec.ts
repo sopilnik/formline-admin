@@ -40,7 +40,8 @@ test.describe('product image', () => {
     expect(served).toEqual({ status: 200, type: 'image/webp', cache: 'private, no-store', sniff: 'nosniff' })
 
     await page.goto('/products?status=draft')
-    await expect(page.getByRole('table', { name: 'Products' }).locator(`img[src="${src}"]`)).toBeVisible()
+    // The list shows the upload's small copy (spec §8.4).
+    await expect(page.getByRole('table', { name: 'Products' }).locator(`img[src="${src}?size=thumb"]`)).toBeVisible()
 
     const stranger = await browser.newContext({ extraHTTPHeaders: EDGE })
     const theirs = await createSandboxSession('owner')

@@ -9,7 +9,7 @@ import { getPool } from '@/server/db/pool'
 import { images, products } from '@/server/db/schema'
 import { withWorkspace, type Tx } from '@/server/db/with-workspace'
 import type { Processed } from '@/server/media/image'
-import { mediaPath, type MediaStorage } from '@/server/media/storage'
+import { mediaPath, thumbPath, type MediaStorage } from '@/server/media/storage'
 
 /** Spec §5.4: per workspace at most 30 uploaded images or 20 MB of them. */
 export const MEDIA_CAP = { images: 30, bytes: 20 * 1024 * 1024 } as const
@@ -24,10 +24,10 @@ async function fits(tx: Tx, workspaceId: string, productImageId: string | null, 
 }
 
 /**
- * Stores a processed upload as the product's image (spec §8.4). The file goes to storage first,
- * outside any transaction; then the image row, the product's new image and the release of the
- * old one commit together. When the database step refuses or fails, the stored file is removed
- * again, or queued for the daily job if storage refuses that too.
+ * Stores a processed upload as the product's image (spec §8.4). The file and its small copy go to
+ * storage first, outside any transaction; then the image row, the product's new image and the release of the
+ * old one commit together. When the database step refuses or fails, the stored files are removed
+ * again, or queued for the daily job if storage refuses that too (the queue takes the copy along).
  */
 export async function storeProductImage(actor: Actor, productId: string, image: Processed, storage: MediaStorage, pool: Pool = getPool()): Promise<ImageUpload> {
   const ctx = actorContext(actor)
@@ -42,8 +42,10 @@ export async function storeProductImage(actor: Actor, productId: string, image: 
   const imageId = randomUUID()
   const path = mediaPath(actor.workspaceId, imageId)
   await storage.put(path, image.bytes)
+  await storage.put(thumbPath(path), image.thumb)
   const discard = async (): Promise<void> => {
-    await storage.delete(path).catch(() => pool.query('insert into fa.pending_media_deletions (storage_path) values ($1) on conflict do nothing', [path]))
+    await Promise.all([storage.delete(path), storage.delete(thumbPath(path))])
+      .catch(() => pool.query('insert into fa.pending_media_deletions (storage_path) values ($1) on conflict do nothing', [path]))
   }
   try {
     const result = await withWorkspace(ctx, async (tx): Promise<ImageUpload> => {

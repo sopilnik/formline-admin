@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { generateToken, hashToken } from '@/server/auth/tokens'
 import type { Actor } from '@/server/actor'
 import type { Processed } from '@/server/media/image'
-import { mediaPath } from '@/server/media/storage'
+import { mediaPath, thumbPath } from '@/server/media/storage'
 import { MEDIA_CAP, removeProductImage, storeProductImage } from '@/server/media/upload'
 import { adminPool, appPool, closeAll } from './db'
 import { memoryStorage } from './storage'
@@ -32,7 +32,7 @@ afterAll(async () => {
   await closeAll()
 })
 
-const webp = (size = 1000): Processed => ({ bytes: Buffer.alloc(size, 7), width: 720, height: 1018 })
+const webp = (size = 1000): Processed => ({ bytes: Buffer.alloc(size, 7), width: 720, height: 1018, thumb: Buffer.alloc(100, 3) })
 const productOf = async (actor: Actor, slug: string) => (await admin.query<{ id: string; image_id: string | null }>(
   'select id, image_id from fa.products where workspace_id = $1 and slug = $2', [actor.workspaceId, slug])).rows[0]!
 const imageRow = async (actor: Actor, id: string) => (await admin.query<{ storage_path: string; source: string; width: number; bytes: number }>(
@@ -50,6 +50,7 @@ describe('storeProductImage', () => {
     if (!result.ok) return
     const path = mediaPath(owner.workspaceId, result.imageId)
     expect(storage.files.get(path)?.length).toBe(1000)
+    expect(storage.files.get(thumbPath(path))?.length).toBe(100)
     expect((await productOf(owner, 'hush')).image_id).toBe(result.imageId)
     expect(await imageRow(owner, result.imageId)).toEqual({ storage_path: path, source: 'upload', width: 720, bytes: 1000 })
     expect(await imageRow(owner, product.image_id!)).toBeUndefined()
@@ -99,7 +100,8 @@ describe('storeProductImage', () => {
     const heavy = await sandbox()
     const big = (await productOf(heavy, 'hush')).id
     expect(await storeProductImage(heavy, big, webp(MEDIA_CAP.bytes + 1), storage, app)).toEqual({ ok: false, reason: 'cap' })
-    expect(storage.files.size).toBe(2)
+    // Two uploads went through, each with its small copy.
+    expect(storage.files.size).toBe(4)
   })
 
   it('finds nothing to change for a viewer', async () => {

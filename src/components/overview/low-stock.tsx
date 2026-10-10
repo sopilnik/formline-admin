@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
+import { thumbSrc } from '@/lib/thumbs'
 import { cn } from '@/lib/utils'
 
 /** One low-stock variant as the page formats it. */
@@ -22,7 +23,7 @@ export function LowStock({ rows, total }: { rows: LowStockView[]; total: number 
           {rows.map(row => (
             <li key={row.key} className="flex items-center gap-3 border-b py-2 text-[13px]">
               {row.imageSrc ? (
-                <Image src={row.imageSrc} alt="" width={30} height={42} unoptimized className="h-[42px] w-[30px] shrink-0 rounded-[3px] object-cover shadow-[0_0_0_1px_var(--border)]" />
+                <Image src={thumbSrc(row.imageSrc)} alt="" width={30} height={42} unoptimized className="h-[42px] w-[30px] shrink-0 rounded-[3px] object-cover shadow-[0_0_0_1px_var(--border)]" />
               ) : (
                 <span aria-hidden className="h-[42px] w-[30px] shrink-0 rounded-[3px] bg-muted" />
               )}

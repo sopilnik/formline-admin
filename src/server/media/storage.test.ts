@@ -3,7 +3,7 @@ import { mkdtemp, readdir, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
-import { bunnyStorage, directoryStorage, MEDIA_PATH, mediaPath, mediaStorage } from '@/server/media/storage'
+import { bunnyStorage, directoryStorage, MEDIA_PATH, mediaPath, mediaStorage, thumbPath } from '@/server/media/storage'
 
 const WS = '3f1c6a2e-9b1d-4e5f-8a7b-0c9d8e7f6a51'
 const IMAGE = '0e4d2c1b-7a6f-4e5d-9c8b-1a2b3c4d5e6f'
@@ -27,6 +27,12 @@ describe('media paths', () => {
     expect(PATH).toBe(`ws/${WS}/${IMAGE}.webp`)
     expect(MEDIA_PATH.test(PATH)).toBe(true)
     for (const bad of ['posters/hush.webp', `ws/${WS}/../x.webp`, `ws/${WS}/${IMAGE}.png`, `/ws/${WS}/${IMAGE}.webp`]) expect(MEDIA_PATH.test(bad), bad).toBe(false)
+  })
+
+  it('keep an upload’s small copy beside it', () => {
+    expect(thumbPath(PATH)).toBe(`ws/${WS}/${IMAGE}.thumb.webp`)
+    expect(MEDIA_PATH.test(thumbPath(PATH))).toBe(true)
+    expect(MEDIA_PATH.test(`ws/${WS}/${IMAGE}.thumb.thumb.webp`)).toBe(false)
   })
 })
 

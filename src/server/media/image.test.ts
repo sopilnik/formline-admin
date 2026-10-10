@@ -1,6 +1,7 @@
 import { crc32 } from 'node:zlib'
 import sharp from 'sharp'
 import { describe, expect, it } from 'vitest'
+import { THUMB } from '@/lib/thumbs'
 import { processImage, sniff, type Processed } from '@/server/media/image'
 
 const solid = (width: number, height: number, background = '#1d3557') => sharp({ create: { width, height, channels: 3, background } })
@@ -35,6 +36,12 @@ describe('sniff', () => {
 })
 
 describe('processImage', () => {
+  it('makes the lists’ small copy beside the image: cut to fill, at their size, as WebP', async () => {
+    const out = processed(await processImage(await solid(1200, 800).png().toBuffer()))
+    const meta = await sharp(out.thumb).metadata()
+    expect([meta.format, meta.width, meta.height]).toEqual(['webp', THUMB.width, THUMB.height])
+  })
+
   it('re-encodes to WebP at the same size', async () => {
     const out = processed(await processImage(await solid(1200, 800).png().toBuffer()))
     expect([out.width, out.height]).toEqual([1200, 800])

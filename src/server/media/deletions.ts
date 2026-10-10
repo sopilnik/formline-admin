@@ -1,7 +1,7 @@
 import 'server-only'
 import type { Pool } from 'pg'
 import { getPool } from '@/server/db/pool'
-import type { MediaStorage } from '@/server/media/storage'
+import { MEDIA_PATH, thumbPath, type MediaStorage } from '@/server/media/storage'
 
 export const RETRY_BATCH = 100
 
@@ -13,7 +13,8 @@ export function retryDelayHours(attempts: number): number {
 type Pending = { storage_path: string; attempts: number }
 
 /**
- * Deletes queued image paths from storage (spec §6.4, §6.5). A failed attempt puts
+ * Deletes queued image paths from storage (spec §6.4, §6.5), an upload together with its small
+ * copy (spec §8.4); a copy that was never made counts as deleted. A failed attempt puts
  * the row back with its next time; `app` has no UPDATE on the queue, so that is a
  * delete and an insert in one transaction.
  */
@@ -25,6 +26,7 @@ export async function drainPendingDeletions(storage: MediaStorage, pool: Pool = 
   for (const row of rows) {
     try {
       await storage.delete(row.storage_path)
+      if (MEDIA_PATH.test(row.storage_path)) await storage.delete(thumbPath(row.storage_path))
       await pool.query('delete from fa.pending_media_deletions where storage_path = $1', [row.storage_path])
       deleted++
       continue

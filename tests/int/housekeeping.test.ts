@@ -123,6 +123,19 @@ describe('drainPendingDeletions', () => {
     }
   })
 
+  it('takes an upload’s small copy away with it', async () => {
+    const path = `ws/${randomUUID()}/${randomUUID()}.webp`
+    const thumb = path.replace(/\.webp$/, '.thumb.webp')
+    await admin.query('insert into fa.pending_media_deletions (storage_path) values ($1)', [path])
+    const storage = memoryStorage([path, thumb])
+    try {
+      await drainPendingDeletions(storage, app)
+      expect([storage.paths.has(path), storage.paths.has(thumb)]).toEqual([false, false])
+    } finally {
+      await admin.query('delete from fa.pending_media_deletions where storage_path = $1', [path])
+    }
+  })
+
   it('runDailyJob runs every part and reports the counts', async () => {
     const report = await runDailyJob({ pool: app, storage: memoryStorage() })
     expect(report).toEqual({
