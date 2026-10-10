@@ -29,7 +29,7 @@
     "dark": "Dark"
   },
   "language": {
-    "label": "Language: {name}",
+    "label": "Language: {name} ({code})",
     "en": "English",
     "ru": "Русский"
   },
@@ -426,7 +426,7 @@
       },
       "sessions": {
         "title": "Signed-in devices",
-        "intro": "Every device where your account is signed in. Sign out the ones you do not recognise.",
+        "intro": "Every device where your account is signed in. Sign out the ones you do not recognize.",
         "unknownDevice": "Unknown device",
         "thisDevice": "This device",
         "times": "Signed in {signedIn} · active {lastActive}",
@@ -977,14 +977,14 @@
     "columns": {
       "member": "Member",
       "role": "Role",
-      "twoFactor": "Two-factor",
+      "twoFactor": "Second factor",
       "lastActive": "Last activity",
       "actions": "Actions"
     },
     "twoFactorOn": "On",
     "twoFactorOff": "Off",
-    "cardTwoFactorOn": "two-factor on",
-    "cardTwoFactorOff": "two-factor off",
+    "cardTwoFactorOn": "second factor on",
+    "cardTwoFactorOff": "second factor off",
     "cardLastActive": "Last activity {at}",
     "noActivity": "No activity yet",
     "status": {

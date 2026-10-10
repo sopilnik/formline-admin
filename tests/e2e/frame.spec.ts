@@ -54,7 +54,7 @@ test.describe('app frame', () => {
   test('the language menu switches to Russian', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/overview')
-    await page.getByRole('button', { name: 'Language: English' }).click()
+    await page.getByRole('button', { name: 'Language: English (EN)' }).click()
     await page.getByRole('menuitemradio', { name: 'Русский' }).click()
     await expect(page.locator('html')).toHaveAttribute('lang', 'ru')
     await expect(page.getByRole('heading', { level: 1, name: 'Обзор' })).toBeVisible()

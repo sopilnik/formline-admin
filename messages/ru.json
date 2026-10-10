@@ -29,7 +29,7 @@
     "dark": "Тёмная"
   },
   "language": {
-    "label": "Язык: {name}",
+    "label": "Язык: {name} ({code})",
     "en": "English",
     "ru": "Русский"
   },

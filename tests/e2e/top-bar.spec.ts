@@ -23,4 +23,14 @@ test.describe('top bar', () => {
     }
     expect(sizes).toEqual(['32 px, 14px', '32 px, 14px', '32 px, 14px', '32 px, 14px'])
   })
+
+  test('the language button’s name holds the code it shows, in both languages', async ({ page, context }) => {
+    await signInAsSandboxUser(context)
+    for (const [lang, name, code] of [['en', 'Language: English (EN)', 'EN'], ['ru', 'Язык: Русский (RU)', 'RU']]) {
+      await page.goto(`/overview?lang=${lang}`)
+      const button = page.getByRole('banner').getByRole('button', { name })
+      await expect(button).toBeVisible()
+      await expect(button).toContainText(code!)
+    }
+  })
 })

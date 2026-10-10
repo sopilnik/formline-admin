@@ -13,7 +13,7 @@ export function LanguageMenu({ locale }: { locale: Locale }) {
   const [, startTransition] = useTransition()
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="ghost" aria-label={t('label', { name: t(locale) })} />}>
+      <DropdownMenuTrigger render={<Button variant="ghost" aria-label={t('label', { name: t(locale), code: locale.toUpperCase() })} />}>
         {locale.toUpperCase()}
         <ChevronDown aria-hidden className="size-3.5 max-[359px]:hidden" />
       </DropdownMenuTrigger>
