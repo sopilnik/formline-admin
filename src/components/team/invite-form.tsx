@@ -25,7 +25,7 @@ export function InviteForm() {
   useEffect(() => settle(state), [state])
   const error = state.status === 'error' ? state : null
   return (
-    <form ref={form} action={action} noValidate className="grid gap-3 md:grid-cols-[minmax(0,1fr)_12rem_auto] md:items-start">
+    <form ref={form} action={action} noValidate className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_12rem_auto] lg:items-start">
       <TextField
         id="invite-email" name="email" type="email" label={t('email')} autoComplete="off" maxLength={EMAIL_MAX} aria-required
         defaultValue={error?.values.email ?? ''} error={error ? t(`errors.${error.error}`) : undefined}
@@ -33,7 +33,7 @@ export function InviteForm() {
       <SelectField id="invite-role" name="role" label={t('role')} defaultValue={error?.values.role ?? 'manager'}>
         {ASSIGNABLE_ROLES.map(option => <option key={option} value={option}>{role(option)}</option>)}
       </SelectField>
-      <Button type="submit" disabled={pending} className="md:mt-[22px]">{pending ? t('sending') : t('submit')}</Button>
+      <Button type="submit" disabled={pending} className="lg:mt-[22px]">{pending ? t('sending') : t('submit')}</Button>
     </form>
   )
 }
