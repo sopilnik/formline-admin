@@ -103,16 +103,20 @@ test('the owner adds a passkey, signs in with it and removes it', async ({ page 
   await cdp.send('WebAuthn.addVirtualAuthenticator', {
     options: { protocol: 'ctap2', transport: 'internal', hasResidentKey: true, hasUserVerification: true, isUserVerified: true, automaticPresenceSimulation: true },
   })
+
   await signInWithPassword(page)
   await page.getByLabel('6-digit code').fill(await codeFor(totp))
   await page.getByRole('button', { name: 'Verify' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
+
   await page.goto('/settings/security')
   await expect(page.getByRole('heading', { level: 1, name: 'Security' })).toBeVisible()
   await expectNoSeriousA11yViolations(page)
+
   await page.getByRole('button', { name: 'Add a passkey' }).click()
   await expect(page.getByText('Passkey added.')).toBeVisible()
   await expect(page.getByRole('list', { name: 'Passkeys' }).getByRole('listitem')).toHaveCount(1)
+
   // On a phone the row's buttons sit under the name instead of squeezing it (visual walk, 26 September).
   await page.setViewportSize({ width: 375, height: 812 })
   const name = page.getByRole('list', { name: 'Passkeys' }).getByRole('listitem').getByText('Chrome, Linux')
@@ -121,9 +125,11 @@ test('the owner adds a passkey, signs in with it and removes it', async ({ page 
   expect(nameBox.width).toBeGreaterThan(150)
   expect(removeBox.y).toBeGreaterThanOrEqual(nameBox.y + nameBox.height)
   await page.setViewportSize({ width: 1280, height: 720 })
+
   await signOut(page)
   await page.getByRole('button', { name: 'Sign in with a passkey' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
+
   await page.goto('/settings/security')
   await page.getByRole('button', { name: /^Remove / }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Remove' }).click()

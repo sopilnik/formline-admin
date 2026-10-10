@@ -119,20 +119,24 @@ test.describe('the Russian layout', () => {
     await longNames(workspaceId)
     await page.setViewportSize({ width: 375, height: 812 })
     await page.goto('/overview?lang=ru')
+
     const inside = async (name: string) => {
       const box = (await page.getByRole('dialog', { name }).boundingBox())!
       expect(box.x, name).toBeGreaterThanOrEqual(0)
       expect(box.x + box.width, name).toBeLessThanOrEqual(375)
       expect(await problems(page), name).toEqual([])
     }
+
     await page.getByRole('button', { name: /^Уведомления/ }).click()
     await inside('Уведомления')
+
     // The header's button keeps inside the header's padding: the Russian label is as short as the English one.
     const bell = page.getByRole('dialog', { name: 'Уведомления' })
     const markAll = bell.getByRole('button').first()
     const [popup, button] = [(await bell.boundingBox())!, (await markAll.boundingBox())!]
     expect(button.x + button.width, 'the bell header keeps its padding').toBeLessThanOrEqual(popup.x + popup.width - 16)
     await expect(markAll).toHaveText('Прочитать все')
+
     await page.keyboard.press('Escape')
     await page.keyboard.press('Control+k')
     await page.keyboard.type('Преображ')
@@ -142,6 +146,7 @@ test.describe('the Russian layout', () => {
     const [label, hint] = await customer.locator('span').evaluateAll(spans => spans.map(span => span.getBoundingClientRect().top))
     expect(hint!, 'the hint stands under the name').toBeGreaterThan(label!)
     await page.keyboard.press('Escape')
+
     await page.getByRole('region', { name: 'Демо-песочница' }).getByRole('button', { name: 'Ещё действия' }).click()
     await page.getByRole('menuitem', { name: 'Сменить пользователя' }).click()
     await inside('Сменить пользователя')

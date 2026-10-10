@@ -9,24 +9,29 @@ test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip'
 test.describe('selection and bulk status', () => {
   test('changes the valid orders, reports the skipped one and logs each change', async ({ page, context }) => {
     const { workspaceId } = await signInAsSandboxUser(context)
+
     // The three newest orders become paid, paid and delivered: the delivered one cannot go to processing.
     const newest = await asSchemaOwner(async c => (await c.query<{ id: string; number: number }>(
       'select id, number from fa.orders where workspace_id = $1 order by placed_at desc, id desc limit 3', [workspaceId])).rows)
     await asSchemaOwner(c => c.query(
       "update fa.orders set status = case when id = $2 then 'delivered' else 'paid' end where workspace_id = $1 and id = any($3)",
       [workspaceId, newest[2]!.id, newest.map(o => o.id)]))
+
     await page.goto('/orders')
     const table = page.getByRole('table', { name: 'Orders' })
     const firstRow = table.getByRole('row').nth(1)
     const placedCell = firstRow.getByRole('cell').nth(2)
     const before = (await placedCell.boundingBox())!
+
     for (const order of newest) await table.getByRole('checkbox', { name: `Select order #${order.number}` }).check()
     await expect(table.getByRole('checkbox', { name: 'Select all orders on this page' })).toHaveAttribute('aria-checked', 'mixed')
     await expect(table.getByText('3 selected')).toBeVisible()
     await expect(table.getByRole('columnheader', { name: 'Placed' })).toHaveCount(0)
+
     // Nothing moves under the pointer: the bulk bar has the header's height and the columns keep their widths.
     const after = (await placedCell.boundingBox())!
     expect([after.x, after.y]).toEqual([before.x, before.y])
+
     await table.getByRole('button', { name: 'Change status' }).click()
     await expect(page.getByRole('menuitem')).toHaveText(['Processing', 'Cancelled', 'Refunded'])
     await page.getByRole('menuitem', { name: 'Processing' }).click()
@@ -34,6 +39,7 @@ test.describe('selection and bulk status', () => {
     await expect(page.getByText(`Skipped #${newest[2]!.number}: not allowed from its status.`)).toBeVisible()
     await expect(table.getByRole('columnheader', { name: 'Placed' })).toBeVisible()
     await expect(firstRow.getByText('Processing', { exact: true })).toBeVisible()
+
     const statuses = await asSchemaOwner(async c => (await c.query<{ status: string }>(
       'select status from fa.orders where workspace_id = $1 and id = any($2) order by placed_at desc, id desc', [workspaceId, newest.map(o => o.id)])).rows.map(r => r.status))
     expect(statuses).toEqual(['processing', 'processing', 'delivered'])

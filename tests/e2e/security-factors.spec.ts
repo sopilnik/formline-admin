@@ -16,12 +16,14 @@ test.describe('second factors in a sandbox', () => {
     await page.goto('/settings/security')
     const authenticator = section(page, 'Authenticator app Off')
     await expect(authenticator).toBeVisible()
+
     // The card is the box: inside it the enrolment group has no border, and its title is for screen readers only.
     const group = authenticator.getByRole('group', { name: 'Authenticator app' })
     await expect(group).toHaveCSS('border-top-width', '0px')
     expect((await group.locator('legend').boundingBox())!.width).toBeLessThanOrEqual(1)
     await expect(page.locator('#totp-secret')).toHaveCSS('word-break', 'normal')
     await expectNoSeriousA11yViolationsInBothThemes(page)
+
     const totp: Totp = { secret: await readTotpSecret(page), lastStep: 0 }
     await authenticator.getByLabel('6-digit code').fill('000000')
     await authenticator.getByRole('button', { name: 'Turn on' }).click()
@@ -29,6 +31,7 @@ test.describe('second factors in a sandbox', () => {
     await authenticator.getByLabel('6-digit code').fill(await codeFor(totp))
     await authenticator.getByRole('button', { name: 'Turn on' }).click()
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('Authenticator app turned on. Your other devices are signed out.')).toBeVisible()
+
     const codes = page.getByRole('list', { name: 'Save your recovery codes' }).getByRole('listitem')
     await expect(codes).toHaveCount(10)
     // Until the codes are closed the card offers nothing else.
@@ -38,6 +41,7 @@ test.describe('second factors in a sandbox', () => {
     await expect(codes).toHaveCount(0)
     await expect(section(page, 'Authenticator app On')).toBeVisible()
     await expect(section(page, 'Recovery codes')).toContainText('10 unused codes left of 10.')
+
     const replaceSection = section(page, 'Authenticator app On')
     await replaceSection.getByRole('button', { name: 'Replace the authenticator…' }).click()
     await replaceSection.getByLabel('6-digit code').fill('000000')

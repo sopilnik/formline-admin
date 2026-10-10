@@ -85,20 +85,24 @@ describe('create_sandbox', () => {
       await c.query("insert into fa.order_events (workspace_id, order_id, kind, to_status, at) values ($1, $2, 'status', 'paid', '2026-03-03T10:00:00Z')", [template, order.rows[0]!.id])
       return { customer: customer.rows[0]!.id, order: order.rows[0]!.id }
     })
+
     try {
       const entry = await create(ipHash())
       const ws = entry.sandbox_id!
+
       const seed = await admin.query<{ newest: Date; oldest: Date }>(
         "select max(placed_at) as newest, min(placed_at) as oldest from fa.orders where workspace_id = $1 and source = 'seed'", [ws])
       expect(Date.now() - seed.rows[0]!.newest.getTime()).toBeLessThan(60 * 60_000)
       expect(seed.rows[0]!.newest.getTime()).toBeLessThanOrEqual(Date.now())
       expect(Date.now() - seed.rows[0]!.oldest.getTime()).toBeLessThan(181 * DAY)
+
       const kept = await admin.query<{ placed_at: Date; at: Date; created_at: Date }>(
         `select o.placed_at, e.at, c.created_at from fa.orders o
            join fa.order_events e on e.workspace_id = o.workspace_id and e.order_id = o.id
            join fa.customers c on c.workspace_id = o.workspace_id and c.id = o.customer_id
           where o.workspace_id = $1 and o.id = $2`, [ws, copy.order])
       expect(kept.rows[0]).toEqual({ placed_at: new Date('2026-03-03T10:00:00Z'), at: new Date('2026-03-03T10:00:00Z'), created_at: new Date('2026-03-01T09:00:00Z') })
+
       const events = await admin.query<{ n: string }>(
         'select count(*) as n from fa.order_events e where e.workspace_id = $1 and e.at > now()', [ws])
       expect(Number(events.rows[0]!.n)).toBe(0)
