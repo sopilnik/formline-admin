@@ -1,32 +1,14 @@
 import type { Metadata } from 'next'
 import { NextIntlClientProvider } from 'next-intl'
 import { getLocale, getTranslations } from 'next-intl/server'
-import localFont from 'next/font/local'
 import { cookies } from 'next/headers'
 import type { ReactNode } from 'react'
 import { Providers } from '@/components/app/providers'
+import { inter, spaceGrotesk } from '@/lib/fonts'
 import { parseTheme, THEME_COOKIE, themeClassName } from '@/lib/theme'
 import { cn } from '@/lib/utils'
 import { getNonce } from '@/server/request'
 import './globals.css'
-
-// Inter carries Latin and Cyrillic in one file; Space Grotesk is Latin only
-// (src/fonts/README.md).
-const inter = localFont({
-  src: '../src/fonts/InterVariable-latin-cyrillic.woff2',
-  weight: '100 900',
-  variable: '--font-inter',
-  display: 'swap',
-})
-
-const spaceGrotesk = localFont({
-  src: [
-    { path: '../src/fonts/SpaceGrotesk-Regular-latin.woff2', weight: '400' },
-    { path: '../src/fonts/SpaceGrotesk-Bold-latin.woff2', weight: '700' },
-  ],
-  variable: '--font-space-grotesk',
-  display: 'swap',
-})
 
 export const metadata: Metadata = {
   title: { default: 'Formline Admin', template: '%s · Formline Admin' },

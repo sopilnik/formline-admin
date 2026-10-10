@@ -62,6 +62,14 @@ describe('Russian copy (the owner’s rules)', () => {
     expect(strings(ru).filter(([, text]) => /(?<!рабоч\p{L}* )пространств/iu.test(text))).toEqual([])
   })
 
+  it('never says «войдите ключом доступа» without a preposition', () => {
+    expect(strings(ru).filter(([, text]) => /войдите ключом доступа/.test(text))).toEqual([])
+  })
+
+  it('starts no sentence with «Либо»', () => {
+    expect(breaking(sentence => /^Либо\s/.test(sentence))).toEqual([])
+  })
+
   it('keeps a dollar amount with its sign', () => {
     expect(strings(ru).filter(([, text]) => /\d \$/.test(text))).toEqual([])
   })

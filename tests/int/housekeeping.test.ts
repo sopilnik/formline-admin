@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { generateToken, hashToken } from '@/server/auth/tokens'
 import { runDailyJob } from '@/server/jobs/daily'
 import { drainPendingDeletions } from '@/server/media/deletions'
+import { MEDIA_PATH } from '@/server/media/storage'
 import { cleanupExpiredSandboxes } from '@/server/sandbox/cleanup'
 import { adminPool, appPool, closeAll } from './db'
 import { asSchemaOwner } from './fixtures'
@@ -131,6 +132,25 @@ describe('drainPendingDeletions', () => {
     try {
       await drainPendingDeletions(storage, app)
       expect([storage.paths.has(path), storage.paths.has(thumb)]).toEqual([false, false])
+    } finally {
+      await admin.query('delete from fa.pending_media_deletions where storage_path = $1', [path])
+    }
+  })
+
+  it('deletes a queued small copy once, without looking for a copy of the copy', async () => {
+    const path = `ws/${randomUUID()}/${randomUUID()}.thumb.webp`
+    await admin.query('insert into fa.pending_media_deletions (storage_path) values ($1)', [path])
+    // As the real storages do, this one refuses any path that is not a media path.
+    const storage = memoryStorage([path])
+    const remove = storage.delete.bind(storage)
+    storage.delete = async target => {
+      if (!MEDIA_PATH.test(target)) throw new Error(`not a media path: ${target}`)
+      await remove(target)
+    }
+    try {
+      await drainPendingDeletions(storage, app)
+      expect(storage.paths.has(path)).toBe(false)
+      expect((await admin.query('select 1 from fa.pending_media_deletions where storage_path = $1', [path])).rowCount).toBe(0)
     } finally {
       await admin.query('delete from fa.pending_media_deletions where storage_path = $1', [path])
     }

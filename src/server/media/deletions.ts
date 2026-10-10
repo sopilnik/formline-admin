@@ -26,7 +26,7 @@ export async function drainPendingDeletions(storage: MediaStorage, pool: Pool = 
   for (const row of rows) {
     try {
       await storage.delete(row.storage_path)
-      if (MEDIA_PATH.test(row.storage_path)) await storage.delete(thumbPath(row.storage_path))
+      if (MEDIA_PATH.test(row.storage_path) && !row.storage_path.endsWith('.thumb.webp')) await storage.delete(thumbPath(row.storage_path))
       await pool.query('delete from fa.pending_media_deletions where storage_path = $1', [row.storage_path])
       deleted++
       continue
