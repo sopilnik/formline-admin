@@ -366,6 +366,8 @@
     "banner": {
       "label": "Demo sandbox",
       "title": "Demo sandbox.",
+      "titleShort": "Demo sandbox.",
+      "bodyShort": "Deleted after 2\u00a0h idle.",
       "body": "Your changes are private. The sandbox is deleted after 2 hours without activity, or {hours, plural, =0 {within the hour} one {after # hour} other {after # hours}} at the latest.",
       "reset": "Reset data",
       "resetTitle": "Reset the sandbox?",

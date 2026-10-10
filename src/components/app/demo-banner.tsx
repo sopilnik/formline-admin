@@ -22,9 +22,11 @@ export function DemoBanner({ hours, members }: { hours: number; members: SwitchT
   const [switchOpen, setSwitchOpen] = useState(false)
   const [state, action, pending] = useActionState(resetDemoAction, IDLE as FormState)
   return (
-    <div role="region" aria-label={t('label')} className="flex items-center gap-3 border-b border-border bg-card px-4 py-2 text-sm md:px-6">
-      <p className="min-w-0 flex-1 truncate sm:whitespace-normal">
-        <strong className="font-semibold">{t('title')}</strong> {t('body', { hours })}
+    <div role="region" aria-label={t('label')} className="flex flex-wrap items-center gap-3 border-b border-border bg-card px-4 py-2 text-sm md:px-6">
+      {/* A phone gets the rule in one short line; from 640 px the whole sentence, kept at least 20 rem wide (the actions wrap). */}
+      <p className="min-w-0 flex-1 truncate sm:min-w-80 sm:whitespace-normal">
+        <span className="sm:hidden"><strong className="font-semibold">{t('titleShort')}</strong> {t('bodyShort')}</span>
+        <span className="hidden sm:inline"><strong className="font-semibold">{t('title')}</strong> {t('body', { hours })}</span>
       </p>
       <div className="hidden items-center gap-2 sm:flex">
         <Button type="button" variant="outline" size="sm" onClick={() => setResetOpen(true)}>{t('reset')}</Button>
@@ -34,7 +36,7 @@ export function DemoBanner({ hours, members }: { hours: number; members: SwitchT
         <DropdownMenuTrigger render={<Button type="button" variant="outline" size="sm" className="sm:hidden" aria-label={t('more')} />}>
           <MoreHorizontal aria-hidden className="size-4" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" className="min-w-48">
           <DropdownMenuItem onClick={() => setResetOpen(true)}>{t('reset')}</DropdownMenuItem>
           {members.length > 0 ? <DropdownMenuItem onClick={() => setSwitchOpen(true)}>{t('switch')}</DropdownMenuItem> : null}
         </DropdownMenuContent>
