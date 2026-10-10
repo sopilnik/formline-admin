@@ -35,7 +35,9 @@ const authenticationResponse = z.object({
   response: z.object({
     clientDataJSON: z.string().max(8192),
     authenticatorData: z.string().max(8192),
-    signature: z.string().max(2048),
+    // Room for post-quantum signatures: the library offers ML-DSA-44 first where the runtime supports it (2 420 bytes), and
+    // ML-DSA-87 signs with 4 627 bytes, 6 170 characters in base64url.
+    signature: z.string().max(8192),
     userHandle: z.string().max(128).optional(),
   }),
 })
