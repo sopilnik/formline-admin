@@ -42,12 +42,12 @@ export async function storeProductImage(actor: Actor, productId: string, image: 
   const imageId = randomUUID()
   const path = mediaPath(actor.workspaceId, imageId)
   await storage.put(path, image.bytes)
-  await storage.put(thumbPath(path), image.thumb)
   const discard = async (): Promise<void> => {
     await Promise.all([storage.delete(path), storage.delete(thumbPath(path))])
       .catch(() => pool.query('insert into fa.pending_media_deletions (storage_path) values ($1) on conflict do nothing', [path]))
   }
   try {
+    await storage.put(thumbPath(path), image.thumb)
     const result = await withWorkspace(ctx, async (tx): Promise<ImageUpload> => {
       const [product] = await tx.select({ slug: products.slug, imageId: products.imageId }).from(products)
         .where(and(eq(products.workspaceId, actor.workspaceId), eq(products.id, productId))).for('update')

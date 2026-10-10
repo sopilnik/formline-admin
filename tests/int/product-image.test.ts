@@ -85,6 +85,19 @@ describe('storeProductImage', () => {
     expect(storage.files.size).toBe(0)
   })
 
+  it('takes the image back out of storage when storage refuses its small copy', async () => {
+    const owner = await sandbox()
+    const product = await productOf(owner, 'hush')
+    const storage = memoryStorage()
+    const put = storage.put.bind(storage)
+    storage.put = async (path, bytes) => {
+      if (path.endsWith('.thumb.webp')) throw new Error(`refused: ${path}`)
+      await put(path, bytes)
+    }
+    await expect(storeProductImage(owner, product.id, webp(), storage, app)).rejects.toThrow('refused')
+    expect(storage.files.size).toBe(0)
+  })
+
   it('keeps each workspace within 30 uploads and 20 MB, not counting the image being replaced', async () => {
     const owner = await sandbox()
     const storage = memoryStorage()
