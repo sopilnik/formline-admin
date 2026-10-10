@@ -8,12 +8,13 @@ import { timeZones } from '@/lib/settings/fields'
 import { isRecentAuth } from '@/server/auth/reauth'
 import { requireSession, workspaceContext } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'
+import { titleFor } from '@/server/authz/page-title'
 import { getStoreSettings } from '@/server/dal/settings'
 import { withWorkspace } from '@/server/db/with-workspace'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('settings.store')
-  return { title: t('title') }
+  return { title: await titleFor('settings.store', t('title')) }
 }
 
 /**

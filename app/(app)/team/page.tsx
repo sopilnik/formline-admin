@@ -8,6 +8,7 @@ import { TeamTable, type MemberView } from '@/components/team/team-table'
 import { formatDateTime } from '@/lib/intl'
 import { requireSession, workspaceContext } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'
+import { titleFor } from '@/server/authz/page-title'
 import { listPendingInvitations } from '@/server/dal/invitations'
 import { getStoreSettings } from '@/server/dal/settings'
 import { listTeam } from '@/server/dal/team'
@@ -15,7 +16,7 @@ import { withWorkspace } from '@/server/db/with-workspace'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('team')
-  return { title: t('title') }
+  return { title: await titleFor('team.read', t('title')) }
 }
 
 /**

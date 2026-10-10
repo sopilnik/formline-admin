@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { cache } from 'react'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { OrderNoteForm } from '@/components/orders/order-note-form'
 import { OrderStatusControl } from '@/components/orders/order-status-control'
@@ -20,10 +21,20 @@ type Params = { params: Promise<{ number: string }> }
 
 const parseNumber = (value: string): number | null => (/^\d{1,9}$/.test(value) ? Number(value) : null)
 
+// The title and the page read the same order: one set of queries per request.
+const load = cache(async (number: number) => {
+  const session = await requireSession()
+  return withWorkspace(workspaceContext(session), async tx => ({
+    order: await getOrder(tx, session.workspaceId, number),
+    timeZone: (await getStoreSettings(tx, session.workspaceId)).timezone,
+  }))
+})
+
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const t = await getTranslations('orders.detail')
   const number = parseNumber((await params).number)
-  return { title: number === null ? t('notFoundTitle') : t('title', { number }) }
+  const order = number === null ? null : (await load(number)).order
+  return { title: order ? t('title', { number: order.number }) : t('notFoundTitle') }
 }
 
 const CARD = 'flex min-w-0 flex-col gap-3 rounded-lg border bg-card p-5'
@@ -34,10 +45,7 @@ export default async function OrderPage({ params }: Params) {
   authorize(session, 'data.read')
   const number = parseNumber((await params).number)
   if (number === null) notFound()
-  const { order, timeZone } = await withWorkspace(workspaceContext(session), async tx => ({
-    order: await getOrder(tx, session.workspaceId, number),
-    timeZone: (await getStoreSettings(tx, session.workspaceId)).timezone,
-  }))
+  const { order, timeZone } = await load(number)
   if (!order) notFound()
   const locale = await getLocale()
   const t = await getTranslations('orders')

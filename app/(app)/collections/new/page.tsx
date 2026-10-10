@@ -6,10 +6,11 @@ import { getTranslations } from 'next-intl/server'
 import { CollectionForm } from '@/components/collections/collection-form'
 import { requireSession } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'
+import { titleFor } from '@/server/authz/page-title'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('collections')
-  return { title: t('new') }
+  return { title: await titleFor('catalog.write', t('new')) }
 }
 
 /** The new-collection form (spec §8.3); a role that cannot write the catalog gets the not-found page. */
