@@ -35,7 +35,7 @@ export function ReauthForm({ intro }: { intro?: string } = {}) {
 
   return (
     <section aria-labelledby="reauth-title" className="rounded-lg border bg-secondary p-4">
-      <h2 id="reauth-title" className="text-base font-bold">{t('reauth.title')}</h2>
+      <h2 id="reauth-title" className="font-sans text-[15px] font-semibold">{t('reauth.title')}</h2>
       <p className="mt-1 text-sm text-muted-foreground">{intro ?? t('reauth.intro')}</p>
       <form action={action} noValidate className="mt-4 flex flex-col gap-4">
         <FormAlert state={state} />

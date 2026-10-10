@@ -27,8 +27,8 @@ export function SessionsSection({ sessions }: { sessions: SessionView[] }) {
   return (
     <section aria-labelledby="sessions-title" className="flex flex-col gap-4 rounded-lg border bg-card p-5">
       <div>
-        <h2 id="sessions-title" className="text-base font-bold">{t('title')}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">{t('intro')}</p>
+        <h2 id="sessions-title" className="font-sans text-[15px] font-semibold">{t('title')}</h2>
+        <p className="mt-1 max-w-prose text-[13px] text-muted-foreground">{t('intro')}</p>
       </div>
       <ul aria-labelledby="sessions-title" className="divide-y rounded-md border">
         {sessions.map(session => {

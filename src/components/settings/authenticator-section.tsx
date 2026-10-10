@@ -60,11 +60,11 @@ export function AuthenticatorSection({ enabled, recent, canDisable, secret, qr }
   return (
     <section aria-labelledby="authenticator-title" className="flex flex-col gap-4 rounded-lg border bg-card p-5">
       <div>
-        <h2 id="authenticator-title" className="flex flex-wrap items-center gap-2 text-base font-bold">
+        <h2 id="authenticator-title" className="flex flex-wrap items-center gap-2 font-sans text-[15px] font-semibold">
           {t('title')}
           <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-ink-2">{enabled ? t('on') : t('off')}</span>
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">{recent ? (enabled ? t('introOn') : t('introOff')) : t('confirmFirst')}</p>
+        <p className="mt-1 max-w-prose text-[13px] text-muted-foreground">{recent ? (enabled ? t('introOn') : t('introOff')) : t('confirmFirst')}</p>
       </div>
       {codes ? <RecoveryCodesView codes={codes} done={{ label: t('codesDone'), onClick: () => setClosed(state) }} /> : null}
       {recent && !codes && enrolling ? (

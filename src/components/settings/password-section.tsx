@@ -27,8 +27,8 @@ export function PasswordSection({ available, recent }: { available: boolean; rec
   return (
     <section aria-labelledby="password-title" className="flex flex-col gap-4 rounded-lg border bg-card p-5">
       <div>
-        <h2 id="password-title" className="text-base font-bold">{t('title')}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">{available ? (recent ? t('intro') : t('confirmFirst')) : t('sandbox')}</p>
+        <h2 id="password-title" className="font-sans text-[15px] font-semibold">{t('title')}</h2>
+        <p className="mt-1 max-w-prose text-[13px] text-muted-foreground">{available ? (recent ? t('intro') : t('confirmFirst')) : t('sandbox')}</p>
       </div>
       {available && recent ? (
         <form action={action} noValidate className="flex max-w-md flex-col gap-4">

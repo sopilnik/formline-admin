@@ -21,7 +21,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
     <AuthCard title={t('title')} description={t('intro')}>
       <div className="flex flex-col gap-5">
         <DemoEntry ended={ended} />
-        <h2 className="text-base font-semibold">{t('ownerSignIn')}</h2>
+        <h2 className="text-base font-bold">{t('ownerSignIn')}</h2>
         <PasskeySignIn />
         <div aria-hidden className="flex items-center gap-3 text-xs text-muted-foreground">
           <span className="h-px flex-1 bg-border" />

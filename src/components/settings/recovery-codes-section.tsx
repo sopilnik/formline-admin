@@ -19,8 +19,8 @@ export function RecoveryCodesSection({ remaining, hasFactor, recent }: { remaini
   return (
     <section aria-labelledby="recovery-title" className="flex flex-col gap-4 rounded-lg border bg-card p-5">
       <div>
-        <h2 id="recovery-title" className="text-base font-bold">{t('title')}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h2 id="recovery-title" className="font-sans text-[15px] font-semibold">{t('title')}</h2>
+        <p className="mt-1 max-w-prose text-[13px] text-muted-foreground">
           {hasFactor ? t('remaining', { count: remaining }) : t('noFactor')}
           {hasFactor && !recent ? ` ${t('confirmFirst')}` : null}
         </p>

@@ -33,7 +33,7 @@ export default async function StoreSettingsPage() {
       <section aria-labelledby="store-details" className="flex flex-col gap-4 rounded-lg border bg-card p-5">
         <div>
           <h2 id="store-details" className="font-sans text-[15px] font-semibold">{t('details')}</h2>
-          <p className="mt-1 text-[13px] text-muted-foreground">{t('intro')}</p>
+          <p className="mt-1 max-w-prose text-[13px] text-muted-foreground">{t('intro')}</p>
         </div>
         <StoreSettingsForm
           settings={{ storeName: settings.storeName, supportEmail: settings.supportEmail, timezone: settings.timezone, lowStockDefault: String(settings.lowStockDefault) }}

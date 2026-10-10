@@ -43,16 +43,16 @@ export function PasskeysSection({ available, recent, passkeys }: Props) {
   if (!available) {
     return (
       <section aria-labelledby="passkeys-title" className="rounded-lg border bg-card p-5">
-        <h2 id="passkeys-title" className="text-base font-bold">{t('title')}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">{t('sandbox')}</p>
+        <h2 id="passkeys-title" className="font-sans text-[15px] font-semibold">{t('title')}</h2>
+        <p className="mt-1 max-w-prose text-[13px] text-muted-foreground">{t('sandbox')}</p>
       </section>
     )
   }
   return (
     <section aria-labelledby="passkeys-title" className="flex flex-col gap-4 rounded-lg border bg-card p-5">
       <div>
-        <h2 id="passkeys-title" className="text-base font-bold">{t('title')}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">{t('intro')}</p>
+        <h2 id="passkeys-title" className="font-sans text-[15px] font-semibold">{t('title')}</h2>
+        <p className="mt-1 max-w-prose text-[13px] text-muted-foreground">{t('intro')}</p>
       </div>
       {passkeys.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t('empty')}</p>
