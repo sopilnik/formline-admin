@@ -42,7 +42,7 @@ test.describe('keyboard focus', () => {
     await signInAsSandboxUser(context)
     await page.goto('/orders')
     const controls = [
-      page.getByRole('searchbox').or(page.locator('input[name=q]')).first(),
+      page.getByRole('searchbox'),
       page.getByRole('button', { name: /^Export [\d,]+ as CSV$/ }),
       page.getByRole('checkbox', { name: /^Select order #\d+$/ }).first(),
     ]
@@ -66,7 +66,7 @@ test.describe('keyboard focus', () => {
     await focusByKeyboard(page, account)
     await page.keyboard.press('Enter')
     await page.keyboard.press('ArrowDown')
-    const item = page.getByRole('menuitem').filter({ has: page.locator(':focus') }).or(page.locator('[role=menuitem]:focus')).first()
+    const item = page.locator('[role=menuitem]:focus')
     await expect(item).toBeFocused()
     await expect.poll(() => outlineOf(item)).toEqual(['solid', '2px', RING])
     await page.keyboard.press('Escape')
@@ -88,7 +88,7 @@ test.describe('keyboard focus', () => {
     expect(await ringInsideItsClip(tab)).toEqual(whole)
 
     await page.goto('/orders')
-    const chip = page.getByRole('button', { name: /^All, / }).or(page.getByRole('radio', { name: /^All, / })).first()
+    const chip = page.getByRole('button', { name: /^All, / })
     await focusByKeyboard(page, chip)
     expect(await ringInsideItsClip(chip)).toEqual(whole)
 
