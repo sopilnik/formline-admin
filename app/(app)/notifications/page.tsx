@@ -42,7 +42,7 @@ export default async function NotificationsPage({ searchParams }: { searchParams
           </form>
         ) : null}
       </div>
-      <section aria-label={t('title')} className="rounded-lg border bg-card p-2 pb-3">
+      <section className="rounded-lg border bg-card p-2 pb-3">
         {items.length > 0 ? (
           <>
             <ul aria-label={t('title')} className="flex flex-col">

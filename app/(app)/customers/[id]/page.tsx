@@ -5,8 +5,8 @@ import { notFound } from 'next/navigation'
 import { cache } from 'react'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { z } from 'zod'
+import { ROW_LINK } from '@/components/app/row-link'
 import { CustomerNotesForm } from '@/components/customers/customer-notes-form'
-import { ORDER_LINK } from '@/components/orders/row-link'
 import { StatusBadge } from '@/components/orders/status-badge'
 import { locationOf } from '@/lib/customers/view'
 import { formatDate, formatDateTime, formatMoney, formatNumber } from '@/lib/intl'
@@ -113,7 +113,7 @@ export default async function CustomerPage({ params }: Params) {
               {customer.recent.map(order => (
                 <li key={order.id} className="group/row relative flex items-center justify-between gap-3 border-b px-1 py-2.5 last:border-b-0 hover:bg-secondary">
                   <span className="flex min-w-0 flex-col">
-                    <Link href={orderHref(order.number)} prefetch={false} className={cn(ORDER_LINK, 'w-fit tabular-nums')}>#{order.number}</Link>
+                    <Link href={orderHref(order.number)} prefetch={false} className={cn(ROW_LINK, 'w-fit font-semibold tabular-nums')}>#{order.number}</Link>
                     <span className="text-xs text-muted-foreground tabular-nums">{formatDateTime(order.placedAt, locale, timeZone)}</span>
                   </span>
                   <span className="flex shrink-0 flex-col items-end gap-1">

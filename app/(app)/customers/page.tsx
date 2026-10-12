@@ -53,7 +53,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
         ) : null}
       </div>
       <CustomersSearch query={query} />
-      <section aria-label={t('title')} className="@container rounded-lg border bg-card p-2 pb-3">
+      <section className="@container rounded-lg border bg-card p-2 pb-3">
         {list.rows.length > 0 ? (
           <>
             <CustomersTable rows={list.rows.map(row => toCustomerRowView(row, locale, timeZone))} query={query} />

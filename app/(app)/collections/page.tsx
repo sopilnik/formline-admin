@@ -35,7 +35,7 @@ export default async function CollectionsPage() {
           </Link>
         ) : null}
       </div>
-      <section aria-label={t('title')} className="rounded-lg border bg-card p-2">
+      <section className="rounded-lg border bg-card p-2">
         {rows.length > 0 ? (
           <CollectionsList rows={rows.map(({ id, slug, name, description, products }) => ({ id, slug, name, description, products }))} canWrite={canWrite} />
         ) : (

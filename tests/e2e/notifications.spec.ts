@@ -77,6 +77,7 @@ test.describe('notifications', () => {
     await expect(page.getByText('8 unread · 8 notifications')).toBeVisible()
     const entries = page.getByRole('list', { name: 'Notifications' }).getByRole('listitem')
     await expect(entries).toHaveCount(8)
+    await expect(page.getByRole('region', { name: 'Notifications' })).toHaveCount(0)   // the list carries the name, once
     await expect(entries.filter({ hasText: 'Low stock:' })).toHaveCount(3)
     await expectNoSeriousA11yViolationsInBothThemes(page)
     await page.getByRole('button', { name: 'Mark all as read' }).click()

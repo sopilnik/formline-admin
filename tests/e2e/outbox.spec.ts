@@ -29,6 +29,7 @@ test.describe('outbox', () => {
     await expect(page.getByText('3 letters')).toBeVisible()
     const letters = page.getByRole('list', { name: 'Outbox' }).getByRole('listitem')
     await expect(letters).toHaveCount(3)
+    await expect(page.getByRole('region', { name: 'Outbox' })).toHaveCount(0)   // the list carries the name, once
     await expect(letters.nth(0).getByRole('link')).toHaveText('Новый вход в ваш аккаунт')
     await expect(letters.nth(0).getByRole('link')).toHaveAttribute('lang', 'ru')
     await expect(letters.nth(1).getByRole('link')).toHaveText('Sign-in locked for an hour')

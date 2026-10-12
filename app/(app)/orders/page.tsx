@@ -53,7 +53,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         ) : null}
       </div>
       <OrdersFilters query={query} statusCounts={page.statusCounts} />
-      <section aria-label={t('title')} className="@container rounded-lg border bg-card p-2 pb-3">
+      <section className="@container rounded-lg border bg-card p-2 pb-3">
         {page.rows.length > 0 ? (
           <>
             <OrdersTable

@@ -3,11 +3,13 @@ import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { Pager } from '@/components/app/pager'
+import { ROW_LINK } from '@/components/app/row-link'
 import { letterSubject } from '@/components/outbox/letter'
 import { formatDateTime } from '@/lib/intl'
 import { letterContent } from '@/lib/letters'
 import { pageQueryHref, parsePageQuery } from '@/lib/pagination'
 import type { SearchParams } from '@/lib/search-params'
+import { cn } from '@/lib/utils'
 import { requireSession } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'
 import { listLetters } from '@/server/dal/outbox'
@@ -18,9 +20,6 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('outbox')
   return { title: t('title') }
 }
-
-// The subject is a real link stretched over its row, as the order number is (spec §8.2).
-const SUBJECT_LINK = 'font-medium underline decoration-border-strong underline-offset-3 group-hover/row:decoration-current focus-visible:decoration-current after:absolute after:inset-0'
 
 /** Every letter the panel wrote (spec §9), newest first; owners and admins only. */
 export default async function OutboxPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
@@ -45,13 +44,13 @@ export default async function OutboxPage({ searchParams }: { searchParams: Promi
         <p className="mt-1 text-[13px] text-muted-foreground tabular-nums">{t('count', { total: list.total })}</p>
       </div>
       <p className="max-w-prose text-[13px] text-ink-2">{t('intro')}</p>
-      <section aria-label={t('title')} className="rounded-lg border bg-card p-2 pb-3">
+      <section className="rounded-lg border bg-card p-2 pb-3">
         {letters.length > 0 ? (
           <>
             <ul aria-label={t('title')} className="flex flex-col">
               {letters.map(letter => (
                 <li key={letter.id} className="group/row relative flex flex-col gap-0.5 border-b px-3 py-3 last:border-b-0 hover:bg-secondary">
-                  <Link href={`/outbox/${letter.id}`} prefetch={false} lang={letter.lang} className={`${SUBJECT_LINK} w-fit text-sm`}>{letter.subject}</Link>
+                  <Link href={`/outbox/${letter.id}`} prefetch={false} lang={letter.lang} className={cn(ROW_LINK, 'w-fit text-sm font-medium')}>{letter.subject}</Link>
                   <span className="text-xs wrap-anywhere text-muted-foreground tabular-nums">{t('toLine', { to: letter.to, sent: letter.sent })}</span>
                 </li>
               ))}

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { cache } from 'react'
+import { ROW_LINK } from '@/components/app/row-link'
 import { CollectionForm } from '@/components/collections/collection-form'
 import { DeleteCollection } from '@/components/collections/delete-collection'
 import { ProductStatusBadge } from '@/components/products/product-status-badge'
@@ -11,6 +12,7 @@ import { ProductThumb } from '@/components/products/product-thumb'
 import { imageSrc } from '@/lib/catalog'
 import { productHref } from '@/lib/products/view'
 import { SLUG_PATTERN } from '@/lib/slug'
+import { cn } from '@/lib/utils'
 import { requireSession } from '@/server/auth/sessions'
 import { authorize } from '@/server/authz/authorize'
 import { can } from '@/server/authz/matrix'
@@ -65,7 +67,7 @@ export default async function CollectionPage({ params }: Params) {
                   <Link
                     href={productHref(product.slug)}
                     prefetch={false}
-                    className="min-w-0 flex-1 truncate text-[13px] font-medium underline decoration-border-strong underline-offset-3 group-hover/row:decoration-current after:absolute after:inset-0"
+                    className={cn(ROW_LINK, 'min-w-0 flex-1 truncate text-[13px] font-medium')}
                   >
                     {product.name}
                   </Link>

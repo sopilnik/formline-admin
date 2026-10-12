@@ -24,7 +24,8 @@ test.describe('order page', () => {
     await expect(page).toHaveURL(new RegExp(`/orders/${order.number}$`))
     await expect(page.getByRole('heading', { level: 1, name: `Order #${order.number}` })).toBeVisible()
     await expect(page).toHaveTitle(`Order #${order.number} · Formline Admin`)
-    await expect(page.getByRole('table', { name: 'Items' }).getByRole('row')).toHaveCount(lines + 1)   // the header and one row per line
+    await expect(page.getByRole('region', { name: 'Items' }).getByRole('table')).toHaveAccessibleName('')   // the section names it, once
+    await expect(page.getByRole('region', { name: 'Items' }).getByRole('row')).toHaveCount(lines + 1)   // the header and one row per line
     await expect(page.getByRole('region', { name: 'Items' }).getByRole('definition').last()).toHaveText(money(order.total_cents))
     await expect(page.getByRole('region', { name: 'Customer' }).getByText(order.name)).toBeVisible()
     await expect(page.getByRole('region', { name: 'Shipping address' }).getByText(order.city, { exact: false })).toBeVisible()
@@ -87,7 +88,7 @@ test.describe('order page', () => {
     const order = await newestPaid(workspaceId)
     await asSchemaOwner(c => c.query('update fa.order_lines set unmatched = true, variant_id = null, sku = null where workspace_id = $1 and order_id = $2', [workspaceId, order.id]))
     await page.goto(`/orders/${order.number}`)
-    const items = page.getByRole('table', { name: 'Items' })
+    const items = page.getByRole('region', { name: 'Items' }).getByRole('table')
     await expect(items.getByText('Not in the catalog').first()).toBeVisible()
     await expect(items.getByRole('link')).toHaveCount(0)
   })

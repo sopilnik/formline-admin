@@ -1,11 +1,11 @@
 'use client'
 
-import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { ROW_LINK } from '@/components/app/row-link'
+import { SortHeader, type SortDir } from '@/components/app/sort-header'
 import { BulkActions } from '@/components/orders/bulk-actions'
-import { ORDER_LINK } from '@/components/orders/row-link'
 import { SourceLabel } from '@/components/orders/source-label'
 import { StatusBadge } from '@/components/orders/status-badge'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -16,27 +16,9 @@ import { cn } from '@/lib/utils'
 const TH = 'h-10 border-b bg-card px-3 text-left font-medium whitespace-nowrap text-muted-foreground'
 const TD = 'h-11 border-b px-3 group-last/row:border-b-0'
 
-function SortHeader({ query, sortKey, label, align = 'left' }: { query: OrdersQuery; sortKey: OrderSort; label: string; align?: 'left' | 'right' }) {
-  const active = query.sort === sortKey
-  // A new column starts newest / largest first; the active one flips its direction.
-  const dir = active && query.dir === 'desc' ? 'asc' : 'desc'
-  const Icon = !active ? ArrowUpDown : query.dir === 'desc' ? ArrowDown : ArrowUp
-  return (
-    <th scope="col" aria-sort={active ? (query.dir === 'desc' ? 'descending' : 'ascending') : undefined} className={cn(TH, align === 'right' && 'text-right')}>
-      <Link
-        href={ordersHref(query, { sort: sortKey, dir })}
-        scroll={false}
-        className={cn('inline-flex items-center gap-1 rounded-sm text-ink-2 hover:text-foreground', active && 'font-semibold text-foreground')}
-      >
-        {label}
-        <Icon aria-hidden className="size-3.5" />
-      </Link>
-    </th>
-  )
-}
-
 export function OrdersTable({ rows, query, canUpdate }: { rows: OrderRowView[]; query: OrdersQuery; canUpdate: boolean }) {
   const t = useTranslations('orders')
+  const sortHref = (sort: OrderSort, dir: SortDir): string => ordersHref(query, { sort, dir })
   const [selected, setSelected] = useState<ReadonlySet<string>>(() => new Set())
   const chosen = rows.filter(row => selected.has(row.id))
   const allChosen = rows.length > 0 && chosen.length === rows.length
@@ -86,13 +68,13 @@ export function OrdersTable({ rows, query, canUpdate }: { rows: OrderRowView[]; 
           ) : (
             <tr>
               <th scope="col" className={cn(TH, 'w-10')}>{allBox}</th>
-              <SortHeader query={query} sortKey="number" label={t('columns.order')} />
-              <SortHeader query={query} sortKey="placed" label={t('columns.placed')} />
+              <SortHeader query={query} sort="number" first="desc" href={sortHref} label={t('columns.order')} />
+              <SortHeader query={query} sort="placed" first="desc" href={sortHref} label={t('columns.placed')} />
               <th scope="col" className={TH}>{t('columns.customer')}</th>
               <th scope="col" className={TH}>{t('columns.source')}</th>
               <th scope="col" className={cn(TH, 'text-center')}>{t('columns.status')}</th>
               <th scope="col" className={cn(TH, 'text-center')}>{t('columns.items')}</th>
-              <SortHeader query={query} sortKey="total" label={t('columns.total')} align="right" />
+              <SortHeader query={query} sort="total" first="desc" href={sortHref} label={t('columns.total')} align="right" />
             </tr>
           )}
         </thead>
@@ -101,7 +83,7 @@ export function OrdersTable({ rows, query, canUpdate }: { rows: OrderRowView[]; 
             <tr key={row.id} className={cn('group/row relative hover:bg-secondary', selected.has(row.id) && 'bg-row-selected hover:bg-row-selected')}>
               <td className={cn(TD, 'relative z-10 w-10')}>{rowBox(row)}</td>
               <td className={cn(TD, 'tabular-nums')}>
-                <Link href={row.href} prefetch={false} className={ORDER_LINK}>#{row.number}</Link>
+                <Link href={row.href} prefetch={false} className={cn(ROW_LINK, 'font-semibold')}>#{row.number}</Link>
               </td>
               <td className={cn(TD, 'whitespace-nowrap tabular-nums')}>{row.placed}</td>
               <td className={cn(TD, 'py-1.5')}>
@@ -127,7 +109,7 @@ export function OrdersTable({ rows, query, canUpdate }: { rows: OrderRowView[]; 
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <span className="relative z-10 flex">{rowBox(row)}</span>
-                  <Link href={row.href} prefetch={false} className={cn(ORDER_LINK, 'text-sm tabular-nums')}>#{row.number}</Link>
+                  <Link href={row.href} prefetch={false} className={cn(ROW_LINK, 'text-sm font-semibold tabular-nums')}>#{row.number}</Link>
                 </div>
                 <StatusBadge status={row.status} />
               </div>

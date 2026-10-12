@@ -52,7 +52,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
         ) : null}
       </div>
       <ProductsFilters query={query} statusCounts={list.statusCounts} collections={list.collections} />
-      <section aria-label={t('title')} className="@container rounded-lg border bg-card p-2 pb-3">
+      <section className="@container rounded-lg border bg-card p-2 pb-3">
         {list.rows.length > 0 ? (
           <>
             <ProductsTable rows={list.rows.map(row => toProductRowView(row, locale, timeZone))} query={query} />

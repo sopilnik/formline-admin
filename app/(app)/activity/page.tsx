@@ -52,7 +52,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
         </p>
       </div>
       <ActivityFilters query={query} members={log.members} />
-      <section aria-label={t('title')} className="@container rounded-lg border bg-card p-2 pb-3">
+      <section className="@container rounded-lg border bg-card p-2 pb-3">
         {entries.length > 0 ? (
           <>
             <ActivityTable entries={entries} />

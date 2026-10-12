@@ -4,8 +4,10 @@ import { ArrowDown, ArrowUp } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useEffect, useOptimistic, useRef, useState, useTransition } from 'react'
+import { ROW_LINK } from '@/components/app/row-link'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
+import { cn } from '@/lib/utils'
 import { moveCollectionAction } from '@/server/actions/collections'
 
 export type CollectionItem = { id: string; slug: string; name: string; description: string; products: number }
@@ -63,7 +65,7 @@ export function CollectionsList({ rows, canWrite }: { rows: CollectionItem[]; ca
               <Link
                 href={`/collections/${row.slug}`}
                 prefetch={false}
-                className="w-fit font-medium underline decoration-border-strong underline-offset-3 group-hover/row:decoration-current after:absolute after:inset-0 focus-visible:decoration-current"
+                className={cn(ROW_LINK, 'w-fit font-medium')}
               >
                 {row.name}
               </Link>

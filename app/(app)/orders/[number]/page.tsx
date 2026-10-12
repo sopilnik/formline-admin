@@ -1,6 +1,5 @@
 import { ArrowLeft } from 'lucide-react'
 import type { Metadata } from 'next'
-import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { cache } from 'react'
@@ -8,8 +7,8 @@ import { getLocale, getTranslations } from 'next-intl/server'
 import { OrderNoteForm } from '@/components/orders/order-note-form'
 import { OrderStatusControl } from '@/components/orders/order-status-control'
 import { SourceLabel } from '@/components/orders/source-label'
+import { ProductThumb } from '@/components/products/product-thumb'
 import { formatDateTime, formatMoney } from '@/lib/intl'
-import { thumbSrc } from '@/lib/thumbs'
 import { cn } from '@/lib/utils'
 import { requireSession } from '@/server/auth/sessions'
 import { authorize } from '@/server/authz/authorize'
@@ -78,7 +77,7 @@ export default async function OrderPage({ params }: Params) {
         <div className="flex min-w-0 flex-col gap-5">
           <section aria-labelledby="items-title" className={cn(CARD, '@container')}>
             <h2 id="items-title" className={CARD_TITLE}>{t('detail.items')}</h2>
-            <table aria-labelledby="items-title" className="w-full border-separate border-spacing-0 text-[13px] tabular-nums">
+            <table className="w-full border-separate border-spacing-0 text-[13px] tabular-nums">
               <thead>
                 <tr className="text-muted-foreground">
                   <th scope="col" className="h-9 border-b pr-3 text-left font-medium">{t('detail.item')}</th>
@@ -91,11 +90,7 @@ export default async function OrderPage({ params }: Params) {
                   <tr key={line.id}>
                     <td className="border-b py-2.5 pr-3">
                       <div className="flex items-center gap-3">
-                        {line.product?.imageSrc ? (
-                          <Image src={thumbSrc(line.product.imageSrc)} alt="" width={30} height={42} unoptimized className="h-[42px] w-[30px] shrink-0 rounded-[3px] object-cover shadow-[0_0_0_1px_var(--border)]" />
-                        ) : (
-                          <span aria-hidden className="h-[42px] w-[30px] shrink-0 rounded-[3px] bg-muted" />
-                        )}
+                        <ProductThumb src={line.product?.imageSrc ?? null} />
                         <span className="min-w-0 flex-1">
                           {line.product ? (
                             <Link href={`/products/${line.product.slug}`} prefetch={false} className="font-medium underline decoration-border-strong underline-offset-3 hover:decoration-current">

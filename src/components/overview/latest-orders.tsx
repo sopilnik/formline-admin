@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { ORDER_LINK } from '@/components/orders/row-link'
+import { ROW_LINK } from '@/components/app/row-link'
 import { StatusBadge } from '@/components/orders/status-badge'
 import type { OrderRowView } from '@/lib/orders/view'
 import { cn } from '@/lib/utils'
@@ -36,7 +36,7 @@ export function LatestOrders({ rows }: { rows: OrderRowView[] }) {
           <tbody>
             {rows.map(row => (
               <tr key={row.id} className="group/row relative hover:bg-secondary">
-                <td className={cn(TD, 'tabular-nums')}><Link href={row.href} prefetch={false} className={ORDER_LINK}>#{row.number}</Link></td>
+                <td className={cn(TD, 'tabular-nums')}><Link href={row.href} prefetch={false} className={cn(ROW_LINK, 'font-semibold')}>#{row.number}</Link></td>
                 <td className={cn(TD, 'whitespace-nowrap tabular-nums')}>{row.placed}</td>
                 <td className={cn(TD, 'max-w-48 truncate')}>{row.customerName}</td>
                 <td className={cn(TD, 'text-center')}><StatusBadge status={row.status} /></td>
@@ -50,7 +50,7 @@ export function LatestOrders({ rows }: { rows: OrderRowView[] }) {
         {rows.map(row => (
           <li key={row.id} className="group/row relative grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-0.5 border-b py-2.5 last:border-b-0 hover:bg-secondary">
             <div className="flex min-w-0 items-baseline gap-2 text-[13px]">
-              <Link href={row.href} prefetch={false} className={cn(ORDER_LINK, 'tabular-nums')}>#{row.number}</Link>
+              <Link href={row.href} prefetch={false} className={cn(ROW_LINK, 'font-semibold tabular-nums')}>#{row.number}</Link>
               <span className="truncate">{row.customerName}</span>
             </div>
             <div className="row-span-2 flex flex-col items-end gap-1">
