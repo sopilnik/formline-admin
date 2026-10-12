@@ -7,6 +7,9 @@ import { customers } from '@/server/db/schema'
 import { withWorkspace } from '@/server/db/with-workspace'
 import { pseudonymFor } from '@/server/stripe/pseudonym'
 
+/** How long after the panel first saw a store customer they become their pseudonym; fa.pseudonymise_customer checks the same. */
+export const PSEUDONYMISE_AFTER_DAYS = 30
+
 /**
  * The daily job's part of spec §7.4: an owner-workspace customer becomes their pseudonym 30 days after the panel first saw
  * them — name, email and place, and the name in their "New order" notifications. Orders and amounts stay. Returns how
@@ -17,7 +20,7 @@ export async function pseudonymiseOldCustomers(pseudonymKey: string, pool: Pool 
   const due = await withWorkspace({ workspaceId, userId: null, role: 'system' }, tx => tx
     .select({ id: customers.id, email: customers.email })
     .from(customers)
-    .where(and(eq(customers.workspaceId, workspaceId), isNull(customers.pseudonymisedAt), lte(customers.createdAt, sql`now() - interval '30 days'`))), pool)
+    .where(and(eq(customers.workspaceId, workspaceId), isNull(customers.pseudonymisedAt), lte(customers.createdAt, sql`now() - make_interval(days => ${PSEUDONYMISE_AFTER_DAYS})`))), pool)
   let changed = 0
   for (const customer of due) {
     const person = pseudonymFor(customer.email, pseudonymKey)

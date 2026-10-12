@@ -1,8 +1,8 @@
 import 'server-only'
 import { and, asc, count, eq, inArray, ne } from 'drizzle-orm'
 import type { ProductStatus } from '@/lib/products/status'
+import type { ImageRef } from '@/lib/products/view'
 import { lockCap, refuseTaken } from '@/server/dal/concurrency'
-import type { ImageRef } from '@/server/dal/products'
 import { collections, images, products } from '@/server/db/schema'
 import type { Tx } from '@/server/db/with-workspace'
 

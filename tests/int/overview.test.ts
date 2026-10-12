@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { bucketSums } from '@/lib/overview/kpi'
 import { periodPlan, PERIODS, type Range } from '@/lib/periods'
 import { generateToken, hashToken } from '@/server/auth/tokens'
-import { attentionCounts, collectionRevenue, revenuePoints, revenueTotals } from '@/server/dal/overview'
+import { attentionCounts, collectionRevenue, lowStock, revenuePoints, revenueTotals } from '@/server/dal/overview'
 import { withWorkspace, type WorkspaceContext } from '@/server/db/with-workspace'
 import { adminPool, appPool, closeAll } from './db'
 
@@ -84,5 +84,15 @@ describe('attentionCounts', () => {
       "select count(*) as n from fa.product_variants v join fa.products p on p.workspace_id = v.workspace_id and p.id = v.product_id where v.workspace_id = $1 and v.stock = 0 and p.status <> 'archived'",
       [ctx.workspaceId]))
     expect(counts.toProcess).toBeGreaterThanOrEqual(12)
+  })
+})
+
+describe('lowStock', () => {
+  it('lists the lowest stock first and the names in the Unicode order, as the other lists', async () => {
+    // Every variant out of stock, and one poster named in lower case: the byte order would put it after every capital.
+    await admin.query('update fa.product_variants set stock = 0 where workspace_id = $1', [ctx.workspaceId])
+    await admin.query("update fa.products set name = 'aardvark' where workspace_id = $1 and slug = 'hush'", [ctx.workspaceId])
+    const { rows } = await read(tx => lowStock(tx, ctx.workspaceId))
+    expect(rows[0]!.productName).toBe('aardvark')
   })
 })

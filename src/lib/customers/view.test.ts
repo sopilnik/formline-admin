@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { customerHref, locationOf, toCustomerRowView } from '@/lib/customers/view'
-import type { CustomerRow } from '@/server/dal/customers'
+import { customerHref, locationOf, toCustomerRowView, type CustomerRow } from '@/lib/customers/view'
 
 const row: CustomerRow = {
   id: 'c1', name: 'Anna Keller', email: 'anna.keller@example.com', city: 'Berlin', country: 'DE',

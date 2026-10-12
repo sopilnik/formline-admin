@@ -1,5 +1,6 @@
 import 'server-only'
 import { and, count, eq, isNotNull, max, sql } from 'drizzle-orm'
+import { compareNames } from '@/lib/intl'
 import type { AssignableRole } from '@/lib/team'
 import { ROLE_ORDER } from '@/server/dal/users'
 import { activityLog, passkeys, users } from '@/server/db/schema'
@@ -36,7 +37,7 @@ export async function listTeam(tx: Tx, workspaceId: string): Promise<TeamMember[
       lastActiveAt: seenOf.get(row.id) ?? null,
     }))
     .sort((a, b) => Number(a.deactivatedAt !== null) - Number(b.deactivatedAt !== null)
-      || ROLE_ORDER[a.role] - ROLE_ORDER[b.role] || a.name.localeCompare(b.name))
+      || ROLE_ORDER[a.role] - ROLE_ORDER[b.role] || compareNames(a.name, b.name))
 }
 
 export type MemberChange = { ok: true; name: string; from: Role; changed: boolean } | { ok: false; reason: 'not_found' | 'not_allowed' }

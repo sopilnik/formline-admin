@@ -39,3 +39,6 @@ export function formatDay(date: Date, locale: Locale, timeZone: string): string 
 export function formatDayRange(start: Date, endInclusive: Date, locale: Locale, timeZone: string): string {
   return new Intl.DateTimeFormat(INTL_LOCALE[locale], { day: 'numeric', month: 'short', timeZone }).formatRange(start, endInclusive)
 }
+
+/** Compares names in the Unicode root order, as Postgres's "unicode" collation sorts them: a list sorted here agrees with one a query sorted. */
+export const compareNames = new Intl.Collator('und').compare

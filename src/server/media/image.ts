@@ -57,6 +57,8 @@ export function processImage(bytes: Buffer): Promise<Processed | ImageProblem> {
       const thumb = await input.clone().resize({ width: THUMB.width, height: THUMB.height, fit: 'cover' }).webp({ quality: THUMB.quality }).toBuffer()
       return { bytes: data, width: info.width, height: info.height, thumb }
     } catch (error) {
+      // libvips says "Input image exceeds pixel limit" past limitInputPixels. The header check above already refuses every
+      // such image, so no test reaches this line; it stays so a picture whose header understates it is still "too large".
       return error instanceof Error && /pixel limit/i.test(error.message) ? 'pixels' : 'decode'
     }
   })

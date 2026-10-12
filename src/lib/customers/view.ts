@@ -1,6 +1,15 @@
 import { INTL_LOCALE, type Locale } from '@/i18n/locale'
 import { formatDate, formatMoney, formatNumber } from '@/lib/intl'
-import type { CustomerRow } from '@/server/dal/customers'
+
+/** One row of the customers list as the database gives it. */
+export type CustomerRow = {
+  id: string; name: string; email: string; city: string | null; country: string | null
+  /** Every order of the customer, whatever its status. */
+  orders: number
+  /** The orders that count as revenue (paid, processing, shipped, delivered), as the overview counts them. */
+  spentCents: number
+  lastOrderAt: Date | null
+}
 
 /** One row of the customers list as the components receive it: strings formatted on the server, in the store's zone. */
 export type CustomerRowView = {

@@ -1,21 +1,13 @@
 import 'server-only'
 import { and, asc, count, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm'
 import type { CustomersQuery } from '@/lib/customers/query'
+import type { CustomerRow } from '@/lib/customers/view'
 import type { OrderStatus } from '@/lib/orders/status'
 import { pageCount } from '@/lib/pagination'
 import { orderCustomer, revenueStatuses, unicodeName } from '@/server/dal/sql'
 import { containsPattern } from '@/server/db/like'
 import { customers, orders } from '@/server/db/schema'
 import type { Tx } from '@/server/db/with-workspace'
-
-export type CustomerRow = {
-  id: string; name: string; email: string; city: string | null; country: string | null
-  /** Every order of the customer, whatever its status. */
-  orders: number
-  /** The orders that count as revenue (paid, processing, shipped, delivered), as the overview counts them. */
-  spentCents: number
-  lastOrderAt: Date | null
-}
 
 export type CustomersList = {
   rows: CustomerRow[]

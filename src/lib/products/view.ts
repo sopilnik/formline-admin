@@ -2,7 +2,22 @@ import type { Locale } from '@/i18n/locale'
 import { imageSrc } from '@/lib/catalog'
 import { formatDate, formatMoney, formatNumber } from '@/lib/intl'
 import type { ProductStatus } from '@/lib/products/status'
-import type { ProductRow } from '@/server/dal/products'
+
+export type ImageRef = { id: string; storagePath: string; source: 'static' | 'upload' }
+export type CollectionOption = { id: string; slug: string; name: string }
+
+/** One row of the products list as the database gives it. */
+export type ProductRow = {
+  id: string; slug: string; name: string; status: ProductStatus
+  collection: CollectionOption
+  image: ImageRef | null
+  /** The cheapest variant; null for a product without variants. */
+  priceFromCents: number | null
+  stock: number; variants: number
+  /** Variants with no stock left, and variants at or below their threshold (the sold-out ones included). */
+  soldOut: number; low: number
+  updatedAt: Date
+}
 
 /** One row of the products list as the components receive it: strings formatted on the server, in the store's zone. */
 export type ProductRowView = {

@@ -1,6 +1,7 @@
 import 'server-only'
 import { and, eq, isNull } from 'drizzle-orm'
 import type { Locale } from '@/i18n/locale'
+import { compareNames } from '@/lib/intl'
 import type { Theme } from '@/lib/theme'
 import { users } from '@/server/db/schema'
 import type { Role, Tx } from '@/server/db/with-workspace'
@@ -50,7 +51,7 @@ export async function listMembers(tx: Tx, workspaceId: string): Promise<Member[]
     .from(users).where(and(eq(users.workspaceId, workspaceId), isNull(users.deactivatedAt)))
   return rows
     .map(r => ({ id: r.id, name: r.name, role: r.role, hasTotp: r.totpSecretEnc !== null }))
-    .sort((a, b) => ROLE_ORDER[a.role] - ROLE_ORDER[b.role] || a.name.localeCompare(b.name))
+    .sort((a, b) => ROLE_ORDER[a.role] - ROLE_ORDER[b.role] || compareNames(a.name, b.name))
 }
 
 export type MemberFactor = { id: string; role: Role; totpSecretEnc: string | null; totpLastStep: number | null; deactivatedAt: Date | null }

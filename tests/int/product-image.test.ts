@@ -1,8 +1,9 @@
 import { createHash, randomUUID } from 'node:crypto'
 import type pg from 'pg'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { generateToken, hashToken } from '@/server/auth/tokens'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import type { Actor } from '@/server/actor'
+import { generateToken, hashToken } from '@/server/auth/tokens'
+import { log } from '@/server/log'
 import type { Processed } from '@/server/media/image'
 import { mediaPath, thumbPath } from '@/server/media/storage'
 import { MEDIA_CAP, removeProductImage, storeProductImage } from '@/server/media/upload'
@@ -88,7 +89,7 @@ describe('storeProductImage', () => {
     expect(storage.files.size).toBe(0)
   })
 
-  it('takes the image back out of storage when storage refuses its small copy', async () => {
+  it('takes the image back out of storage when storage refuses its small copy, and a failed cleanup never hides why', async () => {
     const owner = await sandbox()
     const product = await productOf(owner, 'hush')
     const storage = memoryStorage()
@@ -99,6 +100,27 @@ describe('storeProductImage', () => {
     }
     await expect(storeProductImage(owner, product.id, webp(), storage, app)).rejects.toThrow('refused')
     expect(storage.files.size).toBe(0)
+
+    // Storage refuses the cleanup as well, and the database refuses to queue it: the error is still the small copy's.
+    storage.delete = async path => { throw new Error(`cannot delete ${path}`) }
+    const refusing = new Proxy(app, {
+      get(target, key, receiver) {
+        if (key !== 'query') return Reflect.get(target, key, receiver)
+        return (text: unknown, ...rest: unknown[]) => String(text).includes('pending_media_deletions')
+          ? Promise.reject(new Error('queue refused'))
+          : (target.query as (...args: unknown[]) => Promise<unknown>).call(target, text, ...rest)
+      },
+    })
+    const warn = vi.spyOn(log, 'warn')
+    const error = vi.spyOn(log, 'error')
+    try {
+      await expect(storeProductImage(owner, product.id, webp(), storage, refusing)).rejects.toThrow(/refused: .*\.thumb\.webp/)
+      expect(warn).toHaveBeenCalledWith(expect.objectContaining({ event: 'media.discard_failed' }))
+      expect(error).toHaveBeenCalledWith(expect.objectContaining({ event: 'media.discard_unqueued' }))
+    } finally {
+      warn.mockRestore()
+      error.mockRestore()
+    }
   })
 
   it('keeps each workspace within 30 uploads and 20 MB, not counting the image being replaced', async () => {

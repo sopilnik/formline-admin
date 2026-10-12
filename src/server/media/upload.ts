@@ -8,6 +8,7 @@ import { releaseImage } from '@/server/dal/images'
 import { getPool } from '@/server/db/pool'
 import { images, products } from '@/server/db/schema'
 import { withWorkspace, workspaceContext, type Tx } from '@/server/db/with-workspace'
+import { log } from '@/server/log'
 import type { Processed } from '@/server/media/image'
 import { mediaPath, thumbPath, type MediaStorage } from '@/server/media/storage'
 
@@ -43,9 +44,16 @@ export async function storeProductImage(actor: Actor, productId: string, image: 
   const path = mediaPath(actor.workspaceId, imageId)
   await storage.put(path, image.bytes)
 
+  // The copies of a save that did not happen. A storage failure is logged and queued for the daily job, a failed queue
+  // is logged too, and nothing here throws: the cleanup never replaces the answer or the error the save ended in.
   const discard = async (): Promise<void> => {
-    await Promise.all([storage.delete(path), storage.delete(thumbPath(path))])
-      .catch(() => pool.query('insert into fa.pending_media_deletions (storage_path) values ($1) on conflict do nothing', [path]))
+    try {
+      await Promise.all([storage.delete(path), storage.delete(thumbPath(path))])
+    } catch (error) {
+      log.warn({ event: 'media.discard_failed', path, err: error })
+      await pool.query('insert into fa.pending_media_deletions (storage_path) values ($1) on conflict do nothing', [path])
+        .catch(queueError => log.error({ event: 'media.discard_unqueued', path, err: queueError }))
+    }
   }
 
   try {

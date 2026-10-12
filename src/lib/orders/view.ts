@@ -1,7 +1,12 @@
 import type { Locale } from '@/i18n/locale'
 import { formatDateTime, formatMoney } from '@/lib/intl'
 import type { OrderStatus } from '@/lib/orders/status'
-import type { OrderRow } from '@/server/dal/orders'
+
+/** One row of the orders list as the database gives it. */
+export type OrderRow = {
+  id: string; number: number; placedAt: Date; customerName: string; customerEmail: string
+  items: number; totalCents: number; status: OrderStatus; source: 'seed' | 'stripe'
+}
 
 /** One row of the list as the client components receive it: strings formatted on the server, in the store's zone. */
 export type OrderRowView = {

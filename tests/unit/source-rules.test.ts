@@ -6,8 +6,14 @@ const sources = ['src', 'app'].flatMap(dir => (readdirSync(new URL(dir, root), {
   .filter(name => /\.tsx?$/.test(name))
   .map(name => `${dir}/${name}`))
 
+const lib = sources.filter(name => name.startsWith('src/lib/'))
+
 describe('source files', () => {
   it.each(sources)('%s writes no invisible character literally', name => {
     expect(readFileSync(new URL(name, root), 'utf8')).not.toMatch(/[\u0300-\u036f\u200b-\u200f\u2060\ufeff]/)
+  })
+
+  it.each(lib)('%s takes nothing from the server layer', name => {
+    expect(readFileSync(new URL(name, root), 'utf8')).not.toMatch(/from '@\/server\//)
   })
 })

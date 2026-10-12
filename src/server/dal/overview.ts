@@ -104,13 +104,14 @@ export async function lowStock(tx: Tx, workspaceId: string, limit = 5): Promise<
       from fa.product_variants v
       join fa.products p on p.workspace_id = v.workspace_id and p.id = v.product_id
      where ${low}`)
+  // Three tables, beside the two-table rule above: the image is joined by its primary key, which adds no row estimate.
   const { rows } = await tx.execute<{ id: string; slug: string; name: string; size: string; palette: string; stock: number; image_id: string | null; storage_path: string | null; source: 'static' | 'upload' | null }>(sql`
     select v.id, p.slug, p.name, v.size, v.palette, v.stock, i.id as image_id, i.storage_path, i.source
       from fa.product_variants v
       join fa.products p on p.workspace_id = v.workspace_id and p.id = v.product_id
       left join fa.images i on i.workspace_id = p.workspace_id and i.id = p.image_id
      where ${low}
-     order by v.stock, p.name, v.sku
+     order by v.stock, p.name collate "unicode", v.sku
      limit ${limit}`)
   return {
     total: Number(counted.rows[0]!.n),

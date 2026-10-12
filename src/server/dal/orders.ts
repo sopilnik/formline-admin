@@ -4,17 +4,13 @@ import { z } from 'zod'
 import { imageSrc } from '@/lib/catalog'
 import type { OrdersQuery } from '@/lib/orders/query'
 import { canTransition, isOrderStatus, ORDER_STATUSES, returnsStock, type OrderStatus } from '@/lib/orders/status'
+import type { OrderRow } from '@/lib/orders/view'
 import { pageCount } from '@/lib/pagination'
 import { presetRange } from '@/lib/periods'
 import { orderCustomer } from '@/server/dal/sql'
 import { containsPattern } from '@/server/db/like'
 import { customers, images, orderEvents, orderLines, orders, products, productVariants, users } from '@/server/db/schema'
 import type { Tx } from '@/server/db/with-workspace'
-
-export type OrderRow = {
-  id: string; number: number; placedAt: Date; customerName: string; customerEmail: string
-  items: number; totalCents: number; status: OrderStatus; source: 'seed' | 'stripe'
-}
 
 export type OrdersPage = { rows: OrderRow[]; filtered: number; total: number; statusCounts: Record<OrderStatus, number>; page: number; pages: number }
 

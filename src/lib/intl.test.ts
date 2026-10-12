@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatDate, formatDateTime, formatDay, formatDayRange, formatMoney, formatNumber, formatPercent, formatShare } from '@/lib/intl'
+import { compareNames, formatDate, formatDateTime, formatDay, formatDayRange, formatMoney, formatNumber, formatPercent, formatShare } from '@/lib/intl'
 
 describe('formatDate', () => {
   it('writes the calendar date of the store time zone in the interface language', () => {
@@ -44,5 +44,11 @@ describe('money, numbers and dates (spec §11)', () => {
     expect(formatShare(0.36, 'en')).toBe('36%')
     expect(formatShare(0.124, 'en', 1)).toBe('12.4%')
     expect(formatShare(0.36, 'ru')).toBe('36 %')
+  })
+})
+
+describe('compareNames', () => {
+  it('sorts names in the Unicode root order, letter case and accents after the letter', () => {
+    expect(['Zebra', 'éclair', 'Apple', 'apple'].sort(compareNames)).toEqual(['apple', 'Apple', 'éclair', 'Zebra'])
   })
 })

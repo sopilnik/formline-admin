@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { productHref, toProductRowView } from '@/lib/products/view'
-import type { ProductRow } from '@/server/dal/products'
+import { productHref, toProductRowView, type ProductRow } from '@/lib/products/view'
 
 const row: ProductRow = {
   id: 'p1', slug: 'far-orbit', name: 'Far Orbit', status: 'published',

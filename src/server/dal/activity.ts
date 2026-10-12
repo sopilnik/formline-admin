@@ -3,6 +3,7 @@ import { and, count, desc, eq, gte, inArray, isNull, lt, type SQL } from 'drizzl
 import type { ActivityAction } from '@/lib/activity/actions'
 import type { Lookups } from '@/lib/activity/describe'
 import { SYSTEM_ACTOR, type ActivityQuery } from '@/lib/activity/query'
+import { compareNames } from '@/lib/intl'
 import { pageCount } from '@/lib/pagination'
 import { UUID_PATTERN } from '@/lib/payload'
 import { presetRange } from '@/lib/periods'
@@ -94,7 +95,7 @@ export async function listActivity(tx: Tx, workspaceId: string, query: ActivityQ
     rows,
     total: totalRow?.n ?? 0, filtered,
     page: query.page, pages: pageCount(filtered, query.size),
-    members: members.sort((a, b) => a.name.localeCompare(b.name)),
+    members: members.sort((a, b) => compareNames(a.name, b.name)),
     lookups: {
       users: new Map(members.map(m => [m.id, m.name])),
       orders: new Map(orderRows.map(o => [o.id, o.number])),

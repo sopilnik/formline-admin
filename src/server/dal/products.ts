@@ -5,27 +5,13 @@ import { pageCount } from '@/lib/pagination'
 import { SIZE_IDS, SIZE_SURCHARGE_CENTS, variantPriceCents, type SizeId } from '@/lib/products/price'
 import type { ProductsQuery } from '@/lib/products/query'
 import { canDeleteProduct, canTransitionProduct, PRODUCT_STATUSES, type ProductStatus } from '@/lib/products/status'
+import type { CollectionOption, ImageRef, ProductRow } from '@/lib/products/view'
 import { lockCap, refuseTaken } from '@/server/dal/concurrency'
 import { releaseImage } from '@/server/dal/images'
 import { unicodeName } from '@/server/dal/sql'
 import { containsPattern } from '@/server/db/like'
 import { collections, images, orderLines, products, productVariants } from '@/server/db/schema'
 import type { Tx } from '@/server/db/with-workspace'
-
-export type ImageRef = { id: string; storagePath: string; source: 'static' | 'upload' }
-export type CollectionOption = { id: string; slug: string; name: string }
-
-export type ProductRow = {
-  id: string; slug: string; name: string; status: ProductStatus
-  collection: CollectionOption
-  image: ImageRef | null
-  /** The cheapest variant; null for a product without variants. */
-  priceFromCents: number | null
-  stock: number; variants: number
-  /** Variants with no stock left, and variants at or below their threshold (the sold-out ones included). */
-  soldOut: number; low: number
-  updatedAt: Date
-}
 
 export type ProductsList = {
   rows: ProductRow[]
