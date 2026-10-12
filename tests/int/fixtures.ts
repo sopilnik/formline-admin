@@ -121,3 +121,14 @@ export async function insertSession(
 
   return { id, workspaceId, workspaceKind: row.kind, userId, role: row.role, secondFactorVerified: true, reauthAt, expiresAt: row.expires_at }
 }
+
+export type HandOrder = { number: number; customerId: string; status: string; subtotalCents: number; placedAt: Date }
+
+/** An order written straight into the table, with standard shipping of 900 cents on top: a test's own row of known values. */
+export async function placeOrder(admin: pg.Pool, workspaceId: string, order: HandOrder): Promise<string> {
+  const { rows } = await admin.query<{ id: string }>(
+    `insert into fa.orders (workspace_id, number, customer_id, status, source, delivery, subtotal_cents, shipping_cents, total_cents, placed_at)
+     values ($1, $2, $3, $4, 'seed', 'standard', $5, 900, $5 + 900, $6) returning id`,
+    [workspaceId, order.number, order.customerId, order.status, order.subtotalCents, order.placedAt])
+  return rows[0]!.id
+}

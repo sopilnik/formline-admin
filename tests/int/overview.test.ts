@@ -5,7 +5,7 @@ import { periodPlan, PERIODS, type Range } from '@/lib/periods'
 import { attentionCounts, collectionRevenue, lowStock, revenuePoints, revenueTotals } from '@/server/dal/overview'
 import { withWorkspace, type WorkspaceContext } from '@/server/db/with-workspace'
 import { adminPool, appPool, closeAll } from './db'
-import { createSandbox } from './fixtures'
+import { createSandbox, placeOrder } from './fixtures'
 
 let admin: pg.Pool
 let app: pg.Pool
@@ -25,21 +25,33 @@ afterAll(closeAll)
 const read = <T>(fn: Parameters<typeof withWorkspace<T>>[1]) => withWorkspace(ctx, fn, app)
 const one = async (text: string, params: unknown[]) => Number((await admin.query<{ n: string }>(text, params)).rows[0]!.n)
 
+/** A sandbox of its own whose seed orders all lie two years back, delivered: a test adds the rows it counts. */
+async function cleared(): Promise<WorkspaceContext> {
+  const { workspaceId, userId } = await createSandbox(app)
+  await admin.query("update fa.orders set placed_at = placed_at - interval '2 years', status = 'delivered' where workspace_id = $1", [workspaceId])
+  return { workspaceId, userId, role: 'viewer' }
+}
+
+const newCustomer = async (workspaceId: string, email: string) => (await admin.query<{ id: string }>(
+  "insert into fa.customers (workspace_id, email, name) values ($1, $2, 'Hand Built') returning id", [workspaceId, email])).rows[0]!.id
+
 describe('revenueTotals', () => {
-  it('follows the spec definitions for the current and the previous 30 days', async () => {
-    const plan = periodPlan('30d', now, tz)
-    for (const range of [plan.current, plan.previous]) {
-      const totals = await read(tx => revenueTotals(tx, ctx.workspaceId, range))
-      const inRange = `o.workspace_id = $1 and o.status in ${REVENUE} and o.placed_at >= $2 and o.placed_at < $3`
-      expect(totals.revenueCents).toBe(await one(`select coalesce(sum(o.total_cents), 0) as n from fa.orders o where ${inRange}`, [ctx.workspaceId, range.start, range.end]))
-      expect(totals.orders).toBe(await one(`select count(*) as n from fa.orders o where ${inRange}`, [ctx.workspaceId, range.start, range.end]))
-      // Written differently on purpose: a customer with a revenue order in the range and none before it.
-      expect(totals.newCustomers).toBe(await one(
-        `select count(distinct o.customer_id) as n from fa.orders o where ${inRange}
-           and not exists (select 1 from fa.orders e where e.workspace_id = o.workspace_id and e.customer_id = o.customer_id
-                            and e.status in ${REVENUE} and e.placed_at < $2)`, [ctx.workspaceId, range.start, range.end]))
-      expect(totals.orders).toBeGreaterThan(0)
-    }
+  it('counts from the range start up to its end, leaves cancelled and refunded orders out, and calls a buyer new once', async () => {
+    const built = await cleared()
+    const range = periodPlan('30d', now, tz).current
+    const returning = await newCustomer(built.workspaceId, 'returning@hand.test')
+    const first = await newCustomer(built.workspaceId, 'first@hand.test')
+    const place = (number: number, customerId: string, status: string, subtotalCents: number, placedAt: Date) =>
+      placeOrder(admin, built.workspaceId, { number, customerId, status, subtotalCents, placedAt })
+
+    await place(90001, returning, 'paid', 2000, new Date(range.start.getTime() - 1))
+    await place(90002, returning, 'paid', 2900, range.start)
+    await place(90003, first, 'delivered', 4100, new Date(range.end.getTime() - 1))
+    await place(90004, first, 'cancelled', 1000, range.start)
+    await place(90005, first, 'refunded', 1000, range.start)
+    await place(90006, first, 'paid', 1000, range.end)
+
+    expect(await withWorkspace(built, tx => revenueTotals(tx, built.workspaceId, range), app)).toEqual({ revenueCents: 3800 + 5000, orders: 2, newCustomers: 1 })
   })
 })
 
@@ -72,14 +84,18 @@ describe('collectionRevenue', () => {
 })
 
 describe('attentionCounts', () => {
-  it('counts the orders to process, those in processing and the sold-out variants', async () => {
-    const counts = await read(tx => attentionCounts(tx, ctx.workspaceId))
-    expect(counts.toProcess).toBe(await one("select count(*) as n from fa.orders where workspace_id = $1 and status = 'paid'", [ctx.workspaceId]))
-    expect(counts.processing).toBe(await one("select count(*) as n from fa.orders where workspace_id = $1 and status = 'processing'", [ctx.workspaceId]))
-    expect(counts.soldOut).toBe(await one(
-      "select count(*) as n from fa.product_variants v join fa.products p on p.workspace_id = v.workspace_id and p.id = v.product_id where v.workspace_id = $1 and v.stock = 0 and p.status <> 'archived'",
-      [ctx.workspaceId]))
-    expect(counts.toProcess).toBeGreaterThanOrEqual(12)
+  it('counts the orders to process and in processing, and the sold-out variants of the products still sold', async () => {
+    const built = await cleared()
+    const ws = built.workspaceId
+    await admin.query("update fa.orders set status = 'paid' where workspace_id = $1 and number in (select number from fa.orders where workspace_id = $1 order by number limit 2)", [ws])
+    await admin.query("update fa.orders set status = 'processing' where workspace_id = $1 and number = (select max(number) from fa.orders where workspace_id = $1)", [ws])
+    await admin.query('update fa.product_variants set stock = 5 where workspace_id = $1', [ws])
+    // One sold-out variant of a product on sale counts; the sold-out variants of an archived product do not.
+    await admin.query("update fa.product_variants set stock = 0 where workspace_id = $1 and sku = 'far-orbit-a2-ink'", [ws])
+    await admin.query("update fa.products set status = 'archived' where workspace_id = $1 and slug = 'hush'", [ws])
+    await admin.query("update fa.product_variants v set stock = 0 from fa.products p where p.workspace_id = v.workspace_id and p.id = v.product_id and v.workspace_id = $1 and p.slug = 'hush'", [ws])
+
+    expect(await withWorkspace(built, tx => attentionCounts(tx, ws), app)).toEqual({ toProcess: 2, processing: 1, soldOut: 1 })
   })
 })
 

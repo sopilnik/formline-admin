@@ -9,14 +9,14 @@ import { LIMITS, SECOND_FACTOR_LOCK_SECONDS } from '@/server/ratelimit/limits'
 import { switchUser } from '@/server/sandbox/sign-in-as'
 import { roomInWindow } from '../windows'
 import { adminPool, appPool, closeAll } from './db'
-import { asSchemaOwner, createSandbox, memberIds } from './fixtures'
+import { asSchemaOwner, createSandbox, memberIds, type MemberRole } from './fixtures'
 
 let admin: pg.Pool
 let app: pg.Pool
 
 const meta = { userAgentSummary: 'Vitest', ipHash: null, preferences: { locale: 'en' as const, theme: 'system' as const } }
 
-async function enter(): Promise<{ session: Session; token: string; users: Record<string, string> }> {
+async function enter(): Promise<{ session: Session; token: string; users: Record<MemberRole, string> }> {
   const { token } = await createSandbox(app)
   const session = (await validateSessionToken(token, app))!
   return { session, token, users: await memberIds(admin, session.workspaceId) }
@@ -138,8 +138,12 @@ describe('switchUser', () => {
   })
 
   it('is not for the owner workspace', async () => {
-    const { session } = await enter()
+    const { session, token, users } = await enter()
     const ownerLike: Session = { ...session, workspaceKind: 'owner' }
-    expect(await switchUser(ownerLike, { targetUserId: randomUUID(), code: '', ...meta }, { pool: app })).toMatchObject({ ok: false, error: 'generic' })
+    // A real member without an authenticator: only the workspace guard stands between the caller and the switch.
+    expect(await switchUser(ownerLike, { targetUserId: users.admin, code: '', ...meta }, { pool: app })).toMatchObject({ ok: false, error: 'generic' })
+    expect(await validateSessionToken(token, app)).toMatchObject({ userId: session.userId })
+    const logged = await admin.query("select 1 from fa.activity_log where workspace_id = $1 and action = 'sandbox.switched_user'", [session.workspaceId])
+    expect(logged.rowCount).toBe(0)
   })
 })

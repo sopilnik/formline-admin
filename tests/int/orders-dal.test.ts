@@ -2,12 +2,11 @@ import { randomUUID } from 'node:crypto'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { DEFAULT_ORDERS_QUERY, type OrdersQuery } from '@/lib/orders/query'
-import { presetRange, startOfDay } from '@/lib/periods'
 import { changeOrderStatus, listOrders } from '@/server/dal/orders'
 import { getStoreSettings } from '@/server/dal/settings'
 import { withWorkspace, type WorkspaceContext } from '@/server/db/with-workspace'
 import { adminPool, appPool, closeAll } from './db'
-import { createSandbox } from './fixtures'
+import { createSandbox, placeOrder } from './fixtures'
 
 let admin: pg.Pool
 let app: pg.Pool
@@ -66,13 +65,28 @@ describe('listOrders', () => {
     expect(nobody.pages).toBe(1)
   })
 
-  it('applies the date presets in the store zone and the source filter', async () => {
-    const today = await list({ placed: 'today' })
-    expect(today.filtered).toBe(await countWhere('o.placed_at >= $2', [startOfDay(now, tz)]))
-    const week = presetRange('7d', now, tz)!
-    const sevenDays = await list({ placed: '7d', size: 100 })
-    expect(sevenDays.filtered).toBe(await countWhere('o.placed_at >= $2 and o.placed_at < $3', [week.start, week.end]))
-    expect(sevenDays.rows.every(r => r.placedAt >= week.start && r.placedAt < week.end)).toBe(true)
+  it('starts today and the last seven days at midnight in the store zone', async () => {
+    const { workspaceId, userId } = await createSandbox(app)
+    const built: WorkspaceContext = { workspaceId, userId, role: 'owner' }
+    await admin.query("update fa.orders set placed_at = placed_at - interval '2 years' where workspace_id = $1", [workspaceId])
+    // Both midnights as the database works them out from the same instant, apart from the code under test.
+    const { rows } = await admin.query<{ today: Date; week: Date }>(
+      `select date_trunc('day', $1::timestamptz at time zone $2) at time zone $2 as today,
+              (date_trunc('day', $1::timestamptz at time zone $2) - interval '6 days') at time zone $2 as week`, [now, tz])
+    const { today, week } = rows[0]!
+    const customerId = (await admin.query<{ id: string }>('select id from fa.customers where workspace_id = $1 limit 1', [workspaceId])).rows[0]!.id
+    const before = (date: Date) => new Date(date.getTime() - 1)
+
+    for (const [number, placedAt] of [[90001, today], [90002, before(today)], [90003, week], [90004, before(week)]] as const) {
+      await placeOrder(admin, workspaceId, { number, customerId, status: 'paid', subtotalCents: 1000, placedAt })
+    }
+    const placed = async (preset: OrdersQuery['placed']) => (await list({ placed: preset }, built)).filtered
+
+    expect(await placed('today')).toBe(1)
+    expect(await placed('7d')).toBe(3)
+  })
+
+  it('filters by source', async () => {
     expect((await list({ source: 'stripe' })).filtered).toBe(await countWhere("o.source = 'stripe'"))
     expect((await list({ source: 'seed' })).filtered).toBe(await countWhere("o.source = 'seed'"))
   })

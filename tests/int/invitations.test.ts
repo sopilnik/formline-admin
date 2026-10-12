@@ -118,7 +118,8 @@ describe('acceptInvitation', () => {
     const caller = await sessionOf(owner)
     // A theme the users table refuses fails the member's row, after the acceptance has replaced the visitor's session.
     const refused = { ...meta, preferences: { locale: 'en' as const, theme: 'neon' as Theme } }
-    await expect(acceptInvitation(caller, { token, name: 'Kept Open', ...refused }, app)).rejects.toThrow()
+    const refusal = await acceptInvitation(caller, { token, name: 'Kept Open', ...refused }, app).then(() => '', errorText)
+    expect(refusal).toMatch(/violates check constraint "users_theme_check"/)
     expect((await admin.query('select 1 from fa.sessions where id = $1', [caller.id])).rowCount).toBe(1)
     const invitation = await admin.query<{ accepted: boolean }>(
       "select accepted_at is not null as accepted from fa.invitations where workspace_id = $1 and email = 'kept.open@example.test'", [owner.workspaceId])

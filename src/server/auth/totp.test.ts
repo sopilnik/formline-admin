@@ -76,10 +76,12 @@ describe('TOTP secret encryption', () => {
   it('cannot be moved to another user row or tampered with', () => {
     const sealed = encryptTotpSecret(generateTotpSecret(), binding, ring(`k1:${K1}`))
     const keys = ring(`k1:${K1}`)
-    expect(() => decryptTotpSecret(sealed, { ...binding, userId: binding.workspaceId }, keys)).toThrow()
+    // AES-GCM refuses both: the user row is part of the authenticated data, and the tag covers the ciphertext.
+    expect(() => decryptTotpSecret(sealed, { ...binding, userId: binding.workspaceId }, keys)).toThrow('unable to authenticate data')
     const [id, iv, data, tag] = sealed.split('.')
-    const flipped = `${data!.slice(0, -1)}${data!.endsWith('A') ? 'B' : 'A'}`
-    expect(() => decryptTotpSecret([id, iv, flipped, tag].join('.'), binding, keys)).toThrow()
-    expect(() => decryptTotpSecret(sealed, binding, ring(`k2:${K2}`))).toThrow()
+    // The first character: all its six bits are the ciphertext's, while the last may hold unused ones the decoder refuses first.
+    const flipped = `${data!.startsWith('A') ? 'B' : 'A'}${data!.slice(1)}`
+    expect(() => decryptTotpSecret([id, iv, flipped, tag].join('.'), binding, keys)).toThrow('unable to authenticate data')
+    expect(() => decryptTotpSecret(sealed, binding, ring(`k2:${K2}`))).toThrow('unknown TOTP key id')
   })
 })

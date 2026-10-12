@@ -10,6 +10,7 @@ import { ingestOrder, type IngestResult } from '@/server/stripe/ingest'
 import { pseudonymiseOldCustomers } from '@/server/stripe/personal-data'
 import { pseudonymFor } from '@/server/stripe/pseudonym'
 import { adminPool, appPool, closeAll } from './db'
+import { errorText } from './fixtures'
 import { ensureOwner } from './owner'
 
 let admin: pg.Pool
@@ -266,11 +267,12 @@ describe('the copy in the template', () => {
   })
 
   it('checks every statement against the workspace entered last', async () => {
-    await expect(withWorkspaces(async enter => {
+    const refusal = await withWorkspaces(async enter => {
       await enter({ workspaceId: owner, userId: null, role: 'system' })
       const tx = await enter({ workspaceId: template, userId: null, role: 'system' })
       await tx.insert(customers).values({ workspaceId: owner, email: `stray.${TAG}@ingest.test`, name: 'Stray' })
-    }, app)).rejects.toThrow()
+    }, app).then(() => '', errorText)
+    expect(refusal).toMatch(/row-level security policy for table "customers"/)
     expect((await admin.query('select 1 from fa.customers where email = $1', [`stray.${TAG}@ingest.test`])).rowCount).toBe(0)
   })
 })

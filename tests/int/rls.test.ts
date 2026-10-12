@@ -37,6 +37,8 @@ async function seed(): Promise<Seeded> {
     out.event = await one("insert into fa.order_events (workspace_id, order_id, kind, to_status) values ($1, $2, 'status', 'paid') returning id", [ws, out.order])
     out.activity = await one("insert into fa.activity_log (workspace_id, action) values ($1, 'seed') returning id", [ws])
     out.notification = await one("insert into fa.notifications (workspace_id, kind) values ($1, 'order.new') returning id", [ws])
+    await c.query("insert into fa.notifications (workspace_id, user_id, kind) values ($1, $2, 'order.new')", [ws, users.manager])
+    await c.query('insert into fa.notification_reads (workspace_id, notification_id, user_id) values ($1, $2, $3)', [ws, out.notification, users.manager])
     out.outbox = await one("insert into fa.outbox_emails (workspace_id, to_address, template) values ($1, 'x@example.test', 'invite') returning id", [ws])
     await c.query('insert into fa.store_settings (workspace_id) values ($1)', [ws])
     out.invitation = await one("insert into fa.invitations (workspace_id, email, role, token_hash, invited_by, expires_at) values ($1, 'i@example.test', 'viewer', md5(random()::text) || md5(random()::text), $2, now() + interval '1 day') returning id", [ws, users.admin])
@@ -86,8 +88,25 @@ const ACTORS: Actor[] = ['owner', 'admin', 'manager', 'viewer', 'system']
 const everyTable = ['users', 'sessions', 'passkeys', 'recovery_codes', 'invitations', 'collections', 'images', 'products',
   'product_variants', 'customers', 'workspace_counters', 'orders', 'order_lines', 'order_events', 'activity_log',
   'notifications', 'notification_reads', 'outbox_emails', 'store_settings']
+/** The tables the application reads that belong to no workspace: each is reached through its own grants and functions. */
+const globalTables = ['pending_media_deletions', 'rate_limits', 'stripe_events', 'used_challenges']
 
 describe('isolation', () => {
+  it('covers every table the application reads: a workspace table under row-level security, or a named global one', async () => {
+    const { rows } = await admin.query<{ name: string; workspace: boolean; rls: boolean; forced: boolean }>(
+      `select c.relname as name, c.relrowsecurity as rls, c.relforcerowsecurity as forced,
+              exists (select 1 from pg_attribute a where a.attrelid = c.oid and a.attname = 'workspace_id' and not a.attisdropped) as workspace
+         from pg_class c join pg_namespace n on n.oid = c.relnamespace
+        where n.nspname = 'fa' and c.relkind in ('r', 'p') and has_table_privilege('app', c.oid, 'select')
+        order by c.relname`)
+    const workspaceTables = rows.filter(row => row.workspace)
+
+    expect(workspaceTables.map(row => row.name)).toEqual([...everyTable].sort())
+    // Enabled, not forced: the definer functions run as the tables' owner (0004_rls.sql).
+    expect(workspaceTables.filter(row => !row.rls || row.forced).map(row => row.name)).toEqual([])
+    expect(rows.filter(row => !row.workspace).map(row => row.name)).toEqual(globalTables)
+  })
+
   it.each(everyTable)('%s: no actor ever sees another workspace, even without a filter', async table => {
     for (const actor of ACTORS) {
       const r = await probe(ctx(A, actor), tx => tx.execute(sql`select count(*)::int as n from ${sql.identifier('fa')}.${sql.identifier(table)} where workspace_id = ${B.ws}`))
@@ -233,6 +252,9 @@ describe('write rights follow the matrix', () => {
       return (r as { value: { rows: { n: number }[] } }).value.rows[0]?.n
     }
     expect(await count('viewer', 'notifications')).toBe(1)
+    expect(await count('manager', 'notifications')).toBe(2)
+    expect(await count('viewer', 'notification_reads')).toBe(0)
+    expect(await count('manager', 'notification_reads')).toBe(1)
     expect(await count('viewer', 'outbox_emails')).toBe(0)
     expect(await count('admin', 'outbox_emails')).toBe(1)
     expect(await count('manager', 'activity_log')).toBe(0)

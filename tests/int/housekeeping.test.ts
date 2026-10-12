@@ -157,15 +157,33 @@ describe('drainPendingDeletions', () => {
     }
   })
 
-  it('runDailyJob runs every part and reports the counts', async () => {
-    const report = await runDailyJob({ pool: app, storage: memoryStorage() })
-    expect(report).toEqual({
-      sandboxes: expect.any(Number),
-      purged: { rateLimits: expect.any(Number), challenges: expect.any(Number), sessions: expect.any(Number), failedSignIns: expect.any(Number) },
-      media: { deleted: expect.any(Number), retried: expect.any(Number) },
-      customers: expect.any(Number),
-      failed: [],
-    })
+  it('runDailyJob runs every part and reports what each did', async () => {
+    // One due row for every part of the job.
+    const expired = await enter()
+    await admin.query("update fa.workspaces set expires_at = now() - interval '1 minute' where id = $1", [expired.workspaceId])
+    const live = await enter()
+    await admin.query("insert into fa.sessions (workspace_id, id, user_id, expires_at) values ($1, $2, $3, now() - interval '1 minute')", [live.workspaceId, hashToken(randomUUID()), live.userId])
+    await admin.query("insert into fa.rate_limits (purpose, subject, window_start, count) values ('daily.test', $1, now() - interval '2 days', 1)", [randomUUID()])
+    await admin.query("insert into fa.used_challenges (challenge_hash, used_at) values ($1, now() - interval '2 days')", [hashToken(randomUUID())])
+    await admin.query("insert into fa.activity_log (workspace_id, action, at) values ($1, 'auth.sign_in_failed', now() - interval '91 days')", [live.workspaceId])
+    const [gone, refused] = [`ws/${live.workspaceId}/${randomUUID()}.webp`, `ws/${live.workspaceId}/${randomUUID()}.webp`]
+    await admin.query('insert into fa.pending_media_deletions (storage_path) values ($1), ($2)', [gone, refused])
+    const storage = memoryStorage([gone, refused])
+    storage.failing.add(refused)
+    const owner = (await admin.query<{ id: string }>("select id from fa.workspaces where kind = 'owner'")).rows[0]!.id
+    const customer = (await admin.query<{ id: string }>(
+      "insert into fa.customers (workspace_id, email, name, created_at) values ($1, $2, 'Old Buyer', now() - interval '31 days') returning id",
+      [owner, `old.${randomUUID()}@daily.test`])).rows[0]!.id
+
+    try {
+      const report = await runDailyJob({ pool: app, storage, pseudonymKey: 'test-pseudonym-key-0123456789abcdef0123456789' })
+      const counts = { sandboxes: report.sandboxes, ...report.purged, ...report.media, customers: report.customers }
+      expect(Object.entries(counts).filter(([, n]) => n < 1).map(([part]) => part)).toEqual([])
+      expect(report.failed).toEqual([])
+    } finally {
+      await admin.query('delete from fa.pending_media_deletions where storage_path = any($1::text[])', [[gone, refused]])
+      await admin.query('delete from fa.customers where id = $1', [customer])
+    }
   })
 
   it('runDailyJob goes on past a failing step and names it in the report and the log', async () => {

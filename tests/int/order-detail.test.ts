@@ -6,7 +6,7 @@ import { lowStock } from '@/server/dal/overview'
 import { withWorkspace, type WorkspaceContext } from '@/server/db/with-workspace'
 import { addNote } from '@/server/orders/notes'
 import { adminPool, appPool, closeAll } from './db'
-import { createSandbox, memberIds } from './fixtures'
+import { createSandbox, errorText, memberIds } from './fixtures'
 
 let admin: pg.Pool
 let app: pg.Pool
@@ -69,7 +69,8 @@ describe('addNote', () => {
 
   it('is refused for a viewer by row-level security', async () => {
     const [row] = (await admin.query<{ id: string }>('select id from fa.orders where workspace_id = $1 order by number limit 1', [workspaceId])).rows
-    await expect(addNote(actor('viewer'), row!.id, 'Not allowed.', app)).rejects.toThrow()
+    const refusal = await addNote(actor('viewer'), row!.id, 'Not allowed.', app).then(() => '', errorText)
+    expect(refusal).toMatch(/row-level security policy for table "order_events"/)
   })
 })
 

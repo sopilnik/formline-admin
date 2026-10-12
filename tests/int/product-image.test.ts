@@ -134,8 +134,15 @@ describe('storeProductImage', () => {
     const heavy = await sandbox()
     const big = (await productOf(heavy, 'hush')).id
     expect(await storeProductImage(heavy, big, webp(MEDIA_CAP.bytes + 1), storage, app)).toEqual({ ok: false, reason: 'cap' })
-    // Two uploads went through, each with its small copy.
-    expect(storage.files.size).toBe(4)
+    // The cap holds the sum: 500 bytes short of it, a 1000-byte upload crosses it and a 400-byte one fits.
+    await admin.query(
+      `insert into fa.images (workspace_id, id, storage_path, source, width, height, bytes)
+       values ($1::uuid, gen_random_uuid(), 'ws/' || $1::text || '/' || gen_random_uuid() || '.webp', 'upload', 10, 10, $2)`,
+      [heavy.workspaceId, MEDIA_CAP.bytes - 500])
+    expect(await storeProductImage(heavy, big, webp(1000), storage, app)).toEqual({ ok: false, reason: 'cap' })
+    expect(await storeProductImage(heavy, big, webp(400), storage, app)).toMatchObject({ ok: true })
+    // Three uploads went through, each with its small copy.
+    expect(storage.files.size).toBe(6)
   })
 
   it('finds nothing to change for a viewer', async () => {
