@@ -70,7 +70,7 @@ export function scheduleDailyJob(run: () => Promise<unknown> = runDailyJob, nowM
   const arm = (ms: number) => {
     cancel = timer.after(ms, () => {
       if (stopped) return
-      run().catch(error => log.error({ event: 'daily.failed', message: error instanceof Error ? error.message : String(error) }))
+      run().catch(error => log.error({ event: 'daily.failed', err: error }))
       arm(DAY_MS)
     })
   }

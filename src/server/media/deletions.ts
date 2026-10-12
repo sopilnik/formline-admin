@@ -1,6 +1,7 @@
 import 'server-only'
 import type { Pool } from 'pg'
 import { getPool } from '@/server/db/pool'
+import { log } from '@/server/log'
 import { MEDIA_PATH, thumbPath, type MediaStorage } from '@/server/media/storage'
 
 export const RETRY_BATCH = 100
@@ -32,7 +33,8 @@ export async function drainPendingDeletions(storage: MediaStorage, pool: Pool = 
       await pool.query('delete from fa.pending_media_deletions where storage_path = $1', [row.storage_path])
       deleted++
       continue
-    } catch {
+    } catch (error) {
+      log.warn({ event: 'media.delete_failed', path: row.storage_path, attempts: row.attempts + 1, err: error })
       retried++
     }
 

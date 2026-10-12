@@ -11,7 +11,7 @@ export async function cleanupExpiredSandboxes(pool: Pool = getPool()): Promise<n
     if (deleted > 0) log.info({ event: 'sandbox.cleanup', deleted })
     return deleted
   } catch (error) {
-    log.error({ event: 'sandbox.cleanup.failed', message: error instanceof Error ? error.message : String(error) })
+    log.error({ event: 'sandbox.cleanup_failed', err: error })
     return 0
   }
 }

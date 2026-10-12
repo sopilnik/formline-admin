@@ -26,7 +26,7 @@ export function thumbPath(path: string): string {
 }
 
 function checked(path: string): string {
-  if (!MEDIA_PATH.test(path)) throw new Error('not a media path')
+  if (!MEDIA_PATH.test(path)) throw new Error(`not a media path: ${path}`)
   return path
 }
 

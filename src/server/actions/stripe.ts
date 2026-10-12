@@ -14,6 +14,7 @@ import { log } from '@/server/log'
 import { consume } from '@/server/ratelimit/consume'
 import { userSubject } from '@/server/ratelimit/ip'
 import { LIMITS } from '@/server/ratelimit/limits'
+import { getRequestId } from '@/server/request'
 import { stripeGateway } from '@/server/stripe/gateway'
 import { importMissedOrders } from '@/server/stripe/import'
 
@@ -39,7 +40,7 @@ export async function importStripeOrdersAction(_previous: ImportState, _form: Fo
     refresh()
     return { status: 'done', ...summary }
   } catch (error) {
-    log.error({ event: 'stripe.import_failed', message: error instanceof Error ? error.message : String(error) })
+    log.error({ event: 'stripe.import_failed', requestId: await getRequestId(), err: error })
     return { status: 'error', error: 'failed' }
   }
 }

@@ -164,6 +164,18 @@ describe('runStart', () => {
     expect(role.events.at(-1)).toEqual({ event: 'start.refused', message: 'over-privileged' })
   })
 
+  it('names the DETAIL Postgres gives with a refusal', async () => {
+    const denied = Object.assign(new pg.DatabaseError('permission denied for schema fa', 1, 'error'), { code: '42501', detail: 'Only roles with the CREATE privilege may create objects.' })
+    const refused = harness([new Error('migration 0016 failed', { cause: denied })])
+    expect(await runStart(refused.deps)).toBe(1)
+    expect(refused.events.at(-1)).toEqual({
+      event: 'start.refused',
+      message: 'migration 0016 failed',
+      cause: 'permission denied for schema fa',
+      detail: 'Only roles with the CREATE privilege may create objects.',
+    })
+  })
+
   it('spells out a connection refused at every address of the host', async () => {
     // Node tries every address of a host and, when all refuse, rejects with an AggregateError that has no message.
     const everyAddress = () => new AggregateError([new Error('connect ECONNREFUSED ::1:5432'), new Error('connect ECONNREFUSED 127.0.0.1:5432')], '')

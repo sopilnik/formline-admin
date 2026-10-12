@@ -48,7 +48,7 @@ export async function handleWebhook(
     log.info({ event: 'stripe.delivery', stripeEvent: event.id, outcome: result.status })
     return received
   } catch (error) {
-    log.error({ event: 'stripe.failed', stripeEvent: event.id, message: error instanceof Error ? error.message : String(error) })
+    log.error({ event: 'stripe.failed', stripeEvent: event.id, err: error })
     return { status: 500, body: { received: false, error: 'failed' } }
   }
 }

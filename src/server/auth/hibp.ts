@@ -29,7 +29,7 @@ export async function isBreachedPassword(password: string, options: { fetcher?: 
     }
     return false
   } catch (error) {
-    log.warn({ event: 'hibp.unavailable', reason: error instanceof Error ? error.message : String(error) }, 'breach check skipped')
+    log.warn({ event: 'hibp.unavailable', err: error })
     return null
   }
 }

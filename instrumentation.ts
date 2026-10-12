@@ -1,3 +1,5 @@
+import type { Instrumentation } from 'next'
+
 export async function register(): Promise<void> {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     const { readEnv } = await import('@/server/env')
@@ -11,4 +13,20 @@ export async function register(): Promise<void> {
     const { scheduleDailyJob } = await import('@/server/jobs/daily')
     scheduleDailyJob()
   }
+}
+
+/** Logs every error a request ends in with the id its response carried in X-Request-Id, so a reported id finds its line. */
+export const onRequestError: Instrumentation.onRequestError = async (error, request, context) => {
+  if (process.env.NEXT_RUNTIME !== 'nodejs') return
+
+  const { log } = await import('@/server/log')
+  const id = request.headers['x-request-id']
+  log.error({
+    event: 'request.failed',
+    requestId: Array.isArray(id) ? id[0] : id,
+    method: request.method,
+    path: request.path,
+    route: context.routePath,
+    err: error,
+  })
 }
