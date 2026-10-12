@@ -53,27 +53,40 @@ describe('fixed windows', () => {
 })
 
 describe('locks', () => {
-  it('hold for their duration from the moment they are set', async () => {
+  it('hold for the length they were set with, from the moment they are set', async () => {
     const s = subject()
-    expect(await lockRemaining('test.lock', s, 3600, app)).toBe(0)
-    await setLock('test.lock', s, app)
-    const left = await lockRemaining('test.lock', s, 3600, app)
-    expect(left).toBeGreaterThan(3590)
-    expect(left).toBeLessThanOrEqual(3600)
+    expect(await lockRemaining('test.lock', s, app)).toBe(0)
+    await setLock('test.lock', s, 900, app)
+    const left = await lockRemaining('test.lock', s, app)
+    expect(left).toBeGreaterThan(890)
+    expect(left).toBeLessThanOrEqual(900)
   })
 
-  it('run out after their duration', async () => {
+  it('count the lock that ends last', async () => {
     const s = subject()
-    await admin.query("insert into fa.rate_limits (purpose, subject, window_start, count) values ('test.lock', $1, now() - interval '2 hours', 1)", [s])
-    expect(await lockRemaining('test.lock', s, 3600, app)).toBe(0)
+    await setLock('test.lock', s, 3600, app)
+    await admin.query("insert into fa.rate_limits (purpose, subject, window_start, count) values ('test.lock', $1, now() - interval '1 minute', 900)", [s])
+    expect(await lockRemaining('test.lock', s, app)).toBeGreaterThan(3590)
+  })
+
+  it('run out after their length, not before', async () => {
+    const s = subject()
+    await admin.query("insert into fa.rate_limits (purpose, subject, window_start, count) values ('test.lock', $1, now() - interval '2 hours', 3600)", [s])
+    expect(await lockRemaining('test.lock', s, app)).toBe(0)
+    // Set 50 minutes ago for an hour: ten minutes are left, whatever window the clock is in now.
+    const t = subject()
+    await admin.query("insert into fa.rate_limits (purpose, subject, window_start, count) values ('test.lock', $1, now() - interval '50 minutes', 3600)", [t])
+    const left = await lockRemaining('test.lock', t, app)
+    expect(left).toBeGreaterThan(590)
+    expect(left).toBeLessThanOrEqual(600)
   })
 
   it('clear together with the counters of their subject', async () => {
     const s = subject()
-    await setLock('test.lock', s, app)
+    await setLock('test.lock', s, 3600, app)
     await consume(LIMIT, s, app)
     await clearSubject(s, app)
-    expect(await lockRemaining('test.lock', s, 3600, app)).toBe(0)
+    expect(await lockRemaining('test.lock', s, app)).toBe(0)
     expect((await peek(LIMIT, s, app)).count).toBe(0)
   })
 })

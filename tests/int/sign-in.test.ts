@@ -8,7 +8,7 @@ import { signInWithPassword, type SignInInput } from '@/server/auth/sign-in'
 import { hashToken } from '@/server/auth/tokens'
 import { clearSubject, lockRemaining } from '@/server/ratelimit/consume'
 import { accountSubject, userSubject } from '@/server/ratelimit/ip'
-import { LIMITS } from '@/server/ratelimit/limits'
+import { LIMITS, LOCKS } from '@/server/ratelimit/limits'
 import { roomInWindow } from '../windows'
 import { adminPool, appPool, closeAll } from './db'
 import { TEST_AUTH_ENV } from './env'
@@ -80,6 +80,18 @@ describe('password step', () => {
     expect(locked.retryAfterSeconds).toBeLessThanOrEqual(900)
   })
 
+  it('keeps a lock set late in an hour past the end of that hour', async () => {
+    // The lock was set 50 minutes ago for an hour; the failures that set it counted in a window that has ended.
+    await admin.query(
+      "insert into fa.rate_limits (purpose, subject, window_start, count) values ($1, $2, now() - interval '50 minutes', 3600)",
+      [LOCKS.signInAccount, account])
+    const locked = await signInWithPassword(correct(), { pool: app })
+    if (locked.ok) throw new Error('not locked')
+    expect(locked.error).toBe('rate_limited')
+    expect(locked.retryAfterSeconds).toBeGreaterThan(590)
+    expect(locked.retryAfterSeconds).toBeLessThanOrEqual(600)
+  })
+
   it('allows ten successful passwords an hour per account', async () => {
     await roomInWindow(LIMITS.signInSuccessAccount.windowSeconds, 10)
     for (let i = 0; i < 10; i++) expect((await signInWithPassword(correct(), { pool: app })).ok).toBe(true)
@@ -135,7 +147,7 @@ describe('second-factor step', () => {
     expect(results.slice(0, 9).every(r => !r.ok && r.error === 'code_invalid')).toBe(true)
     expect(results[9]).toEqual({ ok: false, error: 'second_factor_locked' })
     expect(await sessionExists(pending)).toBe(false)
-    expect(await lockRemaining('mfa.lock', userSubject(ownerId), 3600, app)).toBeGreaterThan(3590)
+    expect(await lockRemaining('mfa.lock', userSubject(ownerId), app)).toBeGreaterThan(3590)
     expect(await letters('auth.second_factor_locked')).toBe(lettersBefore + 1)
     const next = await pendingSession()
     const totp = await nextTotp(admin)

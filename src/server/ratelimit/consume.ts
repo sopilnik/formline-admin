@@ -35,21 +35,24 @@ export async function peek(limit: Limit, subject: string, pool: Pool = getPool()
   return { allowed: count < limit.limit, count, retryAfterSeconds: Math.max(rows[0]?.retry ?? 1, 1) }
 }
 
-/** Starts a lock that holds for a fixed time from now (the password and second-factor lockouts). */
-export async function setLock(purpose: string, subject: string, pool: Pool = getPool()): Promise<void> {
+/**
+ * Starts a lock that holds for `seconds` from now (the password and second-factor lockouts). A lock row keeps its start
+ * in `window_start` and its length in `count`, so it lasts as long as it was set for, whatever the counters do meanwhile.
+ */
+export async function setLock(purpose: string, subject: string, seconds: number, pool: Pool = getPool()): Promise<void> {
   await pool.query(
-    `insert into fa.rate_limits (purpose, subject, window_start, count) values ($1, $2, now(), 1)
+    `insert into fa.rate_limits (purpose, subject, window_start, count) values ($1, $2, now(), $3)
      on conflict (purpose, subject, window_start) do nothing`,
-    [purpose, subject])
+    [purpose, subject, seconds])
 }
 
-/** Seconds left of the latest lock, 0 when there is none. */
-export async function lockRemaining(purpose: string, subject: string, seconds: number, pool: Pool = getPool()): Promise<number> {
+/** Seconds left of the lock that ends last, 0 when none holds. */
+export async function lockRemaining(purpose: string, subject: string, pool: Pool = getPool()): Promise<number> {
   const { rows } = await pool.query<{ remaining: number | null }>(
-    `select ceil(extract(epoch from max(r.window_start) + make_interval(secs => $3::int) - now()))::int as remaining
+    `select ceil(extract(epoch from max(r.window_start + make_interval(secs => r.count)) - now()))::int as remaining
        from fa.rate_limits r
-      where r.purpose = $1 and r.subject = $2 and r.count > 0 and r.window_start > now() - make_interval(secs => $3::int)`,
-    [purpose, subject, seconds])
+      where r.purpose = $1 and r.subject = $2 and r.count > 0 and r.window_start + make_interval(secs => r.count) > now()`,
+    [purpose, subject])
   return Math.max(rows[0]?.remaining ?? 0, 0)
 }
 

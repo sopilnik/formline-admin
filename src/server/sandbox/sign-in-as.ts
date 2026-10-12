@@ -44,7 +44,7 @@ export async function switchUser(session: Session, input: SwitchInput, overrides
   let step: number | null = null
   if (target.totpSecretEnc) {
     const subject = userSubject(target.id)
-    const locked = await lockRemaining(LOCKS.secondFactor, subject, SECOND_FACTOR_LOCK_SECONDS, deps.pool)
+    const locked = await lockRemaining(LOCKS.secondFactor, subject, deps.pool)
     if (locked > 0) return { ok: false, error: 'second_factor_locked', field: 'code', retryAfterSeconds: locked }
 
     const secret = decryptTotpSecret(target.totpSecretEnc, { workspaceId: session.workspaceId, userId: target.id }, deps.config.totpKeys)
@@ -52,7 +52,7 @@ export async function switchUser(session: Session, input: SwitchInput, overrides
     if (!verdict.ok) {
       const failures = await consume(LIMITS.secondFactorFail, subject, deps.pool)
       if (!failures.allowed) {
-        await setLock(LOCKS.secondFactor, subject, deps.pool)
+        await setLock(LOCKS.secondFactor, subject, SECOND_FACTOR_LOCK_SECONDS, deps.pool)
         return { ok: false, error: 'second_factor_locked', field: 'code', retryAfterSeconds: SECOND_FACTOR_LOCK_SECONDS }
       }
       return { ok: false, error: 'code_invalid', field: 'code' }

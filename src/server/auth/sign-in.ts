@@ -25,9 +25,7 @@ export async function passwordLockout(input: { email: string; ip: string | null 
   const { pool, config } = deps
   const address = await peek(LIMITS.signInFailIp, ipSubject(input.ip, config.ipHashKey), pool)
   if (!address.allowed) return address.retryAfterSeconds
-  const account = accountSubject(input.email, config.ipHashKey)
-  const failures = await peek(LIMITS.signInFailAccount, account, pool)
-  return lockRemaining(LOCKS.signInAccount, account, passwordLockSeconds(failures.count), pool)
+  return lockRemaining(LOCKS.signInAccount, accountSubject(input.email, config.ipHashKey), pool)
 }
 
 /** Counts a wrong password against the address and the account; from the fifth, the account is locked. */
@@ -36,7 +34,8 @@ export async function recordPasswordFailure(input: { email: string; ip: string |
   await consume(LIMITS.signInFailIp, ipSubject(input.ip, config.ipHashKey), pool)
   const account = accountSubject(input.email, config.ipHashKey)
   const failures = await consume(LIMITS.signInFailAccount, account, pool)
-  if (passwordLockSeconds(failures.count) > 0) await setLock(LOCKS.signInAccount, account, pool)
+  const lock = passwordLockSeconds(failures.count)
+  if (lock > 0) await setLock(LOCKS.signInAccount, account, lock, pool)
 }
 
 /**

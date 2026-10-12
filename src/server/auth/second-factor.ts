@@ -60,7 +60,7 @@ export async function attemptSecondFactor(
   const subject = userSubject(session.userId)
   const ipHash = hashIp(input.ip, config.ipHashKey)
 
-  if (await lockRemaining(LOCKS.secondFactor, subject, SECOND_FACTOR_LOCK_SECONDS, pool) > 0) {
+  if (await lockRemaining(LOCKS.secondFactor, subject, pool) > 0) {
     await withWorkspace(ctx, tx => deleteSession(tx, session), pool)
     return { ok: false, error: 'second_factor_locked' }
   }
@@ -78,7 +78,7 @@ export async function attemptSecondFactor(
 
   const failures = await consume(LIMITS.secondFactorFail, subject, pool)
   if (failures.count >= LIMITS.secondFactorFail.limit) {
-    await setLock(LOCKS.secondFactor, subject, pool)
+    await setLock(LOCKS.secondFactor, subject, SECOND_FACTOR_LOCK_SECONDS, pool)
     await withWorkspace(ctx, async tx => {
       const self = (await getSelf(tx, session.userId))!
       await deleteSession(tx, session)

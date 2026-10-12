@@ -63,7 +63,7 @@ describe('owner recovery', () => {
       tx => createSession(tx, { workspaceId: ownerWorkspace, userId: ownerId, verified: true, userAgentSummary: null, ipHash: null }), app)
     await admin.query("insert into fa.passkeys (workspace_id, user_id, credential_id, public_key, name) values ($1, $2, $3, 'pk', 'Old laptop')",
       [ownerWorkspace, ownerId, `lost${crypto.randomUUID().replace(/-/g, '')}`])
-    await setLock('mfa.lock', userSubject(ownerId), app)
+    await setLock('mfa.lock', userSubject(ownerId), 3600, app)
 
     const result = await recover(await issue(), { password: 'brand-new-password-5582' })
     if (!result.ok) throw new Error(result.error)
@@ -72,7 +72,7 @@ describe('owner recovery', () => {
     expect(await count('select count(*)::int as n from fa.passkeys where user_id = $1', [ownerId])).toBe(0)
     expect(await count('select count(*)::int as n from fa.recovery_codes where user_id = $1 and used_at is null', [ownerId])).toBe(10)
     expect(await validateSessionToken(result.token, app)).toMatchObject({ userId: ownerId, secondFactorVerified: true })
-    expect(await lockRemaining('mfa.lock', userSubject(ownerId), 3600, app)).toBe(0)
+    expect(await lockRemaining('mfa.lock', userSubject(ownerId), app)).toBe(0)
     expect((await signInWithPassword({ email: OWNER.email, password: 'brand-new-password-5582', ip: '203.0.113.200', userAgent: null }, { pool: app })).ok).toBe(true)
     expect(await signInWithPassword({ email: OWNER.email, password: OWNER.password, ip: '203.0.113.201', userAgent: null }, { pool: app }))
       .toEqual({ ok: false, error: 'credentials_invalid' })
