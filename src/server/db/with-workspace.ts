@@ -8,6 +8,9 @@ export type Role = 'owner' | 'admin' | 'manager' | 'viewer'
 export type WorkspaceContext = { workspaceId: string; userId: string | null; role: Role | 'system' }
 export type Tx = NodePgDatabase<typeof schema>
 
+/** No statement of a request runs longer: the slowest query the panel makes takes well under a second. */
+const STATEMENT_TIMEOUT = '30s'
+
 const contextSchema = z.object({
   workspaceId: z.uuid(),
   userId: z.uuid().nullable(),
@@ -41,9 +44,11 @@ export async function withWorkspaces<T>(fn: (enter: (ctx: WorkspaceContext) => P
     const tx = drizzle({ client, schema })
     const result = await fn(async ctx => {
       const { workspaceId, userId, role } = parseWorkspaceContext(ctx)
+      // The statement timeout is set here, per transaction: the pooler refuses it as a connection parameter.
       await client.query(
-        "select set_config('app.workspace_id', $1, true), set_config('app.user_id', $2, true), set_config('app.role', $3, true)",
-        [workspaceId, userId ?? '', role])
+        `select set_config('app.workspace_id', $1, true), set_config('app.user_id', $2, true), set_config('app.role', $3, true),
+                set_config('statement_timeout', $4, true)`,
+        [workspaceId, userId ?? '', role, STATEMENT_TIMEOUT])
       return tx
     })
     await client.query('commit')
