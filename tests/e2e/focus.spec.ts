@@ -1,4 +1,5 @@
 import type { Locator, Page } from '@playwright/test'
+import { frameHydrated } from './ready'
 import { signInAsSandboxUser } from './sessions'
 import { expect, test } from './test'
 
@@ -7,8 +8,7 @@ const RING = 'rgb(191, 58, 14)'
 
 /** Focuses the element the way a keyboard reaches it, so `:focus-visible` matches as it does for a visitor. */
 async function focusByKeyboard(page: Page, target: Locator): Promise<void> {
-  // A page still hydrating can take the focus back; under a full run's load that happened (10 October).
-  await page.waitForLoadState('networkidle')
+  await frameHydrated(page)
   await target.focus()
   await page.keyboard.press('Shift+Tab')
   // Tab on from the element before it, a few stops at most: a group of radios or toggles is one stop.

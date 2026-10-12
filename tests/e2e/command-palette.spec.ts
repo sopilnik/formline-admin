@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test'
 import { expectNoSeriousA11yViolationsInBothThemes } from './a11y'
 import { E2E_ORIGIN_SECRET } from './constants'
 import { asSchemaOwner } from './db'
+import { openFramed } from './ready'
 import { signInAsSandboxUser } from './sessions'
 import { expect, test } from './test'
 
@@ -18,7 +19,7 @@ test.describe('command palette', () => {
       `select o.number, c.name from fa.orders o join fa.customers c on c.workspace_id = o.workspace_id and c.id = o.customer_id
         where o.workspace_id = $1 order by o.placed_at limit 1`, [workspaceId]))
     const { number, name } = rows[0]!
-    await page.goto('/overview')
+    await openFramed(page, '/overview')
     await expect(page.getByRole('button', { name: 'Search…' })).toHaveAttribute('aria-keyshortcuts', 'Control+K')
     await page.keyboard.press('Control+k')
     await expect(palette(page)).toBeVisible()
@@ -48,7 +49,7 @@ test.describe('command palette', () => {
     const { workspaceId } = await signInAsSandboxUser(context)
     const { rows } = await asSchemaOwner(c => c.query<{ id: string; name: string }>(
       'select id, name from fa.customers where workspace_id = $1 order by name limit 1', [workspaceId]))
-    await page.goto('/orders')
+    await openFramed(page, '/orders')
     await page.getByRole('searchbox').focus()
     await page.keyboard.press('Control+k')
     await input(page).fill(rows[0]!.name.split(' ')[1]!)
@@ -58,7 +59,7 @@ test.describe('command palette', () => {
 
   test('offers each role only its own actions, and a sandbox\'s sign-out asks first', async ({ page, context }) => {
     await signInAsSandboxUser(context, 'viewer')
-    await page.goto('/overview')
+    await openFramed(page, '/overview')
     await page.keyboard.press('Control+k')
     const actions = group(page, 'Actions').getByRole('option')
     await expect(actions).toHaveText(['Follow the system theme', 'Use the light theme', 'Use the dark theme', 'Switch to Russian', 'Keyboard shortcuts', 'Sign out'])
@@ -71,7 +72,7 @@ test.describe('command palette', () => {
 
   test('an owner may start a product or an invitation, and switch the theme and the language', async ({ page, context }) => {
     await signInAsSandboxUser(context)
-    await page.goto('/overview')
+    await openFramed(page, '/overview')
     await page.keyboard.press('Control+k')
     await expect(group(page, 'Actions').getByRole('option', { name: 'New product' })).toBeVisible()
     await group(page, 'Actions').getByRole('option', { name: 'Invite a member' }).click()

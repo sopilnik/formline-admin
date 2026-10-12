@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test'
 import { expectNoSeriousA11yViolations } from './a11y'
+import { openFramed } from './ready'
 import { signInAsSandboxUser } from './sessions'
 import { expect, test } from './test'
 
@@ -8,7 +9,7 @@ const sidebarBackground = (page: Page) => page.locator('aside').evaluate(el => g
 test.describe('app frame', () => {
   test('has a skip link, landmarks and the sidebar on dark tokens in the light theme', async ({ page, context }) => {
     await signInAsSandboxUser(context)
-    await page.goto('/overview')
+    await openFramed(page, '/overview')
     await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
     await expect(page).toHaveTitle('Overview · Formline Admin')
     await page.keyboard.press('Tab')
@@ -23,7 +24,7 @@ test.describe('app frame', () => {
 
   test('keyboard focus shows the solid outline in the colour of its surface', async ({ page, context }) => {
     await signInAsSandboxUser(context)
-    await page.goto('/overview')
+    await openFramed(page, '/overview')
     const orders = page.getByRole('link', { name: /^Orders/ })
     await orders.focus()
     await page.keyboard.press('Shift+Tab')
@@ -132,7 +133,7 @@ test.describe('app frame', () => {
 
   test('the focus ring of every menu link is drawn whole, expanded and collapsed', async ({ page, context }) => {
     await signInAsSandboxUser(context)
-    await page.goto('/overview')
+    await openFramed(page, '/overview')
     const nav = page.locator('aside nav')
     const orders = nav.getByRole('link', { name: /^Orders/ })
     await orders.focus()

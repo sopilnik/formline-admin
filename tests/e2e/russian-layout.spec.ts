@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test'
 import { E2E_ORIGIN_SECRET } from './constants'
 import { asSchemaOwner } from './db'
+import { openFramed } from './ready'
 import { signInAsSandboxUser } from './sessions'
 import { expect, test } from './test'
 
@@ -159,7 +160,7 @@ test.describe('the Russian layout', () => {
       "insert into fa.users (workspace_id, email, name, role) select $1, 'member.' || g || '@formline.test', 'Участник ' || g, 'manager' from generate_series(1, 16) g",
       [workspaceId]))
     await page.setViewportSize({ width: 640, height: 400 })
-    await page.goto('/overview?lang=ru')
+    await openFramed(page, '/overview?lang=ru')
     const fits = async (name: string) => {
       const dialog = page.getByRole('dialog', { name })
       await expect(dialog).toBeVisible()
