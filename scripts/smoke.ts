@@ -6,8 +6,11 @@
 import { chromium, type Page } from '@playwright/test'
 import { fetchRawHosts } from './raw-hosts.ts'
 
-/** One line of the log; a failed demo also carries the page it stopped on, so the next failure explains itself. */
-export type Check = { check: string; ok: boolean; detail?: string; page?: { url: string; snapshot: string } }
+/**
+ * One line of the log; a failed demo also carries the page it stopped on, so the next failure explains itself. A check of
+ * the edge's caching says so in `kind`, which probe p4 selects by.
+ */
+export type Check = { check: string; ok: boolean; detail?: string; kind?: 'cache'; page?: { url: string; snapshot: string } }
 
 export const SECURITY_HEADERS: Record<string, RegExp> = {
   'strict-transport-security': /max-age=\d+/,
@@ -38,7 +41,7 @@ export function securityHeaders(headers: Headers): Check[] {
 export function notCached(check: string, headers: Headers): Check {
   const edge = headers.get('cdn-cache')
   const control = headers.get('cache-control') ?? ''
-  return { check, ok: edge !== 'HIT' && /no-store/.test(control), detail: `cdn-cache ${edge ?? 'none'}, cache-control ${control || 'none'}` }
+  return { check, kind: 'cache', ok: edge !== 'HIT' && /no-store/.test(control), detail: `cdn-cache ${edge ?? 'none'}, cache-control ${control || 'none'}` }
 }
 
 export type Served = { status: number; type: string | null; cache: string | null; edge: string | null }
@@ -70,7 +73,11 @@ export async function requestChecks(o: SmokeOptions): Promise<Check[]> {
   checks.push({ check: 'liveness', ok: live.status === 200, detail: `HTTP ${live.status}` })
   const ready = await get('/api/health?db=1')
   const readiness = await ready.json().catch(() => null) as { db?: string; role?: string } | null
-  checks.push({ check: 'readiness', ok: ready.status === 200 && readiness?.db === 'ok' && readiness?.role === 'ok', detail: `HTTP ${ready.status}` })
+  checks.push({
+    check: 'readiness',
+    ok: ready.status === 200 && readiness?.db === 'ok' && readiness?.role === 'ok',
+    detail: `HTTP ${ready.status}, db ${readiness?.db ?? 'none'}, role ${readiness?.role ?? 'none'}`,
+  })
 
   const signIn = await get('/sign-in')
   checks.push({ check: 'sign-in page', ok: signIn.status === 200, detail: `HTTP ${signIn.status}` })

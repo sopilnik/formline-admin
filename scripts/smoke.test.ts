@@ -71,6 +71,14 @@ describe('requestChecks', () => {
     expect(none.at(-1)).toEqual({ check: 'raw hostnames refuse a request around the panel\'s address', ok: true, detail: 'skipped: no raw hostname' })
   })
 
+  it('names what readiness found when it fails', async () => {
+    const wrongRole = (async (input: string | URL | Request) => String(input).includes('db=1')
+      ? Response.json({ status: 'unavailable', db: 'ok', role: 'failed' }, { status: 503 })
+      : panel(input)) as typeof fetch
+    const checks = await requestChecks({ siteUrl: SITE, rawHosts: [], fetch: wrongRole })
+    expect(checks.find(c => c.check === 'readiness')).toEqual({ check: 'readiness', ok: false, detail: 'HTTP 503, db ok, role failed' })
+  })
+
   it('fails a raw hostname that serves the panel', async () => {
     const open = (async (input: string | URL | Request) => panel(String(input).replace('mc-abc.bunny.run', 'formline-admin.test'))) as typeof fetch
     const checks = await requestChecks({ siteUrl: SITE, rawHosts: ['mc-abc.bunny.run'], fetch: open })

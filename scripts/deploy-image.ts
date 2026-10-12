@@ -49,6 +49,17 @@ async function liveVersion(o: DeployOptions): Promise<string | null> {
   }
 }
 
+/** The application's status, or null when bunny's API did not answer this time: one failed call never ends the wait. */
+async function appStatus(o: DeployOptions): Promise<string | null> {
+  try {
+    const { status } = (await api(o, 'GET', `/apps/${o.appId}`)) as { status?: string }
+    return status ?? null
+  } catch (error) {
+    o.log({ event: 'deploy.poll_error', message: error instanceof Error ? error.message : String(error) })
+    return null
+  }
+}
+
 export async function deployImage(o: DeployOptions): Promise<void> {
   const app = (await api(o, 'GET', `/apps/${o.appId}`)) as { containerTemplates?: Template[] }
   const templates = (app.containerTemplates ?? []).filter(t => t.name === o.container)
@@ -62,7 +73,7 @@ export async function deployImage(o: DeployOptions): Promise<void> {
       o.log({ event: 'deploy.live', tag: o.tag })
       return
     }
-    const { status } = (await api(o, 'GET', `/apps/${o.appId}`)) as { status?: string }
+    const status = await appStatus(o)
     if (status === 'failing' || status === 'suspended') throw new Error(`bunny reports the application ${status}`)
     if (o.now() >= deadline) throw new Error(`the panel still answers ${version ?? 'nothing'} instead of ${o.tag}`)
     await o.sleep(o.pollMs ?? 10_000)

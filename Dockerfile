@@ -1,5 +1,6 @@
 # The panel's image (spec §13): built with the repository's pnpm, run on Node 26 as the unprivileged node user. Its start,
-# scripts/start.ts bundled as scripts/start.mjs, migrates the database, checks the role and then runs the standalone server.
+# scripts/container.ts (which runs scripts/start.ts) bundled to dist/start.mjs and copied in as scripts/start.mjs, migrates
+# the database, checks the role and then runs the standalone server.
 # Both stages name the same Node image by digest, so Dependabot moves them together (tests/unit/versions.test.ts).
 FROM node:26-slim@sha256:193fe51b64e77981119c98c2002c9e32a70e2f006fb4d25068ce0558998917f0 AS build
 ARG PNPM_VERSION=11.28.5

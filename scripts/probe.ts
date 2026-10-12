@@ -85,8 +85,10 @@ export async function runProbe(o: ProbeOptions): Promise<boolean> {
       const second = asset ? await site(asset) : null
       const cached = { check: 'built files come from the edge', ok: second?.headers.get('cdn-cache') === 'HIT', detail: `first ${first?.headers.get('cdn-cache') ?? 'none'}, second ${second?.headers.get('cdn-cache') ?? 'none'}` }
 
-      for (const check of [...checks.filter(c => c.check.includes('cached') || c.check.startsWith('media')), cached]) o.log({ probe: 'p4', ...check })
-      return checks.filter(c => c.check.includes('cached')).every(c => c.ok) && cached.ok
+      const caching = checks.filter(c => c.kind === 'cache')
+      for (const check of [...caching, cached]) o.log({ probe: 'p4', ...check })
+      // An empty list would pass every(): without its cache checks the probe proves nothing.
+      return caching.length > 0 && caching.every(c => c.ok) && cached.ok
     }
 
     case 'p5': {

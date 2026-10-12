@@ -20,7 +20,10 @@ function world(opts: { templates?: { id: string; name: string }[]; versions: (st
       return version === null ? new Response('', { status: 502 }) : Response.json({ status: 'ok', version })
     }
     if (method === 'PATCH') return new Response('', { status: opts.patch ?? 200 })
-    return Response.json({ status: statuses.shift() ?? 'progressing', containerTemplates: opts.templates ?? [{ id: 'c-1', name: 'web' }] })
+    const status = statuses.shift() ?? 'progressing'
+    // A status of "502" stands for one call bunny's API fails.
+    if (status === '502') return new Response('', { status: 502 })
+    return Response.json({ status, containerTemplates: opts.templates ?? [{ id: 'c-1', name: 'web' }] })
   }) as typeof fetch
   let clock = 0
   const events: Record<string, unknown>[] = []
@@ -54,6 +57,16 @@ describe('deployImage', () => {
     const error = await deployImage(w.options).catch((e: unknown) => e as Error)
     expect(error).toBeInstanceOf(Error)
     expect((error as Error).message).toBe('bunny PATCH /apps/{id}/containers/c-1: HTTP 400')
+  })
+
+  it('goes on waiting past a status call that fails, and logs it', async () => {
+    const w = world({ versions: ['old-commit', 'old-commit', TAG], statuses: ['active', '502', 'progressing'] })
+    await deployImage(w.options)
+    expect(w.events).toEqual([
+      { event: 'deploy.updated', container: 'web', tag: TAG },
+      { event: 'deploy.poll_error', message: 'bunny GET /apps/{id}: HTTP 502' },
+      { event: 'deploy.live', tag: TAG },
+    ])
   })
 
   it('stops waiting when bunny reports the application failing', async () => {

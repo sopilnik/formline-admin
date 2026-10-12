@@ -82,6 +82,27 @@ describe('runProbe', () => {
     expect(events).toEqual([{ probe: 'p3', endpoints: [{ type: 'cdn', pullZone: true, publicHost: true }] }])
   })
 
+  it('p4 checks the cache checks of the smoke test and the built files', async () => {
+    const edge = (hits: string) => {
+      let asset = 0
+      return (async (input: string | URL | Request) => {
+        const url = new URL(String(input))
+        const noStore = { 'Cache-Control': 'private, no-store', 'CDN-Cache': 'MISS' }
+        if (url.pathname.startsWith('/_next/static/')) return new Response('', { headers: { 'CDN-Cache': asset++ === 0 ? 'MISS' : hits } })
+        if (url.pathname === '/sign-in') return new Response('<script src="/_next/static/chunks/app.js"></script>', { headers: noStore })
+        if (url.pathname === '/api/health') return Response.json({ status: 'ok', db: 'ok', role: 'ok' })
+        return new Response('', { status: 401, headers: noStore })
+      }) as typeof fetch
+    }
+    const served = options('p4', {})
+    served.o.fetch = edge('HIT')
+    expect(await runProbe(served.o)).toBe(true)
+    expect(served.events.map(e => e.check)).toEqual(['sign-in not cached', 'sign-in not cached on a second request', 'media not cached', 'built files come from the edge'])
+    const missed = options('p4', {})
+    missed.o.fetch = edge('MISS')
+    expect(await runProbe(missed.o)).toBe(false)
+  })
+
   it('p5 passes on readiness through the edge with the app role', async () => {
     const ready = options('p5', {}, Response.json({ status: 'ok', db: 'ok', role: 'ok' }))
     expect(await runProbe(ready.o)).toBe(true)
