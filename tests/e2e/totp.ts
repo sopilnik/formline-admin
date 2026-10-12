@@ -1,6 +1,6 @@
-import { decodeBase32IgnorePadding } from '@oslojs/encoding'
-import { generateHOTP } from '@oslojs/otp'
 import type { Page } from '@playwright/test'
+import { decodeBase32IgnorePadding } from '../../src/lib/encoding'
+import { generateHOTP } from '../../src/lib/otp'
 
 export type Totp = { secret: Uint8Array; lastStep: number }
 

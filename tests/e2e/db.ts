@@ -1,6 +1,6 @@
-import { encodeBase32LowerCaseNoPadding, encodeBase64urlNoPadding } from '@oslojs/encoding'
 import { createCipheriv, createHash, randomBytes, randomUUID } from 'node:crypto'
 import pg from 'pg'
+import { encodeBase32LowerCaseNoPadding, encodeBase64urlNoPadding } from '../../src/lib/encoding'
 import { E2E_AUTH_ENV, E2E_MIGRATOR_URL } from './constants'
 
 export type Role = 'owner' | 'admin' | 'manager' | 'viewer'

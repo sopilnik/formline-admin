@@ -1,5 +1,5 @@
-import { encodeBase32LowerCaseNoPadding } from '@oslojs/encoding'
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
+import { encodeBase32LowerCaseNoPadding } from '@/lib/encoding'
 
 export const TOKEN_PATTERN = /^[a-z2-7]{32}$/
 

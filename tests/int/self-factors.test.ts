@@ -1,7 +1,7 @@
-import { generateHOTP } from '@oslojs/otp'
 import { createHash, randomUUID } from 'node:crypto'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { generateHOTP } from '@/lib/otp'
 import { hashRecoveryCode } from '@/server/auth/recovery-codes'
 import { disableOwnTotp, enableOwnTotp, regenerateOwnRecoveryCodes } from '@/server/auth/self-factors'
 import type { Session } from '@/server/auth/sessions'

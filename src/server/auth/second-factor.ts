@@ -6,7 +6,7 @@ import { securityNotice } from '@/server/auth/notices'
 import { hashRecoveryCode, normalizeRecoveryCode } from '@/server/auth/recovery-codes'
 import { deleteSession, workspaceContext, type Session } from '@/server/auth/sessions'
 import { finishSignIn, type SignedIn } from '@/server/auth/sign-in'
-import { decryptTotpSecret, verifyTotp } from '@/server/auth/totp'
+import { decryptTotpSecret, isTotpShape, verifyTotp } from '@/server/auth/totp'
 import { logActivity } from '@/server/dal/activity'
 import { getSelf } from '@/server/dal/users'
 import { recoveryCodes, users } from '@/server/db/schema'
@@ -20,7 +20,7 @@ type Check = { ok: true; method: Method; remaining?: number } | { ok: false }
 
 async function checkCode(tx: Tx, session: Session, code: string, deps: AuthDeps): Promise<Check> {
   const digits = code.replace(/\s+/g, '')
-  if (/^\d{6}$/.test(digits)) {
+  if (isTotpShape(digits)) {
     const [row] = await tx.select({ secret: users.totpSecretEnc, lastStep: users.totpLastStep }).from(users).where(eq(users.id, session.userId))
     if (!row?.secret) return { ok: false }
     const secret = decryptTotpSecret(row.secret, { workspaceId: session.workspaceId, userId: session.userId }, deps.config.totpKeys)

@@ -1,6 +1,6 @@
-import { encodeBase32LowerCaseNoPadding } from '@oslojs/encoding'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { encodeBase32LowerCaseNoPadding } from '@/lib/encoding'
 import { recoverOwner, type RecoverInput } from '@/server/auth/recovery'
 import { createSession, validateSessionToken } from '@/server/auth/sessions'
 import { signInWithPassword } from '@/server/auth/sign-in'

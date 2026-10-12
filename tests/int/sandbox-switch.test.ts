@@ -1,7 +1,7 @@
-import { generateHOTP } from '@oslojs/otp'
 import { createHash, randomUUID } from 'node:crypto'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { generateHOTP } from '@/lib/otp'
 import { validateSessionToken, type Session } from '@/server/auth/sessions'
 import { generateToken, hashToken } from '@/server/auth/tokens'
 import { encryptTotpSecret } from '@/server/auth/totp'

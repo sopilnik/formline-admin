@@ -1,5 +1,4 @@
 import 'server-only'
-import { decodeBase64urlIgnorePadding, decodeHex, encodeBase64urlNoPadding, encodeHexLowerCase } from '@oslojs/encoding'
 import {
   generateAuthenticationOptions,
   generateRegistrationOptions,
@@ -11,7 +10,9 @@ import {
   type RegistrationResponseJSON,
 } from '@simplewebauthn/server'
 import type { Pool } from 'pg'
+import { APP_NAME } from '@/lib/app'
 import type { AuthFailure } from '@/lib/auth-form'
+import { decodeBase64urlIgnorePadding, decodeHex, encodeBase64urlNoPadding, encodeHexLowerCase } from '@/lib/encoding'
 import { authDeps, type AuthDeps } from '@/server/auth/deps'
 import { ownerWorkspaceId } from '@/server/auth/owner'
 import { isRecentAuth } from '@/server/auth/reauth'
@@ -184,7 +185,7 @@ export async function beginRegistration(
     existing: await listPasskeys(tx, session.userId),
   }), deps.pool)
   const options = await generateRegistrationOptions({
-    rpName: 'Formline Admin',
+    rpName: APP_NAME,
     rpID: deps.config.rpId,
     userName: self.email,
     userDisplayName: self.name,

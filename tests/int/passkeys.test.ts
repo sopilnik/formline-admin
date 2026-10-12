@@ -1,7 +1,7 @@
-import { encodeBase64urlNoPadding } from '@oslojs/encoding'
 import type { AuthenticationResponseJSON } from '@simplewebauthn/server'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { encodeBase64urlNoPadding } from '@/lib/encoding'
 import { beginRegistration, challengeCookie, handleFromUserId, markChallengeUsed, readChallenge, removeOwnPasskey, signInWithPasskey } from '@/server/auth/passkeys'
 import type { Session } from '@/server/auth/sessions'
 import { authConfig } from '@/server/config'

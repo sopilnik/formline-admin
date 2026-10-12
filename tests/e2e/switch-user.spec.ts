@@ -1,4 +1,4 @@
-import { generateHOTP } from '@oslojs/otp'
+import { generateHOTP } from '../../src/lib/otp'
 import { E2E_ORIGIN_SECRET } from './constants'
 import { asSchemaOwner, enrolAuthenticator } from './db'
 import { signInAsSandboxUser } from './sessions'

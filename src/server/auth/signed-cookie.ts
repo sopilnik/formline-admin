@@ -1,6 +1,6 @@
 import 'server-only'
-import { decodeBase64urlIgnorePadding, encodeBase64urlNoPadding } from '@oslojs/encoding'
 import { createHmac, timingSafeEqual } from 'node:crypto'
+import { decodeBase64urlIgnorePadding, encodeBase64urlNoPadding } from '@/lib/encoding'
 
 const mac = (body: string, key: string): Buffer => createHmac('sha256', key).update(body).digest()
 

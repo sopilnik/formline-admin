@@ -1,5 +1,5 @@
-import { generateHOTP } from '@oslojs/otp'
 import type pg from 'pg'
+import { generateHOTP } from '@/lib/otp'
 import { findOwner } from '@/server/auth/owner'
 import { setupOwner } from '@/server/auth/setup'
 import { formatTotpSecret } from '@/server/auth/totp'

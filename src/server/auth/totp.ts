@@ -1,12 +1,14 @@
 import 'server-only'
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto'
-import { decodeBase32IgnorePadding, decodeBase64urlIgnorePadding, encodeBase32UpperCaseNoPadding, encodeBase64urlNoPadding } from '@oslojs/encoding'
-import { createTOTPKeyURI, verifyHOTP } from '@oslojs/otp'
+import { APP_NAME } from '@/lib/app'
+import { decodeBase32IgnorePadding, decodeBase64urlIgnorePadding, encodeBase32UpperCaseNoPadding, encodeBase64urlNoPadding } from '@/lib/encoding'
+import { createTOTPKeyURI, verifyHOTP } from '@/lib/otp'
 import type { Keyring } from '@/server/config'
 
 // Spec §5.3: SHA-1, 6 digits, 30 seconds — what every authenticator app accepts.
 const PERIOD = 30
 const DIGITS = 6
+const CODE = new RegExp(`^\\d{${DIGITS}}$`)
 export const TOTP_SECRET_BYTES = 20
 
 export function generateTotpSecret(): Uint8Array {
@@ -29,7 +31,12 @@ export function parseTotpSecret(value: string): Uint8Array | null {
 }
 
 export function totpUri(secret: Uint8Array, accountName: string): string {
-  return createTOTPKeyURI('Formline Admin', accountName, secret, PERIOD, DIGITS)
+  return createTOTPKeyURI(APP_NAME, accountName, secret, PERIOD, DIGITS)
+}
+
+/** Whether a code, its spaces removed, has the shape of an authenticator code rather than of a recovery code. */
+export function isTotpShape(code: string): boolean {
+  return CODE.test(code)
 }
 
 /**
@@ -38,7 +45,7 @@ export function totpUri(secret: Uint8Array, accountName: string): string {
  */
 export function verifyTotp(secret: Uint8Array, code: string, lastStep: number | null, nowMs: number = Date.now()): { ok: true; step: number } | { ok: false } {
   const otp = code.replace(/\s+/g, '')
-  if (!/^\d{6}$/.test(otp)) return { ok: false }
+  if (!isTotpShape(otp)) return { ok: false }
   const current = Math.floor(nowMs / 1000 / PERIOD)
   for (const step of [current - 1, current, current + 1]) {
     if (lastStep !== null && step <= lastStep) continue

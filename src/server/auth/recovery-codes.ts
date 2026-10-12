@@ -1,6 +1,6 @@
 import 'server-only'
-import { encodeBase32LowerCaseNoPadding } from '@oslojs/encoding'
 import { randomBytes } from 'node:crypto'
+import { encodeBase32LowerCaseNoPadding } from '@/lib/encoding'
 import { hashToken } from '@/server/auth/tokens'
 
 export const RECOVERY_CODE_COUNT = 10

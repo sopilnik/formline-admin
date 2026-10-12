@@ -1,5 +1,5 @@
-import { encodeBase64urlNoPadding } from '@oslojs/encoding'
 import { describe, expect, it } from 'vitest'
+import { encodeBase64urlNoPadding } from '@/lib/encoding'
 import { challengeCookie, handleFromUserId, readChallenge, userIdFromHandle } from '@/server/auth/passkeys'
 import { authConfig } from '@/server/config'
 
