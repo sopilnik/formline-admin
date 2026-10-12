@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canDeleteProduct, canTransitionProduct, isProductStatus, nextProductStatuses, PRODUCT_STATUSES } from '@/lib/products/status'
+import { canTransitionProduct, deleteBlocker, isProductStatus, nextProductStatuses, PRODUCT_STATUSES } from '@/lib/products/status'
 
 describe('product status machine', () => {
   it('moves between draft and published both ways and archives either', () => {
@@ -21,10 +21,11 @@ describe('product status machine', () => {
     expect(isProductStatus('active')).toBe(false)
   })
 
-  it('deletes drafts without orders only', () => {
-    expect(canDeleteProduct('draft', false)).toBe(true)
-    expect(canDeleteProduct('draft', true)).toBe(false)
-    expect(canDeleteProduct('published', false)).toBe(false)
-    expect(canDeleteProduct('archived', false)).toBe(false)
+  it('deletes drafts without orders only, and names orders first as the reason', () => {
+    expect(deleteBlocker('draft', false)).toBeNull()
+    expect(deleteBlocker('draft', true)).toBe('has_orders')
+    expect(deleteBlocker('published', true)).toBe('has_orders')
+    expect(deleteBlocker('published', false)).toBe('not_draft')
+    expect(deleteBlocker('archived', false)).toBe('not_draft')
   })
 })

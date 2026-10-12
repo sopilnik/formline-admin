@@ -1,10 +1,9 @@
-import { ArrowLeft } from 'lucide-react'
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { cache } from 'react'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { z } from 'zod'
+import { BackLink } from '@/components/app/detail-page'
 import { LetterBody, letterSubject } from '@/components/outbox/letter'
 import { formatDateTime } from '@/lib/intl'
 import { letterContent } from '@/lib/letters'
@@ -55,10 +54,7 @@ export default async function LetterPage({ params }: Params) {
   ]
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-5">
-      <Link href="/outbox" className="inline-flex w-fit items-center gap-1.5 rounded-sm text-[13px] font-medium text-ink-2 hover:text-foreground">
-        <ArrowLeft aria-hidden className="size-4" />
-        {t('detail.back')}
-      </Link>
+      <BackLink href="/outbox">{t('detail.back')}</BackLink>
       <h1 lang={content.locale} className="text-3xl font-bold tracking-tight break-words">{await letterSubject(content)}</h1>
       <article aria-labelledby="letter-facts" className="flex max-w-3xl min-w-0 flex-col gap-4 rounded-lg border bg-card p-5">
         <h2 id="letter-facts" className="sr-only">{t('detail.letter')}</h2>

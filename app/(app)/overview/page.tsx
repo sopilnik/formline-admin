@@ -12,7 +12,7 @@ import { imageSrc, variantLabel } from '@/lib/catalog'
 import { formatDayRange, formatMoney, formatNumber, formatPercent, formatShare } from '@/lib/intl'
 import { toOrderRowView } from '@/lib/orders/view'
 import { buildChart } from '@/lib/overview/chart'
-import { bucketSums, collectionShares, kpis, type Kpi } from '@/lib/overview/kpi'
+import { bucketSums, collectionShares, kpis, trendOf, type Kpi } from '@/lib/overview/kpi'
 import { lastMoment, parsePeriod, periodPlan, type Range } from '@/lib/periods'
 import type { SearchParams } from '@/lib/search-params'
 import { requireSession } from '@/server/auth/sessions'
@@ -30,15 +30,14 @@ export async function generateMetadata(): Promise<Metadata> {
 type Format = (value: number) => string
 
 /** The strings of one card; "—" for a change the previous period cannot give (spec §8.1). */
-function view(id: string, label: string, hint: string, kpi: Kpi, format: Format, locale: Locale): KpiView {
-  const trend = kpi.change === null ? null : kpi.change > 0 ? 'up' : kpi.change < 0 ? 'down' : 'flat'
+function kpiView(id: string, label: string, hint: string, kpi: Kpi, format: Format, locale: Locale): KpiView {
   return {
     id,
     label,
     hint,
     value: kpi.value === null ? '—' : format(kpi.value),
     change: kpi.change === null ? '—' : formatPercent(kpi.change, locale),
-    trend,
+    trend: trendOf(kpi.change),
     previous: kpi.previous === null ? '—' : format(kpi.previous),
   }
 }
@@ -73,10 +72,10 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   const cents: Format = value => formatMoney(value, locale)
   const number: Format = value => formatNumber(value, locale)
   const figures = [
-    view('revenue', t('kpis.revenue'), t('kpis.revenueHint'), cards.revenue, whole, locale),
-    view('orders', t('kpis.orders'), t('kpis.ordersHint'), cards.orders, number, locale),
-    view('average', t('kpis.averageOrder'), t('kpis.averageOrderHint'), cards.averageOrder, cents, locale),
-    view('customers', t('kpis.newCustomers'), t('kpis.newCustomersHint'), cards.newCustomers, number, locale),
+    kpiView('revenue', t('kpis.revenue'), t('kpis.revenueHint'), cards.revenue, whole, locale),
+    kpiView('orders', t('kpis.orders'), t('kpis.ordersHint'), cards.orders, number, locale),
+    kpiView('average', t('kpis.averageOrder'), t('kpis.averageOrderHint'), cards.averageOrder, cents, locale),
+    kpiView('customers', t('kpis.newCustomers'), t('kpis.newCustomersHint'), cards.newCustomers, number, locale),
   ]
 
   const chartTitle = t('chart.title', { step: plan.step })
@@ -85,7 +84,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
     title: chartTitle,
     range: range(plan.current),
     amount: whole(data.current.revenueCents),
-    trend: change === null ? 'none' : change > 0 ? 'up' : change < 0 ? 'down' : 'flat',
+    trend: trendOf(change) ?? 'none',
     percent: change === null ? '' : formatShare(Math.abs(change), locale, 1),
   })
   const model = buildChart({ plan, current: bucketSums(data.points, plan.buckets), previous: bucketSums(data.points, plan.previousBuckets), locale, timeZone })

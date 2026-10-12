@@ -1,9 +1,9 @@
-import { ArrowLeft } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { cache } from 'react'
 import { getLocale, getTranslations } from 'next-intl/server'
+import { BackLink, CARD, CARD_TITLE } from '@/components/app/detail-page'
 import { OrderNoteForm } from '@/components/orders/order-note-form'
 import { OrderStatusControl } from '@/components/orders/order-status-control'
 import { SourceLabel } from '@/components/orders/source-label'
@@ -37,9 +37,6 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   return { title: order ? t('title', { number: order.number }) : t('notFoundTitle') }
 }
 
-const CARD = 'flex min-w-0 flex-col gap-3 rounded-lg border bg-card p-5'
-const CARD_TITLE = 'font-sans text-[15px] font-semibold'
-
 export default async function OrderPage({ params }: Params) {
   const session = await requireSession()
   authorize(session, 'data.read')
@@ -58,10 +55,7 @@ export default async function OrderPage({ params }: Params) {
   }
   return (
     <div className="flex flex-col gap-5">
-      <Link href="/orders" className="inline-flex w-fit items-center gap-1.5 rounded-sm text-[13px] font-medium text-ink-2 hover:text-foreground">
-        <ArrowLeft aria-hidden className="size-4" />
-        {t('detail.back')}
-      </Link>
+      <BackLink href="/orders">{t('detail.back')}</BackLink>
       <div className="flex flex-wrap items-end gap-4">
         <div className="min-w-60 flex-1">
           <h1 className="text-3xl font-bold tracking-tight">{t('detail.title', { number: order.number })}</h1>

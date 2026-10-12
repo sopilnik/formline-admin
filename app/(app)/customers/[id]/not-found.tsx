@@ -1,13 +1,7 @@
-import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
+import { DetailNotFound } from '@/components/app/detail-page'
 
 export default async function CustomerNotFound() {
   const t = await getTranslations('customers.detail')
-  return (
-    <div className="flex max-w-md flex-col items-start gap-3">
-      <h1 className="text-2xl font-bold tracking-tight">{t('notFoundTitle')}</h1>
-      <p className="text-muted-foreground">{t('notFoundBody')}</p>
-      <Link href="/customers" className="text-[13px] font-medium text-primary hover:underline">{t('allCustomers')}</Link>
-    </div>
-  )
+  return <DetailNotFound title={t('notFoundTitle')} body={t('notFoundBody')} href="/customers" link={t('allCustomers')} />
 }

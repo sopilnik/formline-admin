@@ -1,10 +1,11 @@
 import { Info } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import type { Trend } from '@/lib/overview/kpi'
 import { cn } from '@/lib/utils'
 
 /** One KPI as the page formats it: every string ready, `trend` for the colour of the change. */
-export type KpiView = { id: string; label: string; hint: string; value: string; change: string; trend: 'up' | 'down' | 'flat' | null; previous: string }
+export type KpiView = { id: string; label: string; hint: string; value: string; change: string; trend: Trend | null; previous: string }
 
 export function KpiCard({ kpi }: { kpi: KpiView }) {
   const t = useTranslations('overview.kpis')

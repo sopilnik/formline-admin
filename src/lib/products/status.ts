@@ -20,7 +20,14 @@ export function canTransitionProduct(from: ProductStatus, to: ProductStatus): bo
   return NEXT[from].includes(to)
 }
 
-/** Only a draft that no order line points at can be deleted (spec §8.3); a product with orders is archived instead. */
-export function canDeleteProduct(status: ProductStatus, hasOrders: boolean): boolean {
-  return status === 'draft' && !hasOrders
+/** Why a product cannot be deleted. */
+export type DeleteBlocker = 'has_orders' | 'not_draft'
+
+/**
+ * Only a draft that no order line points at can be deleted (spec §8.3); a product with orders is archived instead. Orders
+ * come first: moving a product with orders to drafts would not make it deletable.
+ */
+export function deleteBlocker(status: ProductStatus, hasOrders: boolean): DeleteBlocker | null {
+  if (hasOrders) return 'has_orders'
+  return status === 'draft' ? null : 'not_draft'
 }

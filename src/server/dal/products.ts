@@ -4,7 +4,7 @@ import { compareVariants } from '@/lib/catalog'
 import { pageCount } from '@/lib/pagination'
 import { SIZE_IDS, SIZE_SURCHARGE_CENTS, variantPriceCents, type SizeId } from '@/lib/products/price'
 import type { ProductsQuery } from '@/lib/products/query'
-import { canDeleteProduct, canTransitionProduct, PRODUCT_STATUSES, type ProductStatus } from '@/lib/products/status'
+import { canTransitionProduct, deleteBlocker, PRODUCT_STATUSES, type DeleteBlocker, type ProductStatus } from '@/lib/products/status'
 import type { CollectionOption, ImageRef, ProductRow } from '@/lib/products/view'
 import { lockCap, refuseTaken } from '@/server/dal/concurrency'
 import { releaseImage } from '@/server/dal/images'
@@ -335,7 +335,7 @@ export async function changeProductStatus(tx: Tx, workspaceId: string, input: { 
 
 export type ProductDeletion =
   | { ok: true; slug: string; name: string; variants: number; queued: string | null }
-  | { ok: false; reason: 'not_found' | 'not_draft' | 'has_orders' }
+  | { ok: false; reason: 'not_found' | DeleteBlocker }
 
 /**
  * Deletes a draft without orders (spec §8.3) with its variants and its image; the image's
@@ -350,9 +350,8 @@ export async function deleteProduct(tx: Tx, workspaceId: string, productId: stri
   const ids = variantRows.map(v => v.id)
   const [ordered] = ids.length === 0 ? [] : await tx.select({ id: orderLines.id }).from(orderLines)
     .where(and(eq(orderLines.workspaceId, workspaceId), inArray(orderLines.variantId, ids))).limit(1)
-  // Orders first: moving a product with orders to drafts would not make it deletable.
-  if (ordered) return { ok: false, reason: 'has_orders' }
-  if (!canDeleteProduct(row.status, false)) return { ok: false, reason: 'not_draft' }
+  const blocker = deleteBlocker(row.status, ordered !== undefined)
+  if (blocker) return { ok: false, reason: blocker }
   await tx.delete(products).where(and(eq(products.workspaceId, workspaceId), eq(products.id, productId)))
   const queued = row.imageId ? await releaseImage(tx, workspaceId, row.imageId) : null
   return { ok: true, slug: row.slug, name: row.name, variants: ids.length, queued }

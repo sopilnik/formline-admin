@@ -16,6 +16,15 @@ export function change(current: number | null, previous: number | null): number 
   return (current - previous) / previous
 }
 
+/** Which way a change goes. */
+export type Trend = 'up' | 'down' | 'flat'
+
+/** The direction of a change, for its colour and its words; none without a change. */
+export function trendOf(change: number | null): Trend | null {
+  if (change === null) return null
+  return change > 0 ? 'up' : change < 0 ? 'down' : 'flat'
+}
+
 const kpi = (value: number | null, previous: number | null): Kpi => ({ value, previous, change: change(value, previous) })
 
 export function kpis(current: Totals, previous: Totals): Kpis {

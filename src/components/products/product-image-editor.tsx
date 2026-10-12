@@ -4,7 +4,7 @@ import { ImageUp } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useRef, useState, useTransition, type ChangeEvent } from 'react'
-import { ProductImage } from '@/components/products/product-image'
+import { ProductImage, type PosterImage } from '@/components/products/product-image'
 import { sendProductImage, type UploadProblem } from '@/components/products/send-product-image'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -12,14 +12,14 @@ import { useToast } from '@/components/ui/toast'
 import { precheckUpload, UPLOAD_ACCEPT } from '@/lib/uploads'
 import { removeProductImageAction } from '@/server/actions/products'
 
-type Props = { productId: string; name: string; src: string | null; width: number; height: number }
+type Props = { productId: string; name: string; image: PosterImage | null }
 
 /**
  * The image of the product page for a role that may change it (spec §8.4). The file goes to
  * `POST /api/media` as the request body; the picker refuses what could never pass, the server
  * decides the rest. Removing asks first, as every deletion does (spec §11).
  */
-export function ProductImageEditor({ productId, name, src, width, height }: Props) {
+export function ProductImageEditor({ productId, name, image }: Props) {
   const t = useTranslations('products.image')
   const toast = useToast()
   const router = useRouter()
@@ -60,14 +60,14 @@ export function ProductImageEditor({ productId, name, src, width, height }: Prop
 
   return (
     <div className="flex flex-col gap-3">
-      <ProductImage src={src} width={width} height={height} />
+      <ProductImage image={image} />
       <input ref={picker} type="file" accept={UPLOAD_ACCEPT} hidden onChange={upload} />
       <div className="flex flex-wrap gap-2">
         <Button type="button" variant="outline" size="sm" disabled={uploading} onClick={() => picker.current?.click()}>
           <ImageUp aria-hidden />
-          {uploading ? t('uploading') : src ? t('replace') : t('upload')}
+          {uploading ? t('uploading') : image ? t('replace') : t('upload')}
         </Button>
-        {src ? (
+        {image ? (
           <Button type="button" variant="ghost" size="sm" disabled={uploading || removing} onClick={() => setConfirming(true)}>{t('remove')}</Button>
         ) : null}
       </div>

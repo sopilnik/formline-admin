@@ -1,9 +1,9 @@
-import { ArrowLeft } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { cache } from 'react'
+import { BackLink, CARD, CARD_TITLE } from '@/components/app/detail-page'
 import { ROW_LINK } from '@/components/app/row-link'
 import { CollectionForm } from '@/components/collections/collection-form'
 import { DeleteCollection } from '@/components/collections/delete-collection'
@@ -34,9 +34,6 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   return { title: collection ? collection.name : t('notFoundTitle') }
 }
 
-const CARD = 'flex min-w-0 flex-col gap-3 rounded-lg border bg-card p-5'
-const CARD_TITLE = 'font-sans text-[15px] font-semibold'
-
 export default async function CollectionPage({ params }: Params) {
   const session = await requireSession()
   authorize(session, 'data.read')
@@ -48,10 +45,7 @@ export default async function CollectionPage({ params }: Params) {
   const canWrite = can(session.role, 'catalog.write', session.workspaceKind)
   return (
     <div className="flex flex-col gap-5">
-      <Link href="/collections" className="inline-flex w-fit items-center gap-1.5 rounded-sm text-[13px] font-medium text-ink-2 hover:text-foreground">
-        <ArrowLeft aria-hidden className="size-4" />
-        {t('back')}
-      </Link>
+      <BackLink href="/collections">{t('back')}</BackLink>
       <div>
         <h1 className="text-3xl font-bold tracking-tight break-words">{collection.name}</h1>
         <p className="mt-1 text-[13px] text-muted-foreground">{t('products', { count: collection.products.length })}</p>

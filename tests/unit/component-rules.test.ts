@@ -24,4 +24,17 @@ describe('interface pieces', () => {
   it.each(components.filter(name => name.startsWith('app/')))('%s names a list once: the section around it takes no name of its own', name => {
     expect(read(name)).not.toMatch(/<section aria-label=\{t\('title'\)\}/)
   })
+
+  it.each(except('src/components/app/detail-page.tsx'))('%s takes the back link and the card classes from the detail page kit', name => {
+    expect(read(name)).not.toMatch(/<ArrowLeft|const CARD(_TITLE)? = /)
+  })
+
+  it.each(components)('%s imports through @/, never by a relative path', name => {
+    expect(read(name)).not.toMatch(/from '\.\.?\//)
+  })
+
+  it.each(components.filter(name => name.startsWith('app/(app)/') && name.endsWith('/not-found.tsx')))('%s says "not found" inside the frame, without a main of its own', name => {
+    expect(read(name)).toMatch(/<(Detail|Page)NotFound[ />]/)
+    expect(read(name)).not.toContain('<main')
+  })
 })

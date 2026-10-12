@@ -6,9 +6,10 @@ import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useToast } from '@/components/ui/toast'
+import type { DeleteBlocker } from '@/lib/products/status'
 import { deleteProductAction } from '@/server/actions/products'
 
-type Props = { productId: string; name: string; variants: number; hasImage: boolean; blocked: 'has_orders' | 'not_draft' | null }
+type Props = { productId: string; name: string; variants: number; hasImage: boolean; blocked: DeleteBlocker | null }
 
 /**
  * "Delete product" (spec §8.3): a draft without orders goes after a confirmation that names it;

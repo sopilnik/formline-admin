@@ -76,6 +76,7 @@ test.describe('outbox', () => {
       await page.goto(path)
       await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible()
       await expect(page.getByRole('link', { name: 'All letters' })).toHaveCount(0)
+      await expect(page.getByRole('main')).toHaveCount(1)
     }
   })
 })

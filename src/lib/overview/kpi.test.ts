@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { averageOrderCents, bucketSums, change, collectionShares, kpis } from '@/lib/overview/kpi'
+import { averageOrderCents, bucketSums, change, collectionShares, kpis, trendOf } from '@/lib/overview/kpi'
 
 describe('KPI arithmetic (spec §8.1, §12.1)', () => {
   it('divides revenue by orders for the average order value, and has none without orders', () => {
@@ -12,6 +12,13 @@ describe('KPI arithmetic (spec §8.1, §12.1)', () => {
     expect(change(61, 64)).toBeCloseTo(-0.0469, 3)
     expect(change(10, 0)).toBeNull()
     expect(change(null, 100)).toBeNull()
+  })
+
+  it('names the direction of a change, and none without one', () => {
+    expect(trendOf(0.124)).toBe('up')
+    expect(trendOf(-0.0469)).toBe('down')
+    expect(trendOf(0)).toBe('flat')
+    expect(trendOf(null)).toBeNull()
   })
 
   it('assembles the four cards', () => {

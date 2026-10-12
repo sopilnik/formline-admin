@@ -1,9 +1,8 @@
-import { ArrowLeft } from 'lucide-react'
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { cache } from 'react'
 import { getLocale, getTranslations } from 'next-intl/server'
+import { BackLink, CARD, CARD_TITLE } from '@/components/app/detail-page'
 import { DeleteProduct } from '@/components/products/delete-product'
 import { ProductDetailsForm } from '@/components/products/product-details-form'
 import { ProductFacts } from '@/components/products/product-facts'
@@ -15,7 +14,7 @@ import { VariantsTable, type VariantView } from '@/components/products/variants-
 import { imageSrc, variantLabel } from '@/lib/catalog'
 import { formatDateTime, formatMoney } from '@/lib/intl'
 import { priceField, variantPriceCents } from '@/lib/products/price'
-import { canDeleteProduct } from '@/lib/products/status'
+import { deleteBlocker } from '@/lib/products/status'
 import { SLUG_PATTERN } from '@/lib/slug'
 import { cn } from '@/lib/utils'
 import { requireSession } from '@/server/auth/sessions'
@@ -46,9 +45,6 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   return { title: product ? product.name : t('notFoundTitle') }
 }
 
-const CARD = 'flex min-w-0 flex-col gap-3 rounded-lg border bg-card p-5'
-const CARD_TITLE = 'font-sans text-[15px] font-semibold'
-
 export default async function ProductPage({ params }: Params) {
   const session = await requireSession()
   authorize(session, 'data.read')
@@ -63,12 +59,10 @@ export default async function ProductPage({ params }: Params) {
     id: v.id, label: variantLabel(v.size, v.palette), sku: v.sku, price: formatMoney(v.priceCents, locale),
     custom: v.priceOverrideCents !== null, stock: v.stock, lowStockThreshold: v.lowStockThreshold,
   }))
+  const image = product.image ? { src: imageSrc(product.image), width: product.image.width, height: product.image.height } : null
   return (
     <div className="flex flex-col gap-5">
-      <Link href="/products" className="inline-flex w-fit items-center gap-1.5 rounded-sm text-[13px] font-medium text-ink-2 hover:text-foreground">
-        <ArrowLeft aria-hidden className="size-4" />
-        {t('detail.back')}
-      </Link>
+      <BackLink href="/products">{t('detail.back')}</BackLink>
       <div className="flex flex-wrap items-end gap-4">
         <div className="min-w-0 grow basis-64">
           <h1 className="text-3xl font-bold tracking-tight break-words">{product.name}</h1>
@@ -124,15 +118,9 @@ export default async function ProductPage({ params }: Params) {
           <section aria-labelledby="image-title" className={CARD}>
             <h2 id="image-title" className={CARD_TITLE}>{t('detail.image')}</h2>
             {canWrite ? (
-              <ProductImageEditor
-                productId={product.id}
-                name={product.name}
-                src={product.image ? imageSrc(product.image) : null}
-                width={product.image?.width ?? 0}
-                height={product.image?.height ?? 0}
-              />
+              <ProductImageEditor productId={product.id} name={product.name} image={image} />
             ) : (
-              <ProductImage src={product.image ? imageSrc(product.image) : null} width={product.image?.width ?? 0} height={product.image?.height ?? 0} />
+              <ProductImage image={image} />
             )}
           </section>
           {can(session.role, 'catalog.delete', session.workspaceKind) ? (
@@ -143,7 +131,7 @@ export default async function ProductPage({ params }: Params) {
                 name={product.name}
                 variants={product.variants.length}
                 hasImage={product.image !== null}
-                blocked={canDeleteProduct(product.status, product.hasOrders) ? null : product.hasOrders ? 'has_orders' : 'not_draft'}
+                blocked={deleteBlocker(product.status, product.hasOrders)}
               />
             </section>
           ) : null}

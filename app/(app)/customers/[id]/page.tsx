@@ -1,10 +1,10 @@
-import { ArrowLeft } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { cache } from 'react'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { z } from 'zod'
+import { BackLink, CARD, CARD_TITLE } from '@/components/app/detail-page'
 import { ROW_LINK } from '@/components/app/row-link'
 import { CustomerNotesForm } from '@/components/customers/customer-notes-form'
 import { StatusBadge } from '@/components/orders/status-badge'
@@ -43,9 +43,6 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   return { title: customer ? customer.name : t('notFoundTitle') }
 }
 
-const CARD = 'flex min-w-0 flex-col gap-3 rounded-lg border bg-card p-5'
-const CARD_TITLE = 'font-sans text-[15px] font-semibold'
-
 export default async function CustomerPage({ params }: Params) {
   const session = await requireSession()
   authorize(session, 'data.read')
@@ -68,10 +65,7 @@ export default async function CustomerPage({ params }: Params) {
   ]
   return (
     <div className="flex flex-col gap-5">
-      <Link href="/customers" className="inline-flex w-fit items-center gap-1.5 rounded-sm text-[13px] font-medium text-ink-2 hover:text-foreground">
-        <ArrowLeft aria-hidden className="size-4" />
-        {t('detail.back')}
-      </Link>
+      <BackLink href="/customers">{t('detail.back')}</BackLink>
       <div className="min-w-0">
         <h1 className="text-3xl font-bold tracking-tight break-words">{customer.name}</h1>
         <p className="mt-1 text-[13px] wrap-anywhere text-muted-foreground">{location ? `${customer.email} · ${location}` : customer.email}</p>

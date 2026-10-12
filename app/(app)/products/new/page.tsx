@@ -1,8 +1,7 @@
-import { ArrowLeft } from 'lucide-react'
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
+import { BackLink } from '@/components/app/detail-page'
 import { NewProductForm } from '@/components/products/new-product-form'
 import { requireSession } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'
@@ -23,10 +22,7 @@ export default async function NewProductPage() {
   const t = await getTranslations('products')
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-5">
-      <Link href="/products" className="inline-flex w-fit items-center gap-1.5 rounded-sm text-[13px] font-medium text-ink-2 hover:text-foreground">
-        <ArrowLeft aria-hidden className="size-4" />
-        {t('detail.back')}
-      </Link>
+      <BackLink href="/products">{t('detail.back')}</BackLink>
       <div>
         <h1 className="text-3xl font-bold tracking-tight">{t('new.title')}</h1>
         <p className="mt-1 text-[13px] text-muted-foreground">{t('new.intro')}</p>
