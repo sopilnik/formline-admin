@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import type { Theme } from '@/lib/theme'
 import type { Actor } from '@/server/actor'
 import type { Session } from '@/server/auth/sessions'
 import { generateToken, hashToken } from '@/server/auth/tokens'
@@ -121,6 +122,19 @@ describe('acceptInvitation', () => {
     const member = await admin.query<{ locale: string; theme: string; shortcuts_enabled: boolean }>(
       "select locale, theme, shortcuts_enabled from fa.users where workspace_id = $1 and email = 'sam.lee@example.test'", [owner.workspaceId])
     expect(member.rows[0]).toEqual({ locale: 'ru', theme: 'dark', shortcuts_enabled: false })
+  })
+
+  it('changes nothing when the member cannot be written: the visitor keeps the session and the invitation stays open', async () => {
+    await inviteMember(owner, { email: 'kept.open@example.test', role: 'viewer', expiresAt }, app)
+    const token = await tokenOfLetter(owner.workspaceId, 'kept.open@example.test')
+    const caller = await sessionOf(owner)
+    // A theme the users table refuses fails the member's row, after the acceptance has replaced the visitor's session.
+    const refused = { ...meta, preferences: { locale: 'en' as const, theme: 'neon' as Theme } }
+    await expect(acceptInvitation(caller, { token, name: 'Kept Open', ...refused }, app)).rejects.toThrow()
+    expect((await admin.query('select 1 from fa.sessions where id = $1', [caller.id])).rowCount).toBe(1)
+    const invitation = await admin.query<{ accepted: boolean }>(
+      "select accepted_at is not null as accepted from fa.invitations where workspace_id = $1 and email = 'kept.open@example.test'", [owner.workspaceId])
+    expect(invitation.rows[0]!.accepted).toBe(false)
   })
 
   it('refuses a revoked invitation and one the email of which became a member meanwhile', async () => {

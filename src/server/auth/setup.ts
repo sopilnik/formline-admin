@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
 import type { Locale } from '@/i18n/locale'
 import type { AuthFailure } from '@/lib/auth-form'
-import { EMAIL_MAX, MEMBER_NAME_MAX } from '@/lib/team'
+import { EMAIL_MAX, memberName } from '@/lib/team'
 import type { Theme } from '@/lib/theme'
 import { checkNewCredentials, sealCredentials } from '@/server/auth/credentials'
 import { authDeps, type AuthDeps } from '@/server/auth/deps'
@@ -48,8 +48,8 @@ export async function setupOwner(
   const attempt = await consume(LIMITS.setupIp, ipSubject(input.ip, config.ipHashKey), pool)
   if (!attempt.allowed) return { ok: false, error: 'rate_limited', retryAfterSeconds: attempt.retryAfterSeconds }
   if (!sameSecret(input.token.trim(), config.setupToken)) return { ok: false, error: 'token_invalid', field: 'token' }
-  const name = input.name.trim()
-  if (name.length < 1 || name.length > MEMBER_NAME_MAX) return { ok: false, error: 'name_required', field: 'name' }
+  const name = memberName(input.name)
+  if (!name) return { ok: false, error: 'name_required', field: 'name' }
   const email = input.email.trim()
   if (!z.email().max(EMAIL_MAX).safeParse(email).success) return { ok: false, error: 'email_invalid', field: 'email' }
   const checked = await checkNewCredentials(input, deps)

@@ -9,7 +9,7 @@ import { workspaceContext, type NewSession, type Session } from '@/server/auth/s
 import { generateToken, hashToken } from '@/server/auth/tokens'
 import { logActivity } from '@/server/dal/activity'
 import { createInvitation, getPendingInvitation, revokeInvitation, type NewInvitation } from '@/server/dal/invitations'
-import { getMemberFactor, getSelf, updateSelfPreferences } from '@/server/dal/users'
+import { getSelf } from '@/server/dal/users'
 import { asDate } from '@/server/db/as-date'
 import { getPool } from '@/server/db/pool'
 import { withWorkspace, type Tx } from '@/server/db/with-workspace'
@@ -17,7 +17,8 @@ import { mail } from '@/server/mail/outbox'
 
 /** The letter with the link, in the inviter's language: the visitor who reads it is the one who wrote it (spec §9). */
 async function sendInvitation(tx: Tx, actor: Actor, invitation: { email: string; role: string; token: string }): Promise<void> {
-  const inviter = (await getSelf(tx, actor))!
+  const inviter = await getSelf(tx, actor)
+  if (!inviter) throw new Error(`the inviter ${actor.userId} is not a member of workspace ${actor.workspaceId}`)
   await mail.send(tx, actor.workspaceId, {
     to: invitation.email, template: 'team.invitation', locale: inviter.locale,
     payload: { inviter: inviter.name, role: invitation.role, token: invitation.token },
@@ -69,9 +70,9 @@ export type Acceptance = ({ ok: true } & NewSession) | { ok: false; reason: 'inv
 
 /**
  * Accepting an invitation from a session in the same sandbox (his decision, 29 September):
- * `accept_invitation` creates the member and replaces the caller's session with theirs.
- * The new member takes the language, the theme and the shortcut switch the visitor has,
- * as "Switch user" hands them over.
+ * `accept_invitation` creates the member with the language, the theme and the shortcut switch
+ * the visitor has, as "Switch user" hands them over, and replaces the caller's session with
+ * theirs, all in one statement.
  */
 export async function acceptInvitation(
   session: Session,
@@ -81,16 +82,15 @@ export async function acceptInvitation(
   if (session.workspaceKind !== 'sandbox') return { ok: false, reason: 'invalid' }
   const token = generateToken()
   const id = hashToken(token)
-  const ctx = workspaceContext(session)
-  const { row, shortcutsEnabled, member } = await withWorkspace(ctx, async tx => {
+  const row = await withWorkspace(workspaceContext(session), async tx => {
     const shortcutsEnabled = (await getSelf(tx, session))?.shortcutsEnabled ?? true
-    const result = await tx.execute<{ outcome: 'accepted' | 'invalid' | 'taken'; user_id: string | null; sandbox_expires_at: string | null }>(
-      sql`select outcome, user_id, sandbox_expires_at from fa.accept_invitation(${hashToken(input.token)}, ${input.name}, ${session.id}, ${id}, ${input.userAgentSummary}, ${input.ipHash})`)
-    const row = result.rows[0]!
-    return { row, shortcutsEnabled, member: row.user_id ? await getMemberFactor(tx, { workspaceId: session.workspaceId, userId: row.user_id }) : null }
+    const { locale, theme } = input.preferences
+    const result = await tx.execute<{ outcome: 'accepted' | 'invalid' | 'taken'; sandbox_expires_at: string | null }>(sql`
+      select outcome, sandbox_expires_at from fa.accept_invitation(${hashToken(input.token)}, ${input.name}, ${session.id}, ${id},
+        ${input.userAgentSummary}, ${input.ipHash}, ${locale}, ${theme}, ${shortcutsEnabled})`)
+    return result.rows[0]!
   }, pool)
-  if (row.outcome !== 'accepted' || !member) return { ok: false, reason: row.outcome === 'accepted' ? 'invalid' : row.outcome }
-  // Row-level security lets a member write only their own row, so this runs as the new member.
-  await withWorkspace({ ...ctx, userId: member.id, role: member.role }, tx => updateSelfPreferences(tx, { workspaceId: session.workspaceId, userId: member.id }, { ...input.preferences, shortcutsEnabled }), pool)
-  return { ok: true, token, id, expiresAt: asDate(row.sandbox_expires_at!) }
+  if (row.outcome !== 'accepted') return { ok: false, reason: row.outcome }
+  if (!row.sandbox_expires_at) throw new Error('accept_invitation accepted without the sandbox\'s expiry')
+  return { ok: true, token, id, expiresAt: asDate(row.sandbox_expires_at) }
 }

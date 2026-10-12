@@ -7,11 +7,9 @@ import { getLocale } from 'next-intl/server'
 import { z } from 'zod'
 import { failureState, formText, type FormState } from '@/lib/auth-form'
 import { parseTheme, THEME_COOKIE } from '@/lib/theme'
+import { requestIpHash } from '@/server/actor'
 import { requireSession, setSessionCookie } from '@/server/auth/sessions'
 import { summariseUserAgent } from '@/server/auth/user-agent'
-import { authConfig } from '@/server/config'
-import { hashIp } from '@/server/ratelimit/ip'
-import { getClientIp } from '@/server/request'
 import { cleanupExpiredSandboxes } from '@/server/sandbox/cleanup'
 import { enterSandbox, type VisitorMeta } from '@/server/sandbox/enter'
 import { resetSandbox } from '@/server/sandbox/lifecycle'
@@ -19,7 +17,7 @@ import { switchUser } from '@/server/sandbox/sign-in-as'
 
 async function visitorMeta(): Promise<VisitorMeta> {
   return {
-    ipHash: hashIp(await getClientIp(), authConfig().ipHashKey),
+    ipHash: await requestIpHash(),
     userAgentSummary: summariseUserAgent((await headers()).get('user-agent')),
     locale: await getLocale(),
   }

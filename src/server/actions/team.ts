@@ -7,9 +7,9 @@ import { getLocale } from 'next-intl/server'
 import { z } from 'zod'
 import { formText } from '@/lib/auth-form'
 import { fail, ok, type ActionResult } from '@/lib/result'
-import { ASSIGNABLE_ROLES, EMAIL_MAX, MEMBER_NAME_MAX, type InviteField } from '@/lib/team'
+import { ASSIGNABLE_ROLES, EMAIL_MAX, memberName, type InviteField } from '@/lib/team'
 import { parseTheme, THEME_COOKIE } from '@/lib/theme'
-import { actorOf } from '@/server/actor'
+import { actorOf, requestIpHash } from '@/server/actor'
 import { requireSession, setSessionCookie } from '@/server/auth/sessions'
 import { TOKEN_PATTERN } from '@/server/auth/tokens'
 import { summariseUserAgent } from '@/server/auth/user-agent'
@@ -98,13 +98,13 @@ export type AcceptState = { status: 'idle' } | { status: 'error'; error: 'name_r
 /** Accepting an invitation from the letter's link: the visitor continues as the new member (spec §8.6). */
 export async function acceptInvitationAction(_previous: AcceptState, form: FormData): Promise<AcceptState> {
   const session = await requireSession()
-  const name = formText(form, 'name').trim()
+  const typed = formText(form, 'name').trim()
   const token = formText(form, 'token')
-  if (!TOKEN_PATTERN.test(token)) return { status: 'error', error: 'invalid', name }
-  if (name.length < 1 || [...name].length > MEMBER_NAME_MAX) return { status: 'error', error: 'name_required', name }
-  const actor = await actorOf(session)
+  if (!TOKEN_PATTERN.test(token)) return { status: 'error', error: 'invalid', name: typed }
+  const name = memberName(typed)
+  if (!name) return { status: 'error', error: 'name_required', name: typed }
   const preferences = { locale: await getLocale(), theme: parseTheme((await cookies()).get(THEME_COOKIE)?.value) }
-  const result = await acceptInvitation(session, { token, name, userAgentSummary: summariseUserAgent((await headers()).get('user-agent')), ipHash: actor.ipHash, preferences })
+  const result = await acceptInvitation(session, { token, name, userAgentSummary: summariseUserAgent((await headers()).get('user-agent')), ipHash: await requestIpHash(), preferences })
   if (!result.ok) return { status: 'error', error: result.reason, name }
   await setSessionCookie(result.token, result.expiresAt, { demo: true })
   redirect('/overview')

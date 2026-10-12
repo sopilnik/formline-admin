@@ -8,8 +8,13 @@ import { getClientIp } from '@/server/request'
 /** Who is changing workspace data: the request identity plus the address hash the activity log keeps (spec §5.7). */
 export type Actor = { workspaceId: string; userId: string; role: Role; ipHash: string | null }
 
+/** The hash of the requesting address, as the activity log and the sessions keep it; never the address itself. */
+export async function requestIpHash(): Promise<string | null> {
+  return hashIp(await getClientIp(), authConfig().ipHashKey)
+}
+
 export async function actorOf(session: Session): Promise<Actor> {
-  return { workspaceId: session.workspaceId, userId: session.userId, role: session.role, ipHash: hashIp(await getClientIp(), authConfig().ipHashKey) }
+  return { workspaceId: session.workspaceId, userId: session.userId, role: session.role, ipHash: await requestIpHash() }
 }
 
 export function actorContext(actor: Actor): { workspaceId: string; userId: string; role: Role } {
