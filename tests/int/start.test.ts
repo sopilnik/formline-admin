@@ -31,19 +31,26 @@ const settle = () => new Promise(resolve => setTimeout(resolve, 50))
 describe('the container start against a real database', () => {
   it('migrates, passes the role check and serves without the migrator\'s address', async () => {
     const s = start(ENV)
-    for (let i = 0; i < 100 && s.served.length === 0; i++) await settle()
-    expect(s.served).toHaveLength(1)
-    expect(s.served[0]!.DATABASE_URL_MIGRATOR).toBeUndefined()
-    expect(s.served[0]!.FORMLINE_MAINTENANCE).toBeUndefined()
-    s.stop()
+    try {
+      for (let i = 0; i < 100 && s.served.length === 0; i++) await settle()
+      expect(s.served).toHaveLength(1)
+      expect(s.served[0]!.DATABASE_URL_MIGRATOR).toBeUndefined()
+      expect(s.served[0]!.FORMLINE_MAINTENANCE).toBeUndefined()
+    } finally {
+      s.stop()
+    }
     expect(await s.running).toBe(0)
   })
 
   it('serves in maintenance mode when the database cannot be reached', async () => {
     const s = start({ ...ENV, DATABASE_URL_MIGRATOR: 'postgres://postgres:postgres@127.0.0.1:9/formline_test' })
-    for (let i = 0; i < 100 && s.served.length === 0; i++) await settle()
-    expect(s.served[0]!.FORMLINE_MAINTENANCE).toBe('1')
-    s.stop()
+    try {
+      for (let i = 0; i < 100 && s.served.length === 0; i++) await settle()
+      expect(s.served).toHaveLength(1)
+      expect(s.served[0]!.FORMLINE_MAINTENANCE).toBe('1')
+    } finally {
+      s.stop()
+    }
     expect(await s.running).toBe(0)
   })
 

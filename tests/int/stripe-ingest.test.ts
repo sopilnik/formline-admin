@@ -6,7 +6,7 @@ import type { IncomingLine, IncomingOrder } from '@/lib/stripe/checkout'
 import { parseLineName } from '@/lib/stripe/line-name'
 import { customers, users } from '@/server/db/schema'
 import { withWorkspace, withWorkspaces } from '@/server/db/with-workspace'
-import { ingestOrder } from '@/server/stripe/ingest'
+import { ingestOrder, type IngestResult } from '@/server/stripe/ingest'
 import { pseudonymiseOldCustomers } from '@/server/stripe/personal-data'
 import { pseudonymFor } from '@/server/stripe/pseudonym'
 import { adminPool, appPool, closeAll } from './db'
@@ -40,6 +40,15 @@ function storeOrder(over: Partial<IncomingOrder> = {}): IncomingOrder {
 
 const PSEUDONYM_KEY = 'test-pseudonym-key-0123456789abcdef0123456789'
 const ingest = (order: IncomingOrder, eventId: string | null = `evt_${TAG}_${count}`) => ingestOrder(order, { eventId, pseudonymKey: PSEUDONYM_KEY }, app)
+
+/** The id of the order an ingest created; any other answer fails here, with the status it had. */
+function createdId(result: IngestResult): string {
+  if (result.status !== 'created') throw new Error(`the ingest answered ${result.status}, not created`)
+  return result.orderId
+}
+
+const customerOf = async (orderId: string) =>
+  (await admin.query<{ customer_id: string }>('select customer_id from fa.orders where workspace_id = $1 and id = $2', [owner, orderId])).rows[0]!.customer_id
 
 async function variant(sku: string): Promise<{ id: string; product_id: string; stock: number }> {
   const { rows } = await admin.query<{ id: string; product_id: string; stock: number }>('select id, product_id, stock from fa.product_variants where workspace_id = $1 and sku = $2', [owner, sku])
@@ -115,14 +124,12 @@ describe('the Stripe ingest', () => {
   })
 
   it('finds a customer by email whatever its case, and names a nameless new one "Customer"', async () => {
-    const first = await admin.query<{ id: string }>('select id from fa.customers where workspace_id = $1 and email = $2', [owner, `mia.${TAG}@ingest.test`])
-    const again = await ingest(storeOrder({ email: `MIA.${TAG}@INGEST.TEST`, name: 'Someone Else' }))
-    expect(again.status).toBe('created')
-    const same = await admin.query<{ customer_id: string }>('select customer_id from fa.orders where workspace_id = $1 and id = $2', [owner, again.status === 'created' ? again.orderId : ''])
-    expect(same.rows[0]!.customer_id).toBe(first.rows[0]!.id)
+    const first = await ingest(storeOrder({ email: `case.${TAG}@ingest.test` }))
+    const again = await ingest(storeOrder({ email: `CASE.${TAG}@INGEST.TEST`, name: 'Someone Else' }))
+    expect(await customerOf(createdId(again))).toBe(await customerOf(createdId(first)))
     const nameless = await ingest(storeOrder({ email: `anon.${TAG}@ingest.test`, name: null }))
     const customer = await admin.query<{ name: string }>('select c.name from fa.orders o join fa.customers c on c.workspace_id = o.workspace_id and c.id = o.customer_id where o.workspace_id = $1 and o.id = $2',
-      [owner, nameless.status === 'created' ? nameless.orderId : ''])
+      [owner, createdId(nameless)])
     expect(customer.rows[0]!.name).toBe('Customer')
   })
 
@@ -147,7 +154,7 @@ describe('the Stripe ingest', () => {
       const farOrbit = await variant('far-orbit-a2-ink')
       expect(farOrbit.stock).toBe(0)
       const notes = await admin.query<{ note: string; actor_user_id: string | null }>("select note, actor_user_id from fa.order_events where workspace_id = $1 and order_id = $2 and kind = 'note'",
-        [owner, result.status === 'created' ? result.orderId : ''])
+        [owner, createdId(result)])
       expect(notes.rows).toEqual([{ note: 'Far Orbit · A2 · Ink: продано на 2 шт. больше, чем было на складе.', actor_user_id: null }])
       expect(await notificationsOf('stock.low')).toEqual([{ productId: farOrbit.product_id, product: 'Far Orbit', size: 'a2', palette: 'ink', stock: 0, threshold: 3, oversold: 2 }])
     } finally {
@@ -159,7 +166,7 @@ describe('the Stripe ingest', () => {
     await setStock('far-orbit-a2-ink', 1, 3)
     const result = await ingest(storeOrder({ lines: [line('Far Orbit · A2 · Ink', 3, 4700)] }))
     const { rows } = await admin.query<{ kind: string; at: Date }>('select kind, at from fa.order_events where workspace_id = $1 and order_id = $2 order by at, id',
-      [owner, result.status === 'created' ? result.orderId : ''])
+      [owner, createdId(result)])
     const at = Object.fromEntries(rows.map(r => [r.kind, r.at.getTime()]))
     expect(at.note! - at.status!).toBe(1)
     expect(rows.map(r => r.kind)).toEqual(['status', 'note'])
@@ -168,7 +175,7 @@ describe('the Stripe ingest', () => {
   it('keeps a line it cannot match as free text and takes no stock for it', async () => {
     await setStock('far-orbit-a2-ink', 9, 3)
     const result = await ingest(storeOrder({ lines: [line('Far Orbit · A2 · Ink', 1, 4700), line('Gift wrap', 1, 500)] }))
-    const lines = await admin.query('select variant_id, sku, name, unmatched from fa.order_lines where workspace_id = $1 and order_id = $2 and unmatched', [owner, result.status === 'created' ? result.orderId : ''])
+    const lines = await admin.query('select variant_id, sku, name, unmatched from fa.order_lines where workspace_id = $1 and order_id = $2 and unmatched', [owner, createdId(result)])
     expect(lines.rows).toEqual([{ variant_id: null, sku: null, name: 'Gift wrap', unmatched: true }])
     expect((await variant('far-orbit-a2-ink')).stock).toBe(8)
   })
@@ -272,7 +279,7 @@ describe('the daily pseudonymisation', () => {
   it('turns an owner-workspace customer into their pseudonym after 30 days, in the "New order" too, and keeps the orders', async () => {
     const email = `old.${TAG}@ingest.test`
     const result = await ingest(storeOrder({ email, name: 'Olga Old' }))
-    const orderId = result.status === 'created' ? result.orderId : ''
+    const orderId = createdId(result)
     const young = await ingest(storeOrder({ email: `young.${TAG}@ingest.test`, name: 'Yuri Young' }))
     await admin.query("update fa.customers set created_at = now() - interval '31 days' where workspace_id = $1 and email = $2", [owner, email])
     await admin.query("update fa.customers set created_at = now() - interval '29 days' where workspace_id = $1 and email = $2", [owner, `young.${TAG}@ingest.test`])
@@ -285,16 +292,17 @@ describe('the daily pseudonymisation', () => {
     const notice = await admin.query<{ customer: string }>("select payload->>'customer' as customer from fa.notifications where workspace_id = $1 and kind = 'order.created' and payload->>'orderId' = $2", [owner, orderId])
     expect(notice.rows).toEqual([{ customer: person.name }])
     const kept = await admin.query<{ name: string }>('select c.name from fa.orders o join fa.customers c on c.workspace_id = o.workspace_id and c.id = o.customer_id where o.workspace_id = $1 and o.id = $2',
-      [owner, young.status === 'created' ? young.orderId : ''])
+      [owner, createdId(young)])
     expect(kept.rows[0]!.name).toBe('Yuri Young')
     expect(await pseudonymiseOldCustomers(PSEUDONYM_KEY, app)).toBe(0)
   })
 
   it('finds a returning customer under their pseudonym, so they stay one customer', async () => {
-    const email = `old.${TAG}@ingest.test`
-    const before = await admin.query<{ id: string }>('select id from fa.customers where workspace_id = $1 and email = $2', [owner, pseudonymFor(email, PSEUDONYM_KEY).email])
+    const email = `back.${TAG}@ingest.test`
+    const first = createdId(await ingest(storeOrder({ email, name: 'Bea Back' })))
+    await admin.query("update fa.customers set created_at = now() - interval '31 days' where workspace_id = $1 and email = $2", [owner, email])
+    await pseudonymiseOldCustomers(PSEUDONYM_KEY, app)
     const again = await ingest(storeOrder({ email }))
-    const customer = await admin.query<{ customer_id: string }>('select customer_id from fa.orders where workspace_id = $1 and id = $2', [owner, again.status === 'created' ? again.orderId : ''])
-    expect(customer.rows[0]!.customer_id).toBe(before.rows[0]!.id)
+    expect(await customerOf(createdId(again))).toBe(await customerOf(first))
   })
 })

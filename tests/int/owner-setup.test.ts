@@ -8,7 +8,7 @@ import { LIMITS } from '@/server/ratelimit/limits'
 import { roomInWindow } from '../windows'
 import { adminPool, appPool, closeAll } from './db'
 import { TEST_AUTH_ENV } from './env'
-import { nextTotp, noBreach, OWNER, OWNER_TOTP_SECRET } from './owner'
+import { ensureOwner, nextTotp, noBreach, OWNER, OWNER_TOTP_SECRET } from './owner'
 
 let admin: pg.Pool
 let app: pg.Pool
@@ -114,6 +114,7 @@ describe('setupOwner', () => {
   })
 
   it('refuses a second owner', async () => {
+    await ensureOwner(admin, app)
     expect(await attempt({ email: 'second@formline.test' })).toEqual({ ok: false, error: 'owner_exists' })
     expect(await owners()).toBe(1)
   })

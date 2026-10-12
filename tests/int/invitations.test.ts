@@ -163,11 +163,12 @@ describe('acceptInvitation', () => {
   })
 
   it('writes the same link into a new letter on resend', async () => {
-    const id = (await admin.query<{ id: string }>("select id from fa.invitations where workspace_id = $1 and email = 'elsewhere@example.test'", [owner.workspaceId])).rows[0]!.id
-    const first = await tokenOfLetter(owner.workspaceId, 'elsewhere@example.test')
-    expect(await resendInvitation(owner, id, app)).toEqual({ email: 'elsewhere@example.test' })
+    await inviteMember(owner, { email: 'resend@example.test', role: 'viewer', expiresAt }, app)
+    const id = (await admin.query<{ id: string }>("select id from fa.invitations where workspace_id = $1 and email = 'resend@example.test'", [owner.workspaceId])).rows[0]!.id
+    const first = await tokenOfLetter(owner.workspaceId, 'resend@example.test')
+    expect(await resendInvitation(owner, id, app)).toEqual({ email: 'resend@example.test' })
     const letters = await admin.query<{ token: string }>(
-      "select payload->>'token' as token from fa.outbox_emails where workspace_id = $1 and to_address = 'elsewhere@example.test'", [owner.workspaceId])
+      "select payload->>'token' as token from fa.outbox_emails where workspace_id = $1 and to_address = 'resend@example.test'", [owner.workspaceId])
     expect(letters.rows.map(r => r.token)).toEqual([first, first])
     expect((await admin.query("select 1 from fa.activity_log where workspace_id = $1 and action = 'team.invitation_resent'", [owner.workspaceId])).rowCount).toBe(1)
   })

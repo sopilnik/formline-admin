@@ -1,11 +1,11 @@
 import pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { migrate } from '../../scripts/migrate'
-import { ADMIN_URL, APP_PASSWORD } from './env'
+import { ADMIN_URL, APP_POOLED_URL, MIGRATOR_URL, withDatabase } from './env'
 
 const DB = 'formline_migrate_test'
-const migratorUrl = `postgres://postgres:postgres@127.0.0.1:55432/${DB}`
-const appUrl = `postgres://app:${APP_PASSWORD}@127.0.0.1:56432/${DB}`
+const migratorUrl = withDatabase(MIGRATOR_URL, DB)
+const appUrl = withDatabase(APP_POOLED_URL, DB)
 const fixtures = (name: string) => new URL(`./fixtures/${name}/`, import.meta.url)
 
 async function admin<T>(fn: (c: pg.Client) => Promise<T>, url = ADMIN_URL): Promise<T> {
@@ -58,7 +58,7 @@ describe('migrate', () => {
     const owner = 'formline_owner_test'
     const ownerDb = `${DB}_owner`
     const ownerUrl = `postgres://${owner}:owner-local-password@127.0.0.1:55432/${ownerDb}`
-    const ownerAppUrl = `postgres://app:${APP_PASSWORD}@127.0.0.1:56432/${ownerDb}`
+    const ownerAppUrl = withDatabase(APP_POOLED_URL, ownerDb)
     await admin(async c => {
       // A run stopped halfway may have left both behind; the database goes first, as the role owns it.
       await c.query(`drop database if exists ${ownerDb} with (force)`)

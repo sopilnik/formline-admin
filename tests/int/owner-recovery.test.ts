@@ -27,7 +27,12 @@ beforeAll(async () => {
   ownerId = await ensureOwner(admin, app)
   ownerWorkspace = (await admin.query<{ id: string }>("select id from fa.workspaces where kind = 'owner'")).rows[0]!.id
 })
-afterAll(closeAll)
+afterAll(async () => {
+  // The owner is shared by every auth test file: a recovery with the shared values puts the password and the authenticator
+  // back, whatever a test below left.
+  expect((await recover(await issue())).ok).toBe(true)
+  await closeAll()
+})
 
 /** Issues a code the way the CLI does: as schema_owner. */
 async function issue(): Promise<string> {
@@ -76,9 +81,6 @@ describe('owner recovery', () => {
     expect((await signInWithPassword({ email: OWNER.email, password: 'brand-new-password-5582', ip: '203.0.113.200', userAgent: null }, { pool: app })).ok).toBe(true)
     expect(await signInWithPassword({ email: OWNER.email, password: OWNER.password, ip: '203.0.113.201', userAgent: null }, { pool: app }))
       .toEqual({ ok: false, error: 'credentials_invalid' })
-
-    // Back to the shared values for the other test files.
-    expect((await recover(await issue())).ok).toBe(true)
   })
 
   it('takes a code once', async () => {

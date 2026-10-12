@@ -8,6 +8,7 @@ import { drainPendingDeletions } from '@/server/media/deletions'
 import { MEDIA_PATH } from '@/server/media/storage'
 import { cleanupExpiredSandboxes } from '@/server/sandbox/cleanup'
 import { adminPool, appPool, closeAll } from './db'
+import { APP_POOLED_URL } from './env'
 import { asSchemaOwner, createSandbox } from './fixtures'
 import { memoryStorage } from './storage'
 
@@ -51,7 +52,9 @@ describe('delete_expired_sandboxes', () => {
 
   it('cleanupExpiredSandboxes returns the count and never throws', async () => {
     expect(typeof await cleanupExpiredSandboxes(app)).toBe('number')
-    const broken = new pg.Pool({ connectionString: 'postgres://app:wrong-password@127.0.0.1:56432/formline_test', max: 1 })
+    const wrong = new URL(APP_POOLED_URL)
+    wrong.password = 'wrong-password'
+    const broken = new pg.Pool({ connectionString: wrong.href, max: 1 })
     try {
       expect(await cleanupExpiredSandboxes(broken)).toBe(0)
     } finally {
@@ -94,6 +97,8 @@ describe('purge_housekeeping', () => {
 
 describe('drainPendingDeletions', () => {
   it('deletes what storage accepts and re-queues what it refuses with a growing delay', async () => {
+    // The queue is global: a due row another file left would be drained and counted here too.
+    await admin.query('delete from fa.pending_media_deletions where next_attempt_at <= now()')
     await admin.query("insert into fa.pending_media_deletions (storage_path) values ('media/ok.webp'), ('media/bad.webp'), ('media/later.webp')")
     await admin.query("update fa.pending_media_deletions set next_attempt_at = now() + interval '1 hour' where storage_path = 'media/later.webp'")
     const storage = memoryStorage(['media/ok.webp', 'media/bad.webp', 'media/later.webp'])

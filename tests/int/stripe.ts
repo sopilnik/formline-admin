@@ -64,7 +64,7 @@ export function signedEvent(session: CheckoutSessionLike, over: { id?: string; t
 /**
  * Everything the Stripe tests of a file change in the shared database, put back when the file ends: the store orders
  * of the owner and the template with their customers, the two order counters, the owner's stock and notifications,
- * and the recorded events.
+ * and the recorded events. What existed before the file stays; what it added goes.
  */
 export async function keepStoreState(admin: pg.Pool): Promise<() => Promise<void>> {
   const { rows: spaces } = await admin.query<{ id: string; kind: string }>("select id, kind from fa.workspaces where kind in ('owner', 'template')")
@@ -75,11 +75,13 @@ export async function keepStoreState(admin: pg.Pool): Promise<() => Promise<void
   const stocks = (await admin.query<{ id: string; stock: number; low_stock_threshold: number }>(
     'select id, stock, low_stock_threshold from fa.product_variants where workspace_id = $1', [owner])).rows
   const customers = (await admin.query<{ id: string }>('select id from fa.customers where workspace_id = any($1::uuid[])', [[owner, template]])).rows.map(r => r.id)
+  const orders = (await admin.query<{ id: string }>('select id from fa.orders where workspace_id = any($1::uuid[])', [[owner, template]])).rows.map(r => r.id)
+  const notifications = (await admin.query<{ id: string }>('select id from fa.notifications where workspace_id = $1', [owner])).rows.map(r => r.id)
   const events = (await admin.query<{ event_id: string }>('select event_id from fa.stripe_events')).rows.map(r => r.event_id)
   return async () => {
-    await admin.query("delete from fa.orders where workspace_id = any($1::uuid[]) and source = 'stripe'", [[owner, template]])
+    await admin.query('delete from fa.orders where workspace_id = any($1::uuid[]) and not (id = any($2::uuid[]))', [[owner, template], orders])
     await admin.query('delete from fa.customers where workspace_id = any($1::uuid[]) and not (id = any($2::uuid[]))', [[owner, template], customers])
-    await admin.query("delete from fa.notifications where workspace_id = $1 and kind in ('order.created', 'stock.low')", [owner])
+    await admin.query('delete from fa.notifications where workspace_id = $1 and not (id = any($2::uuid[]))', [owner, notifications])
     await admin.query('delete from fa.stripe_events where not (event_id = any($1::text[]))', [events])
     for (const c of counters) await admin.query('update fa.workspace_counters set next_order_number = $2 where workspace_id = $1', [c.workspace_id, c.next_order_number])
     for (const v of stocks) await admin.query('update fa.product_variants set stock = $3, low_stock_threshold = $4 where workspace_id = $1 and id = $2', [owner, v.id, v.stock, v.low_stock_threshold])
