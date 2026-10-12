@@ -6,7 +6,8 @@ import { Pager } from '@/components/app/pager'
 import { letterSubject } from '@/components/outbox/letter'
 import { formatDateTime } from '@/lib/intl'
 import { letterContent } from '@/lib/letters'
-import { outboxHref, parseOutboxQuery, type SearchParams } from '@/lib/outbox/query'
+import { pageQueryHref, parsePageQuery } from '@/lib/pagination'
+import type { SearchParams } from '@/lib/search-params'
 import { requireSession, workspaceContext } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'
 import { listLetters } from '@/server/dal/outbox'
@@ -25,12 +26,12 @@ const SUBJECT_LINK = 'font-medium underline decoration-border-strong underline-o
 export default async function OutboxPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const session = await requireSession()
   if (!can(session.role, 'outbox.read', session.workspaceKind)) notFound()
-  const query = parseOutboxQuery(await searchParams)
+  const query = parsePageQuery(await searchParams)
   const { list, timeZone } = await withWorkspace(workspaceContext(session), async tx => ({
     list: await listLetters(tx, session.workspaceId, query),
     timeZone: (await getStoreSettings(tx, session.workspaceId)).timezone,
   }))
-  if (list.total > 0 && query.page > list.pages) redirect(outboxHref(query, { page: list.pages }))
+  if (list.total > 0 && query.page > list.pages) redirect(pageQueryHref('/outbox', query, { page: list.pages }))
   const locale = await getLocale()
   const t = await getTranslations('outbox')
   const letters = await Promise.all(list.rows.map(async row => {
@@ -62,7 +63,7 @@ export default async function OutboxPage({ searchParams }: { searchParams: Promi
               pages={list.pages}
               size={query.size}
               filtered={list.total}
-              href={changes => outboxHref(query, changes)}
+              href={changes => pageQueryHref('/outbox', query, changes)}
             />
           </>
         ) : (

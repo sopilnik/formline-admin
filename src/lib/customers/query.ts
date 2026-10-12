@@ -1,4 +1,5 @@
 import { DEFAULT_PAGE_SIZE, parsePage, parsePageSize, type PageSize } from '@/lib/pagination'
+import { one, pick, searchText, type SearchParams } from '@/lib/search-params'
 
 export const CUSTOMER_SORTS = ['name', 'orders', 'spent', 'last'] as const
 export type CustomerSort = (typeof CUSTOMER_SORTS)[number]
@@ -18,25 +19,11 @@ export const DEFAULT_CUSTOMERS_QUERY: CustomersQuery = { q: '', sort: 'last', di
 /** The direction a column starts in: names A to Z, the most orders, the most spent and the latest order first. */
 export const FIRST_DIR: Record<CustomerSort, 'asc' | 'desc'> = { name: 'asc', orders: 'desc', spent: 'desc', last: 'desc' }
 
-const MAX_SEARCH = 100
-
-export type SearchParams = Record<string, string | string[] | undefined>
-
-function one(params: SearchParams | URLSearchParams, key: string): string | undefined {
-  if (params instanceof URLSearchParams) return params.get(key) ?? undefined
-  const value = params[key]
-  return Array.isArray(value) ? value[0] : value
-}
-
-function pick<T extends string>(options: readonly T[], value: string | undefined, fallback: T): T {
-  return value !== undefined && (options as readonly string[]).includes(value) ? (value as T) : fallback
-}
-
 /** Tolerant, as the other lists: an unknown value means the default. */
 export function parseCustomersQuery(params: SearchParams | URLSearchParams): CustomersQuery {
   const sort = pick(CUSTOMER_SORTS, one(params, 'sort'), DEFAULT_CUSTOMERS_QUERY.sort)
   return {
-    q: (one(params, 'q') ?? '').trim().slice(0, MAX_SEARCH),
+    q: searchText(params),
     sort,
     dir: pick(['asc', 'desc'] as const, one(params, 'dir'), FIRST_DIR[sort]),
     page: parsePage(one(params, 'page')),

@@ -1,3 +1,5 @@
+import { one, type SearchParams } from '@/lib/search-params'
+
 /** The page sizes every list offers (spec §11); the first is the default. */
 export const PAGE_SIZES = [25, 50, 100] as const
 export type PageSize = (typeof PAGE_SIZES)[number]
@@ -13,6 +15,26 @@ export function parsePage(value: string | undefined): number {
 export function parsePageSize(value: string | undefined): PageSize {
   const size = Number(value)
   return (PAGE_SIZES as readonly number[]).includes(size) ? (size as PageSize) : DEFAULT_PAGE_SIZE
+}
+
+/** A list that pages newest first with only its page and its size in the URL: the notifications and the outbox. */
+export type PageQuery = { page: number; size: PageSize }
+
+export const DEFAULT_PAGE_QUERY: PageQuery = { page: 1, size: DEFAULT_PAGE_SIZE }
+
+export function parsePageQuery(params: SearchParams): PageQuery {
+  return { page: parsePage(one(params, 'page')), size: parsePageSize(one(params, 'size')) }
+}
+
+/** The list's path with `changes` applied: the defaults stay out, and a changed size starts again at page 1, as on the other lists. */
+export function pageQueryHref(path: string, query: PageQuery, changes: Partial<PageQuery> = {}): string {
+  const page = changes.page ?? (changes.size !== undefined ? 1 : query.page)
+  const size = changes.size ?? query.size
+  const params = new URLSearchParams()
+  if (page !== DEFAULT_PAGE_QUERY.page) params.set('page', String(page))
+  if (size !== DEFAULT_PAGE_QUERY.size) params.set('size', String(size))
+  const text = params.toString()
+  return text ? `${path}?${text}` : path
 }
 
 /** How many pages `rows` fill; an empty list still has its one page. */

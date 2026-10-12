@@ -1,5 +1,6 @@
 import { DEFAULT_PAGE_SIZE, parsePage, parsePageSize, type PageSize } from '@/lib/pagination'
 import { isProductStatus, PRODUCT_STATUSES, type ProductStatus } from '@/lib/products/status'
+import { all, one, pick, searchText, type SearchParams } from '@/lib/search-params'
 import { SLUG_PATTERN } from '@/lib/slug'
 
 export const STOCK_FILTERS = ['any', 'low', 'out'] as const
@@ -27,22 +28,6 @@ export const DEFAULT_PRODUCTS_QUERY: ProductsQuery = {
 /** The direction a column starts in: names A to Z, the cheapest and the emptiest first, the latest change first. */
 export const FIRST_DIR: Record<ProductSort, 'asc' | 'desc'> = { name: 'asc', price: 'asc', stock: 'asc', updated: 'desc' }
 
-const MAX_SEARCH = 100
-
-export type SearchParams = Record<string, string | string[] | undefined>
-
-function all(params: SearchParams | URLSearchParams, key: string): string[] {
-  if (params instanceof URLSearchParams) return params.getAll(key)
-  const value = params[key]
-  return value === undefined ? [] : Array.isArray(value) ? value : [value]
-}
-
-const one = (params: SearchParams | URLSearchParams, key: string): string | undefined => all(params, key)[0]
-
-function pick<T extends string>(options: readonly T[], value: string | undefined, fallback: T): T {
-  return value !== undefined && (options as readonly string[]).includes(value) ? (value as T) : fallback
-}
-
 /** Tolerant, as the orders list: an unknown value means the default. Statuses may repeat or be comma-separated. */
 export function parseProductsQuery(params: SearchParams | URLSearchParams): ProductsQuery {
   const statuses = new Set(all(params, 'status').flatMap(v => v.split(',')).filter(isProductStatus))
@@ -50,7 +35,7 @@ export function parseProductsQuery(params: SearchParams | URLSearchParams): Prod
   const sort = pick(PRODUCT_SORTS, one(params, 'sort'), DEFAULT_PRODUCTS_QUERY.sort)
   return {
     status: PRODUCT_STATUSES.filter(s => statuses.has(s)),
-    q: (one(params, 'q') ?? '').trim().slice(0, MAX_SEARCH),
+    q: searchText(params),
     collection: SLUG_PATTERN.test(collection) ? collection : '',
     stock: pick(STOCK_FILTERS, one(params, 'stock'), DEFAULT_PRODUCTS_QUERY.stock),
     sort,

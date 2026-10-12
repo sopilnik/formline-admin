@@ -4,7 +4,8 @@ import { getLocale, getTranslations } from 'next-intl/server'
 import { Pager } from '@/components/app/pager'
 import { NotificationEntry } from '@/components/notifications/notification-entry'
 import { Button } from '@/components/ui/button'
-import { notificationsHref, parseNotificationsQuery, type SearchParams } from '@/lib/notifications/query'
+import { pageQueryHref, parsePageQuery } from '@/lib/pagination'
+import type { SearchParams } from '@/lib/search-params'
 import { markAllNotificationsReadAction } from '@/server/actions/notifications'
 import { requireSession, workspaceContext } from '@/server/auth/sessions'
 import { listNotifications } from '@/server/dal/notifications'
@@ -20,12 +21,12 @@ export async function generateMetadata(): Promise<Metadata> {
 /** Every notification of the member, newest first (spec §8.9); the bell shows the latest few. */
 export default async function NotificationsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const session = await requireSession()
-  const query = parseNotificationsQuery(await searchParams)
+  const query = parsePageQuery(await searchParams)
   const { list, timeZone } = await withWorkspace(workspaceContext(session), async tx => ({
     list: await listNotifications(tx, await readerOf(tx, session), query),
     timeZone: (await getStoreSettings(tx, session.workspaceId)).timezone,
   }))
-  if (list.total > 0 && query.page > list.pages) redirect(notificationsHref(query, { page: list.pages }))
+  if (list.total > 0 && query.page > list.pages) redirect(pageQueryHref('/notifications', query, { page: list.pages }))
   const items = await notificationItems(list.rows, await getLocale(), timeZone)
   const t = await getTranslations('notifications')
   return (
@@ -58,7 +59,7 @@ export default async function NotificationsPage({ searchParams }: { searchParams
               pages={list.pages}
               size={query.size}
               filtered={list.total}
-              href={changes => notificationsHref(query, changes)}
+              href={changes => pageQueryHref('/notifications', query, changes)}
             />
           </>
         ) : (

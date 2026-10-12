@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_PAGE_SIZE, pageCount, pageWindow, parsePage, parsePageSize } from '@/lib/pagination'
+import { DEFAULT_PAGE_QUERY, DEFAULT_PAGE_SIZE, pageCount, pageQueryHref, pageWindow, parsePage, parsePageQuery, parsePageSize } from '@/lib/pagination'
 
 describe('parsePage and parsePageSize', () => {
   it('read a whole page number from 1 and one of the offered sizes', () => {
@@ -31,5 +31,21 @@ describe('pageWindow', () => {
     expect(pageWindow(1, 28)).toEqual([1, 2, 3, 4, 5])
     expect(pageWindow(4, 28)).toEqual([2, 3, 4, 5, 6])
     expect(pageWindow(28, 28)).toEqual([24, 25, 26, 27, 28])
+  })
+})
+
+describe('the page query', () => {
+  it('reads the page and its size, and falls back to the defaults', () => {
+    expect(parsePageQuery({ page: '3', size: '50' })).toEqual({ page: 3, size: 50 })
+    expect(parsePageQuery({ page: ['3', '4'], size: '30' })).toEqual({ page: 3, size: 25 })
+    expect(parsePageQuery({ page: 'x', size: '7' })).toEqual(DEFAULT_PAGE_QUERY)
+    expect(parsePageQuery({})).toEqual(DEFAULT_PAGE_QUERY)
+  })
+
+  it('leaves the defaults out of the path and starts again at page 1 when the size changes', () => {
+    expect(pageQueryHref('/outbox', DEFAULT_PAGE_QUERY)).toBe('/outbox')
+    expect(pageQueryHref('/outbox', { page: 3, size: 25 }, { page: 4 })).toBe('/outbox?page=4')
+    expect(pageQueryHref('/notifications', { page: 3, size: 25 }, { size: 100 })).toBe('/notifications?size=100')
+    expect(pageQueryHref('/notifications', { page: 2, size: 50 })).toBe('/notifications?page=2&size=50')
   })
 })

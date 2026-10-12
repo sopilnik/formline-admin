@@ -1,5 +1,6 @@
 import { isOrderStatus, ORDER_STATUSES, type OrderStatus } from '@/lib/orders/status'
 import { DEFAULT_PAGE_SIZE, parsePage, parsePageSize, type PageSize } from '@/lib/pagination'
+import { all, one, pick, searchText, type SearchParams } from '@/lib/search-params'
 
 export const DATE_PRESETS = ['any', 'today', '7d', '30d', 'month'] as const
 export const SOURCES = ['any', 'stripe', 'seed'] as const
@@ -21,28 +22,13 @@ export type OrdersQuery = {
 }
 
 export const DEFAULT_QUERY: OrdersQuery = { status: [], q: '', placed: 'any', source: 'any', sort: 'placed', dir: 'desc', page: 1, size: DEFAULT_PAGE_SIZE }
-const MAX_SEARCH = 100
-
-export type SearchParams = Record<string, string | string[] | undefined>
-
-function all(params: SearchParams | URLSearchParams, key: string): string[] {
-  if (params instanceof URLSearchParams) return params.getAll(key)
-  const value = params[key]
-  return value === undefined ? [] : Array.isArray(value) ? value : [value]
-}
-
-const one = (params: SearchParams | URLSearchParams, key: string): string | undefined => all(params, key)[0]
-
-function pick<T extends string>(options: readonly T[], value: string | undefined, fallback: T): T {
-  return value !== undefined && (options as readonly string[]).includes(value) ? (value as T) : fallback
-}
 
 /** Tolerant: an unknown value means the default, never an error. Statuses may repeat or be comma-separated. */
 export function parseOrdersQuery(params: SearchParams | URLSearchParams): OrdersQuery {
   const statuses = new Set(all(params, 'status').flatMap(v => v.split(',')).filter(isOrderStatus))
   return {
     status: ORDER_STATUSES.filter(s => statuses.has(s)),
-    q: (one(params, 'q') ?? '').trim().slice(0, MAX_SEARCH),
+    q: searchText(params),
     placed: pick(DATE_PRESETS, one(params, 'placed'), DEFAULT_QUERY.placed),
     source: pick(SOURCES, one(params, 'source'), DEFAULT_QUERY.source),
     sort: pick(SORT_KEYS, one(params, 'sort'), DEFAULT_QUERY.sort),

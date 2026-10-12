@@ -1,6 +1,7 @@
 import { isActivityAction, type ActivityAction } from '@/lib/activity/actions'
 import { DATE_PRESETS, type DatePreset } from '@/lib/orders/query'
 import { DEFAULT_PAGE_SIZE, parsePage, parsePageSize, type PageSize } from '@/lib/pagination'
+import { one, type SearchParams } from '@/lib/search-params'
 
 /** Entries without a person: the Stripe ingest and the seed (spec §8.2, "System"). */
 export const SYSTEM_ACTOR = 'system'
@@ -19,14 +20,6 @@ export type ActivityQuery = {
 export const DEFAULT_ACTIVITY_QUERY: ActivityQuery = { actor: '', action: '', when: 'any', page: 1, size: DEFAULT_PAGE_SIZE }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
-
-export type SearchParams = Record<string, string | string[] | undefined>
-
-function one(params: SearchParams | URLSearchParams, key: string): string | undefined {
-  if (params instanceof URLSearchParams) return params.get(key) ?? undefined
-  const value = params[key]
-  return Array.isArray(value) ? value[0] : value
-}
 
 /** Tolerant, as the other lists: an unknown value means the default. */
 export function parseActivityQuery(params: SearchParams | URLSearchParams): ActivityQuery {
