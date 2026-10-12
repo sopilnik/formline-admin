@@ -5,6 +5,7 @@ import { cookies, headers } from 'next/headers'
 import { refresh } from 'next/cache'
 import { z } from 'zod'
 import { type AuthError } from '@/lib/auth-form'
+import { retryMinutes } from '@/lib/form'
 import {
   beginRegistration,
   CHALLENGE_COOKIE,
@@ -16,7 +17,6 @@ import {
   renameOwnPasskey,
   signInWithPasskey,
 } from '@/server/auth/passkeys'
-import { retryMinutes } from '@/lib/form'
 import { requireSession, setSessionCookie, type Session } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'
 import { setPreferenceCookies } from '@/server/preferences'
