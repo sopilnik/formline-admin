@@ -1,7 +1,6 @@
 import { bigint, boolean, primaryKey, text, uuid } from 'drizzle-orm/pg-core'
 import { fa, roleEnum, ts } from '@/server/db/schema/global'
 
-
 export const users = fa.table('users', {
   workspaceId: uuid('workspace_id').notNull(),
   id: uuid('id').notNull().defaultRandom(),

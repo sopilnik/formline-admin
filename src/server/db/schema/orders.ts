@@ -1,7 +1,6 @@
 import { boolean, integer, jsonb, primaryKey, text, uuid } from 'drizzle-orm/pg-core'
 import { fa, ts } from '@/server/db/schema/global'
 
-
 export const customers = fa.table('customers', {
   workspaceId: uuid('workspace_id').notNull(),
   id: uuid('id').notNull().defaultRandom(),

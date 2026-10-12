@@ -1,7 +1,6 @@
 import { integer, primaryKey, text, uuid } from 'drizzle-orm/pg-core'
 import { fa, ts } from '@/server/db/schema/global'
 
-
 export const collections = fa.table('collections', {
   workspaceId: uuid('workspace_id').notNull(),
   id: uuid('id').notNull().defaultRandom(),
