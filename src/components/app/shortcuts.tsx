@@ -3,15 +3,13 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { createContext, use, useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { createContext, use, useEffect, useState, type ReactNode } from 'react'
 import type { NavItem } from '@/components/app/nav'
+import { useIsApple } from '@/components/app/use-is-apple'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { createShortcutReader, GO_KEYS, isTypingTarget, type GoPage } from '@/lib/shortcuts'
 
 const ShortcutsContext = createContext<{ showHelp: () => void } | null>(null)
-
-const noSubscription = () => () => {}
-const isApple = () => /Mac|iPhone|iPad/.test(navigator.platform)
 
 /**
  * The single-key shortcuts of spec §8.10 and the list of them: "/" finds the page's search field, "g" and a letter
@@ -85,7 +83,8 @@ function Keys({ keys }: { keys: string[] }) {
 function ShortcutsHelp({ open, onOpenChange, enabled, items }: { open: boolean; onOpenChange: (open: boolean) => void; enabled: boolean; items: NavItem[] }) {
   const t = useTranslations('shortcuts')
   const nav = useTranslations('nav')
-  const apple = useSyncExternalStore(noSubscription, isApple, () => false)
+  const common = useTranslations('common')
+  const apple = useIsApple()
   const pages = Object.entries(GO_KEYS).filter(([, page]) => items.some(item => item.key === page)) as [string, GoPage][]
   const rows: { keys: string[]; label: string }[] = [
     { keys: [apple ? '⌘' : 'Ctrl', 'K'], label: t('palette') },
@@ -95,7 +94,7 @@ function ShortcutsHelp({ open, onOpenChange, enabled, items }: { open: boolean; 
   ]
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" closeLabel={common('dismiss')}>
         <DialogHeader>
           <DialogTitle>{t('title')}</DialogTitle>
           <DialogDescription>

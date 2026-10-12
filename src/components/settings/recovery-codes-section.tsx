@@ -29,7 +29,9 @@ export function RecoveryCodesSection({ remaining, hasFactor, recent }: { remaini
       {hasFactor && recent && !codes ? (
         <>
           <FormAlert state={state} />
-          <Button type="button" variant="outline" className="self-start" onClick={() => setConfirming(true)}>{t('make')}</Button>
+          <Button type="button" variant="outline" className="self-start" disabled={pending} onClick={() => setConfirming(true)}>
+            {pending ? t('making') : t('make')}
+          </Button>
           <Dialog open={confirming} onOpenChange={setConfirming}>
             <DialogContent showCloseButton={false}>
               <DialogHeader>
@@ -39,7 +41,7 @@ export function RecoveryCodesSection({ remaining, hasFactor, recent }: { remaini
               <form action={action} onSubmit={() => setConfirming(false)}>
                 <DialogFooter>
                   <DialogClose render={<Button type="button" variant="outline" />}>{t('cancel')}</DialogClose>
-                  <Button type="submit" disabled={pending}>{pending ? t('making') : t('confirm')}</Button>
+                  <Button type="submit" disabled={pending}>{t('confirm')}</Button>
                 </DialogFooter>
               </form>
             </DialogContent>

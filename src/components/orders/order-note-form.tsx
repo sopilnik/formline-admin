@@ -16,8 +16,7 @@ export function OrderNoteForm({ orderId }: { orderId: string }) {
   const toast = useToast()
   const field = useRef<HTMLTextAreaElement>(null)
   const [state, action, pending] = useActionState(addOrderNoteAction, IDLE)
-  // Once per result: an effect that listed `toast` would run again after every toast it shows
-  // (useToast returns a new object on each render) and loop.
+  // Once per result, with the latest translations.
   const settle = useEffectEvent((result: NoteState) => {
     if (result.status === 'done') toast.success(t('noteAdded'))
     if (result.status === 'error') field.current?.focus()

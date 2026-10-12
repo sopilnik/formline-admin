@@ -53,4 +53,12 @@ describe('interface pieces', () => {
   it.each(components.filter(name => name.startsWith('src/components/')))('%s exports components, not async helpers', name => {
     expect(read(name)).not.toMatch(/export async function [a-z]/)
   })
+
+  it.each(components)('%s leaves no English close label in a dialog or a sheet', name => {
+    expect(read(name)).not.toMatch(/>Close</)
+  })
+
+  it.each(components)('%s asks for an Apple device only through useIsApple', name => {
+    expect(read(name)).not.toMatch(/navigator\.platform/)
+  })
 })

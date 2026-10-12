@@ -3,7 +3,7 @@
 import { startRegistration } from '@simplewebauthn/browser'
 import { FingerprintPattern } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useState, useTransition } from 'react'
+import { useState, useTransition, type FormEvent } from 'react'
 import { TextField } from '@/components/app/form-fields'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -78,9 +78,12 @@ function PasskeyItem({ passkey, canRemove }: { passkey: PasskeyView; canRemove: 
   const [renaming, setRenaming] = useState(false)
   const [removing, setRemoving] = useState(false)
 
-  function rename(form: FormData) {
+  // Not a form action: React resets a form once its action ends, and a refused name would come back as the old one.
+  function rename(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const name = String(new FormData(event.currentTarget).get('name') ?? '')
     startTransition(async () => {
-      const result = await renamePasskeyAction(passkey.id, String(form.get('name') ?? ''))
+      const result = await renamePasskeyAction(passkey.id, name)
       if (!result.ok) {
         toast.error(errors(result.error, { minutes: 1 }))
         return
@@ -116,7 +119,7 @@ function PasskeyItem({ passkey, canRemove }: { passkey: PasskeyView; canRemove: 
             <DialogHeader>
               <DialogTitle>{t('rename')}</DialogTitle>
             </DialogHeader>
-            <form action={rename} className="flex flex-col gap-4">
+            <form onSubmit={rename} className="flex flex-col gap-4">
               <TextField id={`passkey-name-${passkey.id}`} name="name" label={t('renameLabel')} defaultValue={passkey.name} maxLength={PASSKEY_NAME_MAX} />
               <DialogFooter>
                 <DialogClose render={<Button type="button" variant="outline" />}>{t('cancel')}</DialogClose>

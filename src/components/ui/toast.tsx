@@ -6,11 +6,18 @@ import { XIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
+// One manager for the page: the functions useToast hands out never change, so an effect may list them.
+const toastManager = Toast.createToastManager()
+const toasts = {
+  success: (title: string, description?: string) => toastManager.add({ title, description, type: "success" }),
+  error: (title: string, description?: string) => toastManager.add({ title, description, type: "error", priority: "high" }),
+}
+
 // Base UI Toast instead of sonner: sonner injects a <style> element at run
 // time, which the nonce-based style-src-elem policy blocks (spec §4.2).
 function ToastProvider({ children, closeLabel, regionLabel }: { children: React.ReactNode; closeLabel: string; regionLabel: string }) {
   return (
-    <Toast.Provider>
+    <Toast.Provider toastManager={toastManager}>
       {children}
       <Toast.Portal>
         <Toast.Viewport aria-label={regionLabel} className="fixed right-4 bottom-4 z-50 flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-2 outline-none">
@@ -49,15 +56,7 @@ function ToastList({ closeLabel }: { closeLabel: string }) {
 }
 
 function useToast() {
-  const manager = Toast.useToastManager()
-  return React.useMemo(
-    () => ({
-      success: (title: string, description?: string) => manager.add({ title, description, type: "success" }),
-      error: (title: string, description?: string) =>
-        manager.add({ title, description, type: "error", priority: "high" }),
-    }),
-    [manager]
-  )
+  return toasts
 }
 
 export { ToastProvider, useToast }

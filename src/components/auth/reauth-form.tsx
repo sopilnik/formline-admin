@@ -19,17 +19,21 @@ export function ReauthForm({ intro }: { intro?: string } = {}) {
   const router = useRouter()
   const [state, action, pending] = useActionState(reauthAction, IDLE as FormState<ReauthField>)
   const [passkeyError, setPasskeyError] = useState<AuthError | null>(null)
+  const [passkeyPending, setPasskeyPending] = useState(false)
   const errorFor = useErrorText(state)
   useFocusOnError(state, 'reauth', 'password')
 
   async function withPasskey() {
     setPasskeyError(null)
+    setPasskeyPending(true)
     try {
       const outcome = await reauthWithPasskeyAction(await startAuthentication({ optionsJSON: await passkeyChallenge() }))
       if (outcome.ok) router.refresh()
       else setPasskeyError(outcome.error)
     } catch {
       setPasskeyError('passkey_cancelled')
+    } finally {
+      setPasskeyPending(false)
     }
   }
 
@@ -43,7 +47,9 @@ export function ReauthForm({ intro }: { intro?: string } = {}) {
         <TextField id="reauth-code" name="code" inputMode="numeric" autoComplete="one-time-code" label={t('fields.code')} error={errorFor('code')} />
         <div className="flex flex-wrap gap-2">
           <Button type="submit" disabled={pending}>{pending ? t('reauth.pending') : t('reauth.submit')}</Button>
-          <Button type="button" variant="outline" onClick={withPasskey}>{t('reauth.passkey')}</Button>
+          <Button type="button" variant="outline" onClick={withPasskey} disabled={passkeyPending}>
+            {passkeyPending ? t('signIn.passkeyPending') : t('reauth.passkey')}
+          </Button>
         </div>
         {passkeyError ? <p role="alert" className="text-sm text-destructive">{t(`errors.${passkeyError}`, { minutes: 1 })}</p> : null}
       </form>

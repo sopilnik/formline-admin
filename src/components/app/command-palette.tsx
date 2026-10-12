@@ -5,10 +5,11 @@ import { Dialog } from '@base-ui/react/dialog'
 import { Search } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
-import { useEffect, useRef, useState, useSyncExternalStore, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import type { NavItem } from '@/components/app/nav'
 import { useShortcuts } from '@/components/app/shortcuts'
 import { useSignOut } from '@/components/app/sign-out'
+import { useIsApple } from '@/components/app/use-is-apple'
 import { Button } from '@/components/ui/button'
 import { LOCALES } from '@/i18n/locale'
 import { formatMoney } from '@/lib/intl'
@@ -25,9 +26,6 @@ type Group = { value: 'pages' | 'actions' | 'orders' | 'customers' | 'products';
 /** The pause after the last keystroke before the palette asks the server. */
 const DEBOUNCE_MS = 200
 
-const noSubscription = () => () => {}
-const isApple = () => /Mac|iPhone|iPad/.test(navigator.platform)
-
 /**
  * The command palette (spec §8.10): ⌘K or Ctrl+K anywhere, or the search button in the top bar. It lists the pages and
  * the actions the member may use, and searches orders, customers and products on the server as they type.
@@ -36,7 +34,7 @@ export function CommandPalette({ items, access }: { items: NavItem[]; access: Pa
   const t = useTranslations('palette')
   const [open, setOpen] = useState(false)
   const [opened, setOpened] = useState(0)
-  const apple = useSyncExternalStore(noSubscription, isApple, () => false)
+  const apple = useIsApple()
 
   const openChange = (next: boolean) => {
     setOpen(next)

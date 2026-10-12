@@ -45,6 +45,7 @@ test.describe('keyboard shortcuts', () => {
     await focusPage(page)
     await page.keyboard.press('Shift+?')
     await expect(help(page)).toBeVisible()
+    await expect(help(page).getByRole('button', { name: 'Dismiss' })).toBeVisible()   // the close button speaks the interface's language
     await expect(help(page).getByRole('term')).toHaveText([
       'Open the search and commands', 'Search on this page', 'Go to Overview', 'Go to Orders', 'Go to Products', 'Go to Customers', 'Show this list',
     ])

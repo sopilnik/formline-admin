@@ -19,7 +19,7 @@ export function CustomerNotesForm({ customerId, notes }: { customerId: string; n
   const toast = useToast()
   const field = useRef<HTMLTextAreaElement>(null)
   const [state, action, pending] = useActionState(saveCustomerNotesAction, IDLE)
-  // Once per result: an effect that listed `toast` would run again after every toast it shows.
+  // Once per result, with the latest translations.
   const settle = useEffectEvent((result: CustomerNotesState) => {
     if (result.status === 'done') toast.success(t('notesSaved'))
     if (result.status === 'error') field.current?.focus()

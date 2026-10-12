@@ -44,7 +44,7 @@ function DetailsForm({ productId, slug, version, values, collections, reloading,
   const router = useRouter()
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending] = useActionState(updateProductDetailsAction, IDLE)
-  // Once per result: an effect that listed `toast` would run again after every toast it shows.
+  // Once per result, with the latest translations.
   const settle = useEffectEvent((result: DetailsState) => {
     if (result.status === 'done') {
       toast.success(t('saved'))
