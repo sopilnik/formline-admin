@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     rules: {
       quotes: ['error', 'single', { avoidEscape: true }],
       semi: ['error', 'never'],
+      // Never two blank lines in a row.
+      'no-multiple-empty-lines': ['error', { max: 1 }],
     },
   },
   {
