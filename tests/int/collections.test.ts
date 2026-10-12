@@ -4,9 +4,10 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { generateToken, hashToken } from '@/server/auth/tokens'
 import type { Actor } from '@/server/actor'
 import { createCollectionWithLog, deleteCollectionWithLog, moveCollectionWithLog, updateCollectionWithLog } from '@/server/collections/write'
-import { COLLECTION_CAP, getCollection, listCollections } from '@/server/dal/collections'
+import { COLLECTION_CAP, createCollection, getCollection, listCollections } from '@/server/dal/collections'
 import { withWorkspace } from '@/server/db/with-workspace'
 import { adminPool, appPool, closeAll } from './db'
+import { gate, lockWaiter } from './fixtures'
 
 let admin: pg.Pool
 let app: pg.Pool
@@ -81,5 +82,31 @@ describe('collections', () => {
     const viewer: Actor = { ...owner, userId: viewerId, role: 'viewer' }
     expect(await moveCollectionWithLog(viewer, { id: await idOf(owner, 'night'), direction: 'up' }, app)).toEqual({ ok: false, reason: 'not_found' })
     expect(await updateCollectionWithLog(viewer, { id: await idOf(owner, 'night'), name: 'Viewer', slug: 'night', description: '' }, app)).toEqual({ ok: false, reason: 'not_found' })
+  })
+
+  it('lets only one of two concurrent creates take the last place under the cap', async () => {
+    const owner = await sandbox()
+    try {
+      await admin.query("insert into fa.collections (workspace_id, slug, name, position) select $1, 'filler-' || n, 'Filler ' || n, 10 + n from generate_series(1, $2::int) n", [owner.workspaceId, COLLECTION_CAP - 5])
+      const inserted = gate()
+      const done = gate()
+      const first = withWorkspace(owner, async tx => {
+        const made = await createCollection(tx, owner.workspaceId, { name: 'First', slug: 'first', description: '' })
+        inserted.open()
+        await done.wait
+        return made
+      }, app)
+      await inserted.wait
+
+      const second = createCollectionWithLog(owner, { name: 'Second', slug: 'second', description: '' }, app)
+      await Promise.race([lockWaiter(admin), second.catch(() => undefined)])
+      done.open()
+
+      expect(await first).toMatchObject({ ok: true, slug: 'first' })
+      expect(await second).toEqual({ ok: false, reason: 'cap' })
+      expect(await list(owner)).toHaveLength(COLLECTION_CAP)
+    } finally {
+      await admin.query('delete from fa.workspaces where id = $1', [owner.workspaceId])
+    }
   })
 })

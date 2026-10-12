@@ -1,3 +1,4 @@
+import { setTimeout as sleep } from 'node:timers/promises'
 import type pg from 'pg'
 
 export class Rollback extends Error {}
@@ -7,6 +8,24 @@ export function errorText(error: unknown): string {
   const parts: string[] = []
   for (let e: unknown = error; e instanceof Error; e = e.cause) parts.push(e.message)
   return parts.length > 0 ? parts.join(' | ') : String(error)
+}
+
+/** A promise the test opens when it chooses: it keeps one transaction open while a second save runs into it. */
+export function gate(): { wait: Promise<void>; open: () => void } {
+  let open!: () => void
+  const wait = new Promise<void>(resolve => { open = resolve })
+  return { wait, open }
+}
+
+/** Resolves once a backend of this database waits for a lock: the second of two racing saves has run into the first. */
+export async function lockWaiter(admin: pg.Pool): Promise<void> {
+  for (let attempt = 0; attempt < 200; attempt++) {
+    const { rows } = await admin.query<{ n: number }>(
+      "select count(*)::int as n from pg_stat_activity where datname = current_database() and wait_event_type = 'Lock'")
+    if (rows[0]!.n > 0) return
+    await sleep(25)
+  }
+  throw new Error('no save waited for a lock')
 }
 
 /** Runs fn in a transaction that is always rolled back; returns fn's result. */

@@ -5,6 +5,7 @@ import { pageCount } from '@/lib/pagination'
 import { SIZE_IDS, SIZE_SURCHARGE_CENTS, variantPriceCents, type SizeId } from '@/lib/products/price'
 import type { ProductsQuery } from '@/lib/products/query'
 import { canDeleteProduct, canTransitionProduct, PRODUCT_STATUSES, type ProductStatus } from '@/lib/products/status'
+import { lockCap, refuseTaken } from '@/server/dal/concurrency'
 import { releaseImage } from '@/server/dal/images'
 import { unicodeName } from '@/server/dal/sql'
 import { containsPattern } from '@/server/db/like'
@@ -38,6 +39,10 @@ export type ProductsList = {
 
 /** At most this many products per workspace, so a sandbox stays small (stage 5 amendment). */
 export const PRODUCT_CAP = 200
+
+/** The unique constraints a product save can break, and the refusal each one means. */
+const SLUG_TAKEN = { products_workspace_id_slug_key: 'slug_taken' } as const
+const SLUG_OR_SKU_TAKEN = { ...SLUG_TAKEN, product_variants_workspace_id_sku_key: 'sku_taken' } as const
 
 /** The collections in their order (spec §8.3): the filter's choices and the product form's. */
 export async function listCollectionOptions(tx: Tx, workspaceId: string): Promise<CollectionOption[]> {
@@ -228,13 +233,16 @@ export async function updateProductDetails(tx: Tx, workspaceId: string, input: D
     input.basePriceCents !== row.basePriceCents && 'basePrice', input.tags.join(',') !== row.tags.join(',') && 'tags',
     input.description !== row.description && 'description',
   ].filter((field): field is string => typeof field === 'string')
-  if (changed.length > 0) {
+  const saved = { ok: true as const, slug: input.slug, previousSlug: row.slug, changed }
+  if (changed.length === 0) return saved
+
+  return refuseTaken(tx, SLUG_TAKEN, async () => {
     await tx.update(products).set({
       name: input.name, slug: input.slug, collectionId: input.collectionId, basePriceCents: input.basePriceCents,
       tags: input.tags, description: input.description, updatedAt: sql`now()`,
     }).where(and(eq(products.workspaceId, workspaceId), eq(products.id, input.productId)))
-  }
-  return { ok: true, slug: input.slug, previousSlug: row.slug, changed }
+    return saved
+  })
 }
 
 export type NewProductInput = {
@@ -252,7 +260,8 @@ export type ProductCreation =
  * a product that later took another slug still holds them: a new slug may collide with its SKUs.
  */
 export async function createProduct(tx: Tx, workspaceId: string, input: NewProductInput): Promise<ProductCreation> {
-  const [counted] = await tx.select({ n: sql<number>`count(*)::int` }).from(products).where(eq(products.workspaceId, workspaceId))
+  await lockCap(tx, workspaceId, 'products')
+  const [counted] = await tx.select({ n: count() }).from(products).where(eq(products.workspaceId, workspaceId))
   if ((counted?.n ?? 0) >= PRODUCT_CAP) return { ok: false, reason: 'cap' }
   const [collection] = await tx.select({ id: collections.id }).from(collections)
     .where(and(eq(collections.workspaceId, workspaceId), eq(collections.id, input.collectionId)))
@@ -263,14 +272,17 @@ export async function createProduct(tx: Tx, workspaceId: string, input: NewProdu
   const [taken] = await tx.select({ id: productVariants.id }).from(productVariants)
     .where(and(eq(productVariants.workspaceId, workspaceId), inArray(productVariants.sku, variants.map(v => v.sku))))
   if (taken) return { ok: false, reason: 'sku_taken' }
-  const [created] = await tx.insert(products).values({
-    workspaceId, slug: input.slug, name: input.name, collectionId: input.collectionId, description: input.description,
-    basePriceCents: input.basePriceCents, status: 'draft', tags: input.tags,
-  }).returning({ id: products.id })
-  await tx.insert(productVariants).values(variants.map(v => ({
-    workspaceId, productId: created!.id, sku: v.sku, size: v.size, palette: v.palette, stock: 0, lowStockThreshold: input.lowStockThreshold,
-  })))
-  return { ok: true, id: created!.id, slug: input.slug, variants: variants.length }
+
+  return refuseTaken(tx, SLUG_OR_SKU_TAKEN, async () => {
+    const [created] = await tx.insert(products).values({
+      workspaceId, slug: input.slug, name: input.name, collectionId: input.collectionId, description: input.description,
+      basePriceCents: input.basePriceCents, status: 'draft', tags: input.tags,
+    }).returning({ id: products.id })
+    await tx.insert(productVariants).values(variants.map(v => ({
+      workspaceId, productId: created!.id, sku: v.sku, size: v.size, palette: v.palette, stock: 0, lowStockThreshold: input.lowStockThreshold,
+    })))
+    return { ok: true as const, id: created!.id, slug: input.slug, variants: variants.length }
+  })
 }
 
 export type VariantRowInput = { id: string; priceOverrideCents: number | null; stock: number; stockWas: number; lowStockThreshold: number }

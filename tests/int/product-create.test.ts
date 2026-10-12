@@ -3,11 +3,11 @@ import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { generateToken, hashToken } from '@/server/auth/tokens'
 import type { Actor } from '@/server/actor'
-import { getProduct, PRODUCT_CAP } from '@/server/dal/products'
+import { createProduct, getProduct, PRODUCT_CAP } from '@/server/dal/products'
 import { withWorkspace } from '@/server/db/with-workspace'
 import { createProductWithLog } from '@/server/products/create'
 import { adminPool, appPool, closeAll } from './db'
-import { errorText } from './fixtures'
+import { errorText, gate, lockWaiter } from './fixtures'
 
 let admin: pg.Pool
 let app: pg.Pool
@@ -56,6 +56,25 @@ describe('createProductWithLog', () => {
     await admin.query("update fa.products set slug = 'slow-days' where workspace_id = $1 and slug = 'slow'", [owner.workspaceId])
     expect(await createProductWithLog(owner, draft('slow', ['sage']), app)).toEqual({ ok: false, reason: 'sku_taken' })
     expect(await createProductWithLog(owner, draft('slow', ['ink']), app)).toMatchObject({ ok: true, slug: 'slow' })
+  })
+
+  it('refuses the slug a concurrent create took after the check, instead of failing', async () => {
+    const inserted = gate()
+    const done = gate()
+    const first = withWorkspace(owner, async tx => {
+      const made = await createProduct(tx, owner.workspaceId, { ...draft('two-tabs'), lowStockThreshold: 5 })
+      inserted.open()
+      await done.wait
+      return made
+    }, app)
+    await inserted.wait
+
+    const second = createProductWithLog(owner, draft('two-tabs'), app)
+    await Promise.race([lockWaiter(admin), second.catch(() => undefined)])
+    done.open()
+
+    expect(await first).toMatchObject({ ok: true, slug: 'two-tabs' })
+    expect(await second).toEqual({ ok: false, reason: 'slug_taken' })
   })
 
   it('refuses a collection the workspace lacks and stops at the product cap', async () => {

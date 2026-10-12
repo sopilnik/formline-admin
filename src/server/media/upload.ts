@@ -1,6 +1,6 @@
 import 'server-only'
 import { randomUUID } from 'node:crypto'
-import { and, eq, ne, sql } from 'drizzle-orm'
+import { and, count, eq, ne, sql } from 'drizzle-orm'
 import type { Pool } from 'pg'
 import { actorContext, type Actor } from '@/server/actor'
 import { logActivity } from '@/server/dal/activity'
@@ -18,7 +18,7 @@ export type ImageUpload = { ok: true; imageId: string; width: number; height: nu
 
 /** Whether one more upload of `bytes` fits beside the workspace's others; the product's own image does not count, it is replaced. */
 async function fits(tx: Tx, workspaceId: string, productImageId: string | null, bytes: number): Promise<boolean> {
-  const [used] = await tx.select({ n: sql<number>`count(*)::int`, bytes: sql<number>`coalesce(sum(${images.bytes}), 0)::int` }).from(images)
+  const [used] = await tx.select({ n: count(), bytes: sql<number>`coalesce(sum(${images.bytes}), 0)::int` }).from(images)
     .where(and(eq(images.workspaceId, workspaceId), eq(images.source, 'upload'), productImageId ? ne(images.id, productImageId) : undefined))
   return (used?.n ?? 0) + 1 <= MEDIA_CAP.images && (used?.bytes ?? 0) + bytes <= MEDIA_CAP.bytes
 }

@@ -3,10 +3,11 @@ import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { generateToken, hashToken } from '@/server/auth/tokens'
 import type { Actor } from '@/server/actor'
-import { getProduct, type DetailsInput } from '@/server/dal/products'
+import { getProduct, updateProductDetails, type DetailsInput } from '@/server/dal/products'
 import { withWorkspace } from '@/server/db/with-workspace'
 import { saveProductDetails } from '@/server/products/details'
 import { adminPool, appPool, closeAll } from './db'
+import { gate, lockWaiter } from './fixtures'
 
 let admin: pg.Pool
 let app: pg.Pool
@@ -83,6 +84,26 @@ describe('saveProductDetails', () => {
     const input = await inputFor('loud')
     expect(await saveProductDetails(owner, { ...input, slug: 'red-corner' }, app)).toEqual({ ok: false, reason: 'slug_taken' })
     expect(await saveProductDetails(owner, { ...input, collectionId: randomUUID() }, app)).toEqual({ ok: false, reason: 'collection_missing' })
+  })
+
+  it('refuses the slug a concurrent save took after the check, instead of failing', async () => {
+    const changed = gate()
+    const done = gate()
+    const first = withWorkspace(owner, async tx => {
+      const made = await updateProductDetails(tx, owner.workspaceId, { ...(await inputFor('after-dark')), slug: 'midnight' })
+      changed.open()
+      await done.wait
+      return made
+    }, app)
+    await changed.wait
+
+    const second = saveProductDetails(owner, { ...(await inputFor('far-orbit')), slug: 'midnight' }, app)
+    await Promise.race([lockWaiter(admin), second.catch(() => undefined)])
+    done.open()
+
+    expect(await first).toMatchObject({ ok: true, slug: 'midnight' })
+    expect(await second).toEqual({ ok: false, reason: 'slug_taken' })
+    expect((await read('far-orbit'))?.name).toBe('Far Orbit')
   })
 
   it('writes nothing when nothing changed', async () => {

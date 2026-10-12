@@ -1,6 +1,7 @@
 import 'server-only'
-import { and, asc, eq, inArray, ne, sql } from 'drizzle-orm'
+import { and, asc, count, eq, inArray, ne } from 'drizzle-orm'
 import type { ProductStatus } from '@/lib/products/status'
+import { lockCap, refuseTaken } from '@/server/dal/concurrency'
 import type { ImageRef } from '@/server/dal/products'
 import { collections, images, products } from '@/server/db/schema'
 import type { Tx } from '@/server/db/with-workspace'
@@ -8,13 +9,16 @@ import type { Tx } from '@/server/db/with-workspace'
 /** At most this many collections per workspace; the store has four. */
 export const COLLECTION_CAP = 50
 
+/** The unique constraint a collection save can break, and the refusal it means. */
+const SLUG_TAKEN = { collections_workspace_id_slug_key: 'slug_taken' } as const
+
 export type CollectionRow = { id: string; slug: string; name: string; description: string; position: number; products: number }
 
 /** The collections in their order (spec §8.3), each with its number of products; one table per query (spec §6.1). */
 export async function listCollections(tx: Tx, workspaceId: string): Promise<CollectionRow[]> {
   const rows = await tx.select({ id: collections.id, slug: collections.slug, name: collections.name, description: collections.description, position: collections.position })
     .from(collections).where(eq(collections.workspaceId, workspaceId)).orderBy(asc(collections.position), asc(collections.name))
-  const counts = await tx.select({ collectionId: products.collectionId, n: sql<number>`count(*)::int` }).from(products)
+  const counts = await tx.select({ collectionId: products.collectionId, n: count() }).from(products)
     .where(eq(products.workspaceId, workspaceId)).groupBy(products.collectionId)
   const countOf = new Map(counts.map(c => [c.collectionId, c.n]))
   return rows.map(row => ({ ...row, products: countOf.get(row.id) ?? 0 }))
@@ -44,13 +48,17 @@ export type CollectionWrite = { ok: true; id: string; slug: string; previousSlug
 
 /** A new collection at the end of the order (spec §8.3). */
 export async function createCollection(tx: Tx, workspaceId: string, input: { name: string; slug: string; description: string }): Promise<CollectionWrite> {
+  await lockCap(tx, workspaceId, 'collections')
   const all = await tx.select({ slug: collections.slug, position: collections.position }).from(collections).where(eq(collections.workspaceId, workspaceId))
   if (all.length >= COLLECTION_CAP) return { ok: false, reason: 'cap' }
   if (all.some(c => c.slug === input.slug)) return { ok: false, reason: 'slug_taken' }
-  const [created] = await tx.insert(collections).values({
-    workspaceId, slug: input.slug, name: input.name, description: input.description, position: Math.max(0, ...all.map(c => c.position)) + 1,
-  }).returning({ id: collections.id })
-  return { ok: true, id: created!.id, slug: input.slug, previousSlug: input.slug }
+
+  return refuseTaken(tx, SLUG_TAKEN, async () => {
+    const [created] = await tx.insert(collections).values({
+      workspaceId, slug: input.slug, name: input.name, description: input.description, position: Math.max(0, ...all.map(c => c.position)) + 1,
+    }).returning({ id: collections.id })
+    return { ok: true as const, id: created!.id, slug: input.slug, previousSlug: input.slug }
+  })
 }
 
 /** Saves a collection's fields. Collections carry no version, so the last save wins; their slugs are unique. */
@@ -61,9 +69,12 @@ export async function updateCollection(tx: Tx, workspaceId: string, input: { id:
   const [other] = await tx.select({ id: collections.id }).from(collections)
     .where(and(eq(collections.workspaceId, workspaceId), eq(collections.slug, input.slug), ne(collections.id, input.id)))
   if (other) return { ok: false, reason: 'slug_taken' }
-  await tx.update(collections).set({ name: input.name, slug: input.slug, description: input.description })
-    .where(and(eq(collections.workspaceId, workspaceId), eq(collections.id, input.id)))
-  return { ok: true, id: input.id, slug: input.slug, previousSlug: row.slug }
+
+  return refuseTaken(tx, SLUG_TAKEN, async () => {
+    await tx.update(collections).set({ name: input.name, slug: input.slug, description: input.description })
+      .where(and(eq(collections.workspaceId, workspaceId), eq(collections.id, input.id)))
+    return { ok: true as const, id: input.id, slug: input.slug, previousSlug: row.slug }
+  })
 }
 
 /** The workspace's collections in their current order, locked until the transaction ends. */
