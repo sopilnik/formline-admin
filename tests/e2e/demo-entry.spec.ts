@@ -1,7 +1,7 @@
-import { roomInWindow } from '../windows'
-import { expectNoSeriousA11yViolations } from './a11y'
-import { E2E_DEMO_COOKIE, E2E_ORIGIN_SECRET, E2E_SESSION_COOKIE } from './constants'
-import { expect, test } from './test'
+import { roomInWindow } from '../windows.ts'
+import { expectNoSeriousA11yViolations } from './a11y.ts'
+import { E2E_DEMO_COOKIE, E2E_ORIGIN_SECRET, E2E_SESSION_COOKIE } from './constants.ts'
+import { expect, test } from './test.ts'
 
 // This file presses "Enter the demo" six times; its own address keeps that away from the other files.
 test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip': '203.0.113.21' } })

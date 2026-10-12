@@ -1,7 +1,7 @@
-import { E2E_DEMO_COOKIE, E2E_ORIGIN_SECRET, E2E_SESSION_COOKIE } from './constants'
-import { asSchemaOwner } from './db'
-import { signInAsSandboxUser } from './sessions'
-import { expect, test } from './test'
+import { E2E_DEMO_COOKIE, E2E_ORIGIN_SECRET, E2E_SESSION_COOKIE } from './constants.ts'
+import { asSchemaOwner } from './db.ts'
+import { signInAsSandboxUser } from './sessions.ts'
+import { expect, test } from './test.ts'
 
 // One reset and one entry per run from this address.
 test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip': '203.0.113.22' } })

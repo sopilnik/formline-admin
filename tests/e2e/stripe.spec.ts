@@ -1,11 +1,11 @@
 import { randomUUID } from 'node:crypto'
 import type { APIRequestContext } from '@playwright/test'
 import Stripe from 'stripe'
-import { expectNoSeriousA11yViolations } from './a11y'
-import { E2E_ORIGIN_SECRET, E2E_STRIPE_ENV, E2E_STRIPE_PORT } from './constants'
-import { ageOwnerAuthentication, asSchemaOwner } from './db'
-import { signInAsOwner, signInAsSandboxUser } from './sessions'
-import { expect, test } from './test'
+import { expectNoSeriousA11yViolations } from './a11y.ts'
+import { E2E_ORIGIN_SECRET, E2E_STRIPE_ENV, E2E_STRIPE_PORT } from './constants.ts'
+import { ageOwnerAuthentication, asSchemaOwner } from './db.ts'
+import { signInAsOwner, signInAsSandboxUser } from './sessions.ts'
+import { expect, test } from './test.ts'
 
 // The store's orders reach the owner workspace through the signed webhook, with the line items read from the local
 // stand-in for Stripe's API (spec §7, §12.3). The tests share the owner workspace and run in order.

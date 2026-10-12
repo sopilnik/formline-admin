@@ -1,6 +1,6 @@
 import type { Locator } from '@playwright/test'
-import { signInAsSandboxUser } from './sessions'
-import { expect, test } from './test'
+import { signInAsSandboxUser } from './sessions.ts'
+import { expect, test } from './test.ts'
 
 /** The banner's sentence as the visitor reads it: only the text that is shown at this width. */
 const shownText = (banner: Locator) => banner.locator('p').evaluate(el => (el as HTMLElement).innerText.trim())

@@ -1,11 +1,11 @@
 import { execFileSync } from 'node:child_process'
 import type { Page } from '@playwright/test'
-import { roomInWindow } from '../windows'
-import { expectNoSeriousA11yViolations } from './a11y'
-import { E2E_AUTH_ENV, E2E_MIGRATOR_URL, E2E_SESSION_COOKIE } from './constants'
-import { ageOwnerAuthentication } from './db'
-import { expect, test } from './test'
-import { codeFor, readTotpSecret, type Totp } from './totp'
+import { roomInWindow } from '../windows.ts'
+import { expectNoSeriousA11yViolations } from './a11y.ts'
+import { E2E_AUTH_ENV, E2E_MIGRATOR_URL, E2E_SESSION_COOKIE } from './constants.ts'
+import { ageOwnerAuthentication } from './db.ts'
+import { expect, test } from './test.ts'
+import { codeFor, readTotpSecret, type Totp } from './totp.ts'
 
 // One owner per database: these tests run in order and build on each other.
 test.describe.configure({ mode: 'serial' })

@@ -1,6 +1,6 @@
 import type { Locator } from '@playwright/test'
-import { signInAsSandboxUser } from './sessions'
-import { expect, test } from './test'
+import { signInAsSandboxUser } from './sessions.ts'
+import { expect, test } from './test.ts'
 
 const cursorOf = (target: Locator) => target.evaluate(el => getComputedStyle(el).cursor)
 

@@ -1,5 +1,5 @@
-import { signInAsSandboxUser } from './sessions'
-import { expect, test } from './test'
+import { signInAsSandboxUser } from './sessions.ts'
+import { expect, test } from './test.ts'
 
 test.describe('top bar', () => {
   test('fits a 320 px screen in both languages, so no page scrolls sideways', async ({ page, context }) => {

@@ -1,5 +1,5 @@
-import { E2E_ORIGIN_SECRET } from './constants'
-import { expect, test } from './test'
+import { E2E_ORIGIN_SECRET } from './constants.ts'
+import { expect, test } from './test.ts'
 
 test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip': '203.0.113.24' } })
 

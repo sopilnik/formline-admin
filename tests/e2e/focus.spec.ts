@@ -1,7 +1,7 @@
 import type { Locator, Page } from '@playwright/test'
-import { frameHydrated } from './ready'
-import { signInAsSandboxUser } from './sessions'
-import { expect, test } from './test'
+import { frameHydrated } from './ready.ts'
+import { signInAsSandboxUser } from './sessions.ts'
+import { expect, test } from './test.ts'
 
 /** The primary colour of the light theme, which every focus indicator outside the sidebar draws (spec §11). */
 const RING = 'rgb(191, 58, 14)'

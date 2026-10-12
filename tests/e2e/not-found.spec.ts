@@ -1,5 +1,5 @@
-import { signInAsSandboxUser } from './sessions'
-import { expect, test } from './test'
+import { signInAsSandboxUser } from './sessions.ts'
+import { expect, test } from './test.ts'
 
 test.describe('pages that are not there', () => {
   test('an unknown address offers the way back to the overview, in both languages, under its own title', async ({ page, context }) => {

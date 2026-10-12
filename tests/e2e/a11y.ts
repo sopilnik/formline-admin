@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
 import type { Page } from '@playwright/test'
-import { expect } from './test'
+import { expect } from './test.ts'
 
 /**
  * axe with the WCAG 2.2 A and AA rules; serious and critical findings fail the test (spec §1). `scope` limits it to one

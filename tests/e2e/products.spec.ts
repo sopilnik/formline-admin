@@ -1,8 +1,8 @@
-import { expectNoSeriousA11yViolationsInBothThemes } from './a11y'
-import { E2E_ORIGIN_SECRET } from './constants'
-import { asSchemaOwner } from './db'
-import { signInAsSandboxUser } from './sessions'
-import { expect, test } from './test'
+import { expectNoSeriousA11yViolationsInBothThemes } from './a11y.ts'
+import { E2E_ORIGIN_SECRET } from './constants.ts'
+import { asSchemaOwner } from './db.ts'
+import { signInAsSandboxUser } from './sessions.ts'
+import { expect, test } from './test.ts'
 
 test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip': '203.0.113.30' } })
 
@@ -74,13 +74,22 @@ test.describe('products list', () => {
   })
 
   test('sorts by price through links in the headers', async ({ page, context }) => {
-    await signInAsSandboxUser(context)
+    const { workspaceId } = await signInAsSandboxUser(context)
+    const total = await count('select count(*) as n from fa.products where workspace_id = $1', [workspaceId])
     await page.goto('/products')
     const table = page.getByRole('table', { name: 'Products' })
     await table.getByRole('link', { name: 'Price from' }).click()
     await expect(page).toHaveURL(/\/products\?sort=price$/)
     await expect(table.getByRole('columnheader', { name: 'Price from' })).toHaveAttribute('aria-sort', 'ascending')
-    const prices = async () => (await table.getByRole('row').locator('td:nth-child(4)').allTextContents()).map(text => Number(text.replace(/[^\d.]/g, '')))
+    // The column found by its header, read once the rows are there: allTextContents does not wait.
+    const prices = async () => {
+      await expect(table.locator('tbody tr')).toHaveCount(total)
+      const column = await table.locator('thead th').evaluateAll(cells => cells.findIndex(cell => cell.textContent?.startsWith('Price from')) + 1)
+      expect(column).toBeGreaterThan(0)
+      const cells = await table.locator(`tbody tr > :nth-child(${column})`).allTextContents()
+      expect(cells).toHaveLength(total)
+      return cells.map(text => Number(text.replace(/[^\d.]/g, '')))
+    }
     const ascending = await prices()
     expect(ascending).toEqual([...ascending].sort((a, b) => a - b))
     await table.getByRole('link', { name: 'Price from' }).click()

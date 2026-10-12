@@ -1,8 +1,8 @@
-import { generateHOTP } from '../../src/lib/otp'
-import { E2E_ORIGIN_SECRET } from './constants'
-import { asSchemaOwner, enrolAuthenticator } from './db'
-import { signInAsSandboxUser } from './sessions'
-import { expect, test } from './test'
+import { generateHOTP } from '../../src/lib/otp.ts'
+import { E2E_ORIGIN_SECRET } from './constants.ts'
+import { asSchemaOwner, enrolAuthenticator } from './db.ts'
+import { signInAsSandboxUser } from './sessions.ts'
+import { expect, test } from './test.ts'
 
 test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip': '203.0.113.23' } })
 

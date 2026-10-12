@@ -2,11 +2,11 @@ import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { request as playwrightRequest, type Page } from '@playwright/test'
 import sharp from 'sharp'
-import { roomInWindow } from '../windows'
-import { E2E_BASE_URL, E2E_MEDIA_DIR, E2E_ORIGIN_SECRET, E2E_SESSION_COOKIE } from './constants'
-import { asSchemaOwner } from './db'
-import { signInAsSandboxUser } from './sessions'
-import { expect, test } from './test'
+import { roomInWindow } from '../windows.ts'
+import { E2E_BASE_URL, E2E_MEDIA_DIR, E2E_ORIGIN_SECRET, E2E_SESSION_COOKIE } from './constants.ts'
+import { asSchemaOwner } from './db.ts'
+import { signInAsSandboxUser } from './sessions.ts'
+import { expect, test } from './test.ts'
 
 const EDGE = { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip': '203.0.113.36' }
 test.use({ extraHTTPHeaders: EDGE })

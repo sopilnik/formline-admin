@@ -1,7 +1,7 @@
 import { createCipheriv, createHash, randomBytes, randomUUID } from 'node:crypto'
 import pg from 'pg'
-import { encodeBase32LowerCaseNoPadding, encodeBase64urlNoPadding } from '../../src/lib/encoding'
-import { E2E_AUTH_ENV, E2E_MIGRATOR_URL } from './constants'
+import { encodeBase32LowerCaseNoPadding, encodeBase64urlNoPadding } from '../../src/lib/encoding.ts'
+import { E2E_AUTH_ENV, E2E_MIGRATOR_URL } from './constants.ts'
 
 export type Role = 'owner' | 'admin' | 'manager' | 'viewer'
 
@@ -23,15 +23,19 @@ export async function asSchemaOwner<T>(fn: (client: pg.Client) => Promise<T>): P
   }
 }
 
-/** The sandboxes the fixtures created in this worker; tests/e2e/test.ts deletes each test's own afterwards. */
-export const createdSandboxes: string[] = []
+/** The database's clock: it stamps a sandbox's creation, not this process's clock. */
+export function databaseNow(): Promise<Date> {
+  return asSchemaOwner(async client => (await client.query<{ now: Date }>('select now() as now')).rows[0]!.now)
+}
 
 /**
- * Deletes sandboxes directly, as the schema owner. A run creates one or more per test, and the demo holds at most 100
- * live sandboxes (spec §6.5): without this a growing suite would fill the cap before it ends.
+ * Deletes, as the schema owner, every sandbox created since `since`: the ones the fixtures made and the ones a test entered
+ * through the demo button. Each worker has its own database and runs one test at a time, so they are all the current
+ * test's. A run creates one or more per test, and the demo holds at most 100 live sandboxes (spec §6.5): without this a
+ * growing suite would fill the cap before it ends.
  */
-export async function deleteSandboxes(ids: readonly string[]): Promise<void> {
-  if (ids.length > 0) await asSchemaOwner(client => client.query("delete from fa.workspaces where kind = 'sandbox' and id = any($1::uuid[])", [ids]))
+export async function deleteSandboxesSince(since: Date): Promise<void> {
+  await asSchemaOwner(client => client.query("delete from fa.workspaces where kind = 'sandbox' and created_at >= $1", [since]))
 }
 
 /**
@@ -47,7 +51,6 @@ export function createSandboxSession(role: Role = 'owner'): Promise<{ token: str
       'select * from fa.create_sandbox($1, $2, $3, $4)', [sha256(randomUUID()), sha256(entryToken), 'Playwright', 'en'])
     const row = entry.rows[0]
     if (row?.outcome !== 'created') throw new Error(`create_sandbox: ${row?.outcome ?? 'no row'}`)
-    createdSandboxes.push(row.sandbox_id)
     if (role === 'owner') return { token: entryToken, workspaceId: row.sandbox_id, userId: row.demo_user_id }
     const user = await client.query<{ id: string }>('select id from fa.users where workspace_id = $1 and role = $2', [row.sandbox_id, role])
     const token = encodeBase32LowerCaseNoPadding(randomBytes(20))

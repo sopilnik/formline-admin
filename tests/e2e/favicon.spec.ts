@@ -1,4 +1,4 @@
-import { expect, test } from './test'
+import { expect, test } from './test.ts'
 
 // The panel's own mark in the tab (W.4): the orange F on a tile of the sidebar's colour, as SVG and as a 16 + 32 px ICO.
 test.describe('favicon', () => {

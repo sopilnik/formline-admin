@@ -1,9 +1,9 @@
 import sharp from 'sharp'
-import { expectNoSeriousA11yViolationsInBothThemes } from './a11y'
-import { E2E_BASE_URL, E2E_DEMO_COOKIE, E2E_ORIGIN_SECRET, E2E_SESSION_COOKIE } from './constants'
-import { asSchemaOwner, createSandboxSession } from './db'
-import { signInAsSandboxUser } from './sessions'
-import { expect, test } from './test'
+import { expectNoSeriousA11yViolationsInBothThemes } from './a11y.ts'
+import { E2E_BASE_URL, E2E_DEMO_COOKIE, E2E_ORIGIN_SECRET, E2E_SESSION_COOKIE } from './constants.ts'
+import { asSchemaOwner, createSandboxSession } from './db.ts'
+import { signInAsSandboxUser } from './sessions.ts'
+import { expect, test } from './test.ts'
 
 const EDGE = { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip': '203.0.113.37' }
 test.use({ extraHTTPHeaders: EDGE })

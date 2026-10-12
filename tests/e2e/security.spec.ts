@@ -1,6 +1,6 @@
-import { expectNoSeriousA11yViolations } from './a11y'
-import { signInAsSandboxUser } from './sessions'
-import { expect, test } from './test'
+import { expectNoSeriousA11yViolations } from './a11y.ts'
+import { signInAsSandboxUser } from './sessions.ts'
+import { expect, test } from './test.ts'
 
 test('the passkey challenge comes in a signed, strict, five-minute cookie and asks for user verification', async ({ request }) => {
   const res = await request.get('/api/auth/passkey-challenge')

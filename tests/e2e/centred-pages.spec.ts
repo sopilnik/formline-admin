@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test'
-import { E2E_ORIGIN_SECRET } from './constants'
-import { signInAsSandboxUser } from './sessions'
-import { expect, test } from './test'
+import { E2E_ORIGIN_SECRET } from './constants.ts'
+import { signInAsSandboxUser } from './sessions.ts'
+import { expect, test } from './test.ts'
 
 test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip': '203.0.113.58' }, viewport: { width: 1920, height: 1080 } })
 

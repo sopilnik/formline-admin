@@ -1,5 +1,5 @@
-import { E2E_BASE_URL, E2E_ORIGIN_SECRET } from './constants'
-import { expect, test } from './test'
+import { E2E_BASE_URL, E2E_ORIGIN_SECRET } from './constants.ts'
+import { expect, test } from './test.ts'
 
 // The smoke test's demo on the e2e server, from an address of its own apart from the other files' demo entries.
 test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip': '203.0.113.55' } })

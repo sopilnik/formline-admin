@@ -1,9 +1,9 @@
 import { readFile } from 'node:fs/promises'
-import { roomInWindow } from '../windows'
-import { E2E_ORIGIN_SECRET } from './constants'
-import { asSchemaOwner } from './db'
-import { signInAsSandboxUser } from './sessions'
-import { expect, test } from './test'
+import { roomInWindow } from '../windows.ts'
+import { E2E_ORIGIN_SECRET } from './constants.ts'
+import { asSchemaOwner } from './db.ts'
+import { signInAsSandboxUser } from './sessions.ts'
+import { expect, test } from './test.ts'
 
 test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip': '203.0.113.29' } })
 

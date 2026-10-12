@@ -1,6 +1,6 @@
 import type { BrowserContext } from '@playwright/test'
-import { E2E_BASE_URL, E2E_DEMO_COOKIE, E2E_SESSION_COOKIE } from './constants'
-import { createOwnerSession, createSandboxSession, type Role } from './db'
+import { E2E_BASE_URL, E2E_DEMO_COOKIE, E2E_SESSION_COOKIE } from './constants.ts'
+import { createOwnerSession, createSandboxSession, type Role } from './db.ts'
 
 /** Signs the browser context in as a user of a fresh sandbox, the way a real visitor's cookies look. */
 export async function signInAsSandboxUser(context: BrowserContext, role: Role = 'owner'): Promise<{ token: string; workspaceId: string; userId: string }> {

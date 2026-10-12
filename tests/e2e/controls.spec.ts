@@ -1,7 +1,7 @@
 import type { BrowserContext, Locator } from '@playwright/test'
-import { E2E_BASE_URL } from './constants'
-import { signInAsSandboxUser } from './sessions'
-import { expect, test } from './test'
+import { E2E_BASE_URL } from './constants.ts'
+import { signInAsSandboxUser } from './sessions.ts'
+import { expect, test } from './test.ts'
 
 const chooseTheme = (context: BrowserContext, theme: 'light' | 'dark') =>
   context.addCookies([{ name: 'formline_theme', value: theme, url: E2E_BASE_URL }])
@@ -17,6 +17,7 @@ const OUTLINE_BUTTON = {
   light: { border: 'rgb(133, 136, 128)', background: 'rgb(255, 255, 255)' },
   dark: { border: 'rgb(116, 119, 125)', background: 'rgb(26, 27, 29)' },
 }
+
 const FIELD = {
   light: { border: 'rgb(133, 136, 128)', background: 'rgba(0, 0, 0, 0)' },
   dark: { border: 'rgb(116, 119, 125)', background: 'rgba(0, 0, 0, 0)' },

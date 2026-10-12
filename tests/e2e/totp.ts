@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
-import { decodeBase32IgnorePadding } from '../../src/lib/encoding'
-import { generateHOTP } from '../../src/lib/otp'
+import { decodeBase32IgnorePadding } from '../../src/lib/encoding.ts'
+import { generateHOTP } from '../../src/lib/otp.ts'
 
 export type Totp = { secret: Uint8Array; lastStep: number }
 

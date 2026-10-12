@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
-import { signInAsSandboxUser } from './sessions'
-import { expect, test } from './test'
+import { signInAsSandboxUser } from './sessions.ts'
+import { expect, test } from './test.ts'
 
 /** Every text in Space Grotesk at a weight the panel does not load (only 400 and 700 ship), as "text — weight". */
 const unshippedWeights = (page: Page) =>

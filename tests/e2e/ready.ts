@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { expect } from './test'
+import { expect } from './test.ts'
 
 /**
  * Waits until the panel's frame has hydrated (`<html data-hydrated>`, set by FrameReady). The palette and the shortcuts

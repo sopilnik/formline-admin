@@ -1,6 +1,6 @@
 import type { Locator, Page } from '@playwright/test'
-import { signInAsSandboxUser } from './sessions'
-import { expect, test } from './test'
+import { signInAsSandboxUser } from './sessions.ts'
+import { expect, test } from './test.ts'
 
 /** Holds the server's answer for one page while the test looks at its loading state; the returned function lets it go. */
 async function holdPage(page: Page, path: string): Promise<() => void> {
@@ -17,12 +17,24 @@ async function holdPage(page: Page, path: string): Promise<() => void> {
 
 const top = async (target: Locator) => Math.round((await target.boundingBox())!.y)
 
+/** A colour token of the page's theme as the browser resolves it, read through a throwaway element. */
+const tokenColour = (page: Page, token: string) =>
+  page.evaluate(name => {
+    const probe = document.createElement('div')
+    probe.style.backgroundColor = `var(${name})`
+    document.body.append(probe)
+    const colour = getComputedStyle(probe).backgroundColor
+    probe.remove()
+    return colour
+  }, token)
+
 test.describe('overview layout', () => {
   test('its loading state has the page’s shape and stands out from the canvas', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.setViewportSize({ width: 1100, height: 900 })
     await page.goto('/orders')
     await expect(page.getByRole('heading', { level: 1, name: 'Orders' })).toBeVisible()
+    // Not a wait for hydration: the overview's prefetch, which brings its loading state, must arrive before the hold.
     await page.waitForLoadState('networkidle')
     const release = await holdPage(page, '/overview')
     await page.getByRole('navigation', { name: 'Main menu' }).getByRole('link', { name: 'Overview' }).click()
@@ -30,13 +42,13 @@ test.describe('overview layout', () => {
     const loading = page.locator('main [role=status]').filter({ hasText: 'Loading the overview…' })
     await expect(loading).toBeVisible()
     const skeletons = loading.locator('[data-slot=skeleton]')
-    expect(await skeletons.first().evaluate(el => getComputedStyle(el).backgroundColor)).toBe('rgb(227, 228, 225)')
-    const kpisWhileLoading = await top(loading.locator('[data-slot=skeleton].h-32').first())
-    const panels = loading.locator('[data-slot=skeleton].h-80')
+    expect(await skeletons.first().evaluate(el => getComputedStyle(el).backgroundColor)).toBe(await tokenColour(page, '--border'))
+    const kpisWhileLoading = await top(loading.locator('[data-part=kpi]').first())
+    const panels = loading.locator('[data-part=panel]')
     expect(await top(panels.nth(1))).toBeGreaterThan(await top(panels.nth(0)))
 
     release()
-    const kpis = page.getByRole('region', { name: 'Key figures' }).or(page.locator('section[aria-label="Key figures"]')).first()
+    const kpis = page.getByRole('region', { name: 'Key figures' })
     await expect(kpis).toBeVisible()
     expect(Math.abs((await top(kpis)) - kpisWhileLoading)).toBeLessThanOrEqual(6)
   })

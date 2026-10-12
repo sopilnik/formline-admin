@@ -1,8 +1,8 @@
 import type { Page } from '@playwright/test'
-import { expectNoSeriousA11yViolations } from './a11y'
-import { openFramed } from './ready'
-import { signInAsSandboxUser } from './sessions'
-import { expect, test } from './test'
+import { expectNoSeriousA11yViolations } from './a11y.ts'
+import { openFramed } from './ready.ts'
+import { signInAsSandboxUser } from './sessions.ts'
+import { expect, test } from './test.ts'
 
 const sidebarBackground = (page: Page) => page.locator('aside').evaluate(el => getComputedStyle(el).backgroundColor)
 

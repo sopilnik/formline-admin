@@ -1,5 +1,5 @@
-import { expect, test } from './test'
-import { E2E_CLIENT_IP, E2E_ORIGIN_SECRET } from './constants'
+import { expect, test } from './test.ts'
+import { E2E_CLIENT_IP, E2E_ORIGIN_SECRET } from './constants.ts'
 
 test('liveness answers without the origin secret', async ({ playwright, baseURL }) => {
   const bare = await playwright.request.newContext({ baseURL, extraHTTPHeaders: {} })

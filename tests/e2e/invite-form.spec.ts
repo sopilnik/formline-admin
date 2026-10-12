@@ -1,5 +1,5 @@
-import { signInAsSandboxUser } from './sessions'
-import { expect, test } from './test'
+import { signInAsSandboxUser } from './sessions.ts'
+import { expect, test } from './test.ts'
 
 test.describe('invitation form', () => {
   test('stacks below 1024 px, so the email field never collapses beside an open menu', async ({ page, context }) => {
