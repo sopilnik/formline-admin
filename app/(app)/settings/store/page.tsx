@@ -6,11 +6,11 @@ import { StoreSettingsForm } from '@/components/settings/store-settings-form'
 import { StripeImportSection } from '@/components/settings/stripe-import-section'
 import { timeZones } from '@/lib/settings/fields'
 import { isRecentAuth } from '@/server/auth/reauth'
-import { requireSession, workspaceContext } from '@/server/auth/sessions'
+import { requireSession } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'
 import { titleFor } from '@/server/authz/page-title'
 import { getStoreSettings } from '@/server/dal/settings'
-import { withWorkspace } from '@/server/db/with-workspace'
+import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('settings.store')

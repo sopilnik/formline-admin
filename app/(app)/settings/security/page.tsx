@@ -10,14 +10,14 @@ import { SessionsSection } from '@/components/settings/sessions-section'
 import { formatDate, formatDateTime } from '@/lib/intl'
 import { isRecentAuth } from '@/server/auth/reauth'
 import { countUnusedRecoveryCodes } from '@/server/auth/self-factors'
-import { requireSession, workspaceContext } from '@/server/auth/sessions'
+import { requireSession } from '@/server/auth/sessions'
 import { formatTotpSecret, generateTotpSecret, totpUri } from '@/server/auth/totp'
 import { authorize } from '@/server/authz/authorize'
 import { listPasskeys } from '@/server/dal/passkeys'
 import { listOwnSessions } from '@/server/dal/sessions'
 import { getStoreSettings } from '@/server/dal/settings'
 import { getSelf } from '@/server/dal/users'
-import { withWorkspace } from '@/server/db/with-workspace'
+import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('settings.security')

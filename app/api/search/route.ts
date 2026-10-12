@@ -1,8 +1,8 @@
 import { NO_RESULTS, searchTerm } from '@/lib/search'
-import { getSession, workspaceContext } from '@/server/auth/sessions'
+import { getSession } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'
 import { searchWorkspace } from '@/server/dal/search'
-import { withWorkspace } from '@/server/db/with-workspace'
+import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 export const dynamic = 'force-dynamic'
 

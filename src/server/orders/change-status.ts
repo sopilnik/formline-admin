@@ -1,12 +1,12 @@
 import 'server-only'
 import type { Pool } from 'pg'
 import type { OrderStatus } from '@/lib/orders/status'
+import type { Actor } from '@/server/actor'
 import { logActivity } from '@/server/dal/activity'
 import { changeOrderStatus } from '@/server/dal/orders'
 import { getPool } from '@/server/db/pool'
-import { withWorkspace, type Role } from '@/server/db/with-workspace'
+import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
-export type StatusActor = { workspaceId: string; userId: string; role: Role; ipHash: string | null }
 /** Order numbers, newest first. */
 export type StatusOutcome = { changed: number[]; skipped: number[] }
 
@@ -18,9 +18,9 @@ const newestFirst = (a: number, b: number): number => b - a
  * are walked in sorted order in one transaction, so two overlapping changes lock their
  * rows in the same order. An id the workspace does not hold is neither changed nor reported.
  */
-export async function changeStatuses(actor: StatusActor, orderIds: readonly string[], to: OrderStatus, pool: Pool = getPool()): Promise<StatusOutcome> {
+export async function changeStatuses(actor: Actor, orderIds: readonly string[], to: OrderStatus, pool: Pool = getPool()): Promise<StatusOutcome> {
   const ids = [...new Set(orderIds)].sort()
-  return withWorkspace({ workspaceId: actor.workspaceId, userId: actor.userId, role: actor.role }, async tx => {
+  return withWorkspace(workspaceContext(actor), async tx => {
     const changed: number[] = []
     const skipped: number[] = []
     for (const orderId of ids) {

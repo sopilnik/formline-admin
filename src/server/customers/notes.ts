@@ -1,14 +1,14 @@
 import 'server-only'
 import type { Pool } from 'pg'
-import { actorContext, type Actor } from '@/server/actor'
+import { type Actor } from '@/server/actor'
 import { logActivity } from '@/server/dal/activity'
 import { updateCustomerNotes } from '@/server/dal/customers'
 import { getPool } from '@/server/db/pool'
-import { withWorkspace } from '@/server/db/with-workspace'
+import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 /** Saves a customer's notes and logs a real change (spec §5.7): `unchanged` writes nothing. */
 export async function saveCustomerNotes(actor: Actor, customerId: string, notes: string, pool: Pool = getPool()): Promise<'saved' | 'unchanged' | 'not_found'> {
-  return withWorkspace(actorContext(actor), async tx => {
+  return withWorkspace(workspaceContext(actor), async tx => {
     const result = await updateCustomerNotes(tx, actor.workspaceId, customerId, notes)
     if (!result) return 'not_found'
     if (!result.changed) return 'unchanged'

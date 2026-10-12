@@ -4,11 +4,11 @@ import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { CollectionsList } from '@/components/collections/collections-list'
 import { buttonVariants } from '@/components/ui/button'
-import { requireSession, workspaceContext } from '@/server/auth/sessions'
+import { requireSession } from '@/server/auth/sessions'
 import { authorize } from '@/server/authz/authorize'
 import { can } from '@/server/authz/matrix'
 import { listCollections } from '@/server/dal/collections'
-import { withWorkspace } from '@/server/db/with-workspace'
+import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('collections')

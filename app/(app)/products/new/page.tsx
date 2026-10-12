@@ -4,11 +4,11 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { NewProductForm } from '@/components/products/new-product-form'
-import { requireSession, workspaceContext } from '@/server/auth/sessions'
+import { requireSession } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'
 import { titleFor } from '@/server/authz/page-title'
 import { listCollectionOptions } from '@/server/dal/products'
-import { withWorkspace } from '@/server/db/with-workspace'
+import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('products.new')

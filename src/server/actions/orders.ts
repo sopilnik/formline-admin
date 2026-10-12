@@ -6,20 +6,14 @@ import { formText } from '@/lib/auth-form'
 import { parseNote, type NoteError } from '@/lib/orders/note'
 import { ORDER_STATUSES, type OrderStatus } from '@/lib/orders/status'
 import { fail, ok, type ActionResult } from '@/lib/result'
-import { requireSession, type Session } from '@/server/auth/sessions'
+import { actorOf } from '@/server/actor'
+import { requireSession } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'
-import { authConfig } from '@/server/config'
-import { changeStatuses, type StatusActor, type StatusOutcome } from '@/server/orders/change-status'
+import { changeStatuses, type StatusOutcome } from '@/server/orders/change-status'
 import { addNote } from '@/server/orders/notes'
-import { hashIp } from '@/server/ratelimit/ip'
-import { getClientIp } from '@/server/request'
 
 const statusInput = z.object({ ids: z.array(z.uuid()).min(1).max(100), to: z.enum(ORDER_STATUSES) })
 const oneStatusInput = z.object({ orderId: z.uuid(), to: z.enum(ORDER_STATUSES) })
-
-async function actorOf(session: Session): Promise<StatusActor> {
-  return { workspaceId: session.workspaceId, userId: session.userId, role: session.role, ipHash: hashIp(await getClientIp(), authConfig().ipHashKey) }
-}
 
 /** "Change status" of the bulk bar (spec §8.2): the valid orders change, the others come back as skipped. */
 export async function changeStatusesAction(input: unknown): Promise<ActionResult<StatusOutcome>> {

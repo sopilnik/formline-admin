@@ -10,12 +10,12 @@ import { buttonVariants } from '@/components/ui/button'
 import { DEFAULT_PRODUCTS_QUERY, isProductsFiltered, parseProductsQuery, productsHref } from '@/lib/products/query'
 import { toProductRowView } from '@/lib/products/view'
 import type { SearchParams } from '@/lib/search-params'
-import { requireSession, workspaceContext } from '@/server/auth/sessions'
+import { requireSession } from '@/server/auth/sessions'
 import { authorize } from '@/server/authz/authorize'
 import { can } from '@/server/authz/matrix'
 import { listProducts } from '@/server/dal/products'
 import { getStoreSettings } from '@/server/dal/settings'
-import { withWorkspace } from '@/server/db/with-workspace'
+import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('products')

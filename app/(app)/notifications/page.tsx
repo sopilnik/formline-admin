@@ -7,10 +7,10 @@ import { Button } from '@/components/ui/button'
 import { pageQueryHref, parsePageQuery } from '@/lib/pagination'
 import type { SearchParams } from '@/lib/search-params'
 import { markAllNotificationsReadAction } from '@/server/actions/notifications'
-import { requireSession, workspaceContext } from '@/server/auth/sessions'
+import { requireSession } from '@/server/auth/sessions'
 import { listNotifications } from '@/server/dal/notifications'
 import { getStoreSettings } from '@/server/dal/settings'
-import { withWorkspace } from '@/server/db/with-workspace'
+import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 import { notificationItems, readerOf } from '@/server/notifications/feed'
 
 export async function generateMetadata(): Promise<Metadata> {

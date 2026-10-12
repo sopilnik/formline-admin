@@ -4,9 +4,9 @@ import { refresh, revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { formText } from '@/lib/auth-form'
-import { requireSession, workspaceContext } from '@/server/auth/sessions'
+import { requireSession } from '@/server/auth/sessions'
 import { markAllNotificationsRead, markNotificationRead, notificationHref } from '@/server/dal/notifications'
-import { withWorkspace } from '@/server/db/with-workspace'
+import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 import { readerOf } from '@/server/notifications/feed'
 
 /**

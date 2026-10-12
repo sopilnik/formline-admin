@@ -22,6 +22,11 @@ export function parseWorkspaceContext(ctx: WorkspaceContext): WorkspaceContext {
   return contextSchema.parse(ctx)
 }
 
+/** The identity a member's transaction runs as, from their session or from an actor alike. */
+export function workspaceContext(who: { workspaceId: string; userId: string; role: Role }): WorkspaceContext {
+  return { workspaceId: who.workspaceId, userId: who.userId, role: who.role }
+}
+
 /**
  * The only way the application touches workspace data: one transaction whose
  * request identity (workspace, user, role) row-level security reads. The

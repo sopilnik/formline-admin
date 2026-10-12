@@ -11,12 +11,12 @@ import { SourceLabel } from '@/components/orders/source-label'
 import { formatDateTime, formatMoney } from '@/lib/intl'
 import { thumbSrc } from '@/lib/thumbs'
 import { cn } from '@/lib/utils'
-import { requireSession, workspaceContext } from '@/server/auth/sessions'
+import { requireSession } from '@/server/auth/sessions'
 import { authorize } from '@/server/authz/authorize'
 import { can } from '@/server/authz/matrix'
 import { getOrder, type OrderEventDetail } from '@/server/dal/orders'
 import { getStoreSettings } from '@/server/dal/settings'
-import { withWorkspace } from '@/server/db/with-workspace'
+import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 type Params = { params: Promise<{ number: string }> }
 

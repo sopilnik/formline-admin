@@ -18,12 +18,12 @@ import { priceField, variantPriceCents } from '@/lib/products/price'
 import { canDeleteProduct } from '@/lib/products/status'
 import { SLUG_PATTERN } from '@/lib/slug'
 import { cn } from '@/lib/utils'
-import { requireSession, workspaceContext } from '@/server/auth/sessions'
+import { requireSession } from '@/server/auth/sessions'
 import { authorize } from '@/server/authz/authorize'
 import { can } from '@/server/authz/matrix'
 import { getProduct, listCollectionOptions } from '@/server/dal/products'
 import { getStoreSettings } from '@/server/dal/settings'
-import { withWorkspace } from '@/server/db/with-workspace'
+import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 type Params = { params: Promise<{ slug: string }> }
 

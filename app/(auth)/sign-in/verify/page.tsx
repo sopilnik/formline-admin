@@ -3,9 +3,9 @@ import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { AuthCard } from '@/components/auth/auth-card'
 import { VerifyForm } from '@/components/auth/verify-form'
-import { requireSession, workspaceContext } from '@/server/auth/sessions'
+import { requireSession } from '@/server/auth/sessions'
 import { getSelf } from '@/server/dal/users'
-import { withWorkspace } from '@/server/db/with-workspace'
+import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('auth.verify')

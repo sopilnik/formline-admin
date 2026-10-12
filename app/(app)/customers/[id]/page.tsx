@@ -13,12 +13,12 @@ import { formatDate, formatDateTime, formatMoney, formatNumber } from '@/lib/int
 import { DEFAULT_QUERY, ordersHref } from '@/lib/orders/query'
 import { orderHref } from '@/lib/orders/view'
 import { cn } from '@/lib/utils'
-import { requireSession, workspaceContext } from '@/server/auth/sessions'
+import { requireSession } from '@/server/auth/sessions'
 import { authorize } from '@/server/authz/authorize'
 import { can } from '@/server/authz/matrix'
 import { getCustomer } from '@/server/dal/customers'
 import { getStoreSettings } from '@/server/dal/settings'
-import { withWorkspace } from '@/server/db/with-workspace'
+import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 type Params = { params: Promise<{ id: string }> }
 

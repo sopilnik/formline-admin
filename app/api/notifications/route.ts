@@ -1,8 +1,8 @@
 import { getLocale } from 'next-intl/server'
-import { getSession, workspaceContext } from '@/server/auth/sessions'
+import { getSession } from '@/server/auth/sessions'
 import { listNotifications } from '@/server/dal/notifications'
 import { getStoreSettings } from '@/server/dal/settings'
-import { withWorkspace } from '@/server/db/with-workspace'
+import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 import { BELL_SIZE, notificationItems, readerOf } from '@/server/notifications/feed'
 
 export const dynamic = 'force-dynamic'

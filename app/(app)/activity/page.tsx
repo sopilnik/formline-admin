@@ -10,11 +10,11 @@ import { describeEntry } from '@/lib/activity/describe'
 import { activityHref, DEFAULT_ACTIVITY_QUERY, isActivityFiltered, parseActivityQuery } from '@/lib/activity/query'
 import { formatDateTime } from '@/lib/intl'
 import type { SearchParams } from '@/lib/search-params'
-import { requireSession, workspaceContext } from '@/server/auth/sessions'
+import { requireSession } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'
 import { listActivity } from '@/server/dal/activity'
 import { getStoreSettings } from '@/server/dal/settings'
-import { withWorkspace } from '@/server/db/with-workspace'
+import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('activity')

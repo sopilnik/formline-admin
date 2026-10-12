@@ -16,7 +16,3 @@ export async function requestIpHash(): Promise<string | null> {
 export async function actorOf(session: Session): Promise<Actor> {
   return { workspaceId: session.workspaceId, userId: session.userId, role: session.role, ipHash: await requestIpHash() }
 }
-
-export function actorContext(actor: Actor): { workspaceId: string; userId: string; role: Role } {
-  return { workspaceId: actor.workspaceId, userId: actor.userId, role: actor.role }
-}

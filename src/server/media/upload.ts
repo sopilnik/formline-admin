@@ -2,12 +2,12 @@ import 'server-only'
 import { randomUUID } from 'node:crypto'
 import { and, count, eq, ne, sql } from 'drizzle-orm'
 import type { Pool } from 'pg'
-import { actorContext, type Actor } from '@/server/actor'
+import { type Actor } from '@/server/actor'
 import { logActivity } from '@/server/dal/activity'
 import { releaseImage } from '@/server/dal/images'
 import { getPool } from '@/server/db/pool'
 import { images, products } from '@/server/db/schema'
-import { withWorkspace, type Tx } from '@/server/db/with-workspace'
+import { withWorkspace, workspaceContext, type Tx } from '@/server/db/with-workspace'
 import type { Processed } from '@/server/media/image'
 import { mediaPath, thumbPath, type MediaStorage } from '@/server/media/storage'
 
@@ -30,7 +30,7 @@ async function fits(tx: Tx, workspaceId: string, productImageId: string | null, 
  * again, or queued for the daily job if storage refuses that too (the queue takes the copy along).
  */
 export async function storeProductImage(actor: Actor, productId: string, image: Processed, storage: MediaStorage, pool: Pool = getPool()): Promise<ImageUpload> {
-  const ctx = actorContext(actor)
+  const ctx = workspaceContext(actor)
   const before = await withWorkspace(ctx, async tx => {
     const [product] = await tx.select({ imageId: products.imageId }).from(products)
       .where(and(eq(products.workspaceId, actor.workspaceId), eq(products.id, productId)))
@@ -79,7 +79,7 @@ export async function storeProductImage(actor: Actor, productId: string, image: 
 
 /** "Remove image" (spec §8.4): the product keeps no image; an uploaded file is queued for deletion. */
 export async function removeProductImage(actor: Actor, productId: string, pool: Pool = getPool()): Promise<{ ok: true } | { ok: false; reason: 'not_found' }> {
-  return withWorkspace(actorContext(actor), async tx => {
+  return withWorkspace(workspaceContext(actor), async tx => {
     const [product] = await tx.select({ slug: products.slug, imageId: products.imageId }).from(products)
       .where(and(eq(products.workspaceId, actor.workspaceId), eq(products.id, productId))).for('update')
     if (!product) return { ok: false, reason: 'not_found' }

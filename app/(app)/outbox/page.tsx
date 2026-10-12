@@ -8,11 +8,11 @@ import { formatDateTime } from '@/lib/intl'
 import { letterContent } from '@/lib/letters'
 import { pageQueryHref, parsePageQuery } from '@/lib/pagination'
 import type { SearchParams } from '@/lib/search-params'
-import { requireSession, workspaceContext } from '@/server/auth/sessions'
+import { requireSession } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'
 import { listLetters } from '@/server/dal/outbox'
 import { getStoreSettings } from '@/server/dal/settings'
-import { withWorkspace } from '@/server/db/with-workspace'
+import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('outbox')

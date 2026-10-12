@@ -3,10 +3,10 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { AcceptInvitationForm } from '@/components/team/accept-invitation-form'
-import { requireSession, workspaceContext } from '@/server/auth/sessions'
+import { requireSession } from '@/server/auth/sessions'
 import { hashToken, TOKEN_PATTERN } from '@/server/auth/tokens'
 import { findInvitation } from '@/server/dal/invitations'
-import { withWorkspace } from '@/server/db/with-workspace'
+import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 type Params = { params: Promise<{ token: string }> }
 

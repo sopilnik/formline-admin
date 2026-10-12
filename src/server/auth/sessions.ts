@@ -9,7 +9,7 @@ import type { WorkspaceKind } from '@/server/authz/matrix'
 import { sessionSignInId } from '@/server/dal/sessions'
 import { getPool } from '@/server/db/pool'
 import { sessions } from '@/server/db/schema'
-import type { Role, Tx, WorkspaceContext } from '@/server/db/with-workspace'
+import type { Role, Tx } from '@/server/db/with-workspace'
 
 export const SESSION_COOKIE = '__Host-formline_session'
 
@@ -69,10 +69,6 @@ export async function validateSessionToken(token: string, pool: Pool = getPool()
     reauthAt: row.reauth_at,
     expiresAt: row.expires_at,
   }
-}
-
-export function workspaceContext(session: Session): WorkspaceContext {
-  return { workspaceId: session.workspaceId, userId: session.userId, role: session.role }
 }
 
 /**

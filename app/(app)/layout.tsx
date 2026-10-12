@@ -8,11 +8,11 @@ import { navItems } from '@/components/app/nav'
 import { SIDEBAR_COOKIE } from '@/lib/preferences'
 import { hoursLeft } from '@/lib/sandbox'
 import { parseTheme, THEME_COOKIE } from '@/lib/theme'
-import { requireSession, workspaceContext } from '@/server/auth/sessions'
+import { requireSession } from '@/server/auth/sessions'
 import { countUnread } from '@/server/dal/notifications'
 import { ordersToProcess } from '@/server/dal/orders'
 import { getSelf, listMembers } from '@/server/dal/users'
-import { withWorkspace } from '@/server/db/with-workspace'
+import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 import { readerOf } from '@/server/notifications/feed'
 
 export default async function AppLayout({ children }: { children: ReactNode }) {

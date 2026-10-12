@@ -15,12 +15,12 @@ import { buildChart } from '@/lib/overview/chart'
 import { bucketSums, collectionShares, kpis, type Kpi } from '@/lib/overview/kpi'
 import { lastMoment, parsePeriod, periodPlan, type Range } from '@/lib/periods'
 import type { SearchParams } from '@/lib/search-params'
-import { requireSession, workspaceContext } from '@/server/auth/sessions'
+import { requireSession } from '@/server/auth/sessions'
 import { authorize } from '@/server/authz/authorize'
 import { latestOrders } from '@/server/dal/orders'
 import { attentionCounts, collectionRevenue, lowStock, revenuePoints, revenueTotals } from '@/server/dal/overview'
 import { getStoreSettings } from '@/server/dal/settings'
-import { withWorkspace } from '@/server/db/with-workspace'
+import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('overview')

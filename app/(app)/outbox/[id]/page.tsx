@@ -8,11 +8,11 @@ import { z } from 'zod'
 import { LetterBody, letterSubject } from '@/components/outbox/letter'
 import { formatDateTime } from '@/lib/intl'
 import { letterContent } from '@/lib/letters'
-import { requireSession, workspaceContext } from '@/server/auth/sessions'
+import { requireSession } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'
 import { getLetter } from '@/server/dal/outbox'
 import { getStoreSettings } from '@/server/dal/settings'
-import { withWorkspace } from '@/server/db/with-workspace'
+import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 type Params = { params: Promise<{ id: string }> }
 

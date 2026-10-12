@@ -4,15 +4,15 @@ import type { Pool } from 'pg'
 import type { Locale } from '@/i18n/locale'
 import type { AssignableRole } from '@/lib/team'
 import type { Theme } from '@/lib/theme'
-import { actorContext, type Actor } from '@/server/actor'
-import { workspaceContext, type NewSession, type Session } from '@/server/auth/sessions'
+import { type Actor } from '@/server/actor'
+import { type NewSession, type Session } from '@/server/auth/sessions'
 import { generateToken, hashToken } from '@/server/auth/tokens'
 import { logActivity } from '@/server/dal/activity'
 import { createInvitation, getPendingInvitation, revokeInvitation, type NewInvitation } from '@/server/dal/invitations'
 import { getSelf } from '@/server/dal/users'
 import { asDate } from '@/server/db/as-date'
 import { getPool } from '@/server/db/pool'
-import { withWorkspace, type Tx } from '@/server/db/with-workspace'
+import { withWorkspace, workspaceContext, type Tx } from '@/server/db/with-workspace'
 import { mail } from '@/server/mail/outbox'
 
 /** The letter with the link, in the inviter's language: the visitor who reads it is the one who wrote it (spec §9). */
@@ -28,7 +28,7 @@ async function sendInvitation(tx: Tx, actor: Actor, invitation: { email: string;
 /** "Invite" on the team page (spec §8.6): the invitation, its letter and the log entry, in one transaction. */
 export async function inviteMember(actor: Actor, input: { email: string; role: AssignableRole; expiresAt: Date }, pool: Pool = getPool()): Promise<NewInvitation> {
   const token = generateToken()
-  return withWorkspace(actorContext(actor), async tx => {
+  return withWorkspace(workspaceContext(actor), async tx => {
     const created = await createInvitation(tx, actor.workspaceId, { ...input, invitedBy: actor.userId, token, tokenHash: hashToken(token) })
     if (!created.ok) return created
     await sendInvitation(tx, actor, { email: input.email.toLowerCase(), role: input.role, token })
@@ -42,7 +42,7 @@ export async function inviteMember(actor: Actor, input: { email: string; role: A
 
 /** "Resend": the same link in a new letter. */
 export async function resendInvitation(actor: Actor, id: string, pool: Pool = getPool()): Promise<{ email: string } | null> {
-  return withWorkspace(actorContext(actor), async tx => {
+  return withWorkspace(workspaceContext(actor), async tx => {
     const invitation = await getPendingInvitation(tx, actor.workspaceId, id)
     if (!invitation) return null
     await sendInvitation(tx, actor, invitation)
@@ -56,7 +56,7 @@ export async function resendInvitation(actor: Actor, id: string, pool: Pool = ge
 
 /** "Revoke": the link stops working. */
 export async function revokeMemberInvitation(actor: Actor, id: string, pool: Pool = getPool()): Promise<{ email: string } | null> {
-  return withWorkspace(actorContext(actor), async tx => {
+  return withWorkspace(workspaceContext(actor), async tx => {
     const revoked = await revokeInvitation(tx, actor.workspaceId, id)
     if (!revoked) return null
     await logActivity(tx, actor.workspaceId, {

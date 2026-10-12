@@ -1,14 +1,14 @@
 import 'server-only'
 import type { Pool } from 'pg'
-import { actorContext, type Actor } from '@/server/actor'
+import { type Actor } from '@/server/actor'
 import { logActivity } from '@/server/dal/activity'
 import { updateProductDetails, type DetailsChange, type DetailsInput } from '@/server/dal/products'
 import { getPool } from '@/server/db/pool'
-import { withWorkspace } from '@/server/db/with-workspace'
+import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 /** Saves the details form and logs what changed (`product.updated`); a save that changes nothing is not logged. */
 export async function saveProductDetails(actor: Actor, input: DetailsInput, pool: Pool = getPool()): Promise<DetailsChange> {
-  return withWorkspace(actorContext(actor), async tx => {
+  return withWorkspace(workspaceContext(actor), async tx => {
     const result = await updateProductDetails(tx, actor.workspaceId, input)
     if (result.ok && result.changed.length > 0) {
       await logActivity(tx, actor.workspaceId, {

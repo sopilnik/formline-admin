@@ -1,8 +1,9 @@
 import { createHash, randomUUID } from 'node:crypto'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import type { Actor } from '@/server/actor'
 import { generateToken, hashToken } from '@/server/auth/tokens'
-import { changeStatuses, type StatusActor } from '@/server/orders/change-status'
+import { changeStatuses } from '@/server/orders/change-status'
 import { adminPool, appPool, closeAll } from './db'
 
 let admin: pg.Pool
@@ -17,7 +18,7 @@ async function sandbox(): Promise<{ workspaceId: string; users: Record<string, s
   return { workspaceId: rows[0]!.sandbox_id, users: Object.fromEntries(members.rows.map(r => [r.role, r.id])) }
 }
 
-const actor = (workspaceId: string, userId: string, role: StatusActor['role']): StatusActor => ({ workspaceId, userId, role, ipHash: null })
+const actor = (workspaceId: string, userId: string, role: Actor['role']): Actor => ({ workspaceId, userId, role, ipHash: null })
 
 const ordersWith = async (workspaceId: string, status: string, limit: number) =>
   (await admin.query<{ id: string; number: number }>('select id, number from fa.orders where workspace_id = $1 and status = $2 order by number limit $3', [workspaceId, status, limit])).rows

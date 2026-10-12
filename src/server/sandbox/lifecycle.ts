@@ -1,10 +1,10 @@
 import 'server-only'
 import { sql } from 'drizzle-orm'
 import type { Pool } from 'pg'
-import { workspaceContext, type Session } from '@/server/auth/sessions'
+import { type Session } from '@/server/auth/sessions'
 import { generateToken, hashToken } from '@/server/auth/tokens'
 import { getPool } from '@/server/db/pool'
-import { withWorkspace } from '@/server/db/with-workspace'
+import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 import { entryFromRow, type EntryRow, type SandboxEntry, type VisitorMeta } from '@/server/sandbox/enter'
 
 /** Deletes the current sandbox; its session goes with it (spec §6.4). Returns the number of image paths queued. */
