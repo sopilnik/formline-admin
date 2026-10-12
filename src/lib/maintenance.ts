@@ -1,9 +1,7 @@
 import { parseLocale } from '@/i18n/locale'
 // The dictionaries live outside src; the page answers in proxy.ts, before any request handler runs.
-// eslint-disable-next-line no-restricted-imports
-import en from '../../messages/en.json'
-// eslint-disable-next-line no-restricted-imports
-import ru from '../../messages/ru.json'
+import en from '@messages/en.json'
+import ru from '@messages/ru.json'
 
 /**
  * What every request but liveness gets while the database is unreachable (spec §13): one short page in the visitor's

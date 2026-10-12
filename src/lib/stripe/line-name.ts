@@ -1,7 +1,6 @@
 // The store names each Checkout line "<Product> · <Size> · <Palette>" and sends no SKU (spec §7.2). The name is read
 // against the catalog snapshot the template is built from, never against the panel's catalog, which the owner may edit.
-// eslint-disable-next-line no-restricted-imports
-import { PALETTES, PRODUCTS, SIZES, skuOf, type PaletteId, type SizeId } from '../../../db/seed/catalog'
+import { PALETTES, PRODUCTS, SIZES, skuOf, type PaletteId, type SizeId } from '@seed/catalog'
 
 export type LineVariant = { sku: string; size: SizeId; palette: PaletteId }
 

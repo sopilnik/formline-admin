@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest'
 // The dictionaries live outside src; the test reads them as files to compare with the root error page's words.
-// eslint-disable-next-line no-restricted-imports
-import en from '../../messages/en.json'
-// eslint-disable-next-line no-restricted-imports
-import ru from '../../messages/ru.json'
+import en from '@messages/en.json'
+import ru from '@messages/ru.json'
 import { GLOBAL_ERROR_COPY, globalErrorLocale, globalErrorTheme } from './global-error-copy'
 
 describe('the root error page’s words', () => {

@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { parsePrice, priceField, SIZE_IDS, SIZE_SURCHARGE_CENTS, variantPriceCents } from '@/lib/products/price'
 // The generator's catalog holds the store's surcharges; this test keeps the panel's copy in step with it.
-// eslint-disable-next-line no-restricted-imports
-import { SIZES } from '../../../db/seed/catalog'
+import { SIZES } from '@seed/catalog'
 
 describe('variant prices', () => {
   it('uses the store surcharges', () => {

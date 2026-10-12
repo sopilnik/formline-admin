@@ -19,7 +19,6 @@ import { stripeGateway } from '@/server/stripe/gateway'
 import { importMissedOrders } from '@/server/stripe/import'
 
 /** Settings → Store → "Import missed orders" (spec §7.5): the owner, after a fresh sign-in, three times an hour. */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- useActionState requires this signature; the form carries no fields
 export async function importStripeOrdersAction(_previous: ImportState, _form: FormData): Promise<ImportState> {
   const session = await requireSession()
   if (!can(session.role, 'stripe.import', session.workspaceKind)) return { status: 'error', error: 'forbidden' }

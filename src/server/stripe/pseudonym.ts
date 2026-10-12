@@ -1,8 +1,7 @@
 import 'server-only'
 import { createHmac } from 'node:crypto'
 // The demo's own people (spec §6.3): a store customer becomes one of them.
-// eslint-disable-next-line no-restricted-imports
-import { FIRST_NAMES, LAST_NAMES, PLACES } from '../../../db/seed/people'
+import { FIRST_NAMES, LAST_NAMES, PLACES } from '@seed/people'
 
 export type Pseudonym = { name: string; email: string; city: string; country: string }
 

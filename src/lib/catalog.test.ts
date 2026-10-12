@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { compareVariants, imageSrc, PALETTE_IDS, paletteName, variantLabel } from '@/lib/catalog'
 // The generator's catalog is the source of the names; this test keeps the panel's copy in step with it.
-// eslint-disable-next-line no-restricted-imports
-import { PALETTES, SIZES } from '../../db/seed/catalog'
+import { PALETTES, SIZES } from '@seed/catalog'
 
 describe('catalog labels', () => {
   it('names every size and palette of the store the way the catalog does', () => {

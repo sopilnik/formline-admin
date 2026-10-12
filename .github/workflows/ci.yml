@@ -16,8 +16,9 @@ jobs:
   checks:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # A push and the pull request it updates share one group: the later run replaces the earlier one.
     concurrency:
-      group: checks-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+      group: checks-${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -29,6 +30,8 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # A known advisory in what the image ships stops the run before any check spends time on it.
+      - run: pnpm audit --prod
       # Postgres and PgBouncer exactly as on a developer's machine (docker-compose.yml).
       - run: pnpm db:up
       - run: pnpm lint
@@ -37,7 +40,6 @@ jobs:
       - run: pnpm test:int
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
-      - run: pnpm audit --prod
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:

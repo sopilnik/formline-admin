@@ -19,6 +19,14 @@ const eslintConfig = defineConfig([
     },
   },
   {
+    // An argument a signature demands and the body leaves unused starts with an underscore: useActionState hands every
+    // action the previous state and the form, wanted or not.
+    files: ['**/*.{ts,tsx,mts}'],
+    rules: {
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+    },
+  },
+  {
     // sql.raw splices text into SQL without binding it; every query goes through
     // the sql template or the query builder instead.
     files: ['**/*.{ts,tsx,mts,mjs}'],

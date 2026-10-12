@@ -15,6 +15,10 @@ describe('source files', () => {
     expect(readFileSync(new URL(name, root), 'utf8')).not.toMatch(/[\u0300-\u036f\u200b-\u200f\u2060\ufeff]/)
   })
 
+  it.each(sources)('%s reaches the seed and the dictionaries through their aliases, never by silencing the import rule', name => {
+    expect(readFileSync(new URL(name, root), 'utf8')).not.toMatch(/eslint-disable[^\n]*no-restricted-imports/)
+  })
+
   it.each(lib)('%s takes nothing from the server layer', name => {
     expect(readFileSync(new URL(name, root), 'utf8')).not.toMatch(/from '@\/server\//)
   })

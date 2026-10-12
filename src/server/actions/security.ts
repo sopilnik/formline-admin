@@ -64,7 +64,6 @@ export async function disableTotpAction(): Promise<{ ok: true } | { ok: false; e
 }
 
 /** "Make new codes": ten recovery codes, shown once. */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- useActionState requires this signature; the form carries no fields
 export async function regenerateRecoveryCodesAction(_previous: FormState, _form: FormData): Promise<FormState> {
   const session = await requireSession()
   if (!can(session.role, 'self.manage', session.workspaceKind)) return { status: 'error', error: 'generic' }

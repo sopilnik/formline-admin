@@ -17,7 +17,7 @@
     "incremental": true,
     "noUncheckedIndexedAccess": true,
     "plugins": [{ "name": "next" }],
-    "paths": { "@/*": ["./src/*"] }
+    "paths": { "@/*": ["./src/*"], "@seed/*": ["./db/seed/*"], "@messages/*": ["./messages/*"] }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.mts", ".next/types/**/*.ts", ".next/dev/types/**/*.ts"],
   "exclude": ["node_modules"]

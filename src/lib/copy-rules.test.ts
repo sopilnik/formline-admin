@@ -1,10 +1,8 @@
 import { createTranslator } from 'next-intl'
 import { describe, expect, it } from 'vitest'
 // The dictionaries live outside src; the test reads every string of them.
-// eslint-disable-next-line no-restricted-imports
-import en from '../../messages/en.json'
-// eslint-disable-next-line no-restricted-imports
-import ru from '../../messages/ru.json'
+import en from '@messages/en.json'
+import ru from '@messages/ru.json'
 
 type Tree = { [key: string]: string | Tree }
 

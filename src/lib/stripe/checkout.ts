@@ -1,7 +1,6 @@
 import { parseLineName, type LineVariant } from '@/lib/stripe/line-name'
 // The store's rates come with the catalog snapshot: express $19, standard $9 or free from $150.
-// eslint-disable-next-line no-restricted-imports
-import { SHIPPING_CENTS } from '../../../db/seed/catalog'
+import { SHIPPING_CENTS } from '@seed/catalog'
 
 // What the ingest reads from a Checkout Session and its line items (spec §7.2). Plain shapes, so the webhook, the
 // import and the tests hand over the same fields whether they come from Stripe's SDK or from a fixture.

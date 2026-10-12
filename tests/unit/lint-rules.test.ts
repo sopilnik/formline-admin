@@ -18,6 +18,11 @@ describe('project lint rules', () => {
     expect(await ruleIds('export const a = "x";\n', 'src/lib/example.ts')).toEqual(expect.arrayContaining(['quotes', 'semi']))
   })
 
+  it('lets an argument a signature demands go unused when its name starts with an underscore, and no other', async () => {
+    expect(await ruleIds('export const act = (_previous: unknown, _form: FormData) => 1\n', 'src/server/actions/example.ts')).toEqual([])
+    expect(await ruleIds('export const act = (previous: unknown) => 1\n', 'src/server/actions/example.ts')).toEqual(['@typescript-eslint/no-unused-vars'])
+  })
+
   it('leaves the vendored ui primitives to their own style', async () => {
     expect(await ruleIds('export const a = "x";\n', 'src/components/ui/example.ts')).not.toContain('quotes')
   })

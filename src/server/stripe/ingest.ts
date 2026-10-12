@@ -13,10 +13,8 @@ import { withWorkspaces, type Tx } from '@/server/db/with-workspace'
 import { log } from '@/server/log'
 import { pseudonymFor, type Pseudonym } from '@/server/stripe/pseudonym'
 // The dictionaries live outside src; the ingest runs without a request to take a language from.
-// eslint-disable-next-line no-restricted-imports
-import en from '../../../messages/en.json'
-// eslint-disable-next-line no-restricted-imports
-import ru from '../../../messages/ru.json'
+import en from '@messages/en.json'
+import ru from '@messages/ru.json'
 
 export type IngestResult = { status: 'created'; orderId: string; number: number } | { status: 'duplicate' }
 

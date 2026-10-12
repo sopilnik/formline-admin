@@ -25,7 +25,6 @@ async function visitorMeta(): Promise<VisitorMeta> {
 }
 
 /** "Enter the demo": a new sandbox and its session, then the overview (spec §6.4). */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- useActionState requires this signature; the demo needs neither argument
 export async function enterDemoAction(_previous: FormState, _form: FormData): Promise<FormState> {
   const entry = await enterSandbox(await visitorMeta())
   if (!entry.ok) return failureState(entry)
@@ -35,7 +34,6 @@ export async function enterDemoAction(_previous: FormState, _form: FormData): Pr
 }
 
 /** "Reset data": a fresh copy and a new session for the same visitor (spec §6.4). */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- useActionState requires this signature; the reset needs neither argument
 export async function resetDemoAction(_previous: FormState, _form: FormData): Promise<FormState> {
   const session = await requireSession()
   if (session.workspaceKind !== 'sandbox') redirect('/overview')
