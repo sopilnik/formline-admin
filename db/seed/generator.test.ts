@@ -34,20 +34,12 @@ describe('generateTemplate', () => {
     const customers = new Set(data.customers.map(c => c.id))
     const orders = new Set(data.orders.map(o => o.id))
     const staff = new Set(data.users.map(u => u.id))
-    for (const p of data.products) {
-      expect(collections.has(p.collectionId)).toBe(true)
-      expect(images.has(p.imageId)).toBe(true)
-    }
-    for (const v of data.variants) expect(products.has(v.productId)).toBe(true)
-    for (const o of data.orders) expect(customers.has(o.customerId)).toBe(true)
-    for (const l of data.lines) {
-      expect(orders.has(l.orderId)).toBe(true)
-      expect(variants.get(l.variantId)?.sku).toBe(l.sku)
-    }
-    for (const e of data.events) {
-      expect(orders.has(e.orderId)).toBe(true)
-      if (e.actorUserId) expect(staff.has(e.actorUserId)).toBe(true)
-    }
+    // Each list names the rows whose reference points nowhere, so a failure says which.
+    expect(data.products.filter(p => !collections.has(p.collectionId) || !images.has(p.imageId)).map(p => p.slug)).toEqual([])
+    expect(data.variants.filter(v => !products.has(v.productId)).map(v => v.sku)).toEqual([])
+    expect(data.orders.filter(o => !customers.has(o.customerId)).map(o => o.number)).toEqual([])
+    expect(data.lines.filter(l => !orders.has(l.orderId) || variants.get(l.variantId)?.sku !== l.sku).map(l => l.id)).toEqual([])
+    expect(data.events.filter(e => !orders.has(e.orderId) || (e.actorUserId && !staff.has(e.actorUserId))).map(e => e.id)).toEqual([])
     expect(new Set(data.customers.map(c => c.email.toLowerCase())).size).toBe(CUSTOMER_COUNT)
     expect(new Set(data.variants.map(v => v.sku)).size).toBe(data.variants.length)
   })
@@ -96,6 +88,6 @@ describe('generateTemplate', () => {
   it('leaves some variants sold out and some low on stock', () => {
     expect(data.variants.some(v => v.stock === 0)).toBe(true)
     expect(data.variants.some(v => v.stock > 0 && v.stock <= v.lowStockThreshold)).toBe(true)
-    expect(data.variants.every(v => v.stock >= 0 && v.stock <= 40)).toBe(true)
+    expect(data.variants.filter(v => v.stock < 0 || v.stock > 40).map(v => v.sku)).toEqual([])
   })
 })

@@ -2,41 +2,37 @@ import { describe, expect, it } from 'vitest'
 import { can, type Action } from '@/server/authz/matrix'
 import { authorize, ForbiddenError } from '@/server/authz/authorize'
 
-const ALL = ['owner', 'admin', 'manager', 'viewer'] as const
-const rows: [Action, (typeof ALL)[number][], 'sandbox' | 'owner'][] = [
-  ['data.read', ['owner', 'admin', 'manager', 'viewer'], 'sandbox'],
-  ['csv.export', ['owner', 'admin', 'manager', 'viewer'], 'sandbox'],
-  ['orders.update', ['owner', 'admin', 'manager'], 'sandbox'],
-  ['catalog.write', ['owner', 'admin', 'manager'], 'sandbox'],
-  ['catalog.delete', ['owner', 'admin', 'manager'], 'sandbox'],
-  ['customers.notes', ['owner', 'admin', 'manager'], 'sandbox'],
-  ['activity.read', ['owner', 'admin'], 'sandbox'],
-  ['outbox.read', ['owner', 'admin'], 'sandbox'],
-  ['team.read', ['owner', 'admin'], 'sandbox'],
-  ['team.manage', ['owner', 'admin'], 'sandbox'],
-  ['settings.store', ['owner', 'admin'], 'sandbox'],
-  ['stripe.import', ['owner'], 'owner'],
-  ['self.manage', ['owner', 'admin', 'manager', 'viewer'], 'sandbox'],
-  ['sandbox.tools', ['owner', 'admin', 'manager', 'viewer'], 'sandbox'],
-]
+const ROLES = ['owner', 'admin', 'manager', 'viewer'] as const
+const KINDS = ['sandbox', 'owner', 'template'] as const
+type Allowed = Partial<Record<(typeof KINDS)[number], readonly (typeof ROLES)[number][]>>
+
+const EVERYONE = ROLES
+const EDITORS = ['owner', 'admin', 'manager'] as const
+const LEADS = ['owner', 'admin'] as const
+
+/** Who may do what in each kind of workspace (spec §5.5), written out in full: a kind left out allows no one. */
+const expected: Record<Action, Allowed> = {
+  'data.read': { sandbox: EVERYONE, owner: EVERYONE },
+  'csv.export': { sandbox: EVERYONE, owner: EVERYONE },
+  'orders.update': { sandbox: EDITORS, owner: EDITORS },
+  'catalog.write': { sandbox: EDITORS, owner: EDITORS },
+  'catalog.delete': { sandbox: EDITORS, owner: EDITORS },
+  'customers.notes': { sandbox: EDITORS, owner: EDITORS },
+  'activity.read': { sandbox: LEADS, owner: LEADS },
+  'outbox.read': { sandbox: LEADS, owner: LEADS },
+  'team.read': { sandbox: LEADS, owner: LEADS },
+  'team.manage': { sandbox: LEADS },
+  'settings.store': { sandbox: LEADS, owner: LEADS },
+  'stripe.import': { owner: ['owner'] },
+  'self.manage': { sandbox: EVERYONE, owner: EVERYONE },
+  'sandbox.tools': { sandbox: EVERYONE },
+}
 
 describe('can', () => {
-  it.each(rows)('%s is allowed for exactly %j', (action, allowed, kind) => {
-    for (const role of ALL) expect([action, role, can(role, action, kind)]).toEqual([action, role, allowed.includes(role)])
-  })
+  it.each(Object.entries(expected) as [Action, Allowed][])('%s allows exactly the listed roles in every kind of workspace', (action, allowed) => {
+    const actual = Object.fromEntries(KINDS.map(kind => [kind, ROLES.filter(role => can(role, action, kind))]))
 
-  it('keeps the team and the sandbox tools out of the owner workspace, but shows the owner the team page', () => {
-    expect(can('owner', 'team.read', 'owner')).toBe(true)
-    expect(can('owner', 'team.manage', 'owner')).toBe(false)
-    expect(can('owner', 'sandbox.tools', 'owner')).toBe(false)
-  })
-
-  it('keeps the Stripe import out of sandboxes', () => {
-    expect(can('owner', 'stripe.import', 'sandbox')).toBe(false)
-  })
-
-  it('allows nothing in the template workspace', () => {
-    expect(can('owner', 'data.read', 'template')).toBe(false)
+    expect(actual).toEqual(Object.fromEntries(KINDS.map(kind => [kind, [...(allowed[kind] ?? [])]])))
   })
 })
 

@@ -1,6 +1,6 @@
 import { crc32 } from 'node:zlib'
-import sharp from 'sharp'
-import { describe, expect, it } from 'vitest'
+import sharp, { type Sharp } from 'sharp'
+import { describe, expect, it, vi } from 'vitest'
 import { THUMB } from '@/lib/thumbs'
 import { processImage, sniff, type Processed } from '@/server/media/image'
 
@@ -90,9 +90,27 @@ describe('processImage', () => {
     expect(await processImage(png.subarray(0, 60))).toBe('decode')
   })
 
-  it('handles uploads one after another', async () => {
+  it('handles uploads one after another, and goes on after one that fails', async () => {
     const inputs = await Promise.all([solid(500, 500).png().toBuffer(), solid(600, 300).png().toBuffer(), solid(100, 900).png().toBuffer()])
-    const outs = (await Promise.all(inputs.map(processImage))).map(processed)
-    expect(outs.map(o => [o.width, o.height])).toEqual([[500, 500], [600, 300], [100, 900]])
+    const order: string[] = []
+    const read = sharp.prototype.metadata
+    let runs = 0
+    // Every run starts by reading the header; the second run's header breaks.
+    const metadata = vi.spyOn(sharp.prototype, 'metadata').mockImplementation(function (this: Sharp) {
+      order.push('start')
+      runs += 1
+      return runs === 2 ? Promise.reject(new Error('broken header')) : read.call(this)
+    })
+
+    try {
+      const outs = await Promise.all(inputs.map(input => processImage(input).then(out => {
+        order.push('end')
+        return out
+      })))
+      expect(outs.map(out => typeof out === 'string' ? out : [out.width, out.height])).toEqual([[500, 500], 'decode', [100, 900]])
+      expect(order).toEqual(['start', 'end', 'start', 'end', 'start', 'end'])
+    } finally {
+      metadata.mockRestore()
+    }
   })
 })
