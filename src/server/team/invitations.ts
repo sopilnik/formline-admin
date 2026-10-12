@@ -10,6 +10,7 @@ import { generateToken, hashToken } from '@/server/auth/tokens'
 import { logActivity } from '@/server/dal/activity'
 import { createInvitation, getPendingInvitation, revokeInvitation, type NewInvitation } from '@/server/dal/invitations'
 import { getMemberFactor, getSelf, updateSelfPreferences } from '@/server/dal/users'
+import { asDate } from '@/server/db/as-date'
 import { getPool } from '@/server/db/pool'
 import { withWorkspace, type Tx } from '@/server/db/with-workspace'
 import { mail } from '@/server/mail/outbox'
@@ -91,6 +92,5 @@ export async function acceptInvitation(
   if (row.outcome !== 'accepted' || !member) return { ok: false, reason: row.outcome === 'accepted' ? 'invalid' : row.outcome }
   // Row-level security lets a member write only their own row, so this runs as the new member.
   await withWorkspace({ ...ctx, userId: member.id, role: member.role }, tx => updateSelfPreferences(tx, { workspaceId: session.workspaceId, userId: member.id }, { ...input.preferences, shortcutsEnabled }), pool)
-  // A raw statement through the workspace transaction returns a timestamptz column as text (task 3.4).
-  return { ok: true, token, id, expiresAt: new Date(row.sandbox_expires_at!) }
+  return { ok: true, token, id, expiresAt: asDate(row.sandbox_expires_at!) }
 }

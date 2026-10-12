@@ -95,6 +95,7 @@ export async function finishSignIn(tx: Tx, input: {
   method: 'password' | 'passkey'
   userAgent: string | null
   ipHash: string | null
+  at: Date
   pending?: Session
 }): Promise<SignedIn> {
   const meta = { userAgentSummary: summariseUserAgent(input.userAgent), ipHash: input.ipHash }
@@ -103,6 +104,6 @@ export async function finishSignIn(tx: Tx, input: {
     : await createSession(tx, { workspaceId: input.workspaceId, userId: input.userId, verified: true, ...meta })
   const self = (await getSelf(tx, input))!
   await logActivity(tx, input.workspaceId, { actorUserId: input.userId, action: 'auth.sign_in', details: { method: input.method }, ipHash: input.ipHash })
-  await securityNotice(tx, input.workspaceId, self, 'auth.new_sign_in', { device: meta.userAgentSummary }, { signInId: fresh.signInId })
+  await securityNotice(tx, input.workspaceId, self, 'auth.new_sign_in', { device: meta.userAgentSummary }, { at: input.at, signInId: fresh.signInId })
   return { token: fresh.token, expiresAt: fresh.expiresAt, locale: self.locale, theme: self.theme }
 }

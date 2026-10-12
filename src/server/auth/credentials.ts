@@ -6,14 +6,22 @@ import { generateRecoveryCodes, hashRecoveryCode } from '@/server/auth/recovery-
 import { generateToken, hashToken } from '@/server/auth/tokens'
 import { encryptTotpSecret, parseTotpSecret, verifyTotp } from '@/server/auth/totp'
 
+/** The length and breach rules of a new password, for setup, recovery and a change alike; null when it passes. */
+export async function checkNewPassword(password: string, deps: Pick<AuthDeps, 'isBreached'>): Promise<AuthFailure<'password'> | null> {
+  const shape = checkPasswordShape(password)
+  if (shape !== 'ok') return { ok: false, error: shape === 'too_short' ? 'password_too_short' : 'password_too_long', field: 'password' }
+  if (await deps.isBreached(password)) return { ok: false, error: 'password_breached', field: 'password' }
+  return null
+}
+
 /** A new password and the first code of a new authenticator, as setup and recovery take them. */
 export async function checkNewCredentials(
   input: { password: string; totpSecret: string; code: string },
   deps: AuthDeps,
 ): Promise<{ ok: true; secret: Uint8Array; step: number } | AuthFailure<'password' | 'code'>> {
-  const shape = checkPasswordShape(input.password)
-  if (shape !== 'ok') return { ok: false, error: shape === 'too_short' ? 'password_too_short' : 'password_too_long', field: 'password' }
-  if (await deps.isBreached(input.password)) return { ok: false, error: 'password_breached', field: 'password' }
+  const refused = await checkNewPassword(input.password, deps)
+  if (refused) return refused
+
   const secret = parseTotpSecret(input.totpSecret)
   const totp = secret ? verifyTotp(secret, input.code, null, deps.now()) : null
   if (!secret || !totp?.ok) return { ok: false, error: 'code_invalid', field: 'code' }

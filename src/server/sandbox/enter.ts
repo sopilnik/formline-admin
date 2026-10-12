@@ -2,6 +2,7 @@ import 'server-only'
 import type { Pool } from 'pg'
 import type { Locale } from '@/i18n/locale'
 import { generateToken, hashToken } from '@/server/auth/tokens'
+import { asDate } from '@/server/db/as-date'
 import { getPool } from '@/server/db/pool'
 
 export type SandboxEntry =
@@ -15,12 +16,12 @@ export type EntryRow = {
   outcome: 'created' | 'rate_limited' | 'full'
   sandbox_id: string | null
   demo_user_id: string | null
-  sandbox_expires_at: Date | null
+  sandbox_expires_at: Date | string | null
   retry_after_seconds: number
 }
 
 export function entryFromRow(row: EntryRow, token: string): SandboxEntry {
-  if (row.outcome === 'created') return { ok: true, token, workspaceId: row.sandbox_id!, userId: row.demo_user_id!, expiresAt: row.sandbox_expires_at! }
+  if (row.outcome === 'created') return { ok: true, token, workspaceId: row.sandbox_id!, userId: row.demo_user_id!, expiresAt: asDate(row.sandbox_expires_at!) }
   if (row.outcome === 'rate_limited') return { ok: false, error: 'demo_rate_limited', retryAfterSeconds: row.retry_after_seconds }
   return { ok: false, error: 'demo_full' }
 }

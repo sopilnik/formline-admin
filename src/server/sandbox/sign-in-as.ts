@@ -11,6 +11,7 @@ import { generateToken, hashToken } from '@/server/auth/tokens'
 import { decryptTotpSecret, verifyTotp } from '@/server/auth/totp'
 import { logActivity } from '@/server/dal/activity'
 import { getMemberFactor, getSelf, updateSelfPreferences } from '@/server/dal/users'
+import { asDate } from '@/server/db/as-date'
 import { withWorkspace } from '@/server/db/with-workspace'
 import { lockRemaining } from '@/server/ratelimit/consume'
 import { userSubject } from '@/server/ratelimit/ip'
@@ -59,7 +60,7 @@ export async function switchUser(session: Session, input: SwitchInput, overrides
       await withWorkspace(ctx, async tx => {
         const member = (await getSelf(tx, { workspaceId: session.workspaceId, userId: target.id }))!
         await logActivity(tx, session.workspaceId, { actorUserId: target.id, action: 'auth.second_factor_locked', ipHash: input.ipHash })
-        await securityNotice(tx, session.workspaceId, member, 'auth.second_factor_locked', {})
+        await securityNotice(tx, session.workspaceId, member, 'auth.second_factor_locked', {}, { at: new Date(deps.now()) })
       }, deps.pool)
       return { ok: false, error: 'second_factor_locked', field: 'code', retryAfterSeconds: SECOND_FACTOR_LOCK_SECONDS }
     }
@@ -73,8 +74,5 @@ export async function switchUser(session: Session, input: SwitchInput, overrides
 
   // Row-level security lets a member write only their own row, so this runs as the member just switched to.
   await withWorkspace({ ...ctx, userId: target.id, role: target.role }, tx => updateSelfPreferences(tx, { workspaceId: session.workspaceId, userId: target.id }, { ...input.preferences, shortcutsEnabled }), deps.pool)
-
-  // A raw statement through the workspace transaction returns a timestamptz column as
-  // text rather than a Date, unlike a plain pool query; coerce it before it reaches the cookie.
-  return { ok: true, token, id, expiresAt: new Date(result.rows[0]!.expires_at) }
+  return { ok: true, token, id, expiresAt: asDate(result.rows[0]!.expires_at) }
 }

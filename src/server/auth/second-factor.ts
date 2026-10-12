@@ -71,7 +71,7 @@ export async function attemptSecondFactor(
     if (result.ok && result.method === 'recovery_code') {
       const self = (await getSelf(tx, session))!
       await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.recovery_code_used', details: { remaining: result.remaining }, ipHash })
-      await securityNotice(tx, session.workspaceId, self, 'auth.recovery_code_used', { remaining: result.remaining })
+      await securityNotice(tx, session.workspaceId, self, 'auth.recovery_code_used', { remaining: result.remaining }, { at: new Date(deps.now()) })
     }
     return result
   }, pool)
@@ -82,7 +82,7 @@ export async function attemptSecondFactor(
       const self = (await getSelf(tx, session))!
       await deleteSession(tx, session)
       await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.second_factor_locked', ipHash })
-      await securityNotice(tx, session.workspaceId, self, 'auth.second_factor_locked', {})
+      await securityNotice(tx, session.workspaceId, self, 'auth.second_factor_locked', {}, { at: new Date(deps.now()) })
     }, pool)
     return { ok: false, error: 'second_factor_locked' }
   }
@@ -117,6 +117,7 @@ export async function verifySecondFactor(
     method: 'password',
     userAgent: input.userAgent,
     ipHash: hashIp(input.ip, deps.config.ipHashKey),
+    at: new Date(deps.now()),
     pending: session,
   }), deps.pool)
   return { ok: true, ...signedIn }

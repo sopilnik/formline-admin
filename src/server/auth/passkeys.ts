@@ -141,7 +141,7 @@ export async function signInWithPasskey(
   const ipHash = hashIp(meta.ip, config.ipHashKey)
   const signedIn = await withWorkspace(ctx, async tx => {
     await recordPasskeyUse(tx, ctx, passkey.id, verified.newCounter)
-    return finishSignIn(tx, { workspaceId, userId, method: 'passkey', userAgent: meta.userAgent, ipHash })
+    return finishSignIn(tx, { workspaceId, userId, method: 'passkey', userAgent: meta.userAgent, ipHash, at: new Date(deps.now()) })
   }, pool)
   return { ok: true, ...signedIn }
 }

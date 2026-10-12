@@ -1,5 +1,5 @@
 import 'server-only'
-import { and, count, eq, isNotNull, max } from 'drizzle-orm'
+import { and, count, eq, isNotNull, max, sql } from 'drizzle-orm'
 import type { AssignableRole } from '@/lib/team'
 import { activityLog, passkeys, users } from '@/server/db/schema'
 import type { Role, Tx } from '@/server/db/with-workspace'
@@ -73,7 +73,7 @@ export async function setMemberActive(tx: Tx, workspaceId: string, actorId: stri
   if (!member) return { ok: false, reason: 'not_found' }
   if (member.role === 'owner' || member.id === actorId) return { ok: false, reason: 'not_allowed' }
   if ((member.deactivatedAt === null) === active) return { ok: true, name: member.name, from: member.role, changed: false }
-  const updated = await tx.update(users).set({ deactivatedAt: active ? null : new Date() })
+  const updated = await tx.update(users).set({ deactivatedAt: active ? null : sql`now()` })
     .where(and(eq(users.workspaceId, workspaceId), eq(users.id, userId))).returning({ id: users.id })
   return updated.length === 1 ? { ok: true, name: member.name, from: member.role, changed: true } : { ok: false, reason: 'not_allowed' }
 }

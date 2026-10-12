@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm'
 import type { CollectionRevenue, RevenuePoint, Totals } from '@/lib/overview/kpi'
 import { REVENUE_STATUSES } from '@/lib/orders/status'
 import type { Range } from '@/lib/periods'
+import { asDate } from '@/server/db/as-date'
 import type { Tx } from '@/server/db/with-workspace'
 
 // The orders that count as revenue (spec §8.1), bound as parameters.
@@ -33,7 +34,7 @@ export async function revenuePoints(tx: Tx, workspaceId: string, range: Range): 
       from fa.orders o
      where o.workspace_id = ${workspaceId} and o.status in (${revenueStatuses})
        and o.placed_at >= ${range.start} and o.placed_at < ${range.end}`)
-  return rows.map(row => ({ at: new Date(row.placed_at), cents: Number(row.total_cents) }))
+  return rows.map(row => ({ at: asDate(row.placed_at), cents: Number(row.total_cents) }))
 }
 
 /**

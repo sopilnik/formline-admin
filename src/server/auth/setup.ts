@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
 import type { Locale } from '@/i18n/locale'
 import type { AuthFailure } from '@/lib/auth-form'
+import { EMAIL_MAX, MEMBER_NAME_MAX } from '@/lib/team'
 import type { Theme } from '@/lib/theme'
 import { checkNewCredentials, sealCredentials } from '@/server/auth/credentials'
 import { authDeps, type AuthDeps } from '@/server/auth/deps'
@@ -11,6 +12,7 @@ import { sameSecret } from '@/server/auth/tokens'
 import { summariseUserAgent } from '@/server/auth/user-agent'
 import { logActivity } from '@/server/dal/activity'
 import { updateSelfPreferences } from '@/server/dal/users'
+import { isUniqueViolation } from '@/server/db/errors'
 import { withWorkspace } from '@/server/db/with-workspace'
 import { consume } from '@/server/ratelimit/consume'
 import { hashIp, ipSubject } from '@/server/ratelimit/ip'
@@ -47,9 +49,9 @@ export async function setupOwner(
   if (!attempt.allowed) return { ok: false, error: 'rate_limited', retryAfterSeconds: attempt.retryAfterSeconds }
   if (!sameSecret(input.token.trim(), config.setupToken)) return { ok: false, error: 'token_invalid', field: 'token' }
   const name = input.name.trim()
-  if (name.length < 1 || name.length > 120) return { ok: false, error: 'name_required', field: 'name' }
+  if (name.length < 1 || name.length > MEMBER_NAME_MAX) return { ok: false, error: 'name_required', field: 'name' }
   const email = input.email.trim()
-  if (!z.email().max(254).safeParse(email).success) return { ok: false, error: 'email_invalid', field: 'email' }
+  if (!z.email().max(EMAIL_MAX).safeParse(email).success) return { ok: false, error: 'email_invalid', field: 'email' }
   const checked = await checkNewCredentials(input, deps)
   if (!checked.ok) return checked
 
@@ -65,7 +67,7 @@ export async function setupOwner(
         sealed.sessionHash, summariseUserAgent(input.userAgent), ipHash])
     expiresAt = rows[0]!.expires
   } catch (error) {
-    if ((error as { code?: string }).code === '23505') return { ok: false, error: 'owner_exists' }
+    if (isUniqueViolation(error)) return { ok: false, error: 'owner_exists' }
     throw error
   }
   await withWorkspace({ workspaceId, userId, role: 'owner' }, async tx => {

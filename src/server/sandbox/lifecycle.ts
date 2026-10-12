@@ -18,8 +18,5 @@ export async function resetSandbox(session: Session, input: VisitorMeta, pool: P
   const token = generateToken()
   const result = await withWorkspace(workspaceContext(session), tx => tx.execute<EntryRow>(
     sql`select * from fa.reset_sandbox(${input.ipHash}, ${hashToken(token)}, ${input.userAgentSummary}, ${input.locale})`), pool)
-  const row = result.rows[0]!
-  // A raw statement through the workspace transaction returns a timestamptz column as
-  // text rather than a Date, unlike a plain pool query; coerce it before it reaches the cookie.
-  return entryFromRow({ ...row, sandbox_expires_at: row.sandbox_expires_at ? new Date(row.sandbox_expires_at) : null }, token)
+  return entryFromRow(result.rows[0]!, token)
 }

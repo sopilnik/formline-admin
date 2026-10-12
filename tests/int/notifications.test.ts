@@ -136,7 +136,7 @@ describe('a new sign-in', () => {
     expect(here.signInId).not.toBe(there.signInId)
     await withWorkspace(ctx(other, 'owner'), async tx => {
       const self = (await getSelf(tx, { workspaceId: other.workspaceId, userId: other.users.owner }))!
-      await securityNotice(tx, other.workspaceId, self, 'auth.new_sign_in', { device: 'Firefox, Linux' }, { signInId: here.signInId })
+      await securityNotice(tx, other.workspaceId, self, 'auth.new_sign_in', { device: 'Firefox, Linux' }, { at: new Date(), signInId: here.signInId })
     }, app)
     const { rows } = await admin.query<{ payload: Record<string, unknown> }>(
       "select payload from fa.outbox_emails where workspace_id = $1 and template = 'auth.new_sign_in'", [other.workspaceId])

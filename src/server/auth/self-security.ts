@@ -1,7 +1,8 @@
 import 'server-only'
 import type { AuthFailure } from '@/lib/auth-form'
+import { checkNewPassword } from '@/server/auth/credentials'
 import { authDeps, type AuthDeps } from '@/server/auth/deps'
-import { checkPasswordShape, hashPassword } from '@/server/auth/passwords'
+import { hashPassword } from '@/server/auth/passwords'
 import { isRecentAuth } from '@/server/auth/reauth'
 import { workspaceContext, type Session } from '@/server/auth/sessions'
 import { logActivity } from '@/server/dal/activity'
@@ -25,9 +26,8 @@ export async function changeOwnPassword(
   const deps = authDeps(overrides)
   if (session.workspaceKind !== 'owner') return { ok: false, error: 'generic' }
   if (!isRecentAuth(session, deps.now())) return { ok: false, error: 'reauth_required' }
-  const shape = checkPasswordShape(input.password)
-  if (shape !== 'ok') return { ok: false, error: shape === 'too_short' ? 'password_too_short' : 'password_too_long', field: 'password' }
-  if (await deps.isBreached(input.password)) return { ok: false, error: 'password_breached', field: 'password' }
+  const refused = await checkNewPassword(input.password, deps)
+  if (refused) return refused
   const passwordHash = await hashPassword(input.password)
   const signedOut = await withWorkspace(workspaceContext(session), async tx => {
     await tx.update(users).set({ passwordHash }).where(isUser(session))

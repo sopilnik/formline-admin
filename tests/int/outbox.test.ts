@@ -36,7 +36,7 @@ describe('securityNotice', () => {
   it('writes the bell entry and a letter in the recipient’s language that greets them by name', async () => {
     await withWorkspace(owner, async tx => {
       const self = (await getSelf(tx, { workspaceId: owner.workspaceId, userId: owner.userId! }))!
-      await securityNotice(tx, owner.workspaceId, self, 'auth.new_sign_in', { device: 'Firefox, Linux' })
+      await securityNotice(tx, owner.workspaceId, self, 'auth.new_sign_in', { device: 'Firefox, Linux' }, { at: new Date() })
     }, app)
     const { rows } = await admin.query<{ to_address: string; template: string; payload: Record<string, unknown> }>(
       'select to_address, template, payload from fa.outbox_emails where workspace_id = $1', [owner.workspaceId])

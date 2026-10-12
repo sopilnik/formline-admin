@@ -1,9 +1,9 @@
-import { timingSafeEqual } from 'node:crypto'
 import { isIP } from 'node:net'
 import { NextResponse, type NextRequest } from 'next/server'
 import { LOCALE_COOKIE } from '@/i18n/locale'
 import { maintenancePage } from '@/lib/maintenance'
 import { PREFERENCE_COOKIE_OPTIONS } from '@/lib/preference-cookie'
+import { sameSecret } from '@/server/auth/tokens'
 
 // The container is reachable only through the bunny edge, which sets both
 // headers on every request and overwrites whatever a client sent. Anything
@@ -27,12 +27,6 @@ export function buildCsp(nonce: string, dev: boolean): string {
     "form-action 'self'",
     "object-src 'none'",
   ].join('; ')
-}
-
-function sameSecret(given: string, expected: string): boolean {
-  const a = Buffer.from(given)
-  const b = Buffer.from(expected)
-  return a.length === b.length && timingSafeEqual(a, b)
 }
 
 // Liveness alone, without a query: the readiness check (`?db=1`) reaches the database and comes through the edge like any page.
