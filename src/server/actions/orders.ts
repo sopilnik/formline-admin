@@ -2,7 +2,7 @@
 
 import { refresh } from 'next/cache'
 import { z } from 'zod'
-import { formText } from '@/lib/auth-form'
+import { formText } from '@/lib/form'
 import { parseNote, type NoteError } from '@/lib/orders/note'
 import { ORDER_SELECTION_MAX } from '@/lib/orders/query'
 import { ORDER_STATUSES, type OrderStatus } from '@/lib/orders/status'

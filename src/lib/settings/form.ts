@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { LOCALES, type Locale } from '@/i18n/locale'
-import { LOW_STOCK_MAX, NAME_MAX, STORE_NAME_MAX, SUPPORT_EMAIL_MAX, timeZones, type ProfileField, type ProfileIssue, type StoreField, type StoreIssue } from '@/lib/settings/fields'
+import { LOW_STOCK_MAX, STORE_NAME_MAX, SUPPORT_EMAIL_MAX, timeZones, type ProfileField, type ProfileIssue, type StoreField, type StoreIssue } from '@/lib/settings/fields'
+import { MEMBER_NAME_MAX } from '@/lib/team'
 import { THEMES, type Theme } from '@/lib/theme'
 
 export type Profile = { name: string; locale: Locale; theme: Theme; shortcuts: boolean }
@@ -18,7 +19,7 @@ export function parseProfile(values: Record<ProfileField, string>): Parsed<Profi
   const fieldErrors: Partial<Record<ProfileField, ProfileIssue>> = {}
   const name = values.name.trim()
   if (!name) fieldErrors.name = 'required'
-  else if (length(name) > NAME_MAX) fieldErrors.name = 'too_long'
+  else if (length(name) > MEMBER_NAME_MAX) fieldErrors.name = 'too_long'
   const locale = z.enum(LOCALES).safeParse(values.locale)
   if (!locale.success) fieldErrors.locale = 'invalid'
   const theme = z.enum(THEMES).safeParse(values.theme)

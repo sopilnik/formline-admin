@@ -8,8 +8,6 @@ export const STORE_FIELDS = ['storeName', 'supportEmail', 'timezone', 'lowStockD
 export type StoreField = (typeof STORE_FIELDS)[number]
 export type StoreIssue = 'required' | 'too_long' | 'email_invalid' | 'timezone_invalid' | 'number_invalid'
 
-/** As the users table allows a name. */
-export const NAME_MAX = 120
 /** As the store_settings table allows a store name. */
 export const STORE_NAME_MAX = 80
 export const SUPPORT_EMAIL_MAX = 254

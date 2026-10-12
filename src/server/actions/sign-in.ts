@@ -2,7 +2,8 @@
 
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { failureState, formText, type FormState } from '@/lib/auth-form'
+import { failureState, type FormState } from '@/lib/auth-form'
+import { formText } from '@/lib/form'
 import { verifySecondFactor } from '@/server/auth/second-factor'
 import { requireSession, setSessionCookie } from '@/server/auth/sessions'
 import { signInWithPassword } from '@/server/auth/sign-in'

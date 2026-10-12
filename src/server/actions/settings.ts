@@ -1,7 +1,7 @@
 'use server'
 
 import { refresh } from 'next/cache'
-import { formText } from '@/lib/auth-form'
+import { formText } from '@/lib/form'
 import { PROFILE_FIELDS, STORE_FIELDS, type ProfileField, type ProfileIssue, type StoreField, type StoreIssue } from '@/lib/settings/fields'
 import { parseProfile, parseStoreSettings } from '@/lib/settings/form'
 import { actorOf } from '@/server/actor'

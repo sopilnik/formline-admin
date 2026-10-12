@@ -10,7 +10,7 @@ import { RevenueChart } from '@/components/overview/revenue-chart'
 import type { Locale } from '@/i18n/locale'
 import { imageSrc, variantLabel } from '@/lib/catalog'
 import { formatDayRange, formatMoney, formatNumber, formatPercent, formatShare } from '@/lib/intl'
-import { toRowView } from '@/lib/orders/view'
+import { toOrderRowView } from '@/lib/orders/view'
 import { buildChart } from '@/lib/overview/chart'
 import { bucketSums, collectionShares, kpis, type Kpi } from '@/lib/overview/kpi'
 import { lastMoment, parsePeriod, periodPlan, type Range } from '@/lib/periods'
@@ -115,7 +115,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
         />
       </div>
       <div className="grid gap-5 xl:grid-cols-[2fr_1fr]">
-        <LatestOrders rows={data.latest.map(row => toRowView(row, locale, timeZone))} />
+        <LatestOrders rows={data.latest.map(row => toOrderRowView(row, locale, timeZone))} />
         <LowStock
           total={data.stock.total}
           rows={data.stock.rows.map(row => ({

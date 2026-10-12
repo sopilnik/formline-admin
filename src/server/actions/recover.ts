@@ -1,7 +1,8 @@
 'use server'
 
 import { headers } from 'next/headers'
-import { failureState, formText, type FormState } from '@/lib/auth-form'
+import { failureState, type FormState } from '@/lib/auth-form'
+import { formText } from '@/lib/form'
 import { recoverOwner, type RecoverField } from '@/server/auth/recovery'
 import { setSessionCookie } from '@/server/auth/sessions'
 import { getClientIp } from '@/server/request'

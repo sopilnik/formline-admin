@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { DEFAULT_QUERY } from '@/lib/orders/query'
+import { DEFAULT_ORDERS_QUERY } from '@/lib/orders/query'
 import { isoInZone } from '@/lib/periods'
 import { generateToken, hashToken } from '@/server/auth/tokens'
 import type { WorkspaceContext } from '@/server/db/with-workspace'
@@ -43,19 +43,19 @@ const read = async (stream: ReadableStream<Uint8Array>): Promise<{ bom: boolean;
 
 describe('planExport', () => {
   it('takes every order matching the filters, in the list order', async () => {
-    const plan = await planExport(ctx, { query: { ...DEFAULT_QUERY, status: ['paid'] }, ids: null, now, timeZone: tz }, app)
+    const plan = await planExport(ctx, { query: { ...DEFAULT_ORDERS_QUERY, status: ['paid'] }, ids: null, now, timeZone: tz }, app)
     expect(plan).toEqual({ ids: await idsWhere("status = 'paid'", 'placed_at desc, id desc'), truncated: false })
   })
 
   it('cuts at the cap and says so', async () => {
-    const plan = await planExport(ctx, { query: DEFAULT_QUERY, ids: null, now, timeZone: tz, cap: 50 }, app)
+    const plan = await planExport(ctx, { query: DEFAULT_ORDERS_QUERY, ids: null, now, timeZone: tz, cap: 50 }, app)
     expect(plan.ids).toEqual((await idsWhere('true', 'placed_at desc, id desc')).slice(0, 50))
     expect(plan.truncated).toBe(true)
   })
 
   it('exports a selection in the list sort and ignores the filters', async () => {
     const chosen = (await idsWhere("status = 'delivered'", 'number')).slice(0, 3)
-    const plan = await planExport(ctx, { query: { ...DEFAULT_QUERY, status: ['paid'], sort: 'total', dir: 'asc' }, ids: chosen, now, timeZone: tz }, app)
+    const plan = await planExport(ctx, { query: { ...DEFAULT_ORDERS_QUERY, status: ['paid'], sort: 'total', dir: 'asc' }, ids: chosen, now, timeZone: tz }, app)
     expect(plan.ids).toEqual(await idsWhere(`id in ('${chosen.join("','")}')`, 'total_cents asc, id asc'))
   })
 })

@@ -4,10 +4,10 @@ import { all, one, pick, searchText, type SearchParams } from '@/lib/search-para
 
 export const DATE_PRESETS = ['any', 'today', '7d', '30d', 'month'] as const
 export const SOURCES = ['any', 'stripe', 'seed'] as const
-export const SORT_KEYS = ['placed', 'number', 'total'] as const
+export const ORDER_SORTS = ['placed', 'number', 'total'] as const
 export type DatePreset = (typeof DATE_PRESETS)[number]
 export type SourceFilter = (typeof SOURCES)[number]
-export type SortKey = (typeof SORT_KEYS)[number]
+export type OrderSort = (typeof ORDER_SORTS)[number]
 
 /** The whole state of the orders list; it lives in the URL (spec §8.2, §11). */
 export type OrdersQuery = {
@@ -15,7 +15,7 @@ export type OrdersQuery = {
   q: string
   placed: DatePreset
   source: SourceFilter
-  sort: SortKey
+  sort: OrderSort
   dir: 'asc' | 'desc'
   page: number
   size: PageSize
@@ -24,7 +24,7 @@ export type OrdersQuery = {
 /** The most orders one selection holds: a selection never leaves its page. */
 export const ORDER_SELECTION_MAX = Math.max(...PAGE_SIZES)
 
-export const DEFAULT_QUERY: OrdersQuery = { status: [], q: '', placed: 'any', source: 'any', sort: 'placed', dir: 'desc', page: 1, size: DEFAULT_PAGE_SIZE }
+export const DEFAULT_ORDERS_QUERY: OrdersQuery = { status: [], q: '', placed: 'any', source: 'any', sort: 'placed', dir: 'desc', page: 1, size: DEFAULT_PAGE_SIZE }
 
 /** Tolerant: an unknown value means the default, never an error. Statuses may repeat or be comma-separated. */
 export function parseOrdersQuery(params: SearchParams | URLSearchParams): OrdersQuery {
@@ -32,10 +32,10 @@ export function parseOrdersQuery(params: SearchParams | URLSearchParams): Orders
   return {
     status: ORDER_STATUSES.filter(s => statuses.has(s)),
     q: searchText(params),
-    placed: pick(DATE_PRESETS, one(params, 'placed'), DEFAULT_QUERY.placed),
-    source: pick(SOURCES, one(params, 'source'), DEFAULT_QUERY.source),
-    sort: pick(SORT_KEYS, one(params, 'sort'), DEFAULT_QUERY.sort),
-    dir: pick(['asc', 'desc'] as const, one(params, 'dir'), DEFAULT_QUERY.dir),
+    placed: pick(DATE_PRESETS, one(params, 'placed'), DEFAULT_ORDERS_QUERY.placed),
+    source: pick(SOURCES, one(params, 'source'), DEFAULT_ORDERS_QUERY.source),
+    sort: pick(ORDER_SORTS, one(params, 'sort'), DEFAULT_ORDERS_QUERY.sort),
+    dir: pick(['asc', 'desc'] as const, one(params, 'dir'), DEFAULT_ORDERS_QUERY.dir),
     page: parsePage(one(params, 'page')),
     size: parsePageSize(one(params, 'size')),
   }
@@ -49,24 +49,24 @@ export function ordersHref(query: OrdersQuery, changes: Partial<OrdersQuery> = {
   const params = new URLSearchParams()
   if (next.status.length > 0) params.set('status', ORDER_STATUSES.filter(s => next.status.includes(s)).join(','))
   if (next.q) params.set('q', next.q)
-  if (next.placed !== DEFAULT_QUERY.placed) params.set('placed', next.placed)
-  if (next.source !== DEFAULT_QUERY.source) params.set('source', next.source)
-  if (next.sort !== DEFAULT_QUERY.sort) params.set('sort', next.sort)
-  if (next.dir !== DEFAULT_QUERY.dir) params.set('dir', next.dir)
-  if (next.page !== DEFAULT_QUERY.page) params.set('page', String(next.page))
-  if (next.size !== DEFAULT_QUERY.size) params.set('size', String(next.size))
+  if (next.placed !== DEFAULT_ORDERS_QUERY.placed) params.set('placed', next.placed)
+  if (next.source !== DEFAULT_ORDERS_QUERY.source) params.set('source', next.source)
+  if (next.sort !== DEFAULT_ORDERS_QUERY.sort) params.set('sort', next.sort)
+  if (next.dir !== DEFAULT_ORDERS_QUERY.dir) params.set('dir', next.dir)
+  if (next.page !== DEFAULT_ORDERS_QUERY.page) params.set('page', String(next.page))
+  if (next.size !== DEFAULT_ORDERS_QUERY.size) params.set('size', String(next.size))
   const text = params.toString().replace(/%2C/g, ',')
   return text ? `/orders?${text}` : '/orders'
 }
 
 /** Whether any filter (not the sort or the page) differs from the default — the "Clear filters" link. */
-export function isFiltered(query: OrdersQuery): boolean {
-  return query.status.length > 0 || query.q !== '' || query.placed !== DEFAULT_QUERY.placed || query.source !== DEFAULT_QUERY.source
+export function isOrdersFiltered(query: OrdersQuery): boolean {
+  return query.status.length > 0 || query.q !== '' || query.placed !== DEFAULT_ORDERS_QUERY.placed || query.source !== DEFAULT_ORDERS_QUERY.source
 }
 
 /** The CSV of the list: its filters and sort without the page, or the chosen orders in the list's sort (spec §8.2). */
-export function exportHref(query: OrdersQuery, ids?: readonly string[]): string {
-  const href = ordersHref({ ...query, page: 1, size: DEFAULT_QUERY.size })
+export function ordersExportHref(query: OrdersQuery, ids?: readonly string[]): string {
+  const href = ordersHref({ ...query, page: 1, size: DEFAULT_ORDERS_QUERY.size })
   const at = href.indexOf('?')
   const params = new URLSearchParams(at === -1 ? '' : href.slice(at + 1))
   if (ids && ids.length > 0) {

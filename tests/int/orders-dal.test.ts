@@ -2,7 +2,7 @@ import { createHash, randomUUID } from 'node:crypto'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { generateToken, hashToken } from '@/server/auth/tokens'
-import { DEFAULT_QUERY, type OrdersQuery } from '@/lib/orders/query'
+import { DEFAULT_ORDERS_QUERY, type OrdersQuery } from '@/lib/orders/query'
 import { presetRange, startOfDay } from '@/lib/periods'
 import { changeOrderStatus, listOrders } from '@/server/dal/orders'
 import { getStoreSettings } from '@/server/dal/settings'
@@ -29,7 +29,7 @@ beforeAll(async () => {
 })
 afterAll(closeAll)
 
-const list = (query: Partial<OrdersQuery>, ctx = owner) => withWorkspace(ctx, tx => listOrders(tx, ctx.workspaceId, { ...DEFAULT_QUERY, ...query }, now, tz), app)
+const list = (query: Partial<OrdersQuery>, ctx = owner) => withWorkspace(ctx, tx => listOrders(tx, ctx.workspaceId, { ...DEFAULT_ORDERS_QUERY, ...query }, now, tz), app)
 
 const countWhere = async (where: string, params: unknown[] = []) =>
   Number((await admin.query<{ n: string }>(`select count(*) as n from fa.orders o join fa.customers c on c.workspace_id = o.workspace_id and c.id = o.customer_id where o.workspace_id = $1 and (${where})`, [owner.workspaceId, ...params])).rows[0]!.n)

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { orderHref, toRowView } from '@/lib/orders/view'
+import { orderHref, toOrderRowView } from '@/lib/orders/view'
 
-describe('toRowView', () => {
+describe('toOrderRowView', () => {
   it('formats money and time on the server and links the order by its number', () => {
-    const view = toRowView({
+    const view = toOrderRowView({
       id: '0f8f6a54-7f7d-4c1e-9d55-2b8f3f0e9a11', number: 1412, placedAt: new Date('2026-09-24T12:02:00Z'), customerName: 'Maya Lindqvist',
       customerEmail: 'maya.l@example.com', items: 3, totalCents: 11800, status: 'paid', source: 'stripe',
     }, 'en', 'Europe/Berlin')

@@ -1,6 +1,6 @@
 // The product form's fields and limits, free of Zod so the browser can import them (src/lib/products/form.ts parses).
 // The limits are the database checks' (migration 0003).
-export const NAME_MAX = 120
+export const PRODUCT_NAME_MAX = 120
 export const PRODUCT_SLUG_MAX = 80
 export const DESCRIPTION_MAX = 4000
 export const TAGS_MAX = 12

@@ -2,7 +2,8 @@
 
 import { refresh } from 'next/cache'
 import { z } from 'zod'
-import { failureState, formText, type AuthError, type FormState } from '@/lib/auth-form'
+import { failureState, type AuthError, type FormState } from '@/lib/auth-form'
+import { formText } from '@/lib/form'
 import { fail, ok, type ActionResult } from '@/lib/result'
 import { disableOwnTotp, enableOwnTotp, regenerateOwnRecoveryCodes } from '@/server/auth/self-factors'
 import { changeOwnPassword, revokeOtherSessions, revokeOwnSession } from '@/server/auth/self-security'

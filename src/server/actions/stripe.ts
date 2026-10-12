@@ -1,7 +1,7 @@
 'use server'
 
 import { refresh } from 'next/cache'
-import { retryMinutes } from '@/lib/auth-form'
+import { retryMinutes } from '@/lib/form'
 import type { ImportState, ImportSummary } from '@/lib/stripe/import'
 import { actorOf } from '@/server/actor'
 import { isRecentAuth } from '@/server/auth/reauth'

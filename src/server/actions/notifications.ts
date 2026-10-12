@@ -3,7 +3,7 @@
 import { refresh, revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
-import { formText } from '@/lib/auth-form'
+import { formText } from '@/lib/form'
 import { requireSession } from '@/server/auth/sessions'
 import { markAllNotificationsRead, markNotificationRead, notificationHref } from '@/server/dal/notifications'
 import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'

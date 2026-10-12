@@ -14,7 +14,7 @@ export function orderHref(number: number): string {
   return `/orders/${number}`
 }
 
-export function toRowView(row: OrderRow, locale: Locale, timeZone: string): OrderRowView {
+export function toOrderRowView(row: OrderRow, locale: Locale, timeZone: string): OrderRowView {
   return {
     id: row.id,
     number: row.number,

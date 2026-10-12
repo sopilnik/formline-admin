@@ -6,8 +6,8 @@ import { ExportButton } from '@/components/app/export-button'
 import { Pager } from '@/components/app/pager'
 import { OrdersFilters } from '@/components/orders/orders-filters'
 import { OrdersTable } from '@/components/orders/orders-table'
-import { DEFAULT_QUERY, exportHref, isFiltered, ordersHref, parseOrdersQuery } from '@/lib/orders/query'
-import { toRowView } from '@/lib/orders/view'
+import { DEFAULT_ORDERS_QUERY, isOrdersFiltered, ordersExportHref, ordersHref, parseOrdersQuery } from '@/lib/orders/query'
+import { toOrderRowView } from '@/lib/orders/view'
 import type { SearchParams } from '@/lib/search-params'
 import { requireSession } from '@/server/auth/sessions'
 import { authorize } from '@/server/authz/authorize'
@@ -35,7 +35,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   if (page.filtered > 0 && query.page > page.pages) redirect(ordersHref(query, { page: page.pages }))
   const locale = await getLocale()
   const t = await getTranslations('orders')
-  const filtered = isFiltered(query)
+  const filtered = isOrdersFiltered(query)
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-end gap-4">
@@ -47,7 +47,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         </div>
         {page.filtered > 0 && can(session.role, 'csv.export', session.workspaceKind) ? (
           <ExportButton
-            href={exportHref(query)}
+            href={ordersExportHref(query)}
             label={page.filtered > EXPORT_CAP ? t('export.first', { count: EXPORT_CAP }) : t('export.all', { count: page.filtered })}
           />
         ) : null}
@@ -58,7 +58,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           <>
             <OrdersTable
               key={ordersHref(query)}
-              rows={page.rows.map(row => toRowView(row, locale, timeZone))}
+              rows={page.rows.map(row => toOrderRowView(row, locale, timeZone))}
               query={query}
               canUpdate={can(session.role, 'orders.update', session.workspaceKind)}
             />
@@ -77,7 +77,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
             <h2 className="font-sans text-base font-semibold">{page.total === 0 ? t('empty.noneTitle') : t('empty.filteredTitle')}</h2>
             <p className="text-[13px] text-muted-foreground">{page.total === 0 ? t('empty.noneBody') : t('empty.filteredBody')}</p>
             {page.total > 0 ? (
-              <Link href={ordersHref(DEFAULT_QUERY, { sort: query.sort, dir: query.dir, size: query.size })} className="mt-2 text-[13px] font-medium text-primary hover:underline">
+              <Link href={ordersHref(DEFAULT_ORDERS_QUERY, { sort: query.sort, dir: query.dir, size: query.size })} className="mt-2 text-[13px] font-medium text-primary hover:underline">
                 {t('filters.clear')}
               </Link>
             ) : null}

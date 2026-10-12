@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { SelectField, TextAreaField } from '@/components/app/form-fields'
 import { TextField } from '@/components/auth/text-field'
-import { DESCRIPTION_MAX, NAME_MAX, PRODUCT_SLUG_MAX, type DetailField, type NewProductIssue } from '@/lib/products/fields'
+import { DESCRIPTION_MAX, PRODUCT_NAME_MAX, PRODUCT_SLUG_MAX, type DetailField, type NewProductIssue } from '@/lib/products/fields'
 
 type Props = {
   values: Record<DetailField, string>
@@ -24,7 +24,7 @@ export function ProductDetailsFields({ values, errors, collections, slugPlacehol
   return (
     <div className="flex flex-col gap-4">
       <TextField
-        id="product-name" name="name" label={t('name')} defaultValue={values.name} maxLength={NAME_MAX} aria-required autoComplete="off"
+        id="product-name" name="name" label={t('name')} defaultValue={values.name} maxLength={PRODUCT_NAME_MAX} aria-required autoComplete="off"
         error={error('name')} onInput={onNameInput ? event => onNameInput(event.currentTarget.value) : undefined}
       />
       <TextField

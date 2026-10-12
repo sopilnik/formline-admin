@@ -2,8 +2,8 @@
 
 import { refresh } from 'next/cache'
 import { z } from 'zod'
-import { formText } from '@/lib/auth-form'
 import { parseCustomerNotes, type CustomerNotesError } from '@/lib/customers/notes'
+import { formText } from '@/lib/form'
 import { actorOf } from '@/server/actor'
 import { requireSession } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'

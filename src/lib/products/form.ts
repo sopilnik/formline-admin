@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import {
-  DESCRIPTION_MAX, DETAIL_FIELDS, NAME_MAX, PRODUCT_SLUG_MAX, TAG_MAX, TAGS_MAX, type DetailField, type DetailIssue, type ProductDetails,
+  DESCRIPTION_MAX, DETAIL_FIELDS, PRODUCT_NAME_MAX, PRODUCT_SLUG_MAX, TAG_MAX, TAGS_MAX, type DetailField, type DetailIssue, type ProductDetails,
 } from '@/lib/products/fields'
 import { PALETTE_IDS } from '@/lib/catalog'
 import { parsePrice } from '@/lib/products/price'
@@ -23,7 +23,7 @@ const issue = (error: DetailIssue) => ({ error })
 
 // Every field arrives as text; unknown keys are refused (spec §5.6).
 const schema = z.strictObject({
-  name: z.string().trim().min(1, issue('name_required')).max(NAME_MAX, issue('name_too_long')),
+  name: z.string().trim().min(1, issue('name_required')).max(PRODUCT_NAME_MAX, issue('name_too_long')),
   slug: z.string().trim().toLowerCase(),
   collection: z.uuid(issue('collection_missing')),
   basePrice: z.string(),

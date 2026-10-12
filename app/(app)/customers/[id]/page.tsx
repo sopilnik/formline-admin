@@ -10,7 +10,7 @@ import { ORDER_LINK } from '@/components/orders/row-link'
 import { StatusBadge } from '@/components/orders/status-badge'
 import { locationOf } from '@/lib/customers/view'
 import { formatDate, formatDateTime, formatMoney, formatNumber } from '@/lib/intl'
-import { DEFAULT_QUERY, ordersHref } from '@/lib/orders/query'
+import { DEFAULT_ORDERS_QUERY, ordersHref } from '@/lib/orders/query'
 import { orderHref } from '@/lib/orders/view'
 import { cn } from '@/lib/utils'
 import { requireSession } from '@/server/auth/sessions'
@@ -103,7 +103,7 @@ export default async function CustomerPage({ params }: Params) {
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 id="customer-orders-title" className={CARD_TITLE}>{t('detail.ordersTitle')}</h2>
             {customer.orders > 0 ? (
-              <Link href={ordersHref(DEFAULT_QUERY, { q: customer.email })} className="text-[13px] font-medium text-primary hover:underline">
+              <Link href={ordersHref(DEFAULT_ORDERS_QUERY, { q: customer.email })} className="text-[13px] font-medium text-primary hover:underline">
                 {t('detail.inOrders', { count: customer.orders })}
               </Link>
             ) : null}

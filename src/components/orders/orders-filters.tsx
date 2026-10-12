@@ -8,7 +8,7 @@ import { useEffect, useEffectEvent, useOptimistic, useRef, useState, useTransiti
 import { FilterSelect } from '@/components/app/filter-select'
 import { Input } from '@/components/ui/input'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { DATE_PRESETS, DEFAULT_QUERY, isFiltered, ordersHref, SOURCES, type DatePreset, type OrdersQuery, type SourceFilter } from '@/lib/orders/query'
+import { DATE_PRESETS, DEFAULT_ORDERS_QUERY, isOrdersFiltered, ordersHref, SOURCES, type DatePreset, type OrdersQuery, type SourceFilter } from '@/lib/orders/query'
 import { ORDER_STATUSES, type OrderStatus } from '@/lib/orders/status'
 
 const SEARCH_DELAY_MS = 300
@@ -114,7 +114,7 @@ export function OrdersFilters({ query, statusCounts }: { query: OrdersQuery; sta
           id="orders-placed"
           label={t('placed')}
           value={view.placed}
-          active={view.placed !== DEFAULT_QUERY.placed}
+          active={view.placed !== DEFAULT_ORDERS_QUERY.placed}
           onChange={event => go({ placed: event.target.value as DatePreset })}
         >
           {DATE_PRESETS.map(preset => <option key={preset} value={preset}>{t(`placedOptions.${preset}`)}</option>)}
@@ -123,14 +123,14 @@ export function OrdersFilters({ query, statusCounts }: { query: OrdersQuery; sta
           id="orders-source"
           label={t('source')}
           value={view.source}
-          active={view.source !== DEFAULT_QUERY.source}
+          active={view.source !== DEFAULT_ORDERS_QUERY.source}
           onChange={event => go({ source: event.target.value as SourceFilter })}
         >
           {SOURCES.map(source => <option key={source} value={source}>{t(`sourceOptions.${source}`)}</option>)}
         </FilterSelect>
-        {isFiltered(view) ? (
+        {isOrdersFiltered(view) ? (
           <Link
-            href={ordersHref(DEFAULT_QUERY, { sort: view.sort, dir: view.dir, size: view.size })}
+            href={ordersHref(DEFAULT_ORDERS_QUERY, { sort: view.sort, dir: view.dir, size: view.size })}
             scroll={false}
             className="ml-1 rounded-sm text-[13px] font-medium text-primary hover:underline"
           >

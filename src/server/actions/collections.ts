@@ -2,9 +2,9 @@
 
 import { refresh } from 'next/cache'
 import { z } from 'zod'
-import { formText } from '@/lib/auth-form'
 import { COLLECTION_FIELDS, type CollectionField, type CollectionIssue } from '@/lib/collections/fields'
 import { parseCollection } from '@/lib/collections/form'
+import { formText } from '@/lib/form'
 import { fail as refused, ok, type ActionResult } from '@/lib/result'
 import { actorOf } from '@/server/actor'
 import { requireSession } from '@/server/auth/sessions'

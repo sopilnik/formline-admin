@@ -2,7 +2,8 @@
 
 import { cookies, headers } from 'next/headers'
 import { getLocale } from 'next-intl/server'
-import { failureState, formText, type FormState } from '@/lib/auth-form'
+import { failureState, type FormState } from '@/lib/auth-form'
+import { formText } from '@/lib/form'
 import { parseTheme, THEME_COOKIE } from '@/lib/theme'
 import { setSessionCookie } from '@/server/auth/sessions'
 import { setupOwner, type SetupField } from '@/server/auth/setup'

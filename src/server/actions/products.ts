@@ -2,10 +2,10 @@
 
 import { refresh } from 'next/cache'
 import { z } from 'zod'
-import { formText } from '@/lib/auth-form'
 import {
   DETAIL_FIELDS, VARIANT_FIELDS, variantFieldName, type DetailField, type DetailIssue, type NewProductField, type NewProductIssue,
 } from '@/lib/products/fields'
+import { formText } from '@/lib/form'
 import { parsePalettes, parseProductDetails } from '@/lib/products/form'
 import { PRODUCT_STATUSES, type ProductStatus } from '@/lib/products/status'
 import { parseVariants, type VariantErrors } from '@/lib/products/variants'

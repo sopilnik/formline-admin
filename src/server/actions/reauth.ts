@@ -2,7 +2,8 @@
 
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { failureState, formText, type FormState } from '@/lib/auth-form'
+import { failureState, type FormState } from '@/lib/auth-form'
+import { formText } from '@/lib/form'
 import { reauthenticate, type ReauthField } from '@/server/auth/reauth'
 import { clearSessionCookie, requireSession, setSessionCookie } from '@/server/auth/sessions'
 import { getClientIp } from '@/server/request'

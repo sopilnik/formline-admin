@@ -9,14 +9,14 @@ import { ORDER_LINK } from '@/components/orders/row-link'
 import { SourceLabel } from '@/components/orders/source-label'
 import { StatusBadge } from '@/components/orders/status-badge'
 import { Checkbox } from '@/components/ui/checkbox'
-import { ordersHref, type OrdersQuery, type SortKey } from '@/lib/orders/query'
+import { ordersHref, type OrderSort, type OrdersQuery } from '@/lib/orders/query'
 import type { OrderRowView } from '@/lib/orders/view'
 import { cn } from '@/lib/utils'
 
 const TH = 'h-10 border-b bg-card px-3 text-left font-medium whitespace-nowrap text-muted-foreground'
 const TD = 'h-11 border-b px-3 group-last/row:border-b-0'
 
-function SortHeader({ query, sortKey, label, align = 'left' }: { query: OrdersQuery; sortKey: SortKey; label: string; align?: 'left' | 'right' }) {
+function SortHeader({ query, sortKey, label, align = 'left' }: { query: OrdersQuery; sortKey: OrderSort; label: string; align?: 'left' | 'right' }) {
   const active = query.sort === sortKey
   // A new column starts newest / largest first; the active one flips its direction.
   const dir = active && query.dir === 'desc' ? 'asc' : 'desc'
