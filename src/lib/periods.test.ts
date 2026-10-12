@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, addMonths, daysInMonth, isoInZone, lastMoment, parsePeriod, periodPlan, PERIODS, presetRange, startOfDay, startOfMonth, validTimeZone, zonedParts, zonedToDate } from '@/lib/periods'
+import { addDays, addMonths, dateInZone, daysInMonth, isoInZone, lastMoment, parsePeriod, periodPlan, PERIODS, presetRange, startOfDay, startOfMonth, validTimeZone, zonedParts, zonedToDate } from '@/lib/periods'
 
 const berlin = 'Europe/Berlin'
 const iso = (date: Date) => date.toISOString()
@@ -119,5 +119,13 @@ describe('periodPlan (spec §8.1, amendment 4)', () => {
     expect(parsePeriod('year')).toBe('30d')
     expect(parsePeriod(undefined)).toBe('30d')
     expect(lastMoment(range('2026-08-28T22:00:00Z', '2026-09-27T09:00:00Z'))).toEqual(new Date('2026-09-27T08:59:59.999Z'))
+  })
+})
+
+describe('dateInZone', () => {
+  it('names the civil date of the zone, which may differ from the UTC date', () => {
+    expect(dateInZone(new Date('2026-09-30T22:30:00Z'), 'Europe/Berlin')).toBe('2026-10-01')
+    expect(dateInZone(new Date('2026-09-30T22:30:00Z'), 'America/New_York')).toBe('2026-09-30')
+    expect(dateInZone(new Date('0999-03-04T12:00:00Z'), 'UTC')).toBe('0999-03-04')
   })
 })

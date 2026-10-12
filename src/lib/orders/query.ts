@@ -1,5 +1,5 @@
 import { isOrderStatus, ORDER_STATUSES, type OrderStatus } from '@/lib/orders/status'
-import { DEFAULT_PAGE_SIZE, parsePage, parsePageSize, type PageSize } from '@/lib/pagination'
+import { DEFAULT_PAGE_SIZE, PAGE_SIZES, parsePage, parsePageSize, type PageSize } from '@/lib/pagination'
 import { all, one, pick, searchText, type SearchParams } from '@/lib/search-params'
 
 export const DATE_PRESETS = ['any', 'today', '7d', '30d', 'month'] as const
@@ -20,6 +20,9 @@ export type OrdersQuery = {
   page: number
   size: PageSize
 }
+
+/** The most orders one selection holds: a selection never leaves its page. */
+export const ORDER_SELECTION_MAX = Math.max(...PAGE_SIZES)
 
 export const DEFAULT_QUERY: OrdersQuery = { status: [], q: '', placed: 'any', source: 'any', sort: 'placed', dir: 'desc', page: 1, size: DEFAULT_PAGE_SIZE }
 

@@ -12,10 +12,10 @@ import type { SearchParams } from '@/lib/search-params'
 import { requireSession } from '@/server/auth/sessions'
 import { authorize } from '@/server/authz/authorize'
 import { can } from '@/server/authz/matrix'
+import { EXPORT_CAP } from '@/server/csv-export'
 import { listOrders } from '@/server/dal/orders'
 import { getStoreSettings } from '@/server/dal/settings'
 import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
-import { EXPORT_CAP } from '@/server/orders/export'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('orders')

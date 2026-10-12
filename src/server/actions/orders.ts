@@ -4,6 +4,7 @@ import { refresh } from 'next/cache'
 import { z } from 'zod'
 import { formText } from '@/lib/auth-form'
 import { parseNote, type NoteError } from '@/lib/orders/note'
+import { ORDER_SELECTION_MAX } from '@/lib/orders/query'
 import { ORDER_STATUSES, type OrderStatus } from '@/lib/orders/status'
 import { fail, ok, type ActionResult } from '@/lib/result'
 import { actorOf } from '@/server/actor'
@@ -12,7 +13,7 @@ import { can } from '@/server/authz/matrix'
 import { changeStatuses, type StatusOutcome } from '@/server/orders/change-status'
 import { addNote } from '@/server/orders/notes'
 
-const statusInput = z.strictObject({ ids: z.array(z.uuid()).min(1).max(100), to: z.enum(ORDER_STATUSES) })
+const statusInput = z.strictObject({ ids: z.array(z.uuid()).min(1).max(ORDER_SELECTION_MAX), to: z.enum(ORDER_STATUSES) })
 const oneStatusInput = z.strictObject({ orderId: z.uuid(), to: z.enum(ORDER_STATUSES) })
 
 /** "Change status" of the bulk bar (spec §8.2): the valid orders change, the others come back as skipped. */

@@ -1,19 +1,16 @@
 import 'server-only'
 import { and, eq, inArray } from 'drizzle-orm'
 import type { Pool } from 'pg'
-import { csvMoney, csvRecord, csvText, CSV_BOM } from '@/lib/csv'
+import { csvMoney, csvText } from '@/lib/csv'
 import type { OrdersQuery } from '@/lib/orders/query'
 import type { OrderStatus } from '@/lib/orders/status'
 import { isoInZone } from '@/lib/periods'
+import { batchedCsvStream, EXPORT_CAP, type ExportPlan, type ExportRows } from '@/server/csv-export'
 import { itemsSql, orderFilters, orderSort } from '@/server/dal/orders'
 import { orderCustomer } from '@/server/dal/sql'
 import { getPool } from '@/server/db/pool'
 import { customers, orders } from '@/server/db/schema'
 import { withWorkspace, type WorkspaceContext } from '@/server/db/with-workspace'
-
-/** At most this many rows in one file; above it the first ones in the list's order (amendment 3). */
-export const EXPORT_CAP = 10_000
-const BATCH = 500
 
 export type ExportLabels = {
   /** The eleven column names, in order, from the dictionary. */
@@ -22,8 +19,6 @@ export type ExportLabels = {
   source: Record<'seed' | 'stripe', string>
   delivery: Record<'standard' | 'express', string>
 }
-
-export type ExportPlan = { ids: string[]; truncated: boolean }
 
 /**
  * The orders of the file in the list's order: every order matching the filters, or the
@@ -67,39 +62,18 @@ function cells(row: ExportRow, labels: ExportLabels, timeZone: string): string[]
   ]
 }
 
-/**
- * The file, batch by batch in the planned order. Each batch is read in its own short
- * transaction when the client asks for more, so no connection waits on a slow reader.
- */
+/** The file in the planned order, batch by batch (the shared CSV stream). */
 export function exportStream(ctx: WorkspaceContext, ids: readonly string[], labels: ExportLabels, timeZone: string, pool: Pool = getPool()): ReadableStream<Uint8Array> {
-  const encoder = new TextEncoder()
-  let next = 0
-  return new ReadableStream<Uint8Array>({
-    start(controller) {
-      controller.enqueue(encoder.encode(CSV_BOM + csvRecord(labels.header.map(csvText))))
-    },
-    async pull(controller) {
-      if (next >= ids.length) {
-        controller.close()
-        return
-      }
-      const slice = ids.slice(next, next + BATCH)
-      next += BATCH
-      const rows = await withWorkspace(ctx, tx => tx
-        .select({
-          id: orders.id, number: orders.number, placedAt: orders.placedAt, customerName: customers.name, customerEmail: customers.email,
-          items: itemsSql, subtotalCents: orders.subtotalCents, shippingCents: orders.shippingCents, totalCents: orders.totalCents,
-          status: orders.status, source: orders.source, delivery: orders.delivery,
-        })
-        .from(orders).innerJoin(customers, orderCustomer)
-        .where(and(eq(orders.workspaceId, ctx.workspaceId), inArray(orders.id, [...slice]))), pool)
-      const byId = new Map(rows.map(row => [row.id, row]))
-      let text = ''
-      for (const id of slice) {
-        const row = byId.get(id)
-        if (row) text += csvRecord(cells(row, labels, timeZone))
-      }
-      controller.enqueue(encoder.encode(text))
-    },
-  })
+  const rows: ExportRows<ExportRow> = {
+    read: (tx, slice) => tx
+      .select({
+        id: orders.id, number: orders.number, placedAt: orders.placedAt, customerName: customers.name, customerEmail: customers.email,
+        items: itemsSql, subtotalCents: orders.subtotalCents, shippingCents: orders.shippingCents, totalCents: orders.totalCents,
+        status: orders.status, source: orders.source, delivery: orders.delivery,
+      })
+      .from(orders).innerJoin(customers, orderCustomer)
+      .where(and(eq(orders.workspaceId, ctx.workspaceId), inArray(orders.id, slice))),
+    cells: row => cells(row, labels, timeZone),
+  }
+  return batchedCsvStream(ctx, ids, labels.header, rows, pool)
 }

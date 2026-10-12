@@ -11,16 +11,17 @@ function files(dir: string, ext: RegExp): string[] {
   })
 }
 
-/** Every action the code writes to the log: `logActivity` calls in the server and the routes, and the definer functions' inserts. */
+/** Every action the code writes to the log: `logActivity` calls in the server and the routes, the exports' `logExport`, and the definer functions' inserts. */
 function writtenActions(): Set<string> {
   const found = new Set<string>()
   for (const file of [...files('src/server', /\.ts$/), ...files('app', /\.tsx?$/)]) {
     const source = readFileSync(file, 'utf8')
-    if (!source.includes('logActivity(')) continue
+    if (!source.includes('logActivity(') && !source.includes('logExport(')) continue
     for (const match of source.matchAll(/action: (?:[a-z]+ \? )?'([a-z_]+\.[a-z_]+)'(?: : '([a-z_]+\.[a-z_]+)')?/g)) {
       found.add(match[1]!)
       if (match[2]) found.add(match[2])
     }
+    for (const match of source.matchAll(/logExport\(\w+, '([a-z_]+\.[a-z_]+)'/g)) found.add(match[1]!)
   }
   for (const file of files('src/server/db/migrations', /\.sql$/)) {
     for (const match of readFileSync(file, 'utf8').matchAll(/insert into fa\.activity_log[^;]*?'([a-z_]+\.[a-z_]+)'/g)) found.add(match[1]!)
