@@ -8,6 +8,6 @@ const sources = ['src', 'app'].flatMap(dir => (readdirSync(new URL(dir, root), {
 
 describe('source files', () => {
   it.each(sources)('%s writes no invisible character literally', name => {
-    expect(readFileSync(new URL(name, root), 'utf8')).not.toMatch(/[̀-ͯ​-‏⁠﻿]/)
+    expect(readFileSync(new URL(name, root), 'utf8')).not.toMatch(/[\u0300-\u036f\u200b-\u200f\u2060\ufeff]/)
   })
 })
