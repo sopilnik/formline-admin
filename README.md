@@ -16,7 +16,9 @@ Copy `.env.example` to `.env` before running anything that touches the database.
 `pnpm db:up` starts Postgres 18 and PgBouncer in transaction mode on `127.0.0.1:55432` and `127.0.0.1:56432`.
 `pnpm test:int` runs the integration tests against that stack; `pnpm db:down` stops it and removes its data.
 
-Checks: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:int`, `pnpm test:e2e` (builds first).
+Checks: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:int`, `pnpm test:e2e` (builds first). The end-to-end tests run
+on four workers, each against its own production server (ports 4331, 4332, 4333 and 4335; the Stripe stand-in takes 4334),
+database (`formline_e2e_0` to `_3`) and media folder (`test-media/0` to `/3`).
 
 `src/components/ui/` holds the shadcn primitives the panel uses, changed only where its focus, colour and language rules
 need it. Each keeps its unused exports, so it still compares line for line with a fresh copy from the generator.

@@ -74,8 +74,8 @@ export async function enrolAuthenticator(workspaceId: string, userId: string, se
 }
 
 /**
- * A verified session for the owner, signed in a moment ago. In a whole run the owner tests have created the owner through
- * /setup before this runs; a run of one file creates an owner whose password and authenticator nobody knows.
+ * A verified session for the owner, signed in a moment ago. On the worker that ran the owner tests the owner exists, made
+ * through /setup; on any other database this creates an owner whose password and authenticator nobody knows.
  */
 export function createOwnerSession(): Promise<{ token: string; workspaceId: string; userId: string }> {
   return asSchemaOwner(async client => {
