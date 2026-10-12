@@ -9,6 +9,7 @@ import { encryptTotpSecret, parseTotpSecret, verifyTotp } from '@/server/auth/to
 import { logActivity } from '@/server/dal/activity'
 import { countPasskeys } from '@/server/dal/passkeys'
 import { deleteOtherOwnSessions } from '@/server/dal/sessions'
+import { lockSelf } from '@/server/dal/users'
 import { recoveryCodes, users } from '@/server/db/schema'
 import { withWorkspace, type Tx } from '@/server/db/with-workspace'
 import { hashIp } from '@/server/ratelimit/ip'
@@ -50,7 +51,7 @@ export async function enableOwnTotp(
     const replacing = self?.had != null
     await tx.update(users).set({ totpSecretEnc, totpLastStep: totp.step }).where(eq(users.id, session.userId))
     const codes = replacing ? null : await replaceRecoveryCodes(tx, session)
-    await deleteOtherOwnSessions(tx, { userId: session.userId, currentId: session.id })
+    await deleteOtherOwnSessions(tx, session)
     await logActivity(tx, session.workspaceId, {
       actorUserId: session.userId, action: replacing ? 'auth.totp_replaced' : 'auth.totp_enabled', entityType: 'user', entityId: session.userId,
       ipHash: hashIp(input.ip, deps.config.ipHashKey),
@@ -64,11 +65,13 @@ export async function disableOwnTotp(session: Session, meta: Meta, overrides: Pa
   const deps = authDeps(overrides)
   if (!isRecentAuth(session, deps.now())) return { ok: false, error: 'reauth_required' }
   return withWorkspace(workspaceContext(session), async (tx): Promise<{ ok: true } | AuthFailure> => {
+    await lockSelf(tx, session.workspaceId, session.userId)
     const [self] = await tx.select({ totp: users.totpSecretEnc }).from(users).where(eq(users.id, session.userId))
     if (!self?.totp) return { ok: false, error: 'generic' }
     if (session.workspaceKind === 'owner' && (await countPasskeys(tx, session.userId)) === 0) return { ok: false, error: 'last_factor' }
+
     await tx.update(users).set({ totpSecretEnc: null, totpLastStep: null }).where(eq(users.id, session.userId))
-    await deleteOtherOwnSessions(tx, { userId: session.userId, currentId: session.id })
+    await deleteOtherOwnSessions(tx, session)
     await logActivity(tx, session.workspaceId, {
       actorUserId: session.userId, action: 'auth.totp_disabled', entityType: 'user', entityId: session.userId, ipHash: hashIp(meta.ip, deps.config.ipHashKey),
     })

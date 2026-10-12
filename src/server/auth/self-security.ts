@@ -31,7 +31,7 @@ export async function changeOwnPassword(
   const passwordHash = await hashPassword(input.password)
   const signedOut = await withWorkspace(workspaceContext(session), async tx => {
     await tx.update(users).set({ passwordHash }).where(eq(users.id, session.userId))
-    const ended = await deleteOtherOwnSessions(tx, { userId: session.userId, currentId: session.id })
+    const ended = await deleteOtherOwnSessions(tx, session)
     await logActivity(tx, session.workspaceId, {
       actorUserId: session.userId, action: 'auth.password_changed', entityType: 'user', entityId: session.userId,
       details: { signedOut: ended }, ipHash: hashIp(input.ip, deps.config.ipHashKey),
@@ -59,7 +59,7 @@ export async function revokeOwnSession(session: Session, id: string, meta: Meta,
 export async function revokeOtherSessions(session: Session, meta: Meta, overrides: Partial<AuthDeps> = {}): Promise<number> {
   const deps = authDeps(overrides)
   return withWorkspace(workspaceContext(session), async tx => {
-    const count = await deleteOtherOwnSessions(tx, { userId: session.userId, currentId: session.id })
+    const count = await deleteOtherOwnSessions(tx, session)
     if (count > 0) {
       await logActivity(tx, session.workspaceId, {
         actorUserId: session.userId, action: 'auth.other_sessions_revoked', entityType: 'user', entityId: session.userId,

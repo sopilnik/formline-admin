@@ -1,5 +1,5 @@
 import 'server-only'
-import { and, eq, ne, sql } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import type { Pool } from 'pg'
@@ -110,15 +110,6 @@ export async function rotateSession(tx: Tx, session: Session, meta: { userAgentS
 
 export async function deleteSession(tx: Tx, session: Session): Promise<void> {
   await tx.delete(sessions).where(and(eq(sessions.workspaceId, session.workspaceId), eq(sessions.id, session.id)))
-}
-
-/** Every other session of the same user: a password or second-factor change ends them (spec §5.1). */
-export async function deleteOtherSessions(tx: Tx, session: Session): Promise<void> {
-  await tx.delete(sessions).where(and(
-    eq(sessions.workspaceId, session.workspaceId),
-    eq(sessions.userId, session.userId),
-    ne(sessions.id, session.id),
-  ))
 }
 
 // The session cookie can only be written by Server Actions and route handlers.

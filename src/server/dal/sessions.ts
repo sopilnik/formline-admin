@@ -29,7 +29,12 @@ export async function sessionSignInId(tx: Tx, sessionId: string): Promise<string
   return row?.signInId ?? null
 }
 
-/** Ends every other session of the user; how many there were. */
-export async function deleteOtherOwnSessions(tx: Tx, input: { userId: string; currentId: string }): Promise<number> {
-  return (await tx.delete(sessions).where(and(eq(sessions.userId, input.userId), ne(sessions.id, input.currentId))).returning({ id: sessions.id })).length
+/** Ends every other session of the user — a password or second-factor change does (spec §5.1); how many there were. */
+export async function deleteOtherOwnSessions(tx: Tx, session: { workspaceId: string; userId: string; id: string }): Promise<number> {
+  const ended = await tx.delete(sessions).where(and(
+    eq(sessions.workspaceId, session.workspaceId),
+    eq(sessions.userId, session.userId),
+    ne(sessions.id, session.id),
+  )).returning({ id: sessions.id })
+  return ended.length
 }

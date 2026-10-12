@@ -1,7 +1,8 @@
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { createSession, deleteOtherSessions, rotateSession, validateSessionToken } from '@/server/auth/sessions'
+import { createSession, rotateSession, validateSessionToken } from '@/server/auth/sessions'
 import { generateToken } from '@/server/auth/tokens'
+import { deleteOtherOwnSessions } from '@/server/dal/sessions'
 import { withWorkspace } from '@/server/db/with-workspace'
 import { adminPool, appPool, closeAll } from './db'
 import { asSchemaOwner, createUser, createWorkspace } from './fixtures'
@@ -132,7 +133,7 @@ describe('session changes', () => {
     const b = await newSession(sandbox, member)
     const c = await newSession(sandbox, other)
     const current = (await validateSessionToken(a.token, app))!
-    await withWorkspace({ workspaceId: sandbox, userId: member, role: 'admin' }, tx => deleteOtherSessions(tx, current), app)
+    await withWorkspace({ workspaceId: sandbox, userId: member, role: 'admin' }, tx => deleteOtherOwnSessions(tx, current), app)
     expect(await validateSessionToken(a.token, app)).not.toBeNull()
     expect(await validateSessionToken(b.token, app)).toBeNull()
     expect(await validateSessionToken(c.token, app)).not.toBeNull()

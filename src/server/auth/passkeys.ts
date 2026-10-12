@@ -16,7 +16,7 @@ import { decodeBase64urlIgnorePadding, decodeHex, encodeBase64urlNoPadding, enco
 import { authDeps, type AuthDeps } from '@/server/auth/deps'
 import { ownerWorkspaceId } from '@/server/auth/owner'
 import { isRecentAuth } from '@/server/auth/reauth'
-import { deleteOtherSessions, rotateSession, workspaceContext, type NewSession, type Session } from '@/server/auth/sessions'
+import { rotateSession, workspaceContext, type NewSession, type Session } from '@/server/auth/sessions'
 import { signValue, verifySignedValue } from '@/server/auth/signed-cookie'
 import { finishSignIn, type SignedIn } from '@/server/auth/sign-in'
 import { hashToken } from '@/server/auth/tokens'
@@ -24,7 +24,8 @@ import { summariseUserAgent } from '@/server/auth/user-agent'
 import type { AuthConfig } from '@/server/config'
 import { logActivity } from '@/server/dal/activity'
 import { addPasskey, countPasskeys, deletePasskey, findPasskeyByCredential, listPasskeys, recordPasskeyUse, renamePasskey, type Passkey } from '@/server/dal/passkeys'
-import { getSelf } from '@/server/dal/users'
+import { deleteOtherOwnSessions } from '@/server/dal/sessions'
+import { getSelf, lockSelf } from '@/server/dal/users'
 import { withWorkspace } from '@/server/db/with-workspace'
 import { consume, peek } from '@/server/ratelimit/consume'
 import { hashIp, ipSubject } from '@/server/ratelimit/ip'
@@ -234,7 +235,7 @@ export async function finishRegistration(
       transports: credential.transports ?? [],
       name: (summariseUserAgent(meta.userAgent) ?? 'Passkey').slice(0, 60),
     })
-    await deleteOtherSessions(tx, session)
+    await deleteOtherOwnSessions(tx, session)
     await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.passkey_added', entityType: 'passkey', entityId: id, ipHash })
   }, pool)
   return { ok: true }
@@ -255,10 +256,12 @@ export async function removeOwnPasskey(session: Session, passkeyId: string, meta
   if (!isRecentAuth(session, deps.now())) return { ok: false, error: 'reauth_required' }
   const ipHash = hashIp(meta.ip, deps.config.ipHashKey)
   return withWorkspace(workspaceContext(session), async (tx): Promise<{ ok: true } | AuthFailure> => {
+    await lockSelf(tx, session.workspaceId, session.userId)
     const self = (await getSelf(tx, session.userId))!
     if ((await countPasskeys(tx, session.userId)) + (self.hasTotp ? 1 : 0) <= 1) return { ok: false, error: 'last_factor' }
     if (!(await deletePasskey(tx, passkeyId))) return { ok: false, error: 'generic' }
-    await deleteOtherSessions(tx, session)
+
+    await deleteOtherOwnSessions(tx, session)
     await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.passkey_removed', entityType: 'passkey', entityId: passkeyId, ipHash })
     return { ok: true }
   }, deps.pool)

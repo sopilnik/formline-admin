@@ -123,6 +123,27 @@ describe('removing a passkey', () => {
     expect(await removeOwnPasskey(ownerSession(), only, meta, { pool: app })).toEqual({ ok: true })
   })
 
+  it('waits for a running change to the owner\'s factors before it counts them', async () => {
+    const id = await addPasskeyRow(`wait${crypto.randomUUID().replace(/-/g, '')}`)
+    const holder = await admin.connect()
+    try {
+      // Another change holds the owner's row; the removal may count the factors only once that change has ended. The
+      // holder's lock lets the activity log's foreign key through, so only the removal's own lock of the row waits.
+      await holder.query('begin')
+      await holder.query('select 1 from fa.users where id = $1 for no key update', [ownerId])
+      let settled = false
+      const removing = removeOwnPasskey(ownerSession(), id, meta, { pool: app }).finally(() => { settled = true })
+      await new Promise(resolve => setTimeout(resolve, 500))
+      expect(settled).toBe(false)
+
+      await holder.query('commit')
+      expect(await removing).toEqual({ ok: true })
+    } finally {
+      await holder.query('rollback').catch(() => undefined)
+      holder.release()
+    }
+  })
+
   it('needs a recent authentication', async () => {
     const id = await addPasskeyRow(`stale${crypto.randomUUID().replace(/-/g, '')}`)
     expect(await removeOwnPasskey(ownerSession(new Date(Date.now() - 3_600_000)), id, meta, { pool: app }))

@@ -1,5 +1,5 @@
 import 'server-only'
-import { eq, isNull } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 import type { Locale } from '@/i18n/locale'
 import type { Theme } from '@/lib/theme'
 import { users } from '@/server/db/schema'
@@ -50,6 +50,11 @@ export async function getMemberFactor(tx: Tx, userId: string): Promise<MemberFac
   const [row] = await tx.select({ id: users.id, role: users.role, totpSecretEnc: users.totpSecretEnc, totpLastStep: users.totpLastStep, deactivatedAt: users.deactivatedAt })
     .from(users).where(eq(users.id, userId))
   return row ?? null
+}
+
+/** Locks the user's row until the transaction ends, so two changes to their second factors run one after the other. */
+export async function lockSelf(tx: Tx, workspaceId: string, userId: string): Promise<void> {
+  await tx.select({ id: users.id }).from(users).where(and(eq(users.workspaceId, workspaceId), eq(users.id, userId))).for('update')
 }
 
 /** The profile form's save (spec §8.8): only what changed is written; the fields it changed come back. */
