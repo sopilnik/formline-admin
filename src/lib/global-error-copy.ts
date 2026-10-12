@@ -1,3 +1,4 @@
+import { LOCALE_COOKIE } from '@/i18n/locale'
 import { parseTheme, THEME_COOKIE, type Theme } from '@/lib/theme'
 
 /**
@@ -17,5 +18,5 @@ export function globalErrorTheme(cookie: string): Theme {
 
 /** The language the visitor chose, from the cookie the panel keeps (`NEXT_LOCALE`); English by default. */
 export function globalErrorLocale(cookie: string): keyof typeof GLOBAL_ERROR_COPY {
-  return /(?:^|;\s*)NEXT_LOCALE=ru(?:;|$)/.test(cookie) ? 'ru' : 'en'
+  return new RegExp(`(?:^|;\\s*)${LOCALE_COOKIE}=ru(?:;|$)`).test(cookie) ? 'ru' : 'en'
 }

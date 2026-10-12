@@ -62,6 +62,25 @@ test.describe('app frame', () => {
     await expect(page.getByRole('region', { name: 'Сообщения' })).toBeAttached()
   })
 
+  test('the chosen theme and language are cookies the root error page can read in the browser', async ({ page, context }) => {
+    await signInAsSandboxUser(context)
+    await page.goto('/overview')
+    await page.getByRole('button', { name: 'Theme: System' }).click()
+    await page.getByRole('menuitemradio', { name: 'Dark' }).click()
+    await expect(page.locator('html')).toHaveClass(/\bdark\b/)
+    // A radio item leaves its menu open; its backdrop would take the next click.
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('menu')).toBeHidden()
+    await page.getByRole('button', { name: 'Language: English (EN)' }).click()
+    await page.getByRole('menuitemradio', { name: 'Русский' }).click()
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ru')
+
+    // app/global-error.tsx replaces the root layout and reads both through document.cookie.
+    const cookie = await page.evaluate(() => document.cookie)
+    expect(cookie).toMatch(/(?:^|; )formline_theme=dark(?:;|$)/)
+    expect(cookie).toMatch(/(?:^|; )NEXT_LOCALE=ru(?:;|$)/)
+  })
+
   test('a viewer does not see the team, the activity log or the outbox', async ({ page, context }) => {
     await signInAsSandboxUser(context, 'viewer')
     await page.goto('/overview')

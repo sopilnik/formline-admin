@@ -3,6 +3,7 @@ import { isIP } from 'node:net'
 import { NextResponse, type NextRequest } from 'next/server'
 import { LOCALE_COOKIE } from '@/i18n/locale'
 import { maintenancePage } from '@/lib/maintenance'
+import { PREFERENCE_COOKIE_OPTIONS } from '@/lib/preference-cookie'
 
 // The container is reachable only through the bunny edge, which sets both
 // headers on every request and overwrites whatever a client sent. Anything
@@ -96,14 +97,7 @@ export function proxy(request: NextRequest): NextResponse {
   const response = NextResponse.next({ request: { headers } })
   response.headers.set('Content-Security-Policy', csp)
   response.headers.set('X-Request-Id', requestId)
-  if (locale) {
-    response.cookies.set(LOCALE_COOKIE, locale, {
-      path: '/',
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24 * 365,
-    })
-  }
+  if (locale) response.cookies.set(LOCALE_COOKIE, locale, PREFERENCE_COOKIE_OPTIONS)
   return response
 }
 
