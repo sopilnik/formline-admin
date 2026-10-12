@@ -104,4 +104,28 @@ describe('the template build', () => {
       await c.query('delete from fa.workspaces where id = $1', [sandbox])
     })
   })
+
+  it('gives the owner the catalog only once: a rebuild brings back no deleted product and meets no reused slug', async () => {
+    const saved = await admin.query<{ product: { id: string }; variants: object[] }>(
+      `select to_jsonb(p) as product, (select jsonb_agg(to_jsonb(v)) from fa.product_variants v where v.workspace_id = p.workspace_id and v.product_id = p.id) as variants
+       from fa.products p where p.workspace_id = $1 and p.slug = 'hush'`, [owner])
+    const { product, variants } = saved.rows[0]!
+    const slow = (await admin.query<{ id: string }>("select id from fa.products where workspace_id = $1 and slug = 'slow'", [owner])).rows[0]!.id
+    await asSchemaOwner(admin, async c => {
+      await c.query('delete from fa.products where workspace_id = $1 and id = $2', [owner, product.id])
+      await c.query("update fa.products set slug = 'hush' where workspace_id = $1 and id = $2", [owner, slow])
+    })
+
+    try {
+      expect((await build({ force: true })).rebuilt).toBe(true)
+      const owned = await admin.query<{ id: string; slug: string }>("select id, slug from fa.products where workspace_id = $1 and slug in ('hush', 'slow')", [owner])
+      expect(owned.rows).toEqual([{ id: slow, slug: 'hush' }])
+    } finally {
+      await asSchemaOwner(admin, async c => {
+        await c.query("update fa.products set slug = 'slow' where workspace_id = $1 and id = $2", [owner, slow])
+        await c.query('insert into fa.products select * from jsonb_populate_record(null::fa.products, $1::jsonb)', [JSON.stringify(product)])
+        await c.query('insert into fa.product_variants select * from jsonb_populate_recordset(null::fa.product_variants, $1::jsonb)', [JSON.stringify(variants)])
+      })
+    }
+  })
 })

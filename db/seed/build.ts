@@ -1,5 +1,5 @@
 import type pg from 'pg'
-import { generateTemplate, type TemplateData } from './generator.ts'
+import { FIRST_ORDER_NUMBER, generateTemplate, type TemplateData } from './generator.ts'
 import { TEMPLATE_VERSION } from './version.ts'
 
 export type BuildResult = { rebuilt: boolean; version: number; templateWorkspaceId: string; ownerWorkspaceId: string }
@@ -9,8 +9,8 @@ export type BuildResult = { rebuilt: boolean; version: number; templateWorkspace
  * catalog (spec §6.3). Runs inside migrate as schema_owner in one transaction.
  * Generated rows are replaced; copies of store orders (source = 'stripe' and
  * customers with pseudonymised_at) are kept and numbered after the generated
- * orders; every existing sandbox is untouched; the owner workspace only receives
- * catalog rows it lacks, never changes to its own.
+ * orders; every existing sandbox is untouched; the owner workspace receives the
+ * catalog once, while it has none, and never a change to it afterwards.
  */
 export async function buildTemplate(client: pg.ClientBase, options: { version?: number; force?: boolean } = {}): Promise<BuildResult> {
   const version = options.version ?? TEMPLATE_VERSION
@@ -38,7 +38,7 @@ export async function buildTemplate(client: pg.ClientBase, options: { version?: 
 
     await writeUsers(client, template.id, data)
     await writeCatalog(client, template.id, data, 'replace')
-    await writeCatalog(client, owner.id, data, 'keep')
+    await giveOwnerCatalog(client, owner.id, data)
 
     await client.query("delete from fa.orders where workspace_id = $1 and source = 'seed'", [template.id])
     await client.query('delete from fa.customers where workspace_id = $1 and pseudonymised_at is null', [template.id])
@@ -58,7 +58,7 @@ export async function buildTemplate(client: pg.ClientBase, options: { version?: 
       `insert into fa.workspace_counters (workspace_id, next_order_number) values ($1, $2)
        on conflict (workspace_id) do update set next_order_number = excluded.next_order_number`,
       [template.id, generated + (copies.rowCount ?? 0) + 1])
-    await client.query('insert into fa.workspace_counters (workspace_id, next_order_number) values ($1, 1001) on conflict (workspace_id) do nothing', [owner.id])
+    await client.query('insert into fa.workspace_counters (workspace_id, next_order_number) values ($1, $2) on conflict (workspace_id) do nothing', [owner.id, FIRST_ORDER_NUMBER])
 
     await client.query('insert into fa.store_settings (workspace_id) values ($1), ($2) on conflict (workspace_id) do nothing', [template.id, owner.id])
     await client.query('update fa.workspaces set template_version = $2, template_epoch = $3 where id = $1', [template.id, version, data.epoch])
@@ -78,6 +78,16 @@ async function writeUsers(client: pg.ClientBase, workspaceId: string, data: Temp
        on conflict (workspace_id, id) do update set email = excluded.email, name = excluded.name, role = excluded.role`,
       [workspaceId, u.id, u.email, u.name, u.role, u.createdAt])
   }
+}
+
+/**
+ * The owner workspace gets the catalog once, while it has no collection. From then on the catalog is the owner's own:
+ * a rebuild neither brings back what the owner deleted nor meets a slug or SKU the owner used again.
+ */
+async function giveOwnerCatalog(client: pg.ClientBase, workspaceId: string, data: TemplateData): Promise<void> {
+  const { rowCount } = await client.query('select 1 from fa.collections where workspace_id = $1 limit 1', [workspaceId])
+  if (rowCount) return
+  await writeCatalog(client, workspaceId, data, 'keep')
 }
 
 async function writeCatalog(client: pg.ClientBase, workspaceId: string, data: TemplateData, mode: 'replace' | 'keep'): Promise<void> {
