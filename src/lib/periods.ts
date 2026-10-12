@@ -1,6 +1,9 @@
 import { TIME_ZONE } from '@/i18n/locale'
 import type { DatePreset } from '@/lib/orders/query'
 
+/** One day in milliseconds, for spans that ignore the clock: the daily job's interval, the Stripe import's window. */
+export const DAY_MS = 86_400_000
+
 export type ZonedParts = { year: number; month: number; day: number; hour: number; minute: number; second: number }
 /** Half-open: `start` inclusive, `end` exclusive. */
 export type Range = { start: Date; end: Date }

@@ -1,6 +1,7 @@
 import 'server-only'
 import { and, eq, inArray } from 'drizzle-orm'
 import type { Pool } from 'pg'
+import { DAY_MS } from '@/lib/periods'
 import { readCheckout } from '@/lib/stripe/checkout'
 import { IMPORT_DAYS, IMPORT_MAX_SESSIONS, type ImportSummary } from '@/lib/stripe/import'
 import { ownerWorkspaceId } from '@/server/auth/owner'
@@ -9,8 +10,6 @@ import { orders } from '@/server/db/schema'
 import { withWorkspace } from '@/server/db/with-workspace'
 import type { StripeGateway } from '@/server/stripe/gateway'
 import { ingestOrder } from '@/server/stripe/ingest'
-
-const DAY_MS = 86_400_000
 
 /**
  * The paid sessions of the last 30 days the owner workspace does not have yet, kept through the same ingest as the

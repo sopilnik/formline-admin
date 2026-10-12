@@ -1,8 +1,9 @@
 import { createHash, randomUUID } from 'node:crypto'
 import pg from 'pg'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { generateToken, hashToken } from '@/server/auth/tokens'
 import { runDailyJob } from '@/server/jobs/daily'
+import { log } from '@/server/log'
 import { drainPendingDeletions } from '@/server/media/deletions'
 import { MEDIA_PATH } from '@/server/media/storage'
 import { cleanupExpiredSandboxes } from '@/server/sandbox/cleanup'
@@ -163,6 +164,29 @@ describe('drainPendingDeletions', () => {
       purged: { rateLimits: expect.any(Number), challenges: expect.any(Number), sessions: expect.any(Number), failedSignIns: expect.any(Number) },
       media: { deleted: expect.any(Number), retried: expect.any(Number) },
       customers: expect.any(Number),
+      failed: [],
     })
+  })
+
+  it('runDailyJob goes on past a failing step and names it in the report and the log', async () => {
+    const refusing = new Proxy(app, {
+      get(target, key, receiver) {
+        if (key !== 'query') return Reflect.get(target, key, receiver)
+        return (text: unknown, ...rest: unknown[]) => String(text).includes('purge_housekeeping')
+          ? Promise.reject(new Error('purge refused'))
+          : (target.query as (...args: unknown[]) => Promise<unknown>).call(target, text, ...rest)
+      },
+    })
+    const errors = vi.spyOn(log, 'error')
+    try {
+      const report = await runDailyJob({ pool: refusing, storage: memoryStorage(), pseudonymKey: 'daily-test-key' })
+      expect(report.failed).toEqual(['purge'])
+      expect(report.purged).toEqual({ rateLimits: 0, challenges: 0, sessions: 0, failedSignIns: 0 })
+      expect(report.media).toEqual({ deleted: expect.any(Number), retried: expect.any(Number) })
+      expect(report.customers).toEqual(expect.any(Number))
+      expect(errors).toHaveBeenCalledWith(expect.objectContaining({ event: 'daily.step_failed', step: 'purge' }))
+    } finally {
+      errors.mockRestore()
+    }
   })
 })
