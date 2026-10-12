@@ -1,8 +1,9 @@
 import 'server-only'
 import { and, asc, count, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm'
 import type { CustomersQuery } from '@/lib/customers/query'
-import { REVENUE_STATUSES, type OrderStatus } from '@/lib/orders/status'
+import type { OrderStatus } from '@/lib/orders/status'
 import { pageCount } from '@/lib/pagination'
+import { orderCustomer, revenueStatuses, unicodeName } from '@/server/dal/sql'
 import { containsPattern } from '@/server/db/like'
 import { customers, orders } from '@/server/db/schema'
 import type { Tx } from '@/server/db/with-workspace'
@@ -23,15 +24,10 @@ export type CustomersList = {
   page: number; pages: number
 }
 
-/** Orders join their customer inside the same workspace (composite keys, spec §6.1). */
-export const orderJoin = and(eq(orders.workspaceId, customers.workspaceId), eq(orders.customerId, customers.id))!
-
-const revenueStatuses = sql.join(REVENUE_STATUSES.map(status => sql`${status}`), sql`, `)
 export const ordersSql = sql<number>`count(${orders.id})::int`
 export const spentSql = sql<number>`coalesce(sum(${orders.totalCents}) filter (where ${orders.status} in (${revenueStatuses})), 0)::int`
 export const lastSql = sql<Date | null>`max(${orders.placedAt})`
-/** Names sort in the Unicode root order, whatever the database's own collation is (as on the products). */
-const nameSql = sql`${customers.name} collate "unicode"`
+const nameSql = unicodeName(customers.name)
 
 /** The search: a case-insensitive part of the name or the email (spec §8.5). */
 export function customerFilters(workspaceId: string, query: CustomersQuery): SQL {
@@ -64,7 +60,7 @@ export async function listCustomers(tx: Tx, workspaceId: string, query: Customer
   const rows = await tx.select({
     id: customers.id, name: customers.name, email: customers.email, city: customers.city, country: customers.country,
     orders: ordersSql, spentCents: spentSql, lastOrderAt: lastSql.mapWith(orders.placedAt),
-  }).from(customers).leftJoin(orders, orderJoin)
+  }).from(customers).leftJoin(orders, orderCustomer)
     .where(where)
     .groupBy(customers.workspaceId, customers.id)
     .orderBy(...customerSort(query)).limit(query.size).offset((query.page - 1) * query.size)

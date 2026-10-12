@@ -5,7 +5,8 @@ export const fa = pgSchema('fa')
 export const workspaceKind = fa.enum('workspace_kind', ['template', 'owner', 'sandbox'])
 export const roleEnum = fa.enum('role', ['owner', 'admin', 'manager', 'viewer'])
 
-const ts = (name: string) => timestamp(name, { withTimezone: true })
+/** Every timestamp of the schema is a timestamptz. */
+export const ts = (name: string) => timestamp(name, { withTimezone: true })
 
 export const workspaces = fa.table('workspaces', {
   id: uuid('id').primaryKey().defaultRandom(),

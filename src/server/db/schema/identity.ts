@@ -1,7 +1,6 @@
-import { bigint, boolean, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core'
-import { fa, roleEnum } from '@/server/db/schema/global'
+import { bigint, boolean, primaryKey, text, uuid } from 'drizzle-orm/pg-core'
+import { fa, roleEnum, ts } from '@/server/db/schema/global'
 
-const ts = (name: string) => timestamp(name, { withTimezone: true })
 
 export const users = fa.table('users', {
   workspaceId: uuid('workspace_id').notNull(),

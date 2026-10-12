@@ -66,12 +66,13 @@ export async function updateCollection(tx: Tx, workspaceId: string, input: { id:
   return { ok: true, id: input.id, slug: input.slug, previousSlug: row.slug }
 }
 
-/** Renumbers the order 1, 2, 3… after a move or a deletion; the rows are locked in their current order first. */
+/** The workspace's collections in their current order, locked until the transaction ends. */
 async function lockedOrder(tx: Tx, workspaceId: string): Promise<{ id: string; slug: string; name: string }[]> {
   return tx.select({ id: collections.id, slug: collections.slug, name: collections.name }).from(collections)
     .where(eq(collections.workspaceId, workspaceId)).orderBy(asc(collections.position), asc(collections.name), asc(collections.id)).for('update')
 }
 
+/** Renumbers the order 1, 2, 3… after a move or a deletion, from rows `lockedOrder` locked first. */
 async function renumber(tx: Tx, workspaceId: string, ids: readonly string[]): Promise<void> {
   for (const [index, id] of ids.entries()) {
     await tx.update(collections).set({ position: index + 1 }).where(and(eq(collections.workspaceId, workspaceId), eq(collections.id, id)))

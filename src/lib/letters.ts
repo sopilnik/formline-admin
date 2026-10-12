@@ -1,5 +1,6 @@
 import { parseLocale, type Locale } from '@/i18n/locale'
 import { formatDateTime } from '@/lib/intl'
+import { ASSIGNABLE_ROLES } from '@/lib/team'
 
 /** Every letter the panel writes (spec §9); nothing is ever sent, the outbox keeps them. */
 export const LETTER_TEMPLATES = ['auth.new_sign_in', 'auth.second_factor_locked', 'auth.recovery_code_used', 'team.invitation'] as const
@@ -51,7 +52,6 @@ const SECURITY = '/settings/security'
 
 /** An invitation token: 32 characters of lower-case base32, as every token of the panel (src/server/auth/tokens.ts). */
 const INVITATION_TOKEN = /^[a-z2-7]{32}$/
-const ROLES = ['admin', 'manager', 'viewer'] as const
 
 /**
  * Reads a stored letter (spec §9). The payload is what the letter was written with; a missing or
@@ -93,7 +93,7 @@ export function letterContent(template: string, rawPayload: unknown, timeZone: s
     case 'team.invitation': {
       // The letter goes to someone who is not a member yet: no greeting by name.
       const inviter = text(payload, 'inviter') ?? '—'
-      const role = ROLES.find(r => r === payload.role)
+      const role = ASSIGNABLE_ROLES.find(r => r === payload.role)
       const token = text(payload, 'token')
       return {
         locale, name: null,

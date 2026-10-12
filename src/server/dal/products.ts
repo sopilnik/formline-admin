@@ -6,6 +6,7 @@ import { SIZE_IDS, SIZE_SURCHARGE_CENTS, variantPriceCents, type SizeId } from '
 import type { ProductsQuery } from '@/lib/products/query'
 import { canDeleteProduct, canTransitionProduct, PRODUCT_STATUSES, type ProductStatus } from '@/lib/products/status'
 import { releaseImage } from '@/server/dal/images'
+import { unicodeName } from '@/server/dal/sql'
 import { containsPattern } from '@/server/db/like'
 import { collections, images, orderLines, products, productVariants } from '@/server/db/schema'
 import type { Tx } from '@/server/db/with-workspace'
@@ -57,7 +58,7 @@ const lowSql = sql<number>`(case when ${products.status} <> 'archived' then coun
 const priceFromSql = sql<number | null>`min(${variantPriceSql})::int`
 const stockSql = sql<number>`coalesce(sum(${productVariants.stock}), 0)::int`
 /** Names sort in the Unicode root order, whatever the database's own collation is. */
-const nameSql = sql`${products.name} collate "unicode"`
+const nameSql = unicodeName(products.name)
 
 /** Every filter on the product's own columns; `withStatus: false` leaves the status out (the chip counts). */
 function productFilters(workspaceId: string, query: ProductsQuery, collectionId: string | null, withStatus = true): SQL {

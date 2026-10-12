@@ -5,11 +5,6 @@ import { maintenancePage } from '@/lib/maintenance'
 import { PREFERENCE_COOKIE_OPTIONS } from '@/lib/preference-cookie'
 import { sameSecret } from '@/server/auth/tokens'
 
-// The container is reachable only through the bunny edge, which sets both
-// headers on every request and overwrites whatever a client sent. Anything
-// without them came around the edge and is refused. This is not access
-// control — that lives in the data access layer — it keeps the client IP
-// trustworthy for rate limits and keeps the raw endpoint closed.
 const LIVENESS = '/api/health'
 
 export function buildCsp(nonce: string, dev: boolean): string {
@@ -34,6 +29,11 @@ function isLiveness(request: NextRequest): boolean {
   return request.nextUrl.pathname === LIVENESS && request.nextUrl.search === ''
 }
 
+// The container is reachable only through the bunny edge, which sets both
+// headers on every request and overwrites whatever a client sent. Anything
+// without them came around the edge and is refused. This is not access
+// control — that lives in the data access layer — it keeps the client IP
+// trustworthy for rate limits and keeps the raw endpoint closed.
 function fromEdge(request: NextRequest): boolean {
   if (process.env.NODE_ENV !== 'production' && process.env.ORIGIN_AUTH_DISABLED === '1') return true
   const secret = process.env.ORIGIN_AUTH_SECRET ?? ''

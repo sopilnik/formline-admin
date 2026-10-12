@@ -4,7 +4,8 @@ import type { Pool } from 'pg'
 import type { CustomersQuery } from '@/lib/customers/query'
 import { csvMoney, csvRecord, csvText, CSV_BOM } from '@/lib/csv'
 import { isoInZone } from '@/lib/periods'
-import { customerFilters, customerSort, lastSql, orderJoin, ordersSql, spentSql } from '@/server/dal/customers'
+import { customerFilters, customerSort, lastSql, ordersSql, spentSql } from '@/server/dal/customers'
+import { orderCustomer } from '@/server/dal/sql'
 import { getPool } from '@/server/db/pool'
 import { customers, orders } from '@/server/db/schema'
 import { withWorkspace, type WorkspaceContext } from '@/server/db/with-workspace'
@@ -28,7 +29,7 @@ export async function planCustomerExport(
 ): Promise<CustomerExportPlan> {
   const cap = input.cap ?? EXPORT_CAP
   return withWorkspace(ctx, async tx => {
-    const rows = await tx.select({ id: customers.id }).from(customers).leftJoin(orders, orderJoin)
+    const rows = await tx.select({ id: customers.id }).from(customers).leftJoin(orders, orderCustomer)
       .where(customerFilters(ctx.workspaceId, input.query))
       .groupBy(customers.workspaceId, customers.id)
       .orderBy(...customerSort(input.query)).limit(cap + 1)
@@ -76,7 +77,7 @@ export function customerExportStream(ctx: WorkspaceContext, ids: readonly string
           orders: ordersSql, spentCents: spentSql,
           firstOrderAt: min(orders.placedAt), lastOrderAt: lastSql.mapWith(orders.placedAt),
         })
-        .from(customers).leftJoin(orders, orderJoin)
+        .from(customers).leftJoin(orders, orderCustomer)
         .where(and(eq(customers.workspaceId, ctx.workspaceId), inArray(customers.id, [...slice])))
         .groupBy(customers.workspaceId, customers.id), pool)
       const byId = new Map(rows.map(row => [row.id, row]))

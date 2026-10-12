@@ -1,7 +1,8 @@
 import { z } from 'zod'
 
-// id:base64 pairs; every key is 32 bytes (openssl rand -base64 32).
+// The hosts STRIPE_API_BASE may name in production: the local stand-in of the end-to-end tests only.
 const LOOPBACK = new Set(['127.0.0.1', '[::1]', 'localhost'])
+// id:base64 pairs; every key is 32 bytes (openssl rand -base64 32).
 const KEYRING = /^[a-z0-9]{1,8}:[A-Za-z0-9+/]{43}=(,[a-z0-9]{1,8}:[A-Za-z0-9+/]{43}=)*$/
 
 const schema = z.object({

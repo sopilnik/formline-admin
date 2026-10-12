@@ -5,7 +5,8 @@ import { csvMoney, csvRecord, csvText, CSV_BOM } from '@/lib/csv'
 import type { OrdersQuery } from '@/lib/orders/query'
 import type { OrderStatus } from '@/lib/orders/status'
 import { isoInZone } from '@/lib/periods'
-import { customerJoin, itemsSql, orderFilters, orderSort } from '@/server/dal/orders'
+import { itemsSql, orderFilters, orderSort } from '@/server/dal/orders'
+import { orderCustomer } from '@/server/dal/sql'
 import { getPool } from '@/server/db/pool'
 import { customers, orders } from '@/server/db/schema'
 import { withWorkspace, type WorkspaceContext } from '@/server/db/with-workspace'
@@ -39,7 +40,7 @@ export async function planExport(
     const where = input.ids
       ? and(eq(orders.workspaceId, ctx.workspaceId), inArray(orders.id, [...input.ids]))!
       : orderFilters(ctx.workspaceId, input.query, input.now, input.timeZone)
-    const rows = await tx.select({ id: orders.id }).from(orders).innerJoin(customers, customerJoin)
+    const rows = await tx.select({ id: orders.id }).from(orders).innerJoin(customers, orderCustomer)
       .where(where).orderBy(...orderSort(input.query)).limit(cap + 1)
     return { ids: rows.slice(0, cap).map(row => row.id), truncated: rows.length > cap }
   }, pool)
@@ -90,7 +91,7 @@ export function exportStream(ctx: WorkspaceContext, ids: readonly string[], labe
           items: itemsSql, subtotalCents: orders.subtotalCents, shippingCents: orders.shippingCents, totalCents: orders.totalCents,
           status: orders.status, source: orders.source, delivery: orders.delivery,
         })
-        .from(orders).innerJoin(customers, customerJoin)
+        .from(orders).innerJoin(customers, orderCustomer)
         .where(and(eq(orders.workspaceId, ctx.workspaceId), inArray(orders.id, [...slice]))), pool)
       const byId = new Map(rows.map(row => [row.id, row]))
       let text = ''

@@ -41,7 +41,8 @@ export async function updateSelfPreferences(tx: Tx, who: Who, preferences: { loc
 
 export type Member = { id: string; name: string; role: Role; hasTotp: boolean }
 
-const ROLE_ORDER: Record<Role, number> = { owner: 0, admin: 1, manager: 2, viewer: 3 }
+/** Members are listed owner first, then by role. */
+export const ROLE_ORDER: Record<Role, number> = { owner: 0, admin: 1, manager: 2, viewer: 3 }
 
 /** The active members of the workspace, owner first, then by name. */
 export async function listMembers(tx: Tx, workspaceId: string): Promise<Member[]> {

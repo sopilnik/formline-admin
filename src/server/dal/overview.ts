@@ -1,13 +1,10 @@
 import 'server-only'
 import { sql } from 'drizzle-orm'
 import type { CollectionRevenue, RevenuePoint, Totals } from '@/lib/overview/kpi'
-import { REVENUE_STATUSES } from '@/lib/orders/status'
 import type { Range } from '@/lib/periods'
+import { revenueStatuses } from '@/server/dal/sql'
 import { asDate } from '@/server/db/as-date'
 import type { Tx } from '@/server/db/with-workspace'
-
-// The orders that count as revenue (spec §8.1), bound as parameters.
-const revenueStatuses = sql.join(REVENUE_STATUSES.map(status => sql`${status}`), sql`, `)
 
 /** Revenue, orders and new customers of a period (spec §8.1). Sums and counts arrive as strings. */
 export async function revenueTotals(tx: Tx, workspaceId: string, range: Range): Promise<Totals> {

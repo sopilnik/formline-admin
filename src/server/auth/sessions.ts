@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import type { Pool } from 'pg'
 import { cache } from 'react'
 import { generateToken, hashToken, TOKEN_PATTERN } from '@/server/auth/tokens'
+import type { WorkspaceKind } from '@/server/authz/matrix'
 import { sessionSignInId } from '@/server/dal/sessions'
 import { getPool } from '@/server/db/pool'
 import { sessions } from '@/server/db/schema'
@@ -21,11 +22,14 @@ export const DEMO_COOKIE = '__Host-formline_demo'
 
 const COOKIE = { httpOnly: true, secure: true, sameSite: 'lax', path: '/' } as const
 
+/** The kinds of workspace a person signs in to: the template has no sessions. */
+type SessionKind = Exclude<WorkspaceKind, 'template'>
+
 export type Session = {
   /** The token hash, which is the row's key. */
   id: string
   workspaceId: string
-  workspaceKind: 'owner' | 'sandbox'
+  workspaceKind: SessionKind
   userId: string
   role: Role
   secondFactorVerified: boolean
@@ -40,7 +44,7 @@ export type CreatedSession = NewSession & { signInId: string }
 
 type SessionRow = {
   workspace_id: string
-  workspace_kind: 'owner' | 'sandbox'
+  workspace_kind: SessionKind
   user_id: string
   role: Role
   second_factor_verified: boolean

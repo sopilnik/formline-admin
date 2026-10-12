@@ -4,7 +4,8 @@ import { z } from 'zod'
 import { getPool } from '@/server/db/pool'
 import * as schema from '@/server/db/schema'
 
-export type Role = 'owner' | 'admin' | 'manager' | 'viewer'
+/** A member's role, as the database's `fa.role` enum has it. */
+export type Role = (typeof schema.roleEnum.enumValues)[number]
 export type WorkspaceContext = { workspaceId: string; userId: string | null; role: Role | 'system' }
 export type Tx = NodePgDatabase<typeof schema>
 
@@ -14,7 +15,7 @@ const STATEMENT_TIMEOUT = '30s'
 const contextSchema = z.object({
   workspaceId: z.uuid(),
   userId: z.uuid().nullable(),
-  role: z.enum(['owner', 'admin', 'manager', 'viewer', 'system']),
+  role: z.enum([...schema.roleEnum.enumValues, 'system']),
 })
 
 export function parseWorkspaceContext(ctx: WorkspaceContext): WorkspaceContext {

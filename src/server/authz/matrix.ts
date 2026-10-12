@@ -1,6 +1,8 @@
+import type { workspaceKind } from '@/server/db/schema'
 import type { Role } from '@/server/db/with-workspace'
 
-export type WorkspaceKind = 'template' | 'owner' | 'sandbox'
+/** A workspace's kind, as the database's `fa.workspace_kind` enum has it. */
+export type WorkspaceKind = (typeof workspaceKind.enumValues)[number]
 
 export type Action =
   | 'data.read' | 'csv.export' | 'orders.update' | 'catalog.write' | 'catalog.delete' | 'customers.notes'

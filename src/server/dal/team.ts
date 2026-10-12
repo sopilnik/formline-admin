@@ -1,6 +1,7 @@
 import 'server-only'
 import { and, count, eq, isNotNull, max, sql } from 'drizzle-orm'
 import type { AssignableRole } from '@/lib/team'
+import { ROLE_ORDER } from '@/server/dal/users'
 import { activityLog, passkeys, users } from '@/server/db/schema'
 import type { Role, Tx } from '@/server/db/with-workspace'
 
@@ -12,8 +13,6 @@ export type TeamMember = {
   /** The member's latest entry in the activity log; null before their first. */
   lastActiveAt: Date | null
 }
-
-const ROLE_ORDER: Record<Role, number> = { owner: 0, admin: 1, manager: 2, viewer: 3 }
 
 /**
  * Every member of the workspace, the deactivated ones included (spec §8.6): active first, the owner

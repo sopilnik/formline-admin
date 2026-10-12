@@ -6,6 +6,7 @@ import type { OrdersQuery } from '@/lib/orders/query'
 import { canTransition, isOrderStatus, ORDER_STATUSES, returnsStock, type OrderStatus } from '@/lib/orders/status'
 import { pageCount } from '@/lib/pagination'
 import { presetRange } from '@/lib/periods'
+import { orderCustomer } from '@/server/dal/sql'
 import { containsPattern } from '@/server/db/like'
 import { customers, images, orderEvents, orderLines, orders, products, productVariants, users } from '@/server/db/schema'
 import type { Tx } from '@/server/db/with-workspace'
@@ -16,9 +17,6 @@ export type OrderRow = {
 }
 
 export type OrdersPage = { rows: OrderRow[]; filtered: number; total: number; statusCounts: Record<OrderStatus, number>; page: number; pages: number }
-
-/** Customers join their orders inside the same workspace (composite keys, spec §6.1). */
-export const customerJoin = and(eq(customers.workspaceId, orders.workspaceId), eq(customers.id, orders.customerId))!
 
 /** Sum of the line quantities of the order — the "Items" column. */
 export const itemsSql = sql<number>`(select coalesce(sum(l.qty), 0)::int from fa.order_lines l where l.workspace_id = ${orders.workspaceId} and l.order_id = ${orders.id})`
@@ -57,11 +55,11 @@ export async function listOrders(tx: Tx, workspaceId: string, query: OrdersQuery
   const where = orderFilters(workspaceId, query, now, timeZone)
   const rows = await tx
     .select(ROW_FIELDS)
-    .from(orders).innerJoin(customers, customerJoin).where(where)
+    .from(orders).innerJoin(customers, orderCustomer).where(where)
     .orderBy(...orderSort(query)).limit(query.size).offset((query.page - 1) * query.size)
-  const [filteredRow] = await tx.select({ n: count() }).from(orders).innerJoin(customers, customerJoin).where(where)
+  const [filteredRow] = await tx.select({ n: count() }).from(orders).innerJoin(customers, orderCustomer).where(where)
   const [totalRow] = await tx.select({ n: count() }).from(orders).where(eq(orders.workspaceId, workspaceId))
-  const byStatus = await tx.select({ status: orders.status, n: count() }).from(orders).innerJoin(customers, customerJoin)
+  const byStatus = await tx.select({ status: orders.status, n: count() }).from(orders).innerJoin(customers, orderCustomer)
     .where(orderFilters(workspaceId, query, now, timeZone, false)).groupBy(orders.status)
   const statusCounts = Object.fromEntries(ORDER_STATUSES.map(status => [status, 0])) as Record<OrderStatus, number>
   for (const row of byStatus) statusCounts[row.status] = row.n
@@ -136,7 +134,7 @@ const asStatus = (value: string | null): OrderStatus | null => (value !== null &
 
 /** The newest orders (spec §8.1: eight on the overview), in the list's row shape and order. */
 export async function latestOrders(tx: Tx, workspaceId: string, limit = 8): Promise<OrderRow[]> {
-  return tx.select(ROW_FIELDS).from(orders).innerJoin(customers, customerJoin)
+  return tx.select(ROW_FIELDS).from(orders).innerJoin(customers, orderCustomer)
     .where(eq(orders.workspaceId, workspaceId))
     .orderBy(desc(orders.placedAt), desc(orders.id)).limit(limit)
 }
@@ -150,7 +148,7 @@ export async function getOrder(tx: Tx, workspaceId: string, number: number): Pro
       placedAt: orders.placedAt, address: orders.shippingAddress,
       customerId: customers.id, customerName: customers.name, customerEmail: customers.email, customerCity: customers.city, customerCountry: customers.country,
     })
-    .from(orders).innerJoin(customers, customerJoin)
+    .from(orders).innerJoin(customers, orderCustomer)
     .where(and(eq(orders.workspaceId, workspaceId), eq(orders.number, number)))
   if (!order) return null
 
