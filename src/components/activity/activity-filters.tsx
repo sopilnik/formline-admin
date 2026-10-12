@@ -1,15 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useOptimistic, useTransition } from 'react'
 import { FilterSelect } from '@/components/app/filter-select'
+import { useListQuery } from '@/components/app/use-list-query'
 import { ACTIVITY_GROUPS, type ActivityAction } from '@/lib/activity/actions'
 import { activityHref, DEFAULT_ACTIVITY_QUERY, isActivityFiltered, SYSTEM_ACTOR, type ActivityQuery } from '@/lib/activity/query'
 import { DATE_PRESETS, type DatePreset } from '@/lib/orders/query'
-
-const mergeQuery = (current: ActivityQuery, changes: Partial<ActivityQuery>): ActivityQuery => ({ ...current, ...changes })
 
 /** The log's filters (spec §8.7): who, which action and when, each a navigation, as the other lists' filters. */
 export function ActivityFilters({ query, members }: { query: ActivityQuery; members: { id: string; name: string }[] }) {
@@ -17,13 +14,8 @@ export function ActivityFilters({ query, members }: { query: ActivityQuery; memb
   const actions = useTranslations('activity.actions')
   const groups = useTranslations('activity.groups')
   const presets = useTranslations('orders.filters.placedOptions')
-  const router = useRouter()
-  const [, startTransition] = useTransition()
-  const [view, setView] = useOptimistic(query, mergeQuery)
-  const go = (changes: Partial<ActivityQuery>): void => startTransition(() => {
-    setView(changes)
-    router.push(activityHref(view, changes), { scroll: false })
-  })
+  const { view, go } = useListQuery(query, activityHref)
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       <FilterSelect id="activity-actor" label={t('actor')} value={view.actor} active={view.actor !== ''} onChange={event => go({ actor: event.target.value })}>
