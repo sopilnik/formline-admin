@@ -8,7 +8,8 @@ import { OrderNoteForm } from '@/components/orders/order-note-form'
 import { OrderStatusControl } from '@/components/orders/order-status-control'
 import { SourceLabel } from '@/components/orders/source-label'
 import { ProductThumb } from '@/components/products/product-thumb'
-import { formatDateTime, formatMoney } from '@/lib/intl'
+import { locationOf } from '@/lib/customers/view'
+import { countryName, formatDateTime, formatMoney } from '@/lib/intl'
 import { cn } from '@/lib/utils'
 import { requireSession } from '@/server/auth/sessions'
 import { authorize } from '@/server/authz/authorize'
@@ -48,10 +49,11 @@ export default async function OrderPage({ params }: Params) {
   const t = await getTranslations('orders')
   const canUpdate = can(session.role, 'orders.update', session.workspaceKind)
   const money = (cents: number): string => formatMoney(cents, locale)
+  const location = locationOf(order.customer.city, order.customer.country, locale)
   const describe = (event: OrderEventDetail): string => {
-    if (event.kind === 'note') return event.note ?? ''
-    if (event.from === null) return event.to ? t('detail.statusSet', { status: t(`status.${event.to}`) }) : ''
-    return t('detail.statusChanged', { from: t(`status.${event.from}`), to: event.to ? t(`status.${event.to}`) : '' })
+    if (event.kind === 'note') return event.note
+    if (event.from === null) return t('detail.statusSet', { status: t(`status.${event.to}`) })
+    return t('detail.statusChanged', { from: t(`status.${event.from}`), to: t(`status.${event.to}`) })
   }
   return (
     <div className="flex flex-col gap-5">
@@ -138,7 +140,7 @@ export default async function OrderPage({ params }: Params) {
             <p className="text-[13px]">
               <span className="block font-medium">{order.customer.name}</span>
               <span className="block break-all text-muted-foreground">{order.customer.email}</span>
-              {order.customer.city ? <span className="block text-muted-foreground">{[order.customer.city, order.customer.country].filter(Boolean).join(', ')}</span> : null}
+              {location ? <span className="block text-muted-foreground">{location}</span> : null}
             </p>
             <Link href={`/customers/${order.customer.id}`} prefetch={false} className="w-fit text-[13px] font-medium text-primary hover:underline">
               {t('detail.customerPage')}
@@ -151,7 +153,7 @@ export default async function OrderPage({ params }: Params) {
                 <span className="block">{order.address.name}</span>
                 <span className="block">{order.address.line1}</span>
                 <span className="block">{`${order.address.postalCode} ${order.address.city}`}</span>
-                <span className="block">{order.address.country}</span>
+                <span className="block">{countryName(order.address.country, locale)}</span>
               </address>
             ) : (
               <p className="text-[13px] text-muted-foreground">{t(order.source === 'stripe' ? 'detail.notCollected' : 'detail.noAddress')}</p>

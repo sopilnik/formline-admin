@@ -1,5 +1,5 @@
-import { INTL_LOCALE, type Locale } from '@/i18n/locale'
-import { formatDate, formatMoney, formatNumber } from '@/lib/intl'
+import type { Locale } from '@/i18n/locale'
+import { countryName, formatDate, formatMoney, formatNumber } from '@/lib/intl'
 
 /** One row of the customers list as the database gives it. */
 export type CustomerRow = {
@@ -28,8 +28,7 @@ export function customerHref(id: string): string {
 
 /** The city and the country's name in the interface language ("Berlin, Germany", "Берлин, Германия"). */
 export function locationOf(city: string | null, country: string | null, locale: Locale): string | null {
-  const countryName = country ? (new Intl.DisplayNames([INTL_LOCALE[locale]], { type: 'region' }).of(country) ?? country) : null
-  const parts = [city, countryName].filter((part): part is string => Boolean(part))
+  const parts = [city, country ? countryName(country, locale) : null].filter((part): part is string => Boolean(part))
   return parts.length > 0 ? parts.join(', ') : null
 }
 

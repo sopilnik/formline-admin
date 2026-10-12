@@ -6,13 +6,13 @@ import { ExportButton } from '@/components/app/export-button'
 import { Pager } from '@/components/app/pager'
 import { OrdersFilters } from '@/components/orders/orders-filters'
 import { OrdersTable } from '@/components/orders/orders-table'
+import { EXPORT_CAP } from '@/lib/csv'
 import { DEFAULT_ORDERS_QUERY, isOrdersFiltered, ordersExportHref, ordersHref, parseOrdersQuery } from '@/lib/orders/query'
 import { toOrderRowView } from '@/lib/orders/view'
 import type { SearchParams } from '@/lib/search-params'
 import { requireSession } from '@/server/auth/sessions'
 import { authorize } from '@/server/authz/authorize'
 import { can } from '@/server/authz/matrix'
-import { EXPORT_CAP } from '@/server/csv-export'
 import { listOrders } from '@/server/dal/orders'
 import { getStoreSettings } from '@/server/dal/settings'
 import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
@@ -47,6 +47,8 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         </div>
         {page.filtered > 0 && can(session.role, 'csv.export', session.workspaceKind) ? (
           <ExportButton
+            namespace="orders.export"
+            cap={EXPORT_CAP}
             href={ordersExportHref(query)}
             label={page.filtered > EXPORT_CAP ? t('export.first', { count: EXPORT_CAP }) : t('export.all', { count: page.filtered })}
           />

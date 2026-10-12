@@ -12,8 +12,6 @@ import { consume } from '@/server/ratelimit/consume'
 import { sessionSubject } from '@/server/ratelimit/ip'
 import { LIMITS } from '@/server/ratelimit/limits'
 
-/** At most this many rows in one file; above it the first ones in the list's order (amendment 3). */
-export const EXPORT_CAP = 10_000
 const BATCH = 500
 
 /** The rows of a file in the list's order, and whether the list was cut at the cap. */

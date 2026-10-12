@@ -6,13 +6,13 @@ import { ExportButton } from '@/components/app/export-button'
 import { Pager } from '@/components/app/pager'
 import { CustomersSearch } from '@/components/customers/customers-search'
 import { CustomersTable } from '@/components/customers/customers-table'
+import { EXPORT_CAP } from '@/lib/csv'
 import { customersExportHref, customersHref, DEFAULT_CUSTOMERS_QUERY, isCustomersFiltered, parseCustomersQuery } from '@/lib/customers/query'
 import { toCustomerRowView } from '@/lib/customers/view'
 import type { SearchParams } from '@/lib/search-params'
 import { requireSession } from '@/server/auth/sessions'
 import { authorize } from '@/server/authz/authorize'
 import { can } from '@/server/authz/matrix'
-import { EXPORT_CAP } from '@/server/csv-export'
 import { listCustomers } from '@/server/dal/customers'
 import { getStoreSettings } from '@/server/dal/settings'
 import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
@@ -47,6 +47,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
         {list.filtered > 0 && can(session.role, 'csv.export', session.workspaceKind) ? (
           <ExportButton
             namespace="customers.export"
+            cap={EXPORT_CAP}
             href={customersExportHref(query)}
             label={list.filtered > EXPORT_CAP ? t('export.first', { count: EXPORT_CAP }) : t('export.all', { count: list.filtered })}
           />

@@ -110,12 +110,13 @@ export type OrderLineDetail = {
   product: { slug: string; imageSrc: string | null } | null
 }
 
+/** One entry of an order's history, in one of the two shapes the database's `order_events_shape` check allows. */
 export type OrderEventDetail = {
-  id: string; kind: 'status' | 'note'; from: OrderStatus | null; to: OrderStatus | null; note: string | null
+  id: string
   /** Null for events without a person: the Stripe ingest and the seed's first event ("System"). */
   actorName: string | null
   at: Date
-}
+} & ({ kind: 'status'; from: OrderStatus | null; to: OrderStatus } | { kind: 'note'; note: string })
 
 export type OrderDetail = {
   id: string; number: number; status: OrderStatus; source: 'seed' | 'stripe'; delivery: 'standard' | 'express'
@@ -127,6 +128,17 @@ export type OrderDetail = {
 }
 
 const asStatus = (value: string | null): OrderStatus | null => (value !== null && isOrderStatus(value) ? value : null)
+
+type EventRow = { id: string; kind: 'status' | 'note'; from: string | null; to: string | null; note: string | null; actorName: string | null; at: Date }
+
+/** A history row in its shape; a row that breaks `order_events_shape` cannot be stored, so meeting one is a bug. */
+function toEventDetail(event: EventRow): OrderEventDetail {
+  const common = { id: event.id, actorName: event.actorName, at: event.at }
+  const to = asStatus(event.to)
+  if (event.kind === 'status' && to !== null) return { ...common, kind: 'status', from: asStatus(event.from), to }
+  if (event.kind === 'note' && event.note !== null) return { ...common, kind: 'note', note: event.note }
+  throw new Error(`order event ${event.id} breaks order_events_shape`)
+}
 
 /** The newest orders (spec §8.1: eight on the overview), in the list's row shape and order. */
 export async function latestOrders(tx: Tx, workspaceId: string, limit = 8): Promise<OrderRow[]> {
@@ -180,7 +192,7 @@ export async function getOrder(tx: Tx, workspaceId: string, number: number): Pro
       id: line.id, name: line.name, sku: line.sku, unitCents: line.unitCents, qty: line.qty, unmatched: line.unmatched,
       product: line.variantId ? (productOf.get(line.variantId) ?? null) : null,
     })),
-    history: events.map(event => ({ id: event.id, kind: event.kind, from: asStatus(event.from), to: asStatus(event.to), note: event.note, actorName: event.actorName, at: event.at })),
+    history: events.map(toEventDetail),
   }
 }
 

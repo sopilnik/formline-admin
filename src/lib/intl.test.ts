@@ -1,11 +1,21 @@
 import { describe, expect, it } from 'vitest'
-import { compareNames, formatDate, formatDateTime, formatDay, formatDayRange, formatMoney, formatNumber, formatPercent, formatShare } from '@/lib/intl'
+import { TIME_ZONE } from '@/i18n/locale'
+import { compareNames, countryName, formatDate, formatDateTime, formatDay, formatDayRange, formatMoney, formatNumber, formatPercent, formatShare } from '@/lib/intl'
 
 describe('formatDate', () => {
   it('writes the calendar date of the store time zone in the interface language', () => {
     const lateEvening = new Date('2026-09-24T22:30:00Z') // already 25 September in Berlin
-    expect(formatDate(lateEvening, 'en')).toMatch(/^25 Sept? 2026$/)
-    expect(formatDate(lateEvening, 'ru')).toMatch(/^25 сент\. 2026/)
+    expect(formatDate(lateEvening, 'en', TIME_ZONE)).toMatch(/^25 Sept? 2026$/)
+    expect(formatDate(lateEvening, 'ru', TIME_ZONE)).toMatch(/^25 сент\. 2026/)
+    expect(formatDate(lateEvening, 'en', 'UTC')).toMatch(/^24 Sept? 2026$/)
+  })
+})
+
+describe('countryName', () => {
+  it('names a country in the interface language, and keeps a value that is no region code as it is', () => {
+    expect(countryName('DE', 'en')).toBe('Germany')
+    expect(countryName('DE', 'ru')).toBe('Германия')
+    expect(countryName('Germany', 'en')).toBe('Germany')
   })
 })
 

@@ -7,6 +7,7 @@ import { ExportButton } from '@/components/app/export-button'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useToast } from '@/components/ui/toast'
+import { EXPORT_CAP } from '@/lib/csv'
 import { ordersExportHref, type OrdersQuery } from '@/lib/orders/query'
 import { transitionsForAny, type OrderStatus } from '@/lib/orders/status'
 import type { OrderRowView } from '@/lib/orders/view'
@@ -51,7 +52,7 @@ export function BulkActions({ chosen, query, canUpdate, onClear }: Props) {
           </DropdownMenuContent>
         </DropdownMenu>
       ) : null}
-      <ExportButton href={ordersExportHref(query, chosen.map(row => row.id))} label={t('exportSelected')} size="sm" />
+      <ExportButton namespace="orders.export" cap={EXPORT_CAP} href={ordersExportHref(query, chosen.map(row => row.id))} label={t('exportSelected')} size="sm" />
       <button type="button" onClick={onClear} className="ml-auto rounded-sm text-ink-2 underline underline-offset-3 hover:text-foreground">
         {t('clear')}
       </button>

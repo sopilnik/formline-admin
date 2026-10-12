@@ -84,4 +84,14 @@ test.describe('CSV export', () => {
     // tree, so the text is looked up by its text inside the toast list.
     await expect(page.getByRole('region', { name: 'Messages' }).getByText(/^Too many exports\. Try again in \d+ seconds?\.$/)).toBeVisible()
   })
+
+  test('says the export failed when the connection drops, and keeps the list and its filters', async ({ page, context }) => {
+    await signInAsSandboxUser(context)
+    await page.goto('/orders?status=paid')
+    await page.route('**/api/orders/export**', route => route.abort('connectionreset'))
+    await page.getByRole('button', { name: /^Export \d+ as CSV$/ }).click()
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText('The export failed. Try again.')).toBeVisible()
+    await expect(page.getByRole('table', { name: 'Orders' })).toBeVisible()
+    await expect(page.getByRole('group', { name: 'Status' }).getByRole('button', { name: /^Paid, / })).toHaveAttribute('aria-pressed', 'true')
+  })
 })

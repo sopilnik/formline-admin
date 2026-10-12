@@ -1,8 +1,17 @@
-import { INTL_LOCALE, TIME_ZONE, type Locale } from '@/i18n/locale'
+import { INTL_LOCALE, type Locale } from '@/i18n/locale'
 
 /** A calendar date in the interface language and the store's time zone (spec §11). */
-export function formatDate(date: Date, locale: Locale, timeZone: string = TIME_ZONE): string {
+export function formatDate(date: Date, locale: Locale, timeZone: string): string {
   return new Intl.DateTimeFormat(INTL_LOCALE[locale], { day: 'numeric', month: 'short', year: 'numeric', timeZone }).format(date)
+}
+
+/** A country's name in the interface language ("DE": "Germany", «Германия»); a value that is no region code stays as stored. */
+export function countryName(code: string, locale: Locale): string {
+  try {
+    return new Intl.DisplayNames([INTL_LOCALE[locale]], { type: 'region' }).of(code) ?? code
+  } catch {
+    return code
+  }
 }
 
 /** Money is integer cents in USD; the narrow symbol in both languages ("$14,286", "14 286 $"). */

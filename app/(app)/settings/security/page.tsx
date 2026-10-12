@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { QrCode } from '@/components/auth/qr-code'
 import { ReauthForm } from '@/components/auth/reauth-form'
@@ -30,17 +31,18 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default async function SecurityPage() {
   const session = await requireSession()
-  authorize({ role: session.role, workspaceKind: session.workspaceKind }, 'self.manage')
+  authorize(session, 'self.manage')
   const locale = await getLocale()
   const owner = session.workspaceKind === 'owner'
   const recent = isRecentAuth(session)
   const { self, passkeys, codes, sessions, timeZone } = await withWorkspace(workspaceContext(session), async tx => ({
-    self: (await getSelf(tx, session))!,
+    self: await getSelf(tx, session),
     passkeys: owner ? await listPasskeys(tx, session) : [],
     codes: await countUnusedRecoveryCodes(tx, session),
     sessions: await listOwnSessions(tx, session.userId),
     timeZone: (await getStoreSettings(tx, session.workspaceId)).timezone,
   }))
+  if (!self) redirect('/sign-in')
   const t = await getTranslations('settings.security')
   const auth = await getTranslations('auth')
   // A new key for every view: it only counts once its first code comes back with the form.
@@ -64,8 +66,8 @@ export default async function SecurityPage() {
         passkeys={passkeys.map(p => ({
           id: p.id,
           name: p.name,
-          added: formatDate(p.createdAt, locale),
-          lastUsed: p.lastUsedAt ? formatDate(p.lastUsedAt, locale) : null,
+          added: formatDate(p.createdAt, locale, timeZone),
+          lastUsed: p.lastUsedAt ? formatDate(p.lastUsedAt, locale, timeZone) : null,
         }))}
       />
       <SessionsSection
