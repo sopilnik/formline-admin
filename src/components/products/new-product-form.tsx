@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { startTransition, useActionState, useEffect, useEffectEvent, useRef, useState, type FormEvent } from 'react'
+import { ErrorAlert } from '@/components/app/form-parts'
 import { NewProductImage } from '@/components/products/new-product-image'
 import { ProductDetailsFields } from '@/components/products/product-details-fields'
 import { sendProductImage } from '@/components/products/send-product-image'
@@ -88,7 +89,7 @@ export function NewProductForm({ collections }: Props) {
   return (
     <form ref={form} action={action} onSubmit={submit} noValidate className="flex flex-col gap-5">
       {error && error.error !== 'invalid' ? (
-        <p role="alert" tabIndex={-1} className="rounded-md border border-destructive px-3 py-2 text-sm text-destructive">{t(`failed.${error.error}`)}</p>
+        <ErrorAlert>{t(`failed.${error.error}`)}</ErrorAlert>
       ) : null}
       <ProductDetailsFields
         values={values}

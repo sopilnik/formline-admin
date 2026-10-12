@@ -2,8 +2,8 @@
 
 import { useTranslations } from 'next-intl'
 import { useActionState, useEffect, useEffectEvent, useRef } from 'react'
+import { TextAreaField } from '@/components/app/form-fields'
 import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/ui/toast'
 import { CUSTOMER_NOTES_MAX } from '@/lib/customers/notes'
 import { saveCustomerNotesAction, type CustomerNotesState } from '@/server/actions/customers'
@@ -25,24 +25,21 @@ export function CustomerNotesForm({ customerId, notes }: { customerId: string; n
     if (result.status === 'error') field.current?.focus()
   })
   useEffect(() => settle(state), [state])
-  const error = state.status === 'error' ? t(`notesErrors.${state.error}`) : null
+  const error = state.status === 'error' ? t(`notesErrors.${state.error}`) : undefined
   return (
     <form action={action} className="flex flex-col gap-2">
       <input type="hidden" name="customerId" value={customerId} />
-      <Label htmlFor="customer-notes">{t('notesLabel')}</Label>
-      <textarea
+      <TextAreaField
         ref={field}
         id="customer-notes"
         name="notes"
+        label={t('notesLabel')}
+        hint={t('notesHint')}
+        error={error}
         rows={5}
         maxLength={CUSTOMER_NOTES_MAX}
         defaultValue={state.status === 'error' ? state.notes : notes}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? 'customer-notes-hint customer-notes-error' : 'customer-notes-hint'}
-        className="w-full rounded-lg border border-input bg-card px-2.5 py-2 text-sm placeholder:text-muted-foreground aria-invalid:border-destructive"
       />
-      <p id="customer-notes-hint" className="text-xs text-muted-foreground">{t('notesHint')}</p>
-      {error ? <p id="customer-notes-error" className="text-sm text-destructive">{error}</p> : null}
       <div>
         <Button type="submit" size="sm" disabled={pending}>{pending ? t('saving') : t('saveNotes')}</Button>
       </div>

@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import type { ReactNode } from 'react'
-import { TextField } from '@/components/auth/text-field'
+import { TextField } from '@/components/app/form-fields'
 import { cn } from '@/lib/utils'
 
 type Props = {

@@ -1,8 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { SelectField, TextAreaField } from '@/components/app/form-fields'
-import { TextField } from '@/components/auth/text-field'
+import { SelectField, TextAreaField, TextField } from '@/components/app/form-fields'
 import { DESCRIPTION_MAX, PRODUCT_NAME_MAX, PRODUCT_SLUG_MAX, type DetailField, type NewProductIssue } from '@/lib/products/fields'
 
 type Props = {

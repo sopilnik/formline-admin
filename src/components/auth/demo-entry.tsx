@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { useActionState } from 'react'
-import { FormAlert } from '@/components/auth/form-parts'
+import { FormAlert } from '@/components/app/form-parts'
 import { Button } from '@/components/ui/button'
 import { IDLE, type FormState } from '@/lib/auth-form'
 import { enterDemoAction } from '@/server/actions/demo'

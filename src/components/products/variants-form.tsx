@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useActionState, useEffect, useEffectEvent, useRef, useState, useTransition } from 'react'
+import { ErrorAlert } from '@/components/app/form-parts'
 import { StockLevel } from '@/components/products/variants-table'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -80,12 +81,12 @@ function Variants({ productId, rows, reloading, onReload }: Props & { reloading:
     <form ref={form} action={action} noValidate className="flex flex-col gap-3">
       <input type="hidden" name="productId" value={productId} />
       {error && error.error !== 'invalid' ? (
-        <div role="alert" tabIndex={-1} className="rounded-md border border-destructive px-3 py-2 text-sm text-destructive">
+        <ErrorAlert>
           {error.error === 'stock_conflict' ? t('failed.stock_conflict', { skus: error.skus.join(', ') }) : t(`failed.${error.error}`)}
           {error.error === 'stock_conflict' ? (
             <Button type="button" variant="link" disabled={reloading} className="ml-1 h-auto p-0 text-sm underline" onClick={onReload}>{t('reload')}</Button>
           ) : null}
-        </div>
+        </ErrorAlert>
       ) : null}
       <div aria-hidden className={cn(ROW, 'hidden border-b pb-2 text-xs font-medium text-muted-foreground @xl:grid')}>
         <span>{t('variant')}</span>

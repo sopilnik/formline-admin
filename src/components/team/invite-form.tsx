@@ -2,8 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { useActionState, useEffect, useEffectEvent, useRef } from 'react'
-import { SelectField } from '@/components/app/form-fields'
-import { TextField } from '@/components/auth/text-field'
+import { SelectField, TextField } from '@/components/app/form-fields'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { ASSIGNABLE_ROLES, EMAIL_MAX } from '@/lib/team'

@@ -4,6 +4,7 @@ import { ImageUp } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useRef, useState, useTransition, type ChangeEvent } from 'react'
+import { ErrorAlert } from '@/components/app/form-parts'
 import { ProductImage, type PosterImage } from '@/components/products/product-image'
 import { sendProductImage, type UploadProblem } from '@/components/products/send-product-image'
 import { Button } from '@/components/ui/button'
@@ -73,9 +74,9 @@ export function ProductImageEditor({ productId, name, image }: Props) {
       </div>
       <p className="text-xs text-muted-foreground">{t('hint')}</p>
       {problem ? (
-        <p role="alert" className="rounded-md border border-destructive px-3 py-2 text-sm text-destructive">
+        <ErrorAlert>
           {problem.error === 'rate_limited' ? t('errors.rate_limited', { minutes: problem.minutes }) : t(`errors.${problem.error}`)}
-        </p>
+        </ErrorAlert>
       ) : null}
       <Dialog open={confirming} onOpenChange={setConfirming}>
         <DialogContent showCloseButton={false}>

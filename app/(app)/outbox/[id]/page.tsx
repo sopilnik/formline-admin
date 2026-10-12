@@ -4,7 +4,7 @@ import { cache } from 'react'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { z } from 'zod'
 import { BackLink } from '@/components/app/detail-page'
-import { LetterBody, letterSubject } from '@/components/outbox/letter'
+import { LetterBody } from '@/components/outbox/letter'
 import { formatDateTime } from '@/lib/intl'
 import { letterContent } from '@/lib/letters'
 import { requireSession } from '@/server/auth/sessions'
@@ -12,6 +12,7 @@ import { can } from '@/server/authz/matrix'
 import { getLetter } from '@/server/dal/outbox'
 import { getStoreSettings } from '@/server/dal/settings'
 import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
+import { letterSubject } from '@/server/mail/subject'
 
 type Params = { params: Promise<{ id: string }> }
 

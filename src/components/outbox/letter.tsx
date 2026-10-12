@@ -3,12 +3,6 @@ import { getTranslations } from 'next-intl/server'
 import { buttonVariants } from '@/components/ui/button'
 import type { LetterContent } from '@/lib/letters'
 
-/** The subject in the letter's own language. */
-export async function letterSubject(content: LetterContent): Promise<string> {
-  const t = await getTranslations({ locale: content.locale, namespace: 'letters' })
-  return t(content.subject.key, content.subject.values)
-}
-
 /**
  * A letter as its recipient would read it (spec §9): the greeting, the paragraphs and its one link — a real
  * address inside the panel — in the letter's own language, which may differ from the interface's.

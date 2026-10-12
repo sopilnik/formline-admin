@@ -37,4 +37,20 @@ describe('interface pieces', () => {
     expect(read(name)).toMatch(/<(Detail|Page)NotFound[ />]/)
     expect(read(name)).not.toContain('<main')
   })
+
+  it.each(components)('%s takes the form pieces from components/app', name => {
+    expect(read(name)).not.toMatch(/@\/components\/auth\/(text-field|form-parts)'/)
+  })
+
+  it.each(except('src/components/app/form-parts.tsx'))('%s draws an error alert only through ErrorAlert', name => {
+    expect(read(name)).not.toMatch(/border border-destructive px-3 py-2/)
+  })
+
+  it.each(except('src/components/app/form-fields.tsx'))('%s labels a text area only through TextAreaField', name => {
+    expect(read(name)).not.toMatch(/<textarea/)
+  })
+
+  it.each(components.filter(name => name.startsWith('src/components/')))('%s exports components, not async helpers', name => {
+    expect(read(name)).not.toMatch(/export async function [a-z]/)
+  })
 })

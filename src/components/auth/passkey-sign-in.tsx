@@ -1,18 +1,13 @@
 'use client'
 
-import { browserSupportsWebAuthnAutofill, sendSignal, startAuthentication, type PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser'
+import { browserSupportsWebAuthnAutofill, sendSignal, startAuthentication } from '@simplewebauthn/browser'
 import { FingerprintPattern } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import type { AuthError } from '@/lib/auth-form'
+import { passkeyChallenge } from '@/lib/passkeys'
 import { signInWithPasskeyAction, type PasskeyOutcome } from '@/server/actions/passkeys'
-
-export async function passkeyChallenge(): Promise<PublicKeyCredentialRequestOptionsJSON> {
-  const response = await fetch('/api/auth/passkey-challenge', { cache: 'no-store' })
-  if (!response.ok) throw new Error(`passkey challenge: ${response.status}`)
-  return (await response.json()) as PublicKeyCredentialRequestOptionsJSON
-}
 
 async function attempt(autofill: boolean): Promise<PasskeyOutcome> {
   const options = await passkeyChallenge()

@@ -2,8 +2,8 @@
 
 import { useTranslations } from 'next-intl'
 import { useActionState, useState } from 'react'
-import { FormAlert, useErrorText } from '@/components/auth/form-parts'
-import { TextField } from '@/components/auth/text-field'
+import { TextField } from '@/components/app/form-fields'
+import { FormAlert, useErrorText } from '@/components/app/form-parts'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { IDLE, type FormState } from '@/lib/auth-form'

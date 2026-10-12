@@ -2,9 +2,9 @@
 
 import { useTranslations } from 'next-intl'
 import { useActionState, type ReactNode } from 'react'
-import { FormAlert, useErrorText, useFocusOnError } from '@/components/auth/form-parts'
+import { TextField } from '@/components/app/form-fields'
+import { FormAlert, useErrorText, useFocusOnError } from '@/components/app/form-parts'
 import { RecoveryCodesView } from '@/components/auth/recovery-codes-view'
-import { TextField } from '@/components/auth/text-field'
 import { TotpEnrolment } from '@/components/auth/totp-enrolment'
 import { Button } from '@/components/ui/button'
 import { IDLE, type FormState } from '@/lib/auth-form'

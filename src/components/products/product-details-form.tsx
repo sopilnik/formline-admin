@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useActionState, useEffect, useEffectEvent, useRef, useState, useTransition } from 'react'
+import { ErrorAlert } from '@/components/app/form-parts'
 import { ProductDetailsFields } from '@/components/products/product-details-fields'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
@@ -66,12 +67,12 @@ function DetailsForm({ productId, slug, version, values, collections, reloading,
       <input type="hidden" name="productId" value={productId} />
       <input type="hidden" name="version" value={version} />
       {failure ? (
-        <div role="alert" tabIndex={-1} className="rounded-md border border-destructive px-3 py-2 text-sm text-destructive">
+        <ErrorAlert>
           {t(`failed.${failure}`)}
           {failure === 'conflict' ? (
             <Button type="button" variant="link" disabled={reloading} className="ml-1 h-auto p-0 text-sm underline" onClick={onReload}>{t('reload')}</Button>
           ) : null}
-        </div>
+        </ErrorAlert>
       ) : null}
       <ProductDetailsFields values={state.status === 'error' ? state.values : values} errors={state.status === 'error' ? state.fieldErrors : {}} collections={collections} />
       <div>

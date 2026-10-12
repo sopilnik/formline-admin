@@ -2,6 +2,7 @@
 
 import { ChevronDown } from 'lucide-react'
 import type { ComponentProps, ReactNode } from 'react'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 
@@ -16,6 +17,17 @@ function Messages({ id, hint, error }: { id: string; hint?: string; error?: stri
       {hint ? <p id={`${id}-hint`} className="text-xs text-muted-foreground">{hint}</p> : null}
       {error ? <p id={`${id}-error`} className="text-sm text-destructive">{error}</p> : null}
     </>
+  )
+}
+
+/** A labelled input with its hint and its error, both announced with the field (spec §11, forms). */
+export function TextField({ id, label, hint, error, ...input }: Common & ComponentProps<'input'>) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      <Input id={id} aria-invalid={error ? true : undefined} aria-describedby={describedBy(id, hint, error)} {...input} />
+      <Messages id={id} hint={hint} error={error} />
+    </div>
   )
 }
 

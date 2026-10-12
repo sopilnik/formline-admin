@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { useActionState, useState } from 'react'
-import { FormAlert } from '@/components/auth/form-parts'
+import { FormAlert } from '@/components/app/form-parts'
 import { RecoveryCodesView } from '@/components/auth/recovery-codes-view'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'

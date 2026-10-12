@@ -4,6 +4,7 @@ import { ImageUp, X } from 'lucide-react'
 import Image from 'next/image'
 import { useTranslations } from 'next-intl'
 import { useEffect, useId, useMemo, useRef, useState, type DragEvent } from 'react'
+import { ErrorAlert } from '@/components/app/form-parts'
 import { Button } from '@/components/ui/button'
 import { precheckUpload, UPLOAD_ACCEPT } from '@/lib/uploads'
 import { cn } from '@/lib/utils'
@@ -84,7 +85,7 @@ export function NewProductImage({ file, onChange, disabled = false }: Props) {
         />
       </div>
       <p className="text-xs text-muted-foreground">{t('imageHint')}</p>
-      {refused ? <p role="alert" className="rounded-md border border-destructive px-3 py-2 text-sm text-destructive">{errors(refused)}</p> : null}
+      {refused ? <ErrorAlert>{errors(refused)}</ErrorAlert> : null}
     </div>
   )
 }

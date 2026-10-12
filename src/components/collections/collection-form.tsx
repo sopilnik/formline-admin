@@ -3,8 +3,8 @@
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useActionState, useEffect, useEffectEvent, useRef, useState } from 'react'
-import { TextAreaField } from '@/components/app/form-fields'
-import { TextField } from '@/components/auth/text-field'
+import { TextAreaField, TextField } from '@/components/app/form-fields'
+import { ErrorAlert } from '@/components/app/form-parts'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { COLLECTION_DESCRIPTION_MAX, COLLECTION_FIELDS, COLLECTION_NAME_MAX, COLLECTION_SLUG_MAX, type CollectionField } from '@/lib/collections/fields'
@@ -54,7 +54,7 @@ export function CollectionForm({ collection }: Props) {
     <form ref={form} action={action} noValidate className="flex flex-col gap-4">
       <input type="hidden" name="collectionId" value={collection?.id ?? ''} />
       {error && error.error !== 'invalid' ? (
-        <p role="alert" tabIndex={-1} className="rounded-md border border-destructive px-3 py-2 text-sm text-destructive">{t(`failed.${error.error}`)}</p>
+        <ErrorAlert>{t(`failed.${error.error}`)}</ErrorAlert>
       ) : null}
       <TextField
         id="collection-name" name="name" label={t('name')} defaultValue={values.name} maxLength={COLLECTION_NAME_MAX} aria-required autoComplete="off"

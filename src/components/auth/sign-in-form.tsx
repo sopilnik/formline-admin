@@ -2,8 +2,8 @@
 
 import { useTranslations } from 'next-intl'
 import { useActionState } from 'react'
-import { FormAlert, useFocusOnError } from '@/components/auth/form-parts'
-import { TextField } from '@/components/auth/text-field'
+import { TextField } from '@/components/app/form-fields'
+import { FormAlert, useFocusOnError } from '@/components/app/form-parts'
 import { Button } from '@/components/ui/button'
 import { IDLE, type FormState } from '@/lib/auth-form'
 import { signInAction } from '@/server/actions/sign-in'

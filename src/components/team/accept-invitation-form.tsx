@@ -2,7 +2,8 @@
 
 import { useTranslations } from 'next-intl'
 import { useActionState } from 'react'
-import { TextField } from '@/components/auth/text-field'
+import { TextField } from '@/components/app/form-fields'
+import { ErrorAlert } from '@/components/app/form-parts'
 import { Button } from '@/components/ui/button'
 import { MEMBER_NAME_MAX } from '@/lib/team'
 import { acceptInvitationAction, type AcceptState } from '@/server/actions/team'
@@ -18,7 +19,7 @@ export function AcceptInvitationForm({ token }: { token: string }) {
     <form action={action} noValidate className="flex flex-col gap-4">
       <input type="hidden" name="token" value={token} />
       {error && error.error !== 'name_required' ? (
-        <p role="alert" className="rounded-md border border-destructive px-3 py-2 text-sm text-destructive">{t(`errors.${error.error}`)}</p>
+        <ErrorAlert>{t(`errors.${error.error}`)}</ErrorAlert>
       ) : null}
       <TextField
         id="invite-name" name="name" label={t('name')} hint={t('nameHint')} autoComplete="name" maxLength={MEMBER_NAME_MAX} aria-required

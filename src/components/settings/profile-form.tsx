@@ -2,8 +2,8 @@
 
 import { useTranslations } from 'next-intl'
 import { useActionState, useEffect, useEffectEvent, useRef } from 'react'
-import { SelectField } from '@/components/app/form-fields'
-import { TextField } from '@/components/auth/text-field'
+import { SelectField, TextField } from '@/components/app/form-fields'
+import { ErrorAlert } from '@/components/app/form-parts'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { LOCALES } from '@/i18n/locale'
@@ -36,7 +36,7 @@ export function ProfileForm({ profile }: { profile: Record<ProfileField, string>
   return (
     <form ref={form} action={action} noValidate className="flex max-w-md flex-col gap-4">
       {error && error.error !== 'invalid' ? (
-        <p role="alert" tabIndex={-1} className="rounded-md border border-destructive px-3 py-2 text-sm text-destructive">{t(`errors.${error.error}`)}</p>
+        <ErrorAlert>{t(`errors.${error.error}`)}</ErrorAlert>
       ) : null}
       <TextField id="profile-name" name="name" label={t('name')} autoComplete="name" maxLength={MEMBER_NAME_MAX} aria-required defaultValue={values.name} error={message('name')} />
       <SelectField id="profile-locale" name="locale" label={t('language')} defaultValue={values.locale} error={message('locale')}>

@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { useActionState } from 'react'
+import { ErrorAlert } from '@/components/app/form-parts'
 import { Button } from '@/components/ui/button'
 import type { ImportState } from '@/lib/stripe/import'
 import { importStripeOrdersAction } from '@/server/actions/stripe'
@@ -22,9 +23,9 @@ export function StripeImportSection({ recent }: { recent: boolean }) {
         </p>
       </div>
       {state.status === 'error' ? (
-        <p role="alert" className="rounded-md border border-destructive px-3 py-2 text-sm text-destructive">
+        <ErrorAlert>
           {t(`errors.${state.error}`, { minutes: state.retryAfterMinutes ?? 1 })}
-        </p>
+        </ErrorAlert>
       ) : null}
       {state.status === 'done' ? (
         <div role="status" className="flex flex-col gap-1 rounded-md border px-3 py-2 text-sm">

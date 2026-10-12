@@ -4,7 +4,6 @@ import { notFound, redirect } from 'next/navigation'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { Pager } from '@/components/app/pager'
 import { ROW_LINK } from '@/components/app/row-link'
-import { letterSubject } from '@/components/outbox/letter'
 import { formatDateTime } from '@/lib/intl'
 import { letterContent } from '@/lib/letters'
 import { pageQueryHref, parsePageQuery } from '@/lib/pagination'
@@ -15,6 +14,7 @@ import { can } from '@/server/authz/matrix'
 import { listLetters } from '@/server/dal/outbox'
 import { getStoreSettings } from '@/server/dal/settings'
 import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
+import { letterSubject } from '@/server/mail/subject'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('outbox')
