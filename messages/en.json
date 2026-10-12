@@ -532,6 +532,7 @@
         "nothing": "No missed orders.",
         "already": "{count, plural, one {# order of the last 30 days was already here.} other {# orders of the last 30 days were already here.}}",
         "skipped": "{count, plural, one {# session was left out: it is not a paid store order.} other {# sessions were left out: they are not paid store orders.}}",
+        "failedSessions": "{count, plural, one {# session could not be imported this time; the next import tries it again.} other {# sessions could not be imported this time; the next import tries them again.}}",
         "more": "Stripe has more sessions in these 30 days than one import reads; the oldest were not checked.",
         "errors": {
           "unavailable": "Stripe is not connected on this server.",

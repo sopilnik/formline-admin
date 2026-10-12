@@ -23,9 +23,15 @@ export type IngestResult = { status: 'created'; orderId: string; number: number 
 /** The name of a customer Stripe gave none for; a later order with a name leaves the customer as they are. */
 const NO_NAME = 'Customer'
 
+/**
+ * A repeat of an order already kept. It is thrown inside the transaction rather than returned, so the rollback takes
+ * back what the transaction wrote so far, the recorded event above all, and a repeat leaves no trace.
+ */
 class Duplicate extends Error {}
 
 type Variant = { id: string; sku: string; size: string; palette: string; stock: number; threshold: number; productId: string; product: string }
+type Created = { orderId: string; number: number; customerId: string }
+type Oversold = { label: string; count: number }
 
 let templateWorkspace: string | undefined
 
@@ -54,14 +60,19 @@ async function customerFor(tx: Tx, workspaceId: string, emails: string[], fresh:
     insert into fa.customers (workspace_id, email, name, city, country, pseudonymised_at)
     values (${workspaceId}, ${fresh.email}, ${fresh.name}, ${fresh.city}, ${fresh.country}, ${fresh.pseudonymised ? sql`now()` : null})
     on conflict (workspace_id, lower(email)) do nothing`)
-  return (await found())[0]!.id
+  const [made] = await found()
+  if (!made) throw new Error(`workspace ${workspaceId} neither has nor took the order's customer`)
+  return made.id
 }
 
+/** The workspace's next order number; every workspace gets its counter row with the workspace, so a missing one is a broken schema. */
 async function nextOrderNumber(tx: Tx, workspaceId: string): Promise<number> {
   const { rows } = await tx.execute<{ number: number }>(sql`
     update fa.workspace_counters set next_order_number = next_order_number + 1
     where workspace_id = ${workspaceId} returning next_order_number - 1 as number`)
-  return rows[0]!.number
+  const [row] = rows
+  if (!row) throw new Error(`workspace ${workspaceId} has no order counter in fa.workspace_counters`)
+  return row.number
 }
 
 /** The matched variants, locked so two orders of the same poster take stock one after the other, with their products' names. */
@@ -113,6 +124,94 @@ async function writeCopy(tx: Tx, workspaceId: string, order: IncomingOrder, pers
   await tx.insert(orderEvents).values({ workspaceId, orderId: copy!.id, kind: 'status', fromStatus: null, toStatus: 'paid', actorUserId: null, at: order.placedAt })
 }
 
+/** Keeps the event and the session once each: a repeat throws Duplicate before anything is written. */
+async function claim(tx: Tx, owner: string, order: IncomingOrder, eventId: string | null): Promise<void> {
+  if (eventId) {
+    // A second delivery of the same event waits here until the first one commits, then finds its row.
+    const recorded = await tx.insert(stripeEvents).values({ eventId, outcome: 'order' }).onConflictDoNothing().returning({ id: stripeEvents.eventId })
+    if (recorded.length === 0) throw new Duplicate()
+  }
+  const [seen] = await tx.select({ id: orders.id }).from(orders).where(and(eq(orders.workspaceId, owner), eq(orders.stripeSessionId, order.sessionId))).limit(1)
+  if (seen) throw new Duplicate()
+}
+
+/** The owner's customer and the order itself, under the next number. */
+async function writeOrder(tx: Tx, owner: string, order: IncomingOrder, person: Pseudonym): Promise<Created> {
+  const customerId = await customerFor(tx, owner, [order.email, person.email], {
+    email: order.email, name: order.name ?? NO_NAME, city: order.city, country: order.country, pseudonymised: false,
+  })
+  const number = await nextOrderNumber(tx, owner)
+  const [created] = await tx.insert(orders).values({
+    workspaceId: owner, number, customerId, status: 'paid', source: 'stripe', stripeSessionId: order.sessionId, externalRef: order.externalRef,
+    delivery: order.delivery, subtotalCents: order.subtotalCents, shippingCents: order.shippingCents, totalCents: order.totalCents,
+    placedAt: order.placedAt, updatedAt: order.placedAt,
+  }).onConflictDoNothing({ target: [orders.workspaceId, orders.stripeSessionId] }).returning({ id: orders.id })
+  // The import and a webhook delivery of the same session at once: the second waits for the first and stops here.
+  if (!created) throw new Duplicate()
+  return { orderId: created.id, number, customerId }
+}
+
+/** The order's lines, matched to the locked variants where their names allow, and its first status. */
+async function writeLines(tx: Tx, owner: string, orderId: string, order: IncomingOrder, variants: Map<string, Variant>): Promise<void> {
+  await tx.insert(orderLines).values(order.lines.map(line => {
+    const variant = line.variant ? variants.get(line.variant.sku) : undefined
+    return { workspaceId: owner, orderId, variantId: variant?.id ?? null, sku: variant?.sku ?? null, name: line.name, unitCents: line.unitCents, qty: line.qty, unmatched: !variant }
+  }))
+  await tx.insert(orderEvents).values({ workspaceId: owner, orderId, kind: 'status', fromStatus: null, toStatus: 'paid', actorUserId: null, at: order.placedAt })
+}
+
+/** Takes the stock the matched lines sold, never below zero, says "Low stock" where it should, and returns what was oversold. */
+async function takeStock(tx: Tx, owner: string, order: IncomingOrder, variants: Map<string, Variant>): Promise<Oversold[]> {
+  const sold = new Map<string, number>()
+  for (const line of order.lines) {
+    if (line.variant && variants.has(line.variant.sku)) sold.set(line.variant.sku, (sold.get(line.variant.sku) ?? 0) + line.qty)
+  }
+
+  const oversold: Oversold[] = []
+  for (const [sku, qty] of sold) {
+    const variant = variants.get(sku)!
+    const stock = Math.max(variant.stock - qty, 0)
+    const short = Math.max(qty - variant.stock, 0)
+    await tx.update(productVariants).set({ stock }).where(and(eq(productVariants.workspaceId, owner), eq(productVariants.id, variant.id)))
+    if (short > 0) oversold.push({ label: `${variant.product} · ${variantLabel(variant.size, variant.palette)}`, count: short })
+    // "Low stock" when this sale takes the variant across its threshold from above, or sells more than there was.
+    if (short > 0 || (variant.stock > variant.threshold && stock <= variant.threshold)) {
+      await notify(tx, owner, {
+        userId: null,
+        kind: 'stock.low',
+        payload: {
+          productId: variant.productId, product: variant.product, size: variant.size, palette: variant.palette, stock, threshold: variant.threshold,
+          ...(short > 0 ? { oversold: short } : {}),
+        },
+      })
+    }
+  }
+  return oversold
+}
+
+/** A note on the order of what was oversold, in the owner's language. */
+async function writeOversoldNote(tx: Tx, owner: string, orderId: string, order: IncomingOrder, oversold: Oversold[]): Promise<void> {
+  if (oversold.length === 0) return
+
+  const locale = await ownerLocale(tx, owner)
+  const t = createTranslator({ locale, messages: locale === 'ru' ? ru : en, namespace: 'ingest' })
+  // A moment after the status event, so the history lists the payment first; with the same time their order was random.
+  await tx.insert(orderEvents).values({
+    workspaceId: owner, orderId, kind: 'note', note: oversold.map(o => t('oversold', { line: o.label, count: o.count })).join('\n'), actorUserId: null,
+    at: new Date(order.placedAt.getTime() + 1),
+  })
+}
+
+/** "New order" for everybody in the owner workspace. */
+async function notifyOrder(tx: Tx, owner: string, created: Created, totalCents: number): Promise<void> {
+  const [customer] = await tx.select({ name: customers.name }).from(customers).where(and(eq(customers.workspaceId, owner), eq(customers.id, created.customerId)))
+  await notify(tx, owner, {
+    userId: null,
+    kind: 'order.created',
+    payload: { orderId: created.orderId, number: created.number, customer: customer!.name, totalCents },
+  })
+}
+
 /**
  * One paid store order (spec §7.1–§7.3), in one transaction: the event, the owner's customer, order, lines, first status,
  * the stock the lines take and the notifications, then the pseudonymised copy in the template — all of it or nothing, so
@@ -126,72 +225,17 @@ export async function ingestOrder(order: IncomingOrder, options: { eventId: stri
   try {
     const result = await withWorkspaces(async enter => {
       const tx = await enter({ workspaceId: owner, userId: null, role: 'system' })
-      if (options.eventId) {
-        // A second delivery of the same event waits here until the first one commits, then finds its row.
-        const recorded = await tx.insert(stripeEvents).values({ eventId: options.eventId, outcome: 'order' }).onConflictDoNothing().returning({ id: stripeEvents.eventId })
-        if (recorded.length === 0) throw new Duplicate()
-      }
-      const [seen] = await tx.select({ id: orders.id }).from(orders).where(and(eq(orders.workspaceId, owner), eq(orders.stripeSessionId, order.sessionId))).limit(1)
-      if (seen) throw new Duplicate()
+      await claim(tx, owner, order, options.eventId)
 
-      const customerId = await customerFor(tx, owner, [order.email, person.email], {
-        email: order.email, name: order.name ?? NO_NAME, city: order.city, country: order.country, pseudonymised: false,
-      })
-      const number = await nextOrderNumber(tx, owner)
-      const [created] = await tx.insert(orders).values({
-        workspaceId: owner, number, customerId, status: 'paid', source: 'stripe', stripeSessionId: order.sessionId, externalRef: order.externalRef,
-        delivery: order.delivery, subtotalCents: order.subtotalCents, shippingCents: order.shippingCents, totalCents: order.totalCents,
-        placedAt: order.placedAt, updatedAt: order.placedAt,
-      }).onConflictDoNothing({ target: [orders.workspaceId, orders.stripeSessionId] }).returning({ id: orders.id })
-      // The import and a webhook delivery of the same session at once: the second waits for the first and stops here.
-      if (!created) throw new Duplicate()
-
+      const created = await writeOrder(tx, owner, order, person)
       const variants = await lockVariants(tx, owner, matchedSkus(order))
-      await tx.insert(orderLines).values(order.lines.map(line => {
-        const variant = line.variant ? variants.get(line.variant.sku) : undefined
-        return { workspaceId: owner, orderId: created.id, variantId: variant?.id ?? null, sku: variant?.sku ?? null, name: line.name, unitCents: line.unitCents, qty: line.qty, unmatched: !variant }
-      }))
-      await tx.insert(orderEvents).values({ workspaceId: owner, orderId: created.id, kind: 'status', fromStatus: null, toStatus: 'paid', actorUserId: null, at: order.placedAt })
-
-      const sold = new Map<string, number>()
-      for (const line of order.lines) if (line.variant && variants.has(line.variant.sku)) sold.set(line.variant.sku, (sold.get(line.variant.sku) ?? 0) + line.qty)
-      const oversold: { label: string; count: number }[] = []
-      for (const [sku, qty] of sold) {
-        const variant = variants.get(sku)!
-        const stock = Math.max(variant.stock - qty, 0)
-        const short = Math.max(qty - variant.stock, 0)
-        await tx.update(productVariants).set({ stock }).where(and(eq(productVariants.workspaceId, owner), eq(productVariants.id, variant.id)))
-        if (short > 0) oversold.push({ label: `${variant.product} · ${variantLabel(variant.size, variant.palette)}`, count: short })
-        // "Low stock" when this sale takes the variant across its threshold from above, or sells more than there was.
-        if (short > 0 || (variant.stock > variant.threshold && stock <= variant.threshold)) {
-          await notify(tx, owner, {
-            userId: null,
-            kind: 'stock.low',
-            payload: {
-              productId: variant.productId, product: variant.product, size: variant.size, palette: variant.palette, stock, threshold: variant.threshold,
-              ...(short > 0 ? { oversold: short } : {}),
-            },
-          })
-        }
-      }
-      if (oversold.length > 0) {
-        const locale = await ownerLocale(tx, owner)
-        const t = createTranslator({ locale, messages: locale === 'ru' ? ru : en, namespace: 'ingest' })
-        // A moment after the status event, so the history lists the payment first; with the same time their order was random.
-        await tx.insert(orderEvents).values({
-          workspaceId: owner, orderId: created.id, kind: 'note', note: oversold.map(o => t('oversold', { line: o.label, count: o.count })).join('\n'), actorUserId: null,
-          at: new Date(order.placedAt.getTime() + 1),
-        })
-      }
-      const [customer] = await tx.select({ name: customers.name }).from(customers).where(and(eq(customers.workspaceId, owner), eq(customers.id, customerId)))
-      await notify(tx, owner, {
-        userId: null,
-        kind: 'order.created',
-        payload: { orderId: created.id, number, customer: customer!.name, totalCents: order.totalCents },
-      })
+      await writeLines(tx, owner, created.orderId, order, variants)
+      const oversold = await takeStock(tx, owner, order, variants)
+      await writeOversoldNote(tx, owner, created.orderId, order, oversold)
+      await notifyOrder(tx, owner, created, order.totalCents)
 
       await writeCopy(await enter({ workspaceId: template, userId: null, role: 'system' }), template, order, person)
-      return { status: 'created' as const, orderId: created.id, number }
+      return { status: 'created' as const, orderId: created.orderId, number: created.number }
     }, pool)
     log.info({ event: 'stripe.order', number: result.number, lines: order.lines.length })
     return result

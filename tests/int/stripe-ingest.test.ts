@@ -247,7 +247,7 @@ describe('the copy in the template', () => {
     // Without its counter the template cannot number the copy, and the copy is the last step of the transaction.
     await admin.query('delete from fa.workspace_counters where workspace_id = $1', [template])
     try {
-      await expect(ingest(order, eventId)).rejects.toThrow()
+      await expect(ingest(order, eventId)).rejects.toThrow(/has no order counter/)
     } finally {
       await admin.query('insert into fa.workspace_counters (workspace_id, next_order_number) values ($1, $2)', [template, templateNumber + 100])
     }

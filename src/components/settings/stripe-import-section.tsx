@@ -31,6 +31,7 @@ export function StripeImportSection({ recent }: { recent: boolean }) {
           <p>{state.imported.length > 0 ? t('imported', { count: state.imported.length, numbers: state.imported.map(n => `#${n}`).join(', ') }) : t('nothing')}</p>
           {state.already > 0 ? <p className="text-muted-foreground">{t('already', { count: state.already })}</p> : null}
           {state.skipped > 0 ? <p className="text-muted-foreground">{t('skipped', { count: state.skipped })}</p> : null}
+          {state.failed > 0 ? <p className="text-muted-foreground">{t('failedSessions', { count: state.failed })}</p> : null}
           {state.more ? <p className="text-muted-foreground">{t('more')}</p> : null}
         </div>
       ) : null}
