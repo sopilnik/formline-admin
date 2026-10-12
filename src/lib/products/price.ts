@@ -7,11 +7,7 @@ export type SizeId = (typeof SIZE_IDS)[number]
 export const SIZE_SURCHARGE_CENTS: Record<SizeId, number> = { a3: 0, a2: 1600, a1: 4000 }
 
 /** $9,999.99: the largest base price or override the forms accept. */
-export const MAX_PRICE_CENTS = 999_999
-
-export function isSizeId(value: string): value is SizeId {
-  return (SIZE_IDS as readonly string[]).includes(value)
-}
+const MAX_PRICE_CENTS = 999_999
 
 /**
  * A variant's price (spec §6.1): its override when one is set, the base price plus the size's surcharge otherwise.

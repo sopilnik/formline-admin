@@ -11,7 +11,7 @@ import { useToast } from '@/components/ui/toast'
 import { PASSKEY_NAME_MAX } from '@/lib/passkeys'
 import { beginPasskeyRegistrationAction, finishPasskeyRegistrationAction, removePasskeyAction, renamePasskeyAction } from '@/server/actions/passkeys'
 
-export type PasskeyView = { id: string; name: string; added: string; lastUsed: string | null }
+type PasskeyView = { id: string; name: string; added: string; lastUsed: string | null }
 
 type Props = { available: boolean; recent: boolean; passkeys: PasskeyView[] }
 

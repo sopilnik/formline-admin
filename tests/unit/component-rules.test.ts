@@ -61,4 +61,8 @@ describe('interface pieces', () => {
   it.each(components)('%s asks for an Apple device only through useIsApple', name => {
     expect(read(name)).not.toMatch(/navigator\.platform/)
   })
+
+  it.each(components)('%s casts no translator twice over', name => {
+    expect(read(name)).not.toMatch(/as unknown as/)
+  })
 })

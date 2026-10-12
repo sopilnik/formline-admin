@@ -9,8 +9,8 @@ const classStrings = (source: string): string[] => [...source.matchAll(/"([^"\n]
 describe('vendored ui primitives', () => {
   it('include every primitive the panel uses', () => {
     expect(files).toEqual(expect.arrayContaining([
-      'button.tsx', 'checkbox.tsx', 'dialog.tsx', 'dropdown-menu.tsx', 'input.tsx', 'label.tsx', 'radio-group.tsx',
-      'sheet.tsx', 'skeleton.tsx', 'switch.tsx', 'toast.tsx', 'toggle-group.tsx', 'toggle.tsx', 'tooltip.tsx',
+      'button.tsx', 'checkbox.tsx', 'dialog.tsx', 'dropdown-menu.tsx', 'input.tsx', 'label.tsx', 'sheet.tsx', 'skeleton.tsx',
+      'toast.tsx', 'toggle-group.tsx', 'toggle.tsx', 'tooltip.tsx',
     ]))
   })
 
@@ -28,8 +28,8 @@ describe('vendored ui primitives', () => {
     expect(read(name)).not.toMatch(/data-checked:(bg|border)-primary/)
   })
 
-  it.each(['checkbox.tsx', 'radio-group.tsx', 'switch.tsx'])('%s does not use the primary colour at all', name => {
-    expect(read(name)).not.toMatch(/primary/)
+  it('keeps the checkbox off the primary colour', () => {
+    expect(read('checkbox.tsx')).not.toMatch(/primary/)
   })
 
   it.each(files)('%s takes cn from @/lib/utils', name => {

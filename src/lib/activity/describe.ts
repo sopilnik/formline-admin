@@ -1,4 +1,8 @@
+import { collectionHref } from '@/lib/collections/view'
+import { customerHref } from '@/lib/customers/view'
+import { orderHref } from '@/lib/orders/view'
 import { asRecord, text, whole, type Payload } from '@/lib/payload'
+import { productHref } from '@/lib/products/view'
 
 /** What the log knows about the entities of one page, read from their tables by id (spec §8.7: the entity is linked). */
 export type Lookups = {
@@ -36,26 +40,26 @@ function subjectOf(entry: EntryInput, details: Payload, lookups: Lookups): Subje
   switch (entry.entityType) {
     case 'order': {
       const number = (id ? lookups.orders.get(id) : undefined) ?? whole(details, 'number')
-      return number === null ? null : { text: `#${number}`, href: `/orders/${number}` }
+      return number === null ? null : { text: `#${number}`, href: orderHref(number) }
     }
 
     case 'product': {
       const product = id ? lookups.products.get(id) : undefined
-      if (product) return { text: product.name, href: `/products/${product.slug}` }
+      if (product) return { text: product.name, href: productHref(product.slug) }
       const name = text(details, 'name') ?? text(details, 'slug')
       return name ? { text: name, href: null } : null
     }
 
     case 'collection': {
       const collection = id ? lookups.collections.get(id) : undefined
-      if (collection) return { text: collection.name, href: `/collections/${collection.slug}` }
+      if (collection) return { text: collection.name, href: collectionHref(collection.slug) }
       const name = text(details, 'name') ?? text(details, 'slug')
       return name ? { text: name, href: null } : null
     }
 
     case 'customer': {
       const name = (id ? lookups.customers.get(id) : undefined) ?? text(details, 'name')
-      return name ? { text: name, href: id && lookups.customers.has(id) ? `/customers/${id}` : null } : null
+      return name ? { text: name, href: id && lookups.customers.has(id) ? customerHref(id) : null } : null
     }
 
     case 'user': {

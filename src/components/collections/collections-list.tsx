@@ -7,10 +7,11 @@ import { useEffect, useOptimistic, useRef, useState, useTransition } from 'react
 import { ROW_LINK } from '@/components/app/row-link'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
+import { collectionHref } from '@/lib/collections/view'
 import { cn } from '@/lib/utils'
 import { moveCollectionAction } from '@/server/actions/collections'
 
-export type CollectionItem = { id: string; slug: string; name: string; description: string; products: number }
+type CollectionItem = { id: string; slug: string; name: string; description: string; products: number }
 type Direction = 'up' | 'down'
 
 function moved(rows: CollectionItem[], move: { id: string; direction: Direction }): CollectionItem[] {
@@ -63,7 +64,7 @@ export function CollectionsList({ rows, canWrite }: { rows: CollectionItem[]; ca
             <span className="w-6 shrink-0 text-right text-[13px] text-muted-foreground tabular-nums">{index + 1}</span>
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
               <Link
-                href={`/collections/${row.slug}`}
+                href={collectionHref(row.slug)}
                 prefetch={false}
                 className={cn(ROW_LINK, 'w-fit font-medium')}
               >

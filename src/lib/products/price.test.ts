@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isSizeId, parsePrice, priceField, SIZE_IDS, SIZE_SURCHARGE_CENTS, variantPriceCents } from '@/lib/products/price'
+import { parsePrice, priceField, SIZE_IDS, SIZE_SURCHARGE_CENTS, variantPriceCents } from '@/lib/products/price'
 // The generator's catalog holds the store's surcharges; this test keeps the panel's copy in step with it.
 // eslint-disable-next-line no-restricted-imports
 import { SIZES } from '../../../db/seed/catalog'
@@ -14,11 +14,6 @@ describe('variant prices', () => {
     expect(variantPriceCents(2900, 'a3', null)).toBe(2900)
     expect(variantPriceCents(2900, 'a1', null)).toBe(6900)
     expect(variantPriceCents(2900, 'a1', 5500)).toBe(5500)
-  })
-
-  it('knows the sizes', () => {
-    expect(isSizeId('a2')).toBe(true)
-    expect(isSizeId('a0')).toBe(false)
   })
 })
 

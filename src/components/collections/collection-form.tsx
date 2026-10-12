@@ -8,6 +8,7 @@ import { ErrorAlert } from '@/components/app/form-parts'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { COLLECTION_DESCRIPTION_MAX, COLLECTION_FIELDS, COLLECTION_NAME_MAX, COLLECTION_SLUG_MAX, type CollectionField } from '@/lib/collections/fields'
+import { collectionHref } from '@/lib/collections/view'
 import { slugify } from '@/lib/slug'
 import { saveCollectionAction, type CollectionState } from '@/server/actions/collections'
 
@@ -31,10 +32,10 @@ export function CollectionForm({ collection }: Props) {
       // The refresh after a move clears the pages the browser keeps for a minute (W.1), so the list shows the change.
       // The action refreshes only when the address stays: refreshing there would draw the old address again.
       if (!collection) {
-        router.push(`/collections/${result.slug}`)
+        router.push(collectionHref(result.slug))
         router.refresh()
       } else if (result.slug !== collection.slug) {
-        router.replace(`/collections/${result.slug}`)
+        router.replace(collectionHref(result.slug))
         router.refresh()
       }
     }

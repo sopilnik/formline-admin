@@ -1,14 +1,16 @@
 import { ArrowRight, CircleDollarSign, Package, TriangleAlert, type LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
+import { DEFAULT_ORDERS_QUERY, ordersHref } from '@/lib/orders/query'
+import { DEFAULT_PRODUCTS_QUERY, productsHref } from '@/lib/products/query'
 
 type Counts = { toProcess: number; processing: number; soldOut: number }
 type Part = { key: keyof Counts; href: string; icon: LucideIcon; tone: string }
 
 const PARTS: Part[] = [
-  { key: 'toProcess', href: '/orders?status=paid', icon: CircleDollarSign, tone: 'text-status-info' },
-  { key: 'processing', href: '/orders?status=processing', icon: Package, tone: 'text-status-warn' },
-  { key: 'soldOut', href: '/products?stock=out', icon: TriangleAlert, tone: 'text-status-bad' },
+  { key: 'toProcess', href: ordersHref(DEFAULT_ORDERS_QUERY, { status: ['paid'] }), icon: CircleDollarSign, tone: 'text-status-info' },
+  { key: 'processing', href: ordersHref(DEFAULT_ORDERS_QUERY, { status: ['processing'] }), icon: Package, tone: 'text-status-warn' },
+  { key: 'soldOut', href: productsHref(DEFAULT_PRODUCTS_QUERY, { stock: 'out' }), icon: TriangleAlert, tone: 'text-status-bad' },
 ]
 
 /** "What needs action now" (spec §8.1): up to three links; a part without work is left out, and so is the strip. */

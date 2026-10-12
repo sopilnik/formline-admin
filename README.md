@@ -18,6 +18,9 @@ Copy `.env.example` to `.env` before running anything that touches the database.
 
 Checks: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:int`, `pnpm test:e2e` (builds first).
 
+`src/components/ui/` holds the shadcn primitives the panel uses, changed only where its focus, colour and language rules
+need it. Each keeps its unused exports, so it still compares line for line with a fresh copy from the generator.
+
 ## Production-like run
 
     pnpm build && ORIGIN_AUTH_SECRET=… pnpm start

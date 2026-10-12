@@ -1,10 +1,11 @@
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { ProductThumb } from '@/components/products/product-thumb'
+import { DEFAULT_PRODUCTS_QUERY, productsHref } from '@/lib/products/query'
 import { cn } from '@/lib/utils'
 
 /** One low-stock variant as the page formats it. */
-export type LowStockView = { key: string; href: string; product: string; variant: string; stock: number; imageSrc: string | null }
+type LowStockView = { key: string; href: string; product: string; variant: string; stock: number; imageSrc: string | null }
 
 /** Variants at or below their threshold (spec §8.1): sold out first, at most five, then "View all N". */
 export function LowStock({ rows, total }: { rows: LowStockView[]; total: number }) {
@@ -34,7 +35,7 @@ export function LowStock({ rows, total }: { rows: LowStockView[]; total: number 
         </ul>
       )}
       {total > 0 ? (
-        <Link href="/products?stock=low" prefetch={false} className="mt-auto w-fit pt-3 text-[13px] font-medium text-primary hover:underline">
+        <Link href={productsHref(DEFAULT_PRODUCTS_QUERY, { stock: 'low' })} prefetch={false} className="mt-auto w-fit pt-3 text-[13px] font-medium text-primary hover:underline">
           {t('viewAll', { count: total })}
         </Link>
       ) : null}

@@ -8,8 +8,9 @@ import { OrderNoteForm } from '@/components/orders/order-note-form'
 import { OrderStatusControl } from '@/components/orders/order-status-control'
 import { SourceLabel } from '@/components/orders/source-label'
 import { ProductThumb } from '@/components/products/product-thumb'
-import { locationOf } from '@/lib/customers/view'
+import { customerHref, locationOf } from '@/lib/customers/view'
 import { countryName, formatDateTime, formatMoney } from '@/lib/intl'
+import { productHref } from '@/lib/products/view'
 import { cn } from '@/lib/utils'
 import { requireSession } from '@/server/auth/sessions'
 import { authorize } from '@/server/authz/authorize'
@@ -89,7 +90,7 @@ export default async function OrderPage({ params }: Params) {
                         <ProductThumb src={line.product?.imageSrc ?? null} />
                         <span className="min-w-0 flex-1">
                           {line.product ? (
-                            <Link href={`/products/${line.product.slug}`} prefetch={false} className="font-medium underline decoration-border-strong underline-offset-3 hover:decoration-current">
+                            <Link href={productHref(line.product.slug)} prefetch={false} className="font-medium underline decoration-border-strong underline-offset-3 hover:decoration-current">
                               {line.name}
                             </Link>
                           ) : (
@@ -142,7 +143,7 @@ export default async function OrderPage({ params }: Params) {
               <span className="block break-all text-muted-foreground">{order.customer.email}</span>
               {location ? <span className="block text-muted-foreground">{location}</span> : null}
             </p>
-            <Link href={`/customers/${order.customer.id}`} prefetch={false} className="w-fit text-[13px] font-medium text-primary hover:underline">
+            <Link href={customerHref(order.customer.id)} prefetch={false} className="w-fit text-[13px] font-medium text-primary hover:underline">
               {t('detail.customerPage')}
             </Link>
           </section>

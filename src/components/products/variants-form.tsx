@@ -15,7 +15,7 @@ import { saveVariantsAction, type VariantsState } from '@/server/actions/product
 const IDLE: VariantsState = { status: 'idle' }
 
 /** One variant as the form starts it: the own price as field text ('' for none), the computed price as its placeholder. */
-export type VariantRow = { id: string; label: string; sku: string; computedPrice: string; override: string; stock: number; threshold: number }
+type VariantRow = { id: string; label: string; sku: string; computedPrice: string; override: string; stock: number; threshold: number }
 
 type Props = { productId: string; rows: VariantRow[] }
 

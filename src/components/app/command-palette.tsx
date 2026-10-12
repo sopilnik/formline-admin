@@ -12,13 +12,16 @@ import { useSignOut } from '@/components/app/sign-out'
 import { useIsApple } from '@/components/app/use-is-apple'
 import { Button } from '@/components/ui/button'
 import { LOCALES } from '@/i18n/locale'
+import { customerHref } from '@/lib/customers/view'
 import { formatMoney } from '@/lib/intl'
+import { orderHref } from '@/lib/orders/view'
+import { productHref } from '@/lib/products/view'
 import { NO_RESULTS, searchTerm, type SearchResults } from '@/lib/search'
-import { THEMES, type Theme } from '@/lib/theme'
+import { THEMES } from '@/lib/theme'
 import { setLocaleAction, setThemeAction } from '@/server/actions/preferences'
 
 /** What the palette may offer beyond the pages: the actions the member's role allows (spec §5.5). */
-export type PaletteAccess = { newProduct: boolean; invite: boolean }
+type PaletteAccess = { newProduct: boolean; invite: boolean }
 
 type Entry = { value: string; label: string; hint?: string; run: () => void }
 type Group = { value: 'pages' | 'actions' | 'orders' | 'customers' | 'products'; items: Entry[] }
@@ -131,7 +134,7 @@ function PaletteSearch({ items, access, close }: { items: NavItem[]; access: Pal
     ...THEMES.map(theme => ({
       value: `action:theme-${theme}`,
       label: t(`actions.theme.${theme}`),
-      run: () => startTransition(async () => { await setThemeAction(theme satisfies Theme) }),
+      run: () => startTransition(async () => { await setThemeAction(theme) }),
     })),
     ...LOCALES.filter(other => other !== locale).map(other => ({
       value: `action:language-${other}`,
@@ -143,32 +146,33 @@ function PaletteSearch({ items, access, close }: { items: NavItem[]; access: Pal
   ]
   const term = searchTerm(query)
   const results = found && term === found.term ? found.results : NO_RESULTS
-  const groups: Group[] = [
-    { value: 'pages' as const, items: pages.filter(entry => contains(entry.label, query)) },
-    { value: 'actions' as const, items: actions.filter(entry => contains(entry.label, query)) },
+  const every: Group[] = [
+    { value: 'pages', items: pages.filter(entry => contains(entry.label, query)) },
+    { value: 'actions', items: actions.filter(entry => contains(entry.label, query)) },
     {
-      value: 'orders' as const,
+      value: 'orders',
       items: results.orders.map(order => ({
         value: `order:${order.number}`,
         label: t('orderLabel', { number: order.number, customer: order.customer }),
         hint: `${formatMoney(order.totalCents, locale)} · ${orderStatus(order.status)}`,
-        run: go(`/orders/${order.number}`),
+        run: go(orderHref(order.number)),
       })),
     },
     {
-      value: 'customers' as const,
-      items: results.customers.map(customer => ({ value: `customer:${customer.id}`, label: customer.name, hint: customer.email, run: go(`/customers/${customer.id}`) })),
+      value: 'customers',
+      items: results.customers.map(customer => ({ value: `customer:${customer.id}`, label: customer.name, hint: customer.email, run: go(customerHref(customer.id)) })),
     },
     {
-      value: 'products' as const,
+      value: 'products',
       items: results.products.map(product => ({
         value: `product:${product.slug}`,
         label: product.name,
         hint: productStatus(product.status),
-        run: go(`/products/${product.slug}`),
+        run: go(productHref(product.slug)),
       })),
     },
-  ].filter(group => group.items.length > 0)
+  ]
+  const groups = every.filter(group => group.items.length > 0)
 
   const status = searching ? t('searching') : failed ? t('failed') : null
 

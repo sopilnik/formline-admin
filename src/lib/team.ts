@@ -2,7 +2,7 @@
 export const ASSIGNABLE_ROLES = ['admin', 'manager', 'viewer'] as const
 export type AssignableRole = (typeof ASSIGNABLE_ROLES)[number]
 
-/** An invitation's fields, shared by the form and the server's parser (spec §5.6: no Zod in the browser). */
+/** An invitation's fields: a refused invitation hands its values back to the form under these keys. */
 export const INVITE_FIELDS = ['email', 'role'] as const
 export type InviteField = (typeof INVITE_FIELDS)[number]
 export const EMAIL_MAX = 254

@@ -14,6 +14,7 @@ import { toOrderRowView } from '@/lib/orders/view'
 import { buildChart } from '@/lib/overview/chart'
 import { bucketSums, collectionShares, kpis, trendOf, type Kpi } from '@/lib/overview/kpi'
 import { lastMoment, parsePeriod, periodPlan, type Range } from '@/lib/periods'
+import { productHref } from '@/lib/products/view'
 import type { SearchParams } from '@/lib/search-params'
 import { requireSession } from '@/server/auth/sessions'
 import { authorize } from '@/server/authz/authorize'
@@ -119,7 +120,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
           total={data.stock.total}
           rows={data.stock.rows.map(row => ({
             key: row.variantId,
-            href: `/products/${row.productSlug}`,
+            href: productHref(row.productSlug),
             product: row.productName,
             variant: variantLabel(row.size, row.palette),
             stock: row.stock,

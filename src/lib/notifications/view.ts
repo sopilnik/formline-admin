@@ -30,10 +30,6 @@ export type NotificationTarget =
   | { type: 'product'; productId: string }
   | { type: 'page'; href: '/team' | '/settings/security' }
 
-export function isNotificationKind(value: string): value is NotificationKind {
-  return (NOTIFICATION_KINDS as readonly string[]).includes(value)
-}
-
 /** What a stored notification says; null for a kind this version does not know, which the lists leave out. */
 export function notificationView(kind: string, stored: unknown): NotificationView | null {
   const payload = asRecord(stored) ?? {}

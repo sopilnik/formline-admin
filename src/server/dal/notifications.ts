@@ -1,7 +1,9 @@
 import 'server-only'
 import { and, count, desc, eq, isNull, or, sql, type SQL } from 'drizzle-orm'
 import { notificationTarget, type NotificationKind } from '@/lib/notifications/view'
+import { orderHref } from '@/lib/orders/view'
 import { pageCount } from '@/lib/pagination'
+import { productHref } from '@/lib/products/view'
 import { notificationReads, notifications, products } from '@/server/db/schema'
 import type { Tx } from '@/server/db/with-workspace'
 
@@ -91,9 +93,9 @@ export async function markAllNotificationsRead(tx: Tx, reader: NotificationReade
 export async function notificationHref(tx: Tx, workspaceId: string, kind: string, payload: unknown): Promise<string> {
   const target = notificationTarget(kind, payload)
   if (!target) return '/notifications'
-  if (target.type === 'order') return `/orders/${target.number}`
+  if (target.type === 'order') return orderHref(target.number)
   if (target.type === 'page') return target.href
   const [product] = await tx.select({ slug: products.slug }).from(products)
     .where(and(eq(products.workspaceId, workspaceId), eq(products.id, target.productId)))
-  return product ? `/products/${product.slug}` : '/products'
+  return product ? productHref(product.slug) : '/products'
 }

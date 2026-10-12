@@ -3,7 +3,7 @@ import type { OrderStatus } from '@/lib/orders/status'
 import type { ProductStatus } from '@/lib/products/status'
 
 /** A term shorter than this searches nothing: one letter would match most of the catalog. */
-export const SEARCH_MIN = 2
+const SEARCH_MIN = 2
 /** As long as any field the search looks at is worth typing. */
 export const SEARCH_MAX = 100
 /** Results per group. */

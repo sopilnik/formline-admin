@@ -15,7 +15,14 @@ function SubjectText({ subject }: { subject: Subject | null }) {
   return subject.href ? <Link href={subject.href} prefetch={false} className={LINK}>{subject.text}</Link> : <span>{subject.text}</span>
 }
 
-type Translate = { (key: string): string; has: (key: string) => boolean }
+/**
+ * A logged value in the interface language when the dictionary knows it, else as it was logged: a status, role or field
+ * the log keeps may be one this version no longer names. next-intl types its keys, so the one plain lookup is here.
+ */
+function known(translate: unknown, value: string): string {
+  const lookup = translate as { (key: string): string; has: (key: string) => boolean }
+  return lookup.has(value) ? lookup(value) : value
+}
 
 /** The short detail in words; statuses, roles and field names in the interface language. */
 function DetailText({ detail }: { detail: Detail | null }) {
@@ -26,21 +33,20 @@ function DetailText({ detail }: { detail: Detail | null }) {
   const field = useTranslations('activity.fields')
 
   if (!detail) return null
-  const label = (translate: Translate, value: string): string => (translate.has(value) ? translate(value) : value)
 
   switch (detail.kind) {
     case 'orderStatus':
     case 'productStatus':
     case 'role': {
-      const translate = (detail.kind === 'orderStatus' ? order : detail.kind === 'productStatus' ? product : role) as unknown as Translate
-      const text = t('transition', { from: label(translate, detail.from), to: label(translate, detail.to) })
+      const translate = detail.kind === 'orderStatus' ? order : detail.kind === 'productStatus' ? product : role
+      const text = t('transition', { from: known(translate, detail.from), to: known(translate, detail.to) })
       return <>{detail.kind === 'orderStatus' && detail.bulk ? t('inBulk', { transition: text }) : text}</>
     }
 
     case 'rows':
       return <>{detail.truncated ? t('rowsCut', { count: detail.count }) : t('rows', { count: detail.count })}</>
     case 'fields':
-      return <>{t('fields', { fields: detail.fields.map(name => label(field as unknown as Translate, name)).join(', ') })}</>
+      return <>{t('fields', { fields: detail.fields.map(name => known(field, name)).join(', ') })}</>
     case 'variants':
       return <>{t('variants', { count: detail.count })}</>
     case 'image':
@@ -48,9 +54,9 @@ function DetailText({ detail }: { detail: Detail | null }) {
     case 'position':
       return <>{t('position', { from: detail.from, to: detail.to })}</>
     case 'invited':
-      return <>{t('invited', { role: label(role as unknown as Translate, detail.role) })}</>
+      return <>{t('invited', { role: known(role, detail.role) })}</>
     case 'joined':
-      return <>{t('joined', { role: label(role as unknown as Translate, detail.role) })}</>
+      return <>{t('joined', { role: known(role, detail.role) })}</>
     case 'method':
       return <>{t(`method.${detail.method}`)}</>
     case 'remaining':

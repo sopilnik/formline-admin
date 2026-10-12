@@ -4,7 +4,7 @@ import { getPool } from '@/server/db/pool'
 import { log } from '@/server/log'
 import { MEDIA_PATH, thumbPath, type MediaStorage } from '@/server/media/storage'
 
-export const RETRY_BATCH = 100
+const RETRY_BATCH = 100
 
 /** The wait before the next attempt doubles from one hour and stops growing at a day. */
 export function retryDelayHours(attempts: number): number {

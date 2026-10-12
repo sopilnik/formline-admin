@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { revokeOtherSessionsAction, revokeSessionAction } from '@/server/actions/security'
 
-export type SessionView = { id: string; device: string | null; signedIn: string; lastActive: string; current: boolean }
+type SessionView = { id: string; device: string | null; signedIn: string; lastActive: string; current: boolean }
 
 /** One's signed-in devices (spec §8.8): each other one can be signed out, or all of them at once. */
 export function SessionsSection({ sessions }: { sessions: SessionView[] }) {
