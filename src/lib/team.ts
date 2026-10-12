@@ -18,5 +18,6 @@ export function memberName(raw: string): string | null {
   const length = [...name].length
   return length >= 1 && length <= MEMBER_NAME_MAX ? name : null
 }
+
 /** Members and open invitations together, so a sandbox stays small (spec §6.5). */
 export const TEAM_CAP = 20
