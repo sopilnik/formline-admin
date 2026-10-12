@@ -1,12 +1,11 @@
-import { createHash, randomUUID } from 'node:crypto'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { bucketSums } from '@/lib/overview/kpi'
 import { periodPlan, PERIODS, type Range } from '@/lib/periods'
-import { generateToken, hashToken } from '@/server/auth/tokens'
 import { attentionCounts, collectionRevenue, lowStock, revenuePoints, revenueTotals } from '@/server/dal/overview'
 import { withWorkspace, type WorkspaceContext } from '@/server/db/with-workspace'
 import { adminPool, appPool, closeAll } from './db'
+import { createSandbox } from './fixtures'
 
 let admin: pg.Pool
 let app: pg.Pool
@@ -18,11 +17,8 @@ const REVENUE = "('paid', 'processing', 'shipped', 'delivered')"
 beforeAll(async () => {
   admin = adminPool()
   app = appPool()
-  const { rows } = await app.query<{ outcome: string; sandbox_id: string; demo_user_id: string }>(
-    'select outcome, sandbox_id, demo_user_id from fa.create_sandbox($1, $2, $3, $4)',
-    [createHash('sha256').update(randomUUID()).digest('hex'), hashToken(generateToken()), 'Vitest', 'en'])
-  expect(rows[0]?.outcome).toBe('created')
-  ctx = { workspaceId: rows[0]!.sandbox_id, userId: rows[0]!.demo_user_id, role: 'viewer' }
+  const { workspaceId, userId } = await createSandbox(app)
+  ctx = { workspaceId, userId, role: 'viewer' }
 })
 afterAll(closeAll)
 

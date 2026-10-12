@@ -1,4 +1,3 @@
-import { createHash, randomUUID } from 'node:crypto'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { hashPassword, verifyPassword } from '@/server/auth/passwords'
@@ -8,7 +7,7 @@ import { generateToken, hashToken } from '@/server/auth/tokens'
 import { listOwnSessions } from '@/server/dal/sessions'
 import { withWorkspace } from '@/server/db/with-workspace'
 import { adminPool, appPool, closeAll } from './db'
-import { asSchemaOwner } from './fixtures'
+import { asSchemaOwner, createSandbox, insertSession } from './fixtures'
 import { ensureOwner, noBreach, OWNER } from './owner'
 
 let admin: pg.Pool
@@ -30,15 +29,8 @@ afterAll(async () => {
 })
 
 /** A verified session row of a user, as a signed-in device would have it. */
-async function device(workspaceId: string, userId: string, agent: string, reauthAt: Date | null = new Date()): Promise<Session> {
-  const id = hashToken(generateToken())
-  const { rows } = await admin.query<{ role: Session['role']; kind: 'owner' | 'sandbox'; expires_at: Date }>(
-    `insert into fa.sessions (workspace_id, id, user_id, expires_at, second_factor_verified, reauth_at, user_agent_summary)
-     values ($1, $2, $3, now() + interval '1 day', true, $4, $5)
-     returning (select role from fa.users where workspace_id = $1 and id = $3) as role,
-               (select kind from fa.workspaces where id = $1) as kind, expires_at`, [workspaceId, id, userId, reauthAt, agent])
-  return { id, workspaceId, workspaceKind: rows[0]!.kind, userId, role: rows[0]!.role, secondFactorVerified: true, reauthAt, expiresAt: rows[0]!.expires_at }
-}
+const device = (workspaceId: string, userId: string, agent: string, reauthAt: Date | null = new Date()): Promise<Session> =>
+  insertSession(admin, workspaceId, userId, { reauthAt, userAgent: agent })
 
 const exists = async (session: Session) => (await admin.query('select 1 from fa.sessions where id = $1', [session.id])).rowCount === 1
 
@@ -69,21 +61,15 @@ describe('changeOwnPassword', () => {
   })
 
   it('is not offered in a sandbox, where members have no password', async () => {
-    const { rows } = await app.query<{ sandbox_id: string; demo_user_id: string }>(
-      'select sandbox_id, demo_user_id from fa.create_sandbox($1, $2, $3, $4)',
-      [createHash('sha256').update(randomUUID()).digest('hex'), hashToken(generateToken()), 'Vitest', 'en'])
-    const session = await device(rows[0]!.sandbox_id, rows[0]!.demo_user_id, 'Chrome, Linux')
+    const { workspaceId, userId } = await createSandbox(app)
+    const session = await device(workspaceId, userId, 'Chrome, Linux')
     expect(await changeOwnPassword(session, { password: 'lantern-harbour-quiet-9083', ip: null }, { pool: app, isBreached: noBreach })).toEqual({ ok: false, error: 'generic' })
   })
 })
 
 describe('signed-in devices', () => {
   it('lists one’s own verified sessions only, the most recently active first', async () => {
-    const { rows } = await app.query<{ sandbox_id: string; demo_user_id: string }>(
-      'select sandbox_id, demo_user_id from fa.create_sandbox($1, $2, $3, $4)',
-      [createHash('sha256').update(randomUUID()).digest('hex'), hashToken(generateToken()), 'Vitest', 'en'])
-    const ws = rows[0]!.sandbox_id
-    const me = rows[0]!.demo_user_id
+    const { workspaceId: ws, userId: me } = await createSandbox(app)
     const current = await device(ws, me, 'Chrome, Linux')
     const phone = await device(ws, me, 'Safari, iOS')
     await admin.query("update fa.sessions set last_seen_at = now() + interval '1 minute' where id = $1", [phone.id])

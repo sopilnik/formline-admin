@@ -1,10 +1,9 @@
-import { createHash, randomUUID } from 'node:crypto'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { generateToken, hashToken } from '@/server/auth/tokens'
 import { searchWorkspace } from '@/server/dal/search'
 import { withWorkspace, type WorkspaceContext } from '@/server/db/with-workspace'
 import { adminPool, appPool, closeAll } from './db'
+import { createSandbox } from './fixtures'
 
 let admin: pg.Pool
 let app: pg.Pool
@@ -12,11 +11,8 @@ let box: WorkspaceContext
 let other: WorkspaceContext
 
 async function sandbox(): Promise<WorkspaceContext> {
-  const { rows } = await app.query<{ outcome: string; sandbox_id: string; demo_user_id: string }>(
-    'select outcome, sandbox_id, demo_user_id from fa.create_sandbox($1, $2, $3, $4)',
-    [createHash('sha256').update(randomUUID()).digest('hex'), hashToken(generateToken()), 'Vitest', 'en'])
-  expect(rows[0]?.outcome).toBe('created')
-  return { workspaceId: rows[0]!.sandbox_id, userId: rows[0]!.demo_user_id, role: 'owner' }
+  const { workspaceId, userId } = await createSandbox(app)
+  return { workspaceId, userId, role: 'owner' }
 }
 
 const search = (ctx: WorkspaceContext, term: string) => withWorkspace(ctx, tx => searchWorkspace(tx, ctx.workspaceId, term), app)
@@ -27,10 +23,7 @@ beforeAll(async () => {
   box = await sandbox()
   other = await sandbox()
 })
-afterAll(async () => {
-  await admin.query('delete from fa.workspaces where id = any($1::uuid[])', [[box.workspaceId, other.workspaceId]])
-  await closeAll()
-})
+afterAll(closeAll)
 
 describe('searchWorkspace', () => {
   it('finds an order by its number, with or without the sign', async () => {

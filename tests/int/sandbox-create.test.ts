@@ -1,11 +1,10 @@
-import { createHash, randomUUID } from 'node:crypto'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { validateSessionToken } from '@/server/auth/sessions'
 import { generateToken, hashToken } from '@/server/auth/tokens'
 import { roomInWindow } from '../windows'
 import { adminPool, appPool, closeAll } from './db'
-import { asSchemaOwner } from './fixtures'
+import { asSchemaOwner, randomIpHash } from './fixtures'
 
 type Entry = { outcome: string; sandbox_id: string | null; demo_user_id: string | null; sandbox_expires_at: Date | null; retry_after_seconds: number }
 
@@ -16,8 +15,6 @@ let admin: pg.Pool
 let app: pg.Pool
 let template: string
 let owner: string
-
-const ipHash = () => createHash('sha256').update(randomUUID()).digest('hex')
 
 async function create(ip: string | null, locale = 'en'): Promise<Entry & { token: string }> {
   const token = generateToken()
@@ -51,7 +48,7 @@ afterAll(closeAll)
 
 describe('create_sandbox', () => {
   it('copies the template with its ids into a new workspace and opens the demo owner session', async () => {
-    const entry = await create(ipHash(), 'ru')
+    const entry = await create(randomIpHash(), 'ru')
     expect(entry.outcome).toBe('created')
     const ws = entry.sandbox_id!
     expect(ws).not.toBe(template)
@@ -87,7 +84,7 @@ describe('create_sandbox', () => {
     })
 
     try {
-      const entry = await create(ipHash())
+      const entry = await create(randomIpHash())
       const ws = entry.sandbox_id!
 
       const seed = await admin.query<{ newest: Date; oldest: Date }>(
@@ -117,7 +114,7 @@ describe('create_sandbox', () => {
   it('never reads the owner workspace', async () => {
     await asSchemaOwner(admin, c => c.query("insert into fa.collections (workspace_id, slug, name) values ($1, 'owner-only', 'Owner only')", [owner]))
     try {
-      const entry = await create(ipHash())
+      const entry = await create(randomIpHash())
       const { rowCount } = await admin.query("select 1 from fa.collections where workspace_id = $1 and slug = 'owner-only'", [entry.sandbox_id])
       expect(rowCount).toBe(0)
     } finally {
@@ -128,34 +125,34 @@ describe('create_sandbox', () => {
   it('allows five sandboxes an hour per address, then reports the wait', async () => {
     // create_sandbox counts the entries of an address in fixed hours.
     await roomInWindow(60 * 60, 10)
-    const ip = ipHash()
+    const ip = randomIpHash()
     for (let i = 0; i < 5; i++) expect((await create(ip)).outcome).toBe('created')
     const sixth = await create(ip)
     expect(sixth).toMatchObject({ outcome: 'rate_limited', sandbox_id: null, demo_user_id: null, sandbox_expires_at: null })
     expect(sixth.retry_after_seconds).toBeGreaterThanOrEqual(1)
     expect(sixth.retry_after_seconds).toBeLessThanOrEqual(3600)
-    expect((await create(ipHash())).outcome).toBe('created')
+    expect((await create(randomIpHash())).outcome).toBe('created')
     const { rows } = await admin.query<{ count: number }>("select count from fa.rate_limits where purpose = 'sandbox.create.ip' and subject = $1", [`ip:${ip}`])
     expect(rows[0]?.count).toBe(6)
   })
 
   it('holds the cap under concurrent entries and evicts only idle sandboxes', async () => {
-    const missing = 100 - await liveSandboxes()
-    expect(missing).toBeGreaterThanOrEqual(2)
+    // A known baseline: the files run one after another, so no sandbox here belongs to a test still running.
+    await admin.query("delete from fa.workspaces where kind = 'sandbox'")
     const insert = (n: number, idle: string) => admin.query<{ id: string }>(
       `insert into fa.workspaces (kind, expires_at, last_active_at)
        select 'sandbox', now() + interval '1 day', now() - $2::interval from generate_series(1, $1) returning id`, [n, idle])
     const idle = (await insert(2, '16 minutes')).rows.map(r => r.id)
-    const active = (await insert(missing - 2, '0 minutes')).rows.map(r => r.id)
+    const active = (await insert(98, '0 minutes')).rows.map(r => r.id)
     const made: string[] = []
     try {
-      const [a, b] = await Promise.all([create(ipHash()), create(ipHash())])
+      const [a, b] = await Promise.all([create(randomIpHash()), create(randomIpHash())])
       made.push(...[a.sandbox_id, b.sandbox_id].filter((id): id is string => id !== null))
       expect([a.outcome, b.outcome]).toEqual(['created', 'created'])
       expect((await admin.query('select 1 from fa.workspaces where id = any($1::uuid[])', [idle])).rowCount).toBe(0)
       expect((await admin.query('select 1 from fa.workspaces where id = any($1::uuid[])', [active])).rowCount).toBe(active.length)
       expect(await liveSandboxes()).toBe(100)
-      const third = await create(ipHash())
+      const third = await create(randomIpHash())
       expect(third).toMatchObject({ outcome: 'full', sandbox_id: null })
       expect(await liveSandboxes()).toBe(100)
     } finally {

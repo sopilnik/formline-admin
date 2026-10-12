@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from 'node:crypto'
+import { randomUUID } from 'node:crypto'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import type { Actor } from '@/server/actor'
@@ -7,6 +7,7 @@ import { listTeam } from '@/server/dal/team'
 import { withWorkspace } from '@/server/db/with-workspace'
 import { changeMemberActive, changeMemberRole } from '@/server/team/members'
 import { adminPool, appPool, closeAll } from './db'
+import { createSandbox, memberIds } from './fixtures'
 
 let admin: pg.Pool
 let app: pg.Pool
@@ -16,13 +17,9 @@ let ids: Record<'owner' | 'admin' | 'manager' | 'viewer', string>
 beforeAll(async () => {
   admin = adminPool()
   app = appPool()
-  const { rows } = await app.query<{ outcome: string; sandbox_id: string; demo_user_id: string }>(
-    'select outcome, sandbox_id, demo_user_id from fa.create_sandbox($1, $2, $3, $4)',
-    [createHash('sha256').update(randomUUID()).digest('hex'), hashToken(generateToken()), 'Vitest', 'en'])
-  expect(rows[0]?.outcome).toBe('created')
-  owner = { workspaceId: rows[0]!.sandbox_id, userId: rows[0]!.demo_user_id, role: 'owner', ipHash: 'ip-hash-of-the-test' }
-  const users = await admin.query<{ id: string; role: keyof typeof ids }>('select id, role from fa.users where workspace_id = $1', [owner.workspaceId])
-  ids = Object.fromEntries(users.rows.map(u => [u.role, u.id])) as typeof ids
+  const { workspaceId, userId } = await createSandbox(app)
+  owner = { workspaceId, userId, role: 'owner', ipHash: 'ip-hash-of-the-test' }
+  ids = await memberIds(admin, owner.workspaceId)
 })
 afterAll(closeAll)
 

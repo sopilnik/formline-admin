@@ -1,21 +1,17 @@
-import { createHash, randomUUID } from 'node:crypto'
+import { randomUUID } from 'node:crypto'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import type { Actor } from '@/server/actor'
-import { generateToken, hashToken } from '@/server/auth/tokens'
 import { changeStatuses } from '@/server/orders/change-status'
 import { adminPool, appPool, closeAll } from './db'
+import { createSandbox, memberIds } from './fixtures'
 
 let admin: pg.Pool
 let app: pg.Pool
 
 async function sandbox(): Promise<{ workspaceId: string; users: Record<string, string> }> {
-  const { rows } = await app.query<{ outcome: string; sandbox_id: string }>(
-    'select outcome, sandbox_id from fa.create_sandbox($1, $2, $3, $4)',
-    [createHash('sha256').update(randomUUID()).digest('hex'), hashToken(generateToken()), 'Vitest', 'en'])
-  expect(rows[0]?.outcome).toBe('created')
-  const members = await admin.query<{ id: string; role: string }>('select id, role from fa.users where workspace_id = $1', [rows[0]!.sandbox_id])
-  return { workspaceId: rows[0]!.sandbox_id, users: Object.fromEntries(members.rows.map(r => [r.role, r.id])) }
+  const { workspaceId } = await createSandbox(app)
+  return { workspaceId, users: await memberIds(admin, workspaceId) }
 }
 
 const actor = (workspaceId: string, userId: string, role: Actor['role']): Actor => ({ workspaceId, userId, role, ipHash: null })

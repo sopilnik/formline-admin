@@ -1,14 +1,13 @@
-import { createHash, randomUUID } from 'node:crypto'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { generateHOTP } from '@/lib/otp'
 import { hashRecoveryCode } from '@/server/auth/recovery-codes'
 import { disableOwnTotp, enableOwnTotp, regenerateOwnRecoveryCodes } from '@/server/auth/self-factors'
 import type { Session } from '@/server/auth/sessions'
-import { generateToken, hashToken } from '@/server/auth/tokens'
 import { decryptTotpSecret, formatTotpSecret } from '@/server/auth/totp'
 import { authConfig } from '@/server/config'
 import { adminPool, appPool, closeAll } from './db'
+import { createSandbox, insertSession } from './fixtures'
 import { ensureOwner } from './owner'
 
 let admin: pg.Pool
@@ -21,14 +20,8 @@ const STEP = Math.floor(Date.now() / 30_000)
 const now = () => STEP * 30_000 + 1_000
 const codeAt = (secret: Uint8Array, step = STEP) => generateHOTP(secret, BigInt(step), 6)
 
-async function device(workspaceId: string, userId: string, reauthAt: Date | null = new Date()): Promise<Session> {
-  const id = hashToken(generateToken())
-  const { rows } = await admin.query<{ role: Session['role']; kind: 'owner' | 'sandbox'; expires_at: Date }>(
-    `insert into fa.sessions (workspace_id, id, user_id, expires_at, second_factor_verified, reauth_at) values ($1, $2, $3, now() + interval '1 day', true, $4)
-     returning (select role from fa.users where workspace_id = $1 and id = $3) as role, (select kind from fa.workspaces where id = $1) as kind, expires_at`,
-    [workspaceId, id, userId, reauthAt])
-  return { id, workspaceId, workspaceKind: rows[0]!.kind, userId, role: rows[0]!.role, secondFactorVerified: true, reauthAt, expiresAt: rows[0]!.expires_at }
-}
+const device = (workspaceId: string, userId: string, reauthAt: Date | null = new Date()): Promise<Session> =>
+  insertSession(admin, workspaceId, userId, { reauthAt })
 
 const self = async () => (await admin.query<{ totp_secret_enc: string | null; totp_last_step: string | null }>(
   'select totp_secret_enc, totp_last_step from fa.users where workspace_id = $1 and id = $2', [current.workspaceId, current.userId])).rows[0]!
@@ -44,12 +37,10 @@ const exists = async (session: Session) => (await admin.query('select 1 from fa.
 beforeAll(async () => {
   admin = adminPool()
   app = appPool()
-  const { rows } = await app.query<{ sandbox_id: string; demo_user_id: string }>(
-    'select sandbox_id, demo_user_id from fa.create_sandbox($1, $2, $3, $4)',
-    [createHash('sha256').update(randomUUID()).digest('hex'), hashToken(generateToken()), 'Vitest', 'en'])
+  const { workspaceId, userId } = await createSandbox(app)
   // A sandbox member: no fresh sign-in is asked for (spec §5.1).
-  current = await device(rows[0]!.sandbox_id, rows[0]!.demo_user_id, null)
-  other = await device(rows[0]!.sandbox_id, rows[0]!.demo_user_id, null)
+  current = await device(workspaceId, userId, null)
+  other = await device(workspaceId, userId, null)
 })
 afterAll(closeAll)
 

@@ -1,30 +1,25 @@
-import { createHash, randomUUID } from 'node:crypto'
+import { randomUUID } from 'node:crypto'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { generateHOTP } from '@/lib/otp'
 import { validateSessionToken, type Session } from '@/server/auth/sessions'
-import { generateToken, hashToken } from '@/server/auth/tokens'
 import { encryptTotpSecret } from '@/server/auth/totp'
 import { authConfig } from '@/server/config'
 import { LIMITS, SECOND_FACTOR_LOCK_SECONDS } from '@/server/ratelimit/limits'
 import { switchUser } from '@/server/sandbox/sign-in-as'
 import { roomInWindow } from '../windows'
 import { adminPool, appPool, closeAll } from './db'
-import { asSchemaOwner } from './fixtures'
+import { asSchemaOwner, createSandbox, memberIds } from './fixtures'
 
 let admin: pg.Pool
 let app: pg.Pool
 
-const ipHash = () => createHash('sha256').update(randomUUID()).digest('hex')
 const meta = { userAgentSummary: 'Vitest', ipHash: null, preferences: { locale: 'en' as const, theme: 'system' as const } }
 
 async function enter(): Promise<{ session: Session; token: string; users: Record<string, string> }> {
-  const token = generateToken()
-  const { rows } = await app.query<{ outcome: string; sandbox_id: string }>('select outcome, sandbox_id from fa.create_sandbox($1, $2, $3, $4)', [ipHash(), hashToken(token), 'Vitest', 'en'])
-  expect(rows[0]?.outcome).toBe('created')
+  const { token } = await createSandbox(app)
   const session = (await validateSessionToken(token, app))!
-  const members = await admin.query<{ id: string; role: string }>('select id, role from fa.users where workspace_id = $1', [session.workspaceId])
-  return { session, token, users: Object.fromEntries(members.rows.map(r => [r.role, r.id])) }
+  return { session, token, users: await memberIds(admin, session.workspaceId) }
 }
 
 /** Gives a member of a sandbox an authenticator with this key. */

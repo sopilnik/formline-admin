@@ -1,12 +1,11 @@
-import { createHash, randomUUID } from 'node:crypto'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { DEFAULT_CUSTOMERS_QUERY } from '@/lib/customers/query'
 import { isoInZone } from '@/lib/periods'
-import { generateToken, hashToken } from '@/server/auth/tokens'
 import { customerExportStream, planCustomerExport } from '@/server/customers/export'
 import type { WorkspaceContext } from '@/server/db/with-workspace'
 import { adminPool, appPool, closeAll } from './db'
+import { createSandbox } from './fixtures'
 
 let admin: pg.Pool
 let app: pg.Pool
@@ -17,11 +16,8 @@ const header = ['Customer', 'Email', 'City', 'Country', 'Orders', 'Total spent',
 beforeAll(async () => {
   admin = adminPool()
   app = appPool()
-  const { rows } = await app.query<{ outcome: string; sandbox_id: string; demo_user_id: string }>(
-    'select outcome, sandbox_id, demo_user_id from fa.create_sandbox($1, $2, $3, $4)',
-    [createHash('sha256').update(randomUUID()).digest('hex'), hashToken(generateToken()), 'Vitest', 'en'])
-  expect(rows[0]?.outcome).toBe('created')
-  ctx = { workspaceId: rows[0]!.sandbox_id, userId: rows[0]!.demo_user_id, role: 'owner' }
+  const { workspaceId, userId } = await createSandbox(app)
+  ctx = { workspaceId, userId, role: 'owner' }
   await admin.query(
     "insert into fa.customers (workspace_id, email, name, city) values ($1, 'formula@example.test', '=HYPERLINK(\"x\")', 'Zürich, Altstadt'), ($1, 'olga@example.ru', 'Ольга Смирнова', null)",
     [ctx.workspaceId])

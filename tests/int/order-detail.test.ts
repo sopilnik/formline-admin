@@ -1,12 +1,12 @@
-import { createHash, randomUUID } from 'node:crypto'
+import { randomUUID } from 'node:crypto'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { generateToken, hashToken } from '@/server/auth/tokens'
 import { getOrder } from '@/server/dal/orders'
 import { lowStock } from '@/server/dal/overview'
 import { withWorkspace, type WorkspaceContext } from '@/server/db/with-workspace'
 import { addNote } from '@/server/orders/notes'
 import { adminPool, appPool, closeAll } from './db'
+import { createSandbox, memberIds } from './fixtures'
 
 let admin: pg.Pool
 let app: pg.Pool
@@ -16,13 +16,8 @@ let users: Record<string, string>
 beforeAll(async () => {
   admin = adminPool()
   app = appPool()
-  const { rows } = await app.query<{ outcome: string; sandbox_id: string }>(
-    'select outcome, sandbox_id from fa.create_sandbox($1, $2, $3, $4)',
-    [createHash('sha256').update(randomUUID()).digest('hex'), hashToken(generateToken()), 'Vitest', 'en'])
-  expect(rows[0]?.outcome).toBe('created')
-  workspaceId = rows[0]!.sandbox_id
-  const members = await admin.query<{ id: string; role: string }>('select id, role from fa.users where workspace_id = $1', [workspaceId])
-  users = Object.fromEntries(members.rows.map(r => [r.role, r.id]))
+  workspaceId = (await createSandbox(app)).workspaceId
+  users = await memberIds(admin, workspaceId)
 })
 afterAll(closeAll)
 

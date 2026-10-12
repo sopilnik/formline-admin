@@ -1,11 +1,11 @@
-import { createHash, randomUUID } from 'node:crypto'
+import { randomUUID } from 'node:crypto'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { DEFAULT_ACTIVITY_QUERY, type ActivityQuery } from '@/lib/activity/query'
-import { generateToken, hashToken } from '@/server/auth/tokens'
 import { listActivity } from '@/server/dal/activity'
 import { withWorkspace, type WorkspaceContext } from '@/server/db/with-workspace'
 import { adminPool, appPool, closeAll } from './db'
+import { createSandbox, memberIds } from './fixtures'
 
 let admin: pg.Pool
 let app: pg.Pool
@@ -23,13 +23,9 @@ async function entry(input: { actor: string | null; action: string; entityType?:
 beforeAll(async () => {
   admin = adminPool()
   app = appPool()
-  const { rows } = await app.query<{ outcome: string; sandbox_id: string; demo_user_id: string }>(
-    'select outcome, sandbox_id, demo_user_id from fa.create_sandbox($1, $2, $3, $4)',
-    [createHash('sha256').update(randomUUID()).digest('hex'), hashToken(generateToken()), 'Vitest', 'en'])
-  expect(rows[0]?.outcome).toBe('created')
-  owner = { workspaceId: rows[0]!.sandbox_id, userId: rows[0]!.demo_user_id, role: 'owner' }
-  const users = await admin.query<{ id: string; role: keyof typeof ids }>('select id, role from fa.users where workspace_id = $1', [owner.workspaceId])
-  ids = Object.fromEntries(users.rows.map(u => [u.role, u.id])) as typeof ids
+  const { workspaceId, userId } = await createSandbox(app)
+  owner = { workspaceId, userId, role: 'owner' }
+  ids = await memberIds(admin, owner.workspaceId)
   const order = (await admin.query<{ id: string; number: number }>('select id, number from fa.orders where workspace_id = $1 order by number limit 1', [owner.workspaceId])).rows[0]!
   const product = (await admin.query<{ id: string }>("select id from fa.products where workspace_id = $1 and slug = 'far-orbit'", [owner.workspaceId])).rows[0]!
   await admin.query("update fa.products set name = 'Farther Orbit' where workspace_id = $1 and id = $2", [owner.workspaceId, product.id])

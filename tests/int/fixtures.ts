@@ -1,5 +1,8 @@
+import { createHash, randomUUID } from 'node:crypto'
 import { setTimeout as sleep } from 'node:timers/promises'
 import type pg from 'pg'
+import type { Session } from '@/server/auth/sessions'
+import { generateToken, hashToken } from '@/server/auth/tokens'
 
 export class Rollback extends Error {}
 
@@ -70,4 +73,51 @@ export async function createUser(pool: pg.Pool, workspaceId: string, role: 'owne
       [workspaceId, email, `Test ${role}`, role])
     return rows[0]!.id
   })
+}
+
+/** An address hash nobody else has: it keeps a test outside the per-address limits. */
+export const randomIpHash = (): string => createHash('sha256').update(randomUUID()).digest('hex')
+
+export type Sandbox = { workspaceId: string; userId: string; token: string; expiresAt: Date }
+
+/**
+ * A sandbox as a visitor's entry makes it: create_sandbox from a fresh address, with the demo owner's session opened
+ * under the hash of `token`. tests/int/setup.ts deletes it when the file ends.
+ */
+export async function createSandbox(app: pg.Pool, { locale = 'en', ipHash = randomIpHash() }: { locale?: string; ipHash?: string } = {}): Promise<Sandbox> {
+  const token = generateToken()
+  const { rows } = await app.query<{ outcome: string; sandbox_id: string; demo_user_id: string; sandbox_expires_at: Date }>(
+    'select outcome, sandbox_id, demo_user_id, sandbox_expires_at from fa.create_sandbox($1, $2, $3, $4)', [ipHash, hashToken(token), 'Vitest', locale])
+  const row = rows[0]
+  if (row?.outcome !== 'created') throw new Error(`create_sandbox answered ${row?.outcome ?? 'nothing'}`)
+
+  return { workspaceId: row.sandbox_id, userId: row.demo_user_id, token, expiresAt: row.sandbox_expires_at }
+}
+
+export type MemberRole = 'owner' | 'admin' | 'manager' | 'viewer'
+
+/** The ids of a workspace's members by role, as the template gives every sandbox one of each. */
+export async function memberIds(admin: pg.Pool, workspaceId: string): Promise<Record<MemberRole, string>> {
+  const { rows } = await admin.query<{ id: string; role: MemberRole }>('select id, role from fa.users where workspace_id = $1', [workspaceId])
+  return Object.fromEntries(rows.map(row => [row.role, row.id])) as Record<MemberRole, string>
+}
+
+/**
+ * A verified session of a member, as the cookie of a signed-in visitor carries it: it ends with its sandbox, or in a day
+ * in the owner workspace. Returns the session as the server reads it.
+ */
+export async function insertSession(
+  admin: pg.Pool, workspaceId: string, userId: string,
+  { reauthAt = new Date(), userAgent = null }: { reauthAt?: Date | null; userAgent?: string | null } = {},
+): Promise<Session> {
+  const id = hashToken(generateToken())
+  const { rows } = await admin.query<{ role: Session['role']; kind: Session['workspaceKind']; expires_at: Date }>(
+    `insert into fa.sessions (workspace_id, id, user_id, expires_at, second_factor_verified, reauth_at, user_agent_summary)
+     select w.id, $2, $3, coalesce(w.expires_at, now() + interval '1 day'), true, $4, $5 from fa.workspaces w where w.id = $1
+     returning (select role from fa.users where workspace_id = $1 and id = $3) as role,
+               (select kind from fa.workspaces where id = $1) as kind, expires_at`,
+    [workspaceId, id, userId, reauthAt, userAgent])
+  const row = rows[0]!
+
+  return { id, workspaceId, workspaceKind: row.kind, userId, role: row.role, secondFactorVerified: true, reauthAt, expiresAt: row.expires_at }
 }

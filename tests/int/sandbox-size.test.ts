@@ -1,8 +1,7 @@
-import { createHash, randomUUID } from 'node:crypto'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { generateToken, hashToken } from '@/server/auth/tokens'
 import { adminPool, appPool, closeAll } from './db'
+import { createSandbox } from './fixtures'
 
 const SANDBOXES = 20
 const LIMIT_BYTES = 2 * 1024 * 1024
@@ -23,11 +22,8 @@ async function tableBytes(): Promise<number> {
 }
 
 async function create(): Promise<string> {
-  const { rows } = await app.query<{ outcome: string; sandbox_id: string }>(
-    'select outcome, sandbox_id from fa.create_sandbox($1, $2, $3, $4)',
-    [createHash('sha256').update(randomUUID()).digest('hex'), hashToken(generateToken()), 'Vitest', 'en'])
-  expect(rows[0]?.outcome).toBe('created')
-  return rows[0]!.sandbox_id
+  const { workspaceId } = await createSandbox(app)
+  return workspaceId
 }
 
 describe('sandbox size (spec §6.5)', () => {

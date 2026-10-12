@@ -9,13 +9,11 @@ import { adminPool, closeAll } from './db'
 import { asSchemaOwner, createWorkspace } from './fixtures'
 
 let admin: pg.Pool
-const made: string[] = []
 
 /** Two sandboxes whose owners share one user id, as every sandbox copies the template's ids, each with a passkey and a code. */
 async function twins(): Promise<{ a: string; b: string; userId: string }> {
   const a = await createWorkspace(admin)
   const b = await createWorkspace(admin)
-  made.push(a, b)
   const userId = randomUUID()
   await asSchemaOwner(admin, async c => {
     for (const [workspace, name] of [[a, 'Owner A'], [b, 'Owner B']] as const) {
@@ -30,10 +28,7 @@ async function twins(): Promise<{ a: string; b: string; userId: string }> {
 beforeAll(() => {
   admin = adminPool()
 })
-afterAll(async () => {
-  await admin.query('delete from fa.workspaces where id = any($1::uuid[])', [made])
-  await closeAll()
-})
+afterAll(closeAll)
 
 describe('user, passkey and recovery-code queries', () => {
   // The superuser bypasses row-level security, so only the queries' own predicates keep the other sandbox out.

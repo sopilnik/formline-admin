@@ -1,26 +1,21 @@
-import { createHash, randomUUID } from 'node:crypto'
 import { sql } from 'drizzle-orm'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { validateSessionToken, type Session } from '@/server/auth/sessions'
-import { generateToken, hashToken } from '@/server/auth/tokens'
 import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 import { endSandbox, resetSandbox } from '@/server/sandbox/lifecycle'
 import { roomInWindow } from '../windows'
 import { adminPool, appPool, closeAll } from './db'
-import { asSchemaOwner, errorText } from './fixtures'
+import { asSchemaOwner, createSandbox, errorText, randomIpHash } from './fixtures'
 
 let admin: pg.Pool
 let app: pg.Pool
 let ownerWorkspace: string
 
-const ipHash = () => createHash('sha256').update(randomUUID()).digest('hex')
 const meta = { userAgentSummary: 'Vitest', locale: 'en' as const }
 
-async function enter(ip = ipHash()): Promise<{ session: Session; token: string }> {
-  const token = generateToken()
-  const { rows } = await app.query<{ outcome: string }>('select outcome from fa.create_sandbox($1, $2, $3, $4)', [ip, hashToken(token), 'Vitest', 'en'])
-  expect(rows[0]?.outcome).toBe('created')
+async function enter(ipHash = randomIpHash()): Promise<{ session: Session; token: string }> {
+  const { token } = await createSandbox(app, { ipHash })
   const session = await validateSessionToken(token, app)
   return { session: session!, token }
 }
@@ -70,7 +65,7 @@ describe('end_sandbox', () => {
 
 describe('reset_sandbox', () => {
   it('replaces the sandbox with a fresh copy and counts against the address limit', async () => {
-    const ip = ipHash()
+    const ip = randomIpHash()
     const a = await enter(ip)
     await withWorkspace(workspaceContext(a.session), tx => tx.execute(sql`update fa.collections set name = 'Changed' where slug = 'night'`), app)
     const result = await resetSandbox(a.session, { ipHash: ip, ...meta }, app)
@@ -93,7 +88,7 @@ describe('reset_sandbox', () => {
   it('keeps the sandbox when the address limit refuses the new copy', async () => {
     // create_sandbox counts the entries of an address in fixed hours.
     await roomInWindow(60 * 60, 10)
-    const ip = ipHash()
+    const ip = randomIpHash()
     const a = await enter(ip)
     for (let i = 0; i < 4; i++) await enter(ip)
     const result = await resetSandbox(a.session, { ipHash: ip, ...meta }, app)

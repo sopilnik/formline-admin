@@ -1,13 +1,13 @@
-import { createHash, randomUUID } from 'node:crypto'
+import { randomUUID } from 'node:crypto'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { generateToken, hashToken } from '@/server/auth/tokens'
 import type { Actor } from '@/server/actor'
 import { getProduct } from '@/server/dal/products'
 import { withWorkspace } from '@/server/db/with-workspace'
 import { createProductWithLog } from '@/server/products/create'
 import { changeProductStatusWithLog, deleteProductWithLog } from '@/server/products/status'
 import { adminPool, appPool, closeAll } from './db'
+import { createSandbox } from './fixtures'
 
 let admin: pg.Pool
 let app: pg.Pool
@@ -17,11 +17,8 @@ let collectionId: string
 beforeAll(async () => {
   admin = adminPool()
   app = appPool()
-  const { rows } = await app.query<{ outcome: string; sandbox_id: string; demo_user_id: string }>(
-    'select outcome, sandbox_id, demo_user_id from fa.create_sandbox($1, $2, $3, $4)',
-    [createHash('sha256').update(randomUUID()).digest('hex'), hashToken(generateToken()), 'Vitest', 'en'])
-  expect(rows[0]?.outcome).toBe('created')
-  owner = { workspaceId: rows[0]!.sandbox_id, userId: rows[0]!.demo_user_id, role: 'owner', ipHash: null }
+  const { workspaceId, userId } = await createSandbox(app)
+  owner = { workspaceId, userId, role: 'owner', ipHash: null }
   collectionId = (await admin.query<{ id: string }>("select id from fa.collections where workspace_id = $1 and slug = 'night'", [owner.workspaceId])).rows[0]!.id
 })
 afterAll(async () => {

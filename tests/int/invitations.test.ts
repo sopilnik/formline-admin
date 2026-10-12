@@ -1,4 +1,3 @@
-import { createHash, randomUUID } from 'node:crypto'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import type { Theme } from '@/lib/theme'
@@ -9,7 +8,7 @@ import { findInvitation } from '@/server/dal/invitations'
 import { withWorkspace } from '@/server/db/with-workspace'
 import { acceptInvitation, inviteMember, resendInvitation, revokeMemberInvitation } from '@/server/team/invitations'
 import { adminPool, appPool, closeAll } from './db'
-import { errorText } from './fixtures'
+import { createSandbox, errorText, insertSession } from './fixtures'
 
 let admin: pg.Pool
 let app: pg.Pool
@@ -19,23 +18,12 @@ let expiresAt: Date
 type Sandbox = { actor: Actor; sessionHash: string; expiresAt: Date }
 
 async function sandbox(locale = 'en'): Promise<Sandbox> {
-  const sessionHash = hashToken(generateToken())
-  const { rows } = await app.query<{ outcome: string; sandbox_id: string; demo_user_id: string; sandbox_expires_at: Date }>(
-    'select outcome, sandbox_id, demo_user_id, sandbox_expires_at from fa.create_sandbox($1, $2, $3, $4)',
-    [createHash('sha256').update(randomUUID()).digest('hex'), sessionHash, 'Vitest', locale])
-  expect(rows[0]?.outcome).toBe('created')
-  return { actor: { workspaceId: rows[0]!.sandbox_id, userId: rows[0]!.demo_user_id, role: 'owner', ipHash: 'ip-hash-of-the-test' }, sessionHash, expiresAt: rows[0]!.sandbox_expires_at }
+  const { workspaceId, userId, token, expiresAt } = await createSandbox(app, { locale })
+  return { actor: { workspaceId, userId, role: 'owner', ipHash: 'ip-hash-of-the-test' }, sessionHash: hashToken(token), expiresAt }
 }
 
 /** A verified session of a member, as the cookie of a visitor who switched to them would carry. */
-async function sessionOf(actor: Actor, userId = actor.userId): Promise<Session> {
-  const id = hashToken(generateToken())
-  const { rows } = await admin.query<{ role: Session['role']; expires_at: Date }>(
-    `insert into fa.sessions (workspace_id, id, user_id, expires_at, second_factor_verified, reauth_at)
-     select $1, $2, $3, w.expires_at, true, now() from fa.workspaces w where w.id = $1
-     returning (select role from fa.users where workspace_id = $1 and id = $3) as role, expires_at`, [actor.workspaceId, id, userId])
-  return { id, workspaceId: actor.workspaceId, workspaceKind: 'sandbox', userId, role: rows[0]!.role, secondFactorVerified: true, reauthAt: new Date(), expiresAt: rows[0]!.expires_at }
-}
+const sessionOf = (actor: Actor, userId = actor.userId): Promise<Session> => insertSession(admin, actor.workspaceId, userId)
 
 const tokenOfLetter = async (workspaceId: string, email: string): Promise<string> => (await admin.query<{ token: string }>(
   "select payload->>'token' as token from fa.outbox_emails where workspace_id = $1 and to_address = $2 and template = 'team.invitation' order by created_at desc limit 1",
