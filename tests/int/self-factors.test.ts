@@ -105,8 +105,8 @@ describe('in the owner workspace', () => {
     expect(await disableOwnTotp(stale, { ip: null }, { pool: app })).toEqual({ ok: false, error: 'reauth_required' })
     expect(await regenerateOwnRecoveryCodes(stale, { ip: null }, { pool: app })).toEqual({ ok: false, error: 'reauth_required' })
     const fresh = await device(ownerWorkspace, ownerId)
-    const passkeys = await admin.query<{ n: number }>('select count(*)::int as n from fa.passkeys where workspace_id = $1', [ownerWorkspace])
-    expect(passkeys.rows[0]!.n).toBe(0)
+    // The authenticator is the owner's only factor here, whatever another file left behind.
+    await admin.query('delete from fa.passkeys where workspace_id = $1 and user_id = $2', [ownerWorkspace, ownerId])
     expect(await disableOwnTotp(fresh, { ip: null }, { pool: app })).toEqual({ ok: false, error: 'last_factor' })
     const stillThere = await admin.query<{ on: boolean }>('select totp_secret_enc is not null as on from fa.users where workspace_id = $1 and id = $2', [ownerWorkspace, ownerId])
     expect(stillThere.rows[0]!.on).toBe(true)

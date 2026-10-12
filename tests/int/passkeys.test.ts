@@ -20,7 +20,11 @@ beforeAll(async () => {
   ownerId = await ensureOwner(admin, app)
   ownerWorkspace = (await admin.query<{ id: string }>("select id from fa.workspaces where kind = 'owner'")).rows[0]!.id
 })
-afterAll(closeAll)
+// The owner is shared by every file: the passkeys these tests leave behind go with them.
+afterAll(async () => {
+  await admin.query('delete from fa.passkeys where workspace_id = $1 and user_id = $2', [ownerWorkspace, ownerId])
+  await closeAll()
+})
 
 const config = () => authConfig()
 const meta = { ip: '192.0.2.200', userAgent: null }
