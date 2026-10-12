@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useToast } from '@/components/ui/toast'
 import { exportHref, type OrdersQuery } from '@/lib/orders/query'
-import { sharedTransitions, type OrderStatus } from '@/lib/orders/status'
+import { transitionsForAny, type OrderStatus } from '@/lib/orders/status'
 import type { OrderRowView } from '@/lib/orders/view'
 import { changeStatusesAction } from '@/server/actions/orders'
 
@@ -20,7 +20,7 @@ export function BulkActions({ chosen, query, canUpdate, onClear }: Props) {
   const statusLabel = useTranslations('orders.status')
   const toast = useToast()
   const [pending, startTransition] = useTransition()
-  const targets = sharedTransitions(chosen.map(row => row.status))
+  const targets = transitionsForAny(chosen.map(row => row.status))
 
   const apply = (to: OrderStatus): void => startTransition(async () => {
     const result = await changeStatusesAction({ ids: chosen.map(row => row.id), to })

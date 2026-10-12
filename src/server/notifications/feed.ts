@@ -7,6 +7,7 @@ import { notificationView, type NotificationItem } from '@/lib/notifications/vie
 import type { Session } from '@/server/auth/sessions'
 import type { NotificationReader, NotificationRow } from '@/server/dal/notifications'
 import { sessionSignInId } from '@/server/dal/sessions'
+import { roleEnum } from '@/server/db/schema'
 import type { Role, Tx } from '@/server/db/with-workspace'
 
 /** The bell shows this many; the page has the rest. */
@@ -17,12 +18,13 @@ export async function readerOf(tx: Tx, session: Pick<Session, 'workspaceId' | 'u
   return { workspaceId: session.workspaceId, userId: session.userId, signInId: await sessionSignInId(tx, session.id) }
 }
 
-const ROLES: readonly string[] = ['owner', 'admin', 'manager', 'viewer'] satisfies Role[]
+/** A role the database knows, read from its enum, so a new role can never be missing here. */
+const isRole = (value: string): value is Role => (roleEnum.enumValues as readonly string[]).includes(value)
 
 export async function notificationItems(rows: NotificationRow[], locale: Locale, timeZone: string): Promise<NotificationItem[]> {
   const t = await getTranslations({ locale, namespace: 'notifications.kinds' })
   const roles = await getTranslations({ locale, namespace: 'user.roles' })
-  const roleName = (role: string): string => (ROLES.includes(role) ? roles(role as Role) : role)
+  const roleName = (role: string): string => (isRole(role) ? roles(role) : role)
   return rows.flatMap(row => {
     const view = notificationView(row.kind, row.payload)
     if (!view) return []

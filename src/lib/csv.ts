@@ -1,5 +1,5 @@
 /** First in the file: spreadsheets then read it as UTF-8 and show Cyrillic names (amendment 3). */
-export const CSV_BOM = '﻿'
+export const CSV_BOM = '\uFEFF'
 
 // A cell a spreadsheet would evaluate (OWASP, "CSV injection"): =, +, -, @, tab, carriage return.
 const FORMULA_START = /^[=+\-@\t\r]/

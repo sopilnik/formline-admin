@@ -24,6 +24,8 @@ describe('describeEntry', () => {
       .toEqual({ subject: { text: 'Hush', href: null }, detail: { kind: 'variants', count: 6 } })
     expect(describeEntry({ action: 'collection.deleted', entityType: 'collection', entityId: 'gone', details: { slug: 'sand', name: 'Sand' } }, lookups).subject)
       .toEqual({ text: 'Sand', href: null })
+    expect(describeEntry({ action: 'collection.deleted', entityType: 'collection', entityId: 'gone', details: { slug: 'sand', name: '   ' } }, lookups).subject)
+      .toEqual({ text: 'sand', href: null })
   })
 
   it('reads the details of the team and security entries', () => {

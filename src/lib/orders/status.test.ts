@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canTransition, isOrderStatus, nextStatuses, ORDER_STATUSES, REVENUE_STATUSES, returnsStock, sharedTransitions } from '@/lib/orders/status'
+import { canTransition, isOrderStatus, nextStatuses, ORDER_STATUSES, REVENUE_STATUSES, returnsStock, transitionsForAny } from '@/lib/orders/status'
 
 describe('order status machine (spec §8.2)', () => {
   it('lists the six statuses and the four that count as revenue', () => {
@@ -29,8 +29,8 @@ describe('order status machine (spec §8.2)', () => {
   })
 
   it('offers the transitions valid for at least one of the selected statuses, in status order', () => {
-    expect(sharedTransitions(['shipped', 'paid'])).toEqual(['processing', 'delivered', 'cancelled', 'refunded'])
-    expect(sharedTransitions(['cancelled'])).toEqual([])
-    expect(sharedTransitions([])).toEqual([])
+    expect(transitionsForAny(['shipped', 'paid'])).toEqual(['processing', 'delivered', 'cancelled', 'refunded'])
+    expect(transitionsForAny(['cancelled'])).toEqual([])
+    expect(transitionsForAny([])).toEqual([])
   })
 })

@@ -31,7 +31,7 @@ export function parseVariants(variantIds: readonly string[], text: (name: string
     const override = price === '' ? null : parsePrice(price)
     const stock = count(STOCK_MAX).safeParse(text(variantFieldName('stock', id)))
     const threshold = count(THRESHOLD_MAX).safeParse(text(variantFieldName('threshold', id)))
-    const stockWas = count(Number.MAX_SAFE_INTEGER).safeParse(text(variantFieldName('stockWas', id)))
+    const stockWas = count(STOCK_MAX).safeParse(text(variantFieldName('stockWas', id)))
     if (!stockWas.success) return null
     const problems: Partial<Record<VariantField, VariantIssue>> = {}
     if (price !== '' && override === null) problems.price = 'price_invalid'

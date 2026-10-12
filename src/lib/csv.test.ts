@@ -24,6 +24,6 @@ describe('csv (spec §8.2, amendment 3)', () => {
     expect(csvMoney(5)).toBe('0.05')
     expect(csvMoney(0)).toBe('0.00')
     expect(csvRecord(['1412', 'Maya'])).toBe('1412,Maya\r\n')
-    expect(CSV_BOM).toBe('﻿')
+    expect(CSV_BOM).toBe('\uFEFF')
   })
 })

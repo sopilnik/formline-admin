@@ -1,5 +1,6 @@
 import { parseLocale, type Locale } from '@/i18n/locale'
 import { formatDateTime } from '@/lib/intl'
+import { asRecord, count, text, type Payload } from '@/lib/payload'
 import { ASSIGNABLE_ROLES } from '@/lib/team'
 
 /** Every letter the panel writes (spec §9); nothing is ever sent, the outbox keeps them. */
@@ -29,18 +30,6 @@ export type LetterContent = {
   action: (LetterPart & { href: string }) | null
 }
 
-type Payload = Record<string, unknown>
-
-const text = (payload: Payload, key: string): string | null => {
-  const value = payload[key]
-  return typeof value === 'string' && value.trim() !== '' ? value : null
-}
-
-const count = (payload: Payload, key: string): number | null => {
-  const value = payload[key]
-  return typeof value === 'number' && Number.isInteger(value) && value >= 0 ? value : null
-}
-
 /** The moment in the letter, in its language and the store's zone; an unreadable one shows as a dash. */
 function when(payload: Payload, locale: Locale, timeZone: string): string {
   const at = text(payload, 'at')
@@ -59,7 +48,7 @@ const INVITATION_TOKEN = /^[a-z2-7]{32}$/
  * as a letter without a body.
  */
 export function letterContent(template: string, rawPayload: unknown, timeZone: string): LetterContent {
-  const payload: Payload = rawPayload !== null && typeof rawPayload === 'object' ? (rawPayload as Payload) : {}
+  const payload = asRecord(rawPayload) ?? {}
   const locale = parseLocale(text(payload, 'locale'))
   const name = text(payload, 'name')
   const date = when(payload, locale, timeZone)

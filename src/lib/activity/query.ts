@@ -1,6 +1,7 @@
 import { isActivityAction, type ActivityAction } from '@/lib/activity/actions'
 import { DATE_PRESETS, type DatePreset } from '@/lib/orders/query'
 import { DEFAULT_PAGE_SIZE, parsePage, parsePageSize, type PageSize } from '@/lib/pagination'
+import { UUID_PATTERN } from '@/lib/payload'
 import { one, type SearchParams } from '@/lib/search-params'
 
 /** Entries without a person: the Stripe ingest and the seed (spec §8.2, "System"). */
@@ -19,15 +20,13 @@ export type ActivityQuery = {
 
 export const DEFAULT_ACTIVITY_QUERY: ActivityQuery = { actor: '', action: '', when: 'any', page: 1, size: DEFAULT_PAGE_SIZE }
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
-
 /** Tolerant, as the other lists: an unknown value means the default. */
 export function parseActivityQuery(params: SearchParams | URLSearchParams): ActivityQuery {
   const actor = one(params, 'actor') ?? ''
   const action = one(params, 'action') ?? ''
   const when = one(params, 'when') ?? ''
   return {
-    actor: actor === SYSTEM_ACTOR || UUID.test(actor) ? actor : '',
+    actor: actor === SYSTEM_ACTOR || UUID_PATTERN.test(actor) ? actor : '',
     action: isActivityAction(action) ? action : '',
     when: (DATE_PRESETS as readonly string[]).includes(when) ? (when as DatePreset) : DEFAULT_ACTIVITY_QUERY.when,
     page: parsePage(one(params, 'page')),

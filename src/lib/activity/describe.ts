@@ -1,3 +1,5 @@
+import { asRecord, text, whole, type Payload } from '@/lib/payload'
+
 /** What the log knows about the entities of one page, read from their tables by id (spec §8.7: the entity is linked). */
 export type Lookups = {
   users: ReadonlyMap<string, string>
@@ -28,12 +30,7 @@ export type Detail =
   | { kind: 'devices'; count: number }
   | { kind: 'imported'; count: number }
 
-type Details = Record<string, unknown>
-
-const text = (details: Details, key: string): string | null => (typeof details[key] === 'string' && details[key] !== '' ? (details[key] as string) : null)
-const whole = (details: Details, key: string): number | null => (typeof details[key] === 'number' && Number.isInteger(details[key]) ? (details[key] as number) : null)
-
-function subjectOf(entry: EntryInput, details: Details, lookups: Lookups): Subject | null {
+function subjectOf(entry: EntryInput, details: Payload, lookups: Lookups): Subject | null {
   const id = entry.entityId
 
   switch (entry.entityType) {
@@ -76,7 +73,7 @@ function subjectOf(entry: EntryInput, details: Details, lookups: Lookups): Subje
   }
 }
 
-function detailOf(action: string, details: Details): Detail | null {
+function detailOf(action: string, details: Payload): Detail | null {
   const from = text(details, 'from')
   const to = text(details, 'to')
 
@@ -167,6 +164,6 @@ function detailOf(action: string, details: Details): Detail | null {
  * A malformed or missing detail shows nothing rather than failing: the log is read long after it is written.
  */
 export function describeEntry(entry: EntryInput, lookups: Lookups): { subject: Subject | null; detail: Detail | null } {
-  const details: Details = entry.details !== null && typeof entry.details === 'object' ? (entry.details as Details) : {}
+  const details = asRecord(entry.details) ?? {}
   return { subject: subjectOf(entry, details, lookups), detail: detailOf(entry.action, details) }
 }

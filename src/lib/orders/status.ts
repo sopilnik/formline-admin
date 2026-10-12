@@ -32,7 +32,7 @@ export function returnsStock(from: OrderStatus, to: OrderStatus): boolean {
 }
 
 /** For the bulk menu: every transition valid for at least one of the statuses, in the order of ORDER_STATUSES. */
-export function sharedTransitions(statuses: Iterable<OrderStatus>): OrderStatus[] {
+export function transitionsForAny(statuses: Iterable<OrderStatus>): OrderStatus[] {
   const allowed = new Set<OrderStatus>()
   for (const status of statuses) for (const next of NEXT[status]) allowed.add(next)
   return ORDER_STATUSES.filter(status => allowed.has(status))

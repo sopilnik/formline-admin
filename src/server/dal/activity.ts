@@ -4,6 +4,7 @@ import type { ActivityAction } from '@/lib/activity/actions'
 import type { Lookups } from '@/lib/activity/describe'
 import { SYSTEM_ACTOR, type ActivityQuery } from '@/lib/activity/query'
 import { pageCount } from '@/lib/pagination'
+import { UUID_PATTERN } from '@/lib/payload'
 import { presetRange } from '@/lib/periods'
 import { activityLog, collections, customers, orders, products, users } from '@/server/db/schema'
 import type { Tx } from '@/server/db/with-workspace'
@@ -45,8 +46,6 @@ export type ActivityPage = {
   lookups: Lookups
 }
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
-
 function activityFilters(workspaceId: string, query: ActivityQuery, now: Date, timeZone: string): SQL {
   const parts: SQL[] = [eq(activityLog.workspaceId, workspaceId)]
   if (query.actor === SYSTEM_ACTOR) parts.push(isNull(activityLog.actorUserId))
@@ -59,7 +58,7 @@ function activityFilters(workspaceId: string, query: ActivityQuery, now: Date, t
 
 /** The ids of the page's entities of one type: entity ids are text, and only uuids can name a row. */
 const idsOf = (rows: ActivityRow[], type: string): string[] =>
-  [...new Set(rows.flatMap(row => (row.entityType === type && row.entityId && UUID.test(row.entityId) ? [row.entityId] : [])))]
+  [...new Set(rows.flatMap(row => (row.entityType === type && row.entityId && UUID_PATTERN.test(row.entityId) ? [row.entityId] : [])))]
 
 /**
  * One page of the activity log (spec §8.7), newest first, filtered by actor, action and period in the store's zone.

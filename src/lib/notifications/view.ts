@@ -1,5 +1,6 @@
 // The kinds of notification the bell shows (spec §8.9) and what each one says. The payload is
 // written when the event happens and kept as it was, so a later rename does not rewrite history.
+import { asRecord, text, UUID_PATTERN, whole } from '@/lib/payload'
 
 export const NOTIFICATION_KINDS = [
   'order.created',
@@ -29,27 +30,13 @@ export type NotificationTarget =
   | { type: 'product'; productId: string }
   | { type: 'page'; href: '/team' | '/settings/security' }
 
-type Payload = Record<string, unknown>
-
-const text = (payload: Payload, key: string): string | null => {
-  const value = payload[key]
-  return typeof value === 'string' && value.trim() !== '' ? value : null
-}
-
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
-const whole = (payload: Payload, key: string): number | null => {
-  const value = payload[key]
-  return typeof value === 'number' && Number.isInteger(value) ? value : null
-}
-
 export function isNotificationKind(value: string): value is NotificationKind {
   return (NOTIFICATION_KINDS as readonly string[]).includes(value)
 }
 
 /** What a stored notification says; null for a kind this version does not know, which the lists leave out. */
 export function notificationView(kind: string, stored: unknown): NotificationView | null {
-  const payload: Payload = stored !== null && typeof stored === 'object' && !Array.isArray(stored) ? (stored as Payload) : {}
+  const payload = asRecord(stored) ?? {}
   switch (kind) {
     case 'order.created':
       return { kind, number: whole(payload, 'number'), customer: text(payload, 'customer'), totalCents: whole(payload, 'totalCents') }
@@ -80,7 +67,7 @@ export function notificationView(kind: string, stored: unknown): NotificationVie
 
 /** The subject a notification opens; null when the payload names none (the notifications page then stays open). */
 export function notificationTarget(kind: string, stored: unknown): NotificationTarget | null {
-  const payload: Payload = stored !== null && typeof stored === 'object' && !Array.isArray(stored) ? (stored as Payload) : {}
+  const payload = asRecord(stored) ?? {}
   switch (kind) {
     case 'order.created': {
       const number = whole(payload, 'number')
@@ -88,7 +75,7 @@ export function notificationTarget(kind: string, stored: unknown): NotificationT
     }
     case 'stock.low': {
       const productId = text(payload, 'productId')
-      return productId && UUID.test(productId) ? { type: 'product', productId } : null
+      return productId && UUID_PATTERN.test(productId) ? { type: 'product', productId } : null
     }
     case 'team.invitation_accepted':
       return { type: 'page', href: '/team' }
