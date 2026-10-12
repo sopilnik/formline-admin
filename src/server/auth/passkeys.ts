@@ -12,6 +12,7 @@ import {
 import type { Pool } from 'pg'
 import { APP_NAME } from '@/lib/app'
 import type { AuthFailure } from '@/lib/auth-form'
+import { PASSKEY_NAME_MAX } from '@/lib/passkeys'
 import { decodeBase64urlIgnorePadding, decodeHex, encodeBase64urlNoPadding, encodeHexLowerCase } from '@/lib/encoding'
 import { authDeps, type AuthDeps } from '@/server/auth/deps'
 import { ownerWorkspaceId } from '@/server/auth/owner'
@@ -233,7 +234,7 @@ export async function finishRegistration(
       publicKey: encodeBase64urlNoPadding(credential.publicKey),
       counter: credential.counter,
       transports: credential.transports ?? [],
-      name: (summariseUserAgent(meta.userAgent) ?? 'Passkey').slice(0, 60),
+      name: (summariseUserAgent(meta.userAgent) ?? 'Passkey').slice(0, PASSKEY_NAME_MAX),
     })
     await deleteOtherOwnSessions(tx, session)
     await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.passkey_added', entityType: 'passkey', entityId: id, ipHash })
@@ -244,7 +245,7 @@ export async function finishRegistration(
 export async function renameOwnPasskey(session: Session, passkeyId: string, name: string, overrides: Partial<AuthDeps> = {}): Promise<{ ok: true } | AuthFailure> {
   const deps = authDeps(overrides)
   const trimmed = name.trim()
-  if (trimmed.length < 1 || trimmed.length > 60) return { ok: false, error: 'generic' }
+  if (trimmed.length < 1 || trimmed.length > PASSKEY_NAME_MAX) return { ok: false, error: 'generic' }
   const renamed = await withWorkspace(workspaceContext(session), tx => renamePasskey(tx, session, passkeyId, trimmed), deps.pool)
   return renamed ? { ok: true } : { ok: false, error: 'generic' }
 }

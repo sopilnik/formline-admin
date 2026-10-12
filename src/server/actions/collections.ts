@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { formText } from '@/lib/auth-form'
 import { COLLECTION_FIELDS, type CollectionField, type CollectionIssue } from '@/lib/collections/fields'
 import { parseCollection } from '@/lib/collections/form'
-import { ok, type ActionResult, type ErrorCode } from '@/lib/result'
+import { fail as refused, ok, type ActionResult } from '@/lib/result'
 import { actorOf } from '@/server/actor'
 import { requireSession } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'
@@ -39,7 +39,6 @@ export async function saveCollectionAction(previous: CollectionState, form: Form
   return { status: 'done', slug: result.slug, count: previous.status === 'done' ? previous.count + 1 : 1 }
 }
 
-const refused = (code: ErrorCode): ActionResult<never> => ({ ok: false, code })
 const moveInput = z.strictObject({ id: z.uuid(), direction: z.enum(['up', 'down']) })
 
 /** "Move up" / "Move down" of the collections list (spec §8.3): the new place, to announce it. */
@@ -62,6 +61,7 @@ export async function deleteCollectionAction(input: unknown): Promise<ActionResu
   const parsed = deleteInput.safeParse(input)
   if (!parsed.success) return refused('invalid')
   const result = await deleteCollectionWithLog(await actorOf(session), parsed.data.id)
+  // On success the dialog goes to the list, which renders afresh; a refresh here would render the deleted page again.
   if (result.ok) return ok({ name: result.name })
   refresh()
   return refused(result.reason === 'not_empty' ? 'conflict' : 'not_found')

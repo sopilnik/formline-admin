@@ -8,7 +8,10 @@ import { updateSelfPreferences } from '@/server/dal/users'
 import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 import { setPreferenceCookies } from '@/server/preferences'
 
-/** Theme menu. The cookie drives the server-rendered class; a signed-in user's profile keeps it too. */
+/**
+ * Theme menu. The cookie drives the server-rendered class; a signed-in user's profile keeps it too. The menu only ever
+ * sends one of the themes, so only a crafted call reaches the throw of `parse`: no form state to return it to.
+ */
 export async function setThemeAction(value: string): Promise<void> {
   const theme = z.enum(THEMES).parse(value)
   await setPreferenceCookies({ theme })
@@ -18,7 +21,7 @@ export async function setThemeAction(value: string): Promise<void> {
   }
 }
 
-/** Language menu, the same way. */
+/** Language menu, the same way, the throw included. */
 export async function setLocaleAction(value: string): Promise<void> {
   const locale = z.enum(LOCALES).parse(value)
   await setPreferenceCookies({ locale })

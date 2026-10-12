@@ -20,7 +20,7 @@ export async function changePasswordAction(_previous: FormState<'password'>, for
   return { status: 'done' }
 }
 
-const sessionInput = z.object({ id: z.string().regex(/^[0-9a-f]{64}$/) }).strict()
+const sessionInput = z.strictObject({ id: z.string().regex(/^[0-9a-f]{64}$/) })
 
 /** "Sign out" on another of one's devices. */
 export async function revokeSessionAction(input: unknown): Promise<ActionResult<null>> {

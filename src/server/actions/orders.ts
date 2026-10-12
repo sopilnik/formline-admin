@@ -12,8 +12,8 @@ import { can } from '@/server/authz/matrix'
 import { changeStatuses, type StatusOutcome } from '@/server/orders/change-status'
 import { addNote } from '@/server/orders/notes'
 
-const statusInput = z.object({ ids: z.array(z.uuid()).min(1).max(100), to: z.enum(ORDER_STATUSES) })
-const oneStatusInput = z.object({ orderId: z.uuid(), to: z.enum(ORDER_STATUSES) })
+const statusInput = z.strictObject({ ids: z.array(z.uuid()).min(1).max(100), to: z.enum(ORDER_STATUSES) })
+const oneStatusInput = z.strictObject({ orderId: z.uuid(), to: z.enum(ORDER_STATUSES) })
 
 /** "Change status" of the bulk bar (spec §8.2): the valid orders change, the others come back as skipped. */
 export async function changeStatusesAction(input: unknown): Promise<ActionResult<StatusOutcome>> {

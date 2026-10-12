@@ -6,7 +6,7 @@ import type { ImportState, ImportSummary } from '@/lib/stripe/import'
 import { actorOf } from '@/server/actor'
 import { isRecentAuth } from '@/server/auth/reauth'
 import { requireSession, type Session } from '@/server/auth/sessions'
-import { authorize } from '@/server/authz/authorize'
+import { can } from '@/server/authz/matrix'
 import { stripeConfig } from '@/server/config'
 import { logActivity } from '@/server/dal/activity'
 import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
@@ -22,7 +22,7 @@ import { importMissedOrders } from '@/server/stripe/import'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- useActionState requires this signature; the form carries no fields
 export async function importStripeOrdersAction(_previous: ImportState, _form: FormData): Promise<ImportState> {
   const session = await requireSession()
-  authorize({ role: session.role, workspaceKind: session.workspaceKind }, 'stripe.import')
+  if (!can(session.role, 'stripe.import', session.workspaceKind)) return { status: 'error', error: 'forbidden' }
   if (!isRecentAuth(session)) return { status: 'error', error: 'reauth_required' }
   const config = stripeConfig()
   if (!config) return { status: 'error', error: 'unavailable' }

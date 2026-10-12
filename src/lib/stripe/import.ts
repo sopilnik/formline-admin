@@ -18,7 +18,7 @@ export type ImportSummary = {
   more: boolean
 }
 
-export type ImportError = 'unavailable' | 'rate_limited' | 'reauth_required' | 'failed'
+export type ImportError = 'forbidden' | 'unavailable' | 'rate_limited' | 'reauth_required' | 'failed'
 
 export type ImportState =
   | { status: 'idle' }

@@ -9,7 +9,7 @@ import {
 import { parsePalettes, parseProductDetails } from '@/lib/products/form'
 import { PRODUCT_STATUSES, type ProductStatus } from '@/lib/products/status'
 import { parseVariants, type VariantErrors } from '@/lib/products/variants'
-import { ok, type ActionResult, type ErrorCode } from '@/lib/result'
+import { fail as refused, ok, type ActionResult } from '@/lib/result'
 import { actorOf } from '@/server/actor'
 import { requireSession } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'
@@ -118,7 +118,6 @@ export async function saveVariantsAction(previous: VariantsState, form: FormData
 }
 
 const statusInput = z.strictObject({ productId: z.uuid(), to: z.enum(PRODUCT_STATUSES) })
-const refused = (code: ErrorCode): ActionResult<never> => ({ ok: false, code })
 
 /** The status control of the product page (spec §8.3): `conflict` when the product moved on meanwhile. */
 export async function changeProductStatusAction(input: unknown): Promise<ActionResult<{ to: ProductStatus }>> {
@@ -141,6 +140,7 @@ export async function deleteProductAction(input: unknown): Promise<ActionResult<
   const parsed = deleteInput.safeParse(input)
   if (!parsed.success) return refused('invalid')
   const result = await deleteProductWithLog(await actorOf(session), parsed.data.productId)
+  // On success the dialog goes to the list, which renders afresh; a refresh here would render the deleted page again.
   if (result.ok) return ok({ name: result.name })
   refresh()
   return refused(result.reason === 'not_found' ? 'not_found' : 'conflict')

@@ -2,7 +2,7 @@
 
 import type { AuthenticationResponseJSON, PublicKeyCredentialCreationOptionsJSON, RegistrationResponseJSON } from '@simplewebauthn/server'
 import { cookies, headers } from 'next/headers'
-import { revalidatePath } from 'next/cache'
+import { refresh } from 'next/cache'
 import { z } from 'zod'
 import { retryMinutes, type AuthError } from '@/lib/auth-form'
 import {
@@ -17,7 +17,7 @@ import {
   signInWithPasskey,
 } from '@/server/auth/passkeys'
 import { requireSession, setSessionCookie, type Session } from '@/server/auth/sessions'
-import { authorize } from '@/server/authz/authorize'
+import { can } from '@/server/authz/matrix'
 import { setPreferenceCookies } from '@/server/preferences'
 import { getClientIp } from '@/server/request'
 
@@ -67,8 +67,9 @@ async function takeChallengeCookie(): Promise<string | undefined> {
   return value
 }
 
-function selfManage(session: Session): void {
-  authorize({ role: session.role, workspaceKind: session.workspaceKind }, 'self.manage')
+/** Whether the member may manage their own sign-in methods; a refusal returns, as in every other action. */
+function canManageSelf(session: Session): boolean {
+  return can(session.role, 'self.manage', session.workspaceKind)
 }
 
 /** The client navigates on success: the root layout must render the new language and theme. */
@@ -99,7 +100,7 @@ export async function reauthWithPasskeyAction(input: unknown): Promise<PasskeyOu
 
 export async function beginPasskeyRegistrationAction(): Promise<{ ok: true; options: PublicKeyCredentialCreationOptionsJSON } | { ok: false; error: AuthError }> {
   const session = await requireSession()
-  selfManage(session)
+  if (!canManageSelf(session)) return { ok: false, error: 'generic' }
   const result = await beginRegistration(session)
   if (!result.ok) return { ok: false, error: result.error }
   const store = await cookies()
@@ -109,32 +110,35 @@ export async function beginPasskeyRegistrationAction(): Promise<{ ok: true; opti
 
 export async function finishPasskeyRegistrationAction(input: unknown): Promise<PasskeyOutcome> {
   const session = await requireSession()
-  selfManage(session)
+  if (!canManageSelf(session)) return { ok: false, error: 'generic' }
   const cookie = await takeChallengeCookie()
   const parsed = registrationResponse.safeParse(input)
   if (!parsed.success) return { ok: false, error: 'passkey_failed' }
   const response: RegistrationResponseJSON = { ...parsed.data, clientExtensionResults: {} }
   const result = await finishRegistration(session, response, cookie, await meta())
-  revalidatePath('/settings/security')
-  return result.ok ? { ok: true } : { ok: false, error: result.error }
+  if (!result.ok) return { ok: false, error: result.error }
+  refresh()
+  return { ok: true }
 }
 
-export async function renamePasskeyAction(id: string, name: string): Promise<PasskeyOutcome> {
+export async function renamePasskeyAction(id: string, name: unknown): Promise<PasskeyOutcome> {
   const session = await requireSession()
-  selfManage(session)
+  if (!canManageSelf(session)) return { ok: false, error: 'generic' }
   const passkeyId = z.uuid().safeParse(id)
-  if (!passkeyId.success) return { ok: false, error: 'generic' }
-  const result = await renameOwnPasskey(session, passkeyId.data, z.string().max(200).catch('').parse(name))
-  revalidatePath('/settings/security')
-  return result.ok ? { ok: true } : { ok: false, error: result.error }
+  if (!passkeyId.success || typeof name !== 'string') return { ok: false, error: 'generic' }
+  const result = await renameOwnPasskey(session, passkeyId.data, name)
+  if (!result.ok) return { ok: false, error: result.error }
+  refresh()
+  return { ok: true }
 }
 
 export async function removePasskeyAction(id: string): Promise<PasskeyOutcome> {
   const session = await requireSession()
-  selfManage(session)
+  if (!canManageSelf(session)) return { ok: false, error: 'generic' }
   const passkeyId = z.uuid().safeParse(id)
   if (!passkeyId.success) return { ok: false, error: 'generic' }
   const result = await removeOwnPasskey(session, passkeyId.data, await meta())
-  revalidatePath('/settings/security')
-  return result.ok ? { ok: true } : { ok: false, error: result.error }
+  if (!result.ok) return { ok: false, error: result.error }
+  refresh()
+  return { ok: true }
 }

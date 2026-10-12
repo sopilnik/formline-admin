@@ -8,6 +8,7 @@ import { TextField } from '@/components/auth/text-field'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { useToast } from '@/components/ui/toast'
+import { PASSKEY_NAME_MAX } from '@/lib/passkeys'
 import { beginPasskeyRegistrationAction, finishPasskeyRegistrationAction, removePasskeyAction, renamePasskeyAction } from '@/server/actions/passkeys'
 
 export type PasskeyView = { id: string; name: string; added: string; lastUsed: string | null }
@@ -116,7 +117,7 @@ function PasskeyItem({ passkey, canRemove }: { passkey: PasskeyView; canRemove: 
               <DialogTitle>{t('rename')}</DialogTitle>
             </DialogHeader>
             <form action={rename} className="flex flex-col gap-4">
-              <TextField id={`passkey-name-${passkey.id}`} name="name" label={t('renameLabel')} defaultValue={passkey.name} maxLength={60} />
+              <TextField id={`passkey-name-${passkey.id}`} name="name" label={t('renameLabel')} defaultValue={passkey.name} maxLength={PASSKEY_NAME_MAX} />
               <DialogFooter>
                 <DialogClose render={<Button type="button" variant="outline" />}>{t('cancel')}</DialogClose>
                 <Button type="submit" disabled={pending}>{t('save')}</Button>

@@ -493,7 +493,8 @@
         "required": "Enter your name.",
         "too_long": "Keep the name to 120 characters.",
         "invalid": "Choose one of the options.",
-        "forbidden": "Your role cannot change the profile."
+        "forbidden": "Your role cannot change the profile.",
+        "failed": "The profile could not be saved. Try again."
       },
       "shortcuts": "Single-key shortcuts",
       "shortcutsHint": "/ searches the page, g and a letter moves between pages, ? lists them all. Ctrl+K and ⌘K work either way."
@@ -535,6 +536,7 @@
         "failedSessions": "{count, plural, one {# session could not be imported this time; the next import tries it again.} other {# sessions could not be imported this time; the next import tries them again.}}",
         "more": "Stripe has more sessions in these 30 days than one import reads; the oldest were not checked.",
         "errors": {
+          "forbidden": "Only the owner can import orders.",
           "unavailable": "Stripe is not connected on this server.",
           "rate_limited": "Too many imports. Try again in {minutes, plural, one {# minute} other {# minutes}}.",
           "reauth_required": "Confirm it's you first.",

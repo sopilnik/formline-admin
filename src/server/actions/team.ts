@@ -17,8 +17,8 @@ import { can } from '@/server/authz/matrix'
 import { acceptInvitation, inviteMember, resendInvitation, revokeMemberInvitation } from '@/server/team/invitations'
 import { changeMemberActive, changeMemberRole } from '@/server/team/members'
 
-const roleInput = z.object({ userId: z.uuid(), role: z.enum(ASSIGNABLE_ROLES) }).strict()
-const activeInput = z.object({ userId: z.uuid(), active: z.boolean() }).strict()
+const roleInput = z.strictObject({ userId: z.uuid(), role: z.enum(ASSIGNABLE_ROLES) })
+const activeInput = z.strictObject({ userId: z.uuid(), active: z.boolean() })
 
 /** "Make admin / manager / viewer" on the team page (spec §8.6): owners and admins, in sandboxes. */
 export async function changeMemberRoleAction(input: unknown): Promise<ActionResult<{ name: string }>> {
@@ -45,8 +45,8 @@ export async function changeMemberActiveAction(input: unknown): Promise<ActionRe
   return ok({ name: result.name })
 }
 
-const inviteInput = z.object({ email: z.email().max(EMAIL_MAX), role: z.enum(ASSIGNABLE_ROLES) })
-const idInput = z.object({ id: z.uuid() }).strict()
+const inviteInput = z.strictObject({ email: z.email().max(EMAIL_MAX), role: z.enum(ASSIGNABLE_ROLES) })
+const idInput = z.strictObject({ id: z.uuid() })
 
 export type InviteState =
   | { status: 'idle' }

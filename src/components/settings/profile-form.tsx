@@ -34,8 +34,8 @@ export function ProfileForm({ profile }: { profile: Record<ProfileField, string>
   const message = (field: ProfileField): string | undefined => (error?.fieldErrors[field] ? t(`errors.${error.fieldErrors[field]}`) : undefined)
   return (
     <form ref={form} action={action} noValidate className="flex max-w-md flex-col gap-4">
-      {error?.error === 'forbidden' ? (
-        <p role="alert" tabIndex={-1} className="rounded-md border border-destructive px-3 py-2 text-sm text-destructive">{t('errors.forbidden')}</p>
+      {error && error.error !== 'invalid' ? (
+        <p role="alert" tabIndex={-1} className="rounded-md border border-destructive px-3 py-2 text-sm text-destructive">{t(`errors.${error.error}`)}</p>
       ) : null}
       <TextField id="profile-name" name="name" label={t('name')} autoComplete="name" maxLength={NAME_MAX} aria-required defaultValue={values.name} error={message('name')} />
       <SelectField id="profile-locale" name="locale" label={t('language')} defaultValue={values.locale} error={message('locale')}>
