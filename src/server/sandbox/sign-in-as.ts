@@ -39,8 +39,8 @@ export async function switchUser(session: Session, input: SwitchInput, overrides
 
   const ctx = workspaceContext(session)
   const { target, shortcutsEnabled } = await withWorkspace(ctx, async tx => ({
-    target: await getMemberFactor(tx, input.targetUserId),
-    shortcutsEnabled: (await getSelf(tx, session.userId))?.shortcutsEnabled ?? true,
+    target: await getMemberFactor(tx, { workspaceId: session.workspaceId, userId: input.targetUserId }),
+    shortcutsEnabled: (await getSelf(tx, session))?.shortcutsEnabled ?? true,
   }), deps.pool)
   if (!target || target.deactivatedAt || target.id === session.userId) return { ok: false, error: 'generic' }
 
@@ -57,7 +57,7 @@ export async function switchUser(session: Session, input: SwitchInput, overrides
 
       // The member hears of the lock as the owner does of theirs: in the log, the bell and a letter.
       await withWorkspace(ctx, async tx => {
-        const member = (await getSelf(tx, target.id))!
+        const member = (await getSelf(tx, { workspaceId: session.workspaceId, userId: target.id }))!
         await logActivity(tx, session.workspaceId, { actorUserId: target.id, action: 'auth.second_factor_locked', ipHash: input.ipHash })
         await securityNotice(tx, session.workspaceId, member, 'auth.second_factor_locked', {})
       }, deps.pool)
@@ -72,7 +72,7 @@ export async function switchUser(session: Session, input: SwitchInput, overrides
     sql`select fa.sandbox_sign_in_as(${target.id}, ${session.id}, ${id}, ${step}, ${input.userAgentSummary}, ${input.ipHash}) as expires_at`), deps.pool)
 
   // Row-level security lets a member write only their own row, so this runs as the member just switched to.
-  await withWorkspace({ ...ctx, userId: target.id, role: target.role }, tx => updateSelfPreferences(tx, target.id, { ...input.preferences, shortcutsEnabled }), deps.pool)
+  await withWorkspace({ ...ctx, userId: target.id, role: target.role }, tx => updateSelfPreferences(tx, { workspaceId: session.workspaceId, userId: target.id }, { ...input.preferences, shortcutsEnabled }), deps.pool)
 
   // A raw statement through the workspace transaction returns a timestamptz column as
   // text rather than a Date, unlike a plain pool query; coerce it before it reaches the cookie.

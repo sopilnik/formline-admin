@@ -14,7 +14,7 @@ export async function setThemeAction(value: string): Promise<void> {
   await setPreferenceCookies({ theme })
   const session = await getSession()
   if (session?.secondFactorVerified) {
-    await withWorkspace(workspaceContext(session), tx => updateSelfPreferences(tx, session.userId, { theme }))
+    await withWorkspace(workspaceContext(session), tx => updateSelfPreferences(tx, session, { theme }))
   }
 }
 
@@ -24,6 +24,6 @@ export async function setLocaleAction(value: string): Promise<void> {
   await setPreferenceCookies({ locale })
   const session = await getSession()
   if (session?.secondFactorVerified) {
-    await withWorkspace(workspaceContext(session), tx => updateSelfPreferences(tx, session.userId, { locale }))
+    await withWorkspace(workspaceContext(session), tx => updateSelfPreferences(tx, session, { locale }))
   }
 }

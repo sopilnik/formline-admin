@@ -101,7 +101,7 @@ export async function finishSignIn(tx: Tx, input: {
   const fresh: CreatedSession = input.pending
     ? await rotateSession(tx, input.pending, meta)
     : await createSession(tx, { workspaceId: input.workspaceId, userId: input.userId, verified: true, ...meta })
-  const self = (await getSelf(tx, input.userId))!
+  const self = (await getSelf(tx, input))!
   await logActivity(tx, input.workspaceId, { actorUserId: input.userId, action: 'auth.sign_in', details: { method: input.method }, ipHash: input.ipHash })
   await securityNotice(tx, input.workspaceId, self, 'auth.new_sign_in', { device: meta.userAgentSummary }, { signInId: fresh.signInId })
   return { token: fresh.token, expiresAt: fresh.expiresAt, locale: self.locale, theme: self.theme }

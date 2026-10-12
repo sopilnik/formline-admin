@@ -69,7 +69,7 @@ export async function setupOwner(
     throw error
   }
   await withWorkspace({ workspaceId, userId, role: 'owner' }, async tx => {
-    await updateSelfPreferences(tx, userId, { locale: input.locale, theme: input.theme })
+    await updateSelfPreferences(tx, { workspaceId, userId }, { locale: input.locale, theme: input.theme })
     await logActivity(tx, workspaceId, { actorUserId: userId, action: 'auth.owner_created', entityType: 'user', entityId: userId, ipHash })
   }, pool)
   return { ok: true, token: sealed.sessionToken, expiresAt, recoveryCodes: sealed.recoveryCodes }

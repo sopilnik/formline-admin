@@ -16,7 +16,7 @@ import { mail } from '@/server/mail/outbox'
 
 /** The letter with the link, in the inviter's language: the visitor who reads it is the one who wrote it (spec §9). */
 async function sendInvitation(tx: Tx, actor: Actor, invitation: { email: string; role: string; token: string }): Promise<void> {
-  const inviter = (await getSelf(tx, actor.userId))!
+  const inviter = (await getSelf(tx, actor))!
   await mail.send(tx, actor.workspaceId, {
     to: invitation.email, template: 'team.invitation', locale: inviter.locale,
     payload: { inviter: inviter.name, role: invitation.role, token: invitation.token },
@@ -82,15 +82,15 @@ export async function acceptInvitation(
   const id = hashToken(token)
   const ctx = workspaceContext(session)
   const { row, shortcutsEnabled, member } = await withWorkspace(ctx, async tx => {
-    const shortcutsEnabled = (await getSelf(tx, session.userId))?.shortcutsEnabled ?? true
+    const shortcutsEnabled = (await getSelf(tx, session))?.shortcutsEnabled ?? true
     const result = await tx.execute<{ outcome: 'accepted' | 'invalid' | 'taken'; user_id: string | null; sandbox_expires_at: string | null }>(
       sql`select outcome, user_id, sandbox_expires_at from fa.accept_invitation(${hashToken(input.token)}, ${input.name}, ${session.id}, ${id}, ${input.userAgentSummary}, ${input.ipHash})`)
     const row = result.rows[0]!
-    return { row, shortcutsEnabled, member: row.user_id ? await getMemberFactor(tx, row.user_id) : null }
+    return { row, shortcutsEnabled, member: row.user_id ? await getMemberFactor(tx, { workspaceId: session.workspaceId, userId: row.user_id }) : null }
   }, pool)
   if (row.outcome !== 'accepted' || !member) return { ok: false, reason: row.outcome === 'accepted' ? 'invalid' : row.outcome }
   // Row-level security lets a member write only their own row, so this runs as the new member.
-  await withWorkspace({ ...ctx, userId: member.id, role: member.role }, tx => updateSelfPreferences(tx, member.id, { ...input.preferences, shortcutsEnabled }), pool)
+  await withWorkspace({ ...ctx, userId: member.id, role: member.role }, tx => updateSelfPreferences(tx, { workspaceId: session.workspaceId, userId: member.id }, { ...input.preferences, shortcutsEnabled }), pool)
   // A raw statement through the workspace transaction returns a timestamptz column as text (task 3.4).
   return { ok: true, token, id, expiresAt: new Date(row.sandbox_expires_at!) }
 }

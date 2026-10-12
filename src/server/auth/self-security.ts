@@ -1,5 +1,4 @@
 import 'server-only'
-import { eq } from 'drizzle-orm'
 import type { AuthFailure } from '@/lib/auth-form'
 import { authDeps, type AuthDeps } from '@/server/auth/deps'
 import { checkPasswordShape, hashPassword } from '@/server/auth/passwords'
@@ -7,6 +6,7 @@ import { isRecentAuth } from '@/server/auth/reauth'
 import { workspaceContext, type Session } from '@/server/auth/sessions'
 import { logActivity } from '@/server/dal/activity'
 import { deleteOtherOwnSessions, deleteOwnSession } from '@/server/dal/sessions'
+import { isUser } from '@/server/dal/users'
 import { users } from '@/server/db/schema'
 import { withWorkspace } from '@/server/db/with-workspace'
 import { hashIp } from '@/server/ratelimit/ip'
@@ -30,7 +30,7 @@ export async function changeOwnPassword(
   if (await deps.isBreached(input.password)) return { ok: false, error: 'password_breached', field: 'password' }
   const passwordHash = await hashPassword(input.password)
   const signedOut = await withWorkspace(workspaceContext(session), async tx => {
-    await tx.update(users).set({ passwordHash }).where(eq(users.id, session.userId))
+    await tx.update(users).set({ passwordHash }).where(isUser(session))
     const ended = await deleteOtherOwnSessions(tx, session)
     await logActivity(tx, session.workspaceId, {
       actorUserId: session.userId, action: 'auth.password_changed', entityType: 'user', entityId: session.userId,

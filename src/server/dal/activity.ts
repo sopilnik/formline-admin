@@ -1,5 +1,6 @@
 import 'server-only'
 import { and, count, desc, eq, gte, inArray, isNull, lt, type SQL } from 'drizzle-orm'
+import type { ActivityAction } from '@/lib/activity/actions'
 import type { Lookups } from '@/lib/activity/describe'
 import { SYSTEM_ACTOR, type ActivityQuery } from '@/lib/activity/query'
 import { pageCount } from '@/lib/pagination'
@@ -9,7 +10,7 @@ import type { Tx } from '@/server/db/with-workspace'
 
 export type ActivityEntry = {
   actorUserId: string | null
-  action: string
+  action: ActivityAction
   entityType?: string
   entityId?: string
   details?: Record<string, unknown>

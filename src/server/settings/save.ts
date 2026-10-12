@@ -11,7 +11,7 @@ import { withWorkspace } from '@/server/db/with-workspace'
 /** Saves one's own profile and logs what changed as `profile.updated` (spec §5.7). */
 export async function saveProfile(actor: Actor, profile: Profile, pool: Pool = getPool()): Promise<string[] | null> {
   return withWorkspace(actorContext(actor), async tx => {
-    const changed = await updateProfile(tx, actor.userId, profile)
+    const changed = await updateProfile(tx, actor, profile)
     if (changed && changed.length > 0) {
       await logActivity(tx, actor.workspaceId, {
         actorUserId: actor.userId, action: 'profile.updated', entityType: 'user', entityId: actor.userId, details: { changed }, ipHash: actor.ipHash,

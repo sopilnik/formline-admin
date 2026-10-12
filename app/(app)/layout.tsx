@@ -18,8 +18,8 @@ import { readerOf } from '@/server/notifications/feed'
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const session = await requireSession()
   const { self, members, toProcess, unread } = await withWorkspace(workspaceContext(session), async tx => ({
-    self: await getSelf(tx, session.userId),
-    members: session.workspaceKind === 'sandbox' ? await listMembers(tx) : [],
+    self: await getSelf(tx, session),
+    members: session.workspaceKind === 'sandbox' ? await listMembers(tx, session.workspaceId) : [],
     toProcess: await ordersToProcess(tx, session.workspaceId),
     unread: await countUnread(tx, await readerOf(tx, session)),
   }))

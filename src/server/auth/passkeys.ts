@@ -129,7 +129,7 @@ export async function signInWithPasskey(
   const workspaceId = await ownerWorkspaceId(pool)
   // The handle's user is the identity row-level security reads the passkey under.
   const ctx = { workspaceId, userId, role: 'system' } as const
-  const passkey = await withWorkspace(ctx, tx => findPasskeyByCredential(tx, response.id), pool)
+  const passkey = await withWorkspace(ctx, tx => findPasskeyByCredential(tx, workspaceId, response.id), pool)
   if (!passkey) {
     await consume(LIMITS.passkeyFailIp, address, pool)
     return { ok: false, error: 'passkey_unknown', credentialId: response.id }
@@ -140,7 +140,7 @@ export async function signInWithPasskey(
 
   const ipHash = hashIp(meta.ip, config.ipHashKey)
   const signedIn = await withWorkspace(ctx, async tx => {
-    await recordPasskeyUse(tx, passkey.id, verified.newCounter)
+    await recordPasskeyUse(tx, ctx, passkey.id, verified.newCounter)
     return finishSignIn(tx, { workspaceId, userId, method: 'passkey', userAgent: meta.userAgent, ipHash })
   }, pool)
   return { ok: true, ...signedIn }
@@ -159,13 +159,13 @@ export async function reauthenticateWithPasskey(
   const challenge = readChallenge(cookie, 'auth', undefined, config, deps.now())
   if (!challenge || userIdFromHandle(response.response.userHandle) !== session.userId) return { ok: false, error: 'passkey_failed' }
   const ctx = workspaceContext(session)
-  const passkey = await withWorkspace(ctx, tx => findPasskeyByCredential(tx, response.id), pool)
+  const passkey = await withWorkspace(ctx, tx => findPasskeyByCredential(tx, session.workspaceId, response.id), pool)
   if (!passkey || !(await markChallengeUsed(challenge, pool))) return { ok: false, error: 'passkey_failed' }
   const verified = await verifyAssertion(response, challenge, passkey, config)
   if (!verified) return { ok: false, error: 'passkey_failed' }
   const ipHash = hashIp(meta.ip, config.ipHashKey)
   const fresh = await withWorkspace(ctx, async tx => {
-    await recordPasskeyUse(tx, passkey.id, verified.newCounter)
+    await recordPasskeyUse(tx, session, passkey.id, verified.newCounter)
     const rotated = await rotateSession(tx, session, { userAgentSummary: summariseUserAgent(meta.userAgent), ipHash })
     await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.reauthenticated', details: { method: 'passkey' }, ipHash })
     return rotated
@@ -182,8 +182,8 @@ export async function beginRegistration(
   if (session.workspaceKind !== 'owner') return { ok: false, error: 'generic' }
   if (!isRecentAuth(session, deps.now())) return { ok: false, error: 'reauth_required' }
   const { self, existing } = await withWorkspace(workspaceContext(session), async tx => ({
-    self: (await getSelf(tx, session.userId))!,
-    existing: await listPasskeys(tx, session.userId),
+    self: (await getSelf(tx, session))!,
+    existing: await listPasskeys(tx, session),
   }), deps.pool)
   const options = await generateRegistrationOptions({
     rpName: APP_NAME,
@@ -245,7 +245,7 @@ export async function renameOwnPasskey(session: Session, passkeyId: string, name
   const deps = authDeps(overrides)
   const trimmed = name.trim()
   if (trimmed.length < 1 || trimmed.length > 60) return { ok: false, error: 'generic' }
-  const renamed = await withWorkspace(workspaceContext(session), tx => renamePasskey(tx, passkeyId, trimmed), deps.pool)
+  const renamed = await withWorkspace(workspaceContext(session), tx => renamePasskey(tx, session, passkeyId, trimmed), deps.pool)
   return renamed ? { ok: true } : { ok: false, error: 'generic' }
 }
 
@@ -256,10 +256,10 @@ export async function removeOwnPasskey(session: Session, passkeyId: string, meta
   if (!isRecentAuth(session, deps.now())) return { ok: false, error: 'reauth_required' }
   const ipHash = hashIp(meta.ip, deps.config.ipHashKey)
   return withWorkspace(workspaceContext(session), async (tx): Promise<{ ok: true } | AuthFailure> => {
-    await lockSelf(tx, session.workspaceId, session.userId)
-    const self = (await getSelf(tx, session.userId))!
-    if ((await countPasskeys(tx, session.userId)) + (self.hasTotp ? 1 : 0) <= 1) return { ok: false, error: 'last_factor' }
-    if (!(await deletePasskey(tx, passkeyId))) return { ok: false, error: 'generic' }
+    await lockSelf(tx, session)
+    const self = (await getSelf(tx, session))!
+    if ((await countPasskeys(tx, session)) + (self.hasTotp ? 1 : 0) <= 1) return { ok: false, error: 'last_factor' }
+    if (!(await deletePasskey(tx, session, passkeyId))) return { ok: false, error: 'generic' }
 
     await deleteOtherOwnSessions(tx, session)
     await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.passkey_removed', entityType: 'passkey', entityId: passkeyId, ipHash })

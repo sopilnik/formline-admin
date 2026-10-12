@@ -1,5 +1,4 @@
 import 'server-only'
-import { eq } from 'drizzle-orm'
 import type { AuthFailure } from '@/lib/auth-form'
 import { authDeps, type AuthDeps } from '@/server/auth/deps'
 import { verifyPassword } from '@/server/auth/passwords'
@@ -8,6 +7,7 @@ import { rotateSession, workspaceContext, type NewSession, type Session } from '
 import { passwordLockout, recordPasswordFailure } from '@/server/auth/sign-in'
 import { summariseUserAgent } from '@/server/auth/user-agent'
 import { logActivity } from '@/server/dal/activity'
+import { isUser } from '@/server/dal/users'
 import { users } from '@/server/db/schema'
 import { withWorkspace } from '@/server/db/with-workspace'
 import { hashIp } from '@/server/ratelimit/ip'
@@ -37,7 +37,7 @@ export async function reauthenticate(
   const [self] = await withWorkspace(ctx, tx => tx
     .select({ email: users.email, passwordHash: users.passwordHash })
     .from(users)
-    .where(eq(users.id, session.userId)), pool)
+    .where(isUser(session)), pool)
   if (!self?.passwordHash) return { ok: false, error: 'credentials_invalid', field: 'password' }
   const attempt = { email: self.email, ip: input.ip }
   const locked = await passwordLockout(attempt, deps)

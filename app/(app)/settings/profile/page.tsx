@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function ProfilePage() {
   const session = await requireSession()
   authorize(session, 'self.manage')
-  const self = await withWorkspace(workspaceContext(session), tx => getSelf(tx, session.userId))
+  const self = await withWorkspace(workspaceContext(session), tx => getSelf(tx, session))
   if (!self) redirect('/sign-in')
   const t = await getTranslations('settings.profile')
   return (

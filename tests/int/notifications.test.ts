@@ -135,7 +135,7 @@ describe('a new sign-in', () => {
     const there = await signIn(other)
     expect(here.signInId).not.toBe(there.signInId)
     await withWorkspace(ctx(other, 'owner'), async tx => {
-      const self = (await getSelf(tx, other.users.owner))!
+      const self = (await getSelf(tx, { workspaceId: other.workspaceId, userId: other.users.owner }))!
       await securityNotice(tx, other.workspaceId, self, 'auth.new_sign_in', { device: 'Firefox, Linux' }, { signInId: here.signInId })
     }, app)
     const { rows } = await admin.query<{ payload: Record<string, unknown> }>(

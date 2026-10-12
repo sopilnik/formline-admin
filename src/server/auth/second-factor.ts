@@ -1,15 +1,16 @@
 import 'server-only'
-import { and, count, eq, isNull, lt, or, sql } from 'drizzle-orm'
+import { and, eq, isNull, lt, or, sql } from 'drizzle-orm'
 import type { Pool } from 'pg'
 import type { AuthFailure } from '@/lib/auth-form'
 import { authDeps, type AuthDeps } from '@/server/auth/deps'
 import { securityNotice } from '@/server/auth/notices'
 import { hashRecoveryCode, normalizeRecoveryCode } from '@/server/auth/recovery-codes'
 import { deleteSession, workspaceContext, type Session } from '@/server/auth/sessions'
+import { countUnusedRecoveryCodes, ownCodes } from '@/server/auth/self-factors'
 import { finishSignIn, type SignedIn } from '@/server/auth/sign-in'
 import { decryptTotpSecret, isTotpShape, verifyTotp } from '@/server/auth/totp'
 import { logActivity } from '@/server/dal/activity'
-import { getSelf } from '@/server/dal/users'
+import { getSelf, isUser } from '@/server/dal/users'
 import { recoveryCodes, users } from '@/server/db/schema'
 import { withWorkspace, type Tx } from '@/server/db/with-workspace'
 import { consume, lockRemaining, setLock } from '@/server/ratelimit/consume'
@@ -22,7 +23,7 @@ type Check = { ok: true; method: Method; remaining?: number } | { ok: false }
 async function checkCode(tx: Tx, session: Session, code: string, deps: AuthDeps): Promise<Check> {
   const digits = code.replace(/\s+/g, '')
   if (isTotpShape(digits)) {
-    const [row] = await tx.select({ secret: users.totpSecretEnc, lastStep: users.totpLastStep }).from(users).where(eq(users.id, session.userId))
+    const [row] = await tx.select({ secret: users.totpSecretEnc, lastStep: users.totpLastStep }).from(users).where(isUser(session))
     if (!row?.secret) return { ok: false }
     const secret = decryptTotpSecret(row.secret, { workspaceId: session.workspaceId, userId: session.userId }, deps.config.totpKeys)
     const result = verifyTotp(secret, digits, row.lastStep, deps.now())
@@ -30,7 +31,7 @@ async function checkCode(tx: Tx, session: Session, code: string, deps: AuthDeps)
     // Conditional on the stored step, so two requests with the same code cannot both pass.
     const stored = await tx.update(users)
       .set({ totpLastStep: result.step })
-      .where(and(eq(users.id, session.userId), or(isNull(users.totpLastStep), lt(users.totpLastStep, result.step))))
+      .where(and(isUser(session), or(isNull(users.totpLastStep), lt(users.totpLastStep, result.step))))
       .returning({ id: users.id })
     return stored.length === 1 ? { ok: true, method: 'totp' } : { ok: false }
   }
@@ -38,11 +39,10 @@ async function checkCode(tx: Tx, session: Session, code: string, deps: AuthDeps)
   if (!normalized) return { ok: false }
   const used = await tx.update(recoveryCodes)
     .set({ usedAt: sql`now()` })
-    .where(and(eq(recoveryCodes.userId, session.userId), eq(recoveryCodes.codeHash, hashRecoveryCode(normalized)), isNull(recoveryCodes.usedAt)))
+    .where(and(ownCodes(session), eq(recoveryCodes.codeHash, hashRecoveryCode(normalized)), isNull(recoveryCodes.usedAt)))
     .returning({ id: recoveryCodes.id })
   if (used.length !== 1) return { ok: false }
-  const [left] = await tx.select({ n: count() }).from(recoveryCodes).where(and(eq(recoveryCodes.userId, session.userId), isNull(recoveryCodes.usedAt)))
-  return { ok: true, method: 'recovery_code', remaining: left?.n ?? 0 }
+  return { ok: true, method: 'recovery_code', remaining: await countUnusedRecoveryCodes(tx, session) }
 }
 
 /**
@@ -69,7 +69,7 @@ export async function attemptSecondFactor(
   const check = await withWorkspace(ctx, async tx => {
     const result = await checkCode(tx, session, input.code, deps)
     if (result.ok && result.method === 'recovery_code') {
-      const self = (await getSelf(tx, session.userId))!
+      const self = (await getSelf(tx, session))!
       await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.recovery_code_used', details: { remaining: result.remaining }, ipHash })
       await securityNotice(tx, session.workspaceId, self, 'auth.recovery_code_used', { remaining: result.remaining })
     }
@@ -79,7 +79,7 @@ export async function attemptSecondFactor(
 
   if (await recordSecondFactorFailure(subject, pool)) {
     await withWorkspace(ctx, async tx => {
-      const self = (await getSelf(tx, session.userId))!
+      const self = (await getSelf(tx, session))!
       await deleteSession(tx, session)
       await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.second_factor_locked', ipHash })
       await securityNotice(tx, session.workspaceId, self, 'auth.second_factor_locked', {})

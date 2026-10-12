@@ -35,9 +35,9 @@ export default async function SecurityPage() {
   const owner = session.workspaceKind === 'owner'
   const recent = isRecentAuth(session)
   const { self, passkeys, codes, sessions, timeZone } = await withWorkspace(workspaceContext(session), async tx => ({
-    self: (await getSelf(tx, session.userId))!,
-    passkeys: owner ? await listPasskeys(tx, session.userId) : [],
-    codes: await countUnusedRecoveryCodes(tx, session.userId),
+    self: (await getSelf(tx, session))!,
+    passkeys: owner ? await listPasskeys(tx, session) : [],
+    codes: await countUnusedRecoveryCodes(tx, session),
     sessions: await listOwnSessions(tx, session.userId),
     timeZone: (await getStoreSettings(tx, session.workspaceId)).timezone,
   }))

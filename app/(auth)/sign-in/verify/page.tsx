@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function VerifyPage() {
   const session = await requireSession({ pending: true })
   if (session.secondFactorVerified) redirect('/overview')
-  const self = await withWorkspace(workspaceContext(session), tx => getSelf(tx, session.userId))
+  const self = await withWorkspace(workspaceContext(session), tx => getSelf(tx, session))
   const t = await getTranslations('auth.verify')
   return (
     <AuthCard title={t('title')}>
