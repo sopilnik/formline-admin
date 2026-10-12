@@ -49,7 +49,7 @@ export async function recoverOwner(
   if (!expiresAt) return { ok: false, error: 'recovery_invalid', field: 'recoveryCode' }
 
   // Whoever holds the lost factors may have locked the account: recovery lifts both locks.
-  await clearSubject(userSubject(owner.id), pool)
+  await clearSubject(userSubject(workspaceId, owner.id), pool)
   await clearSubject(accountSubject(owner.email, config.ipHashKey), pool)
   await withWorkspace({ workspaceId, userId: owner.id, role: 'owner' }, tx => logActivity(tx, workspaceId, {
     actorUserId: owner.id,

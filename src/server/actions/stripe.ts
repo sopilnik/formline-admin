@@ -25,7 +25,7 @@ export async function importStripeOrdersAction(_previous: ImportState, _form: Fo
   if (!isRecentAuth(session)) return { status: 'error', error: 'reauth_required' }
   const config = stripeConfig()
   if (!config) return { status: 'error', error: 'unavailable' }
-  const verdict = await consume(LIMITS.stripeImport, userSubject(session.userId))
+  const verdict = await consume(LIMITS.stripeImport, userSubject(session.workspaceId, session.userId))
   if (!verdict.allowed) return { status: 'error', error: 'rate_limited', retryAfterMinutes: retryMinutes(verdict.retryAfterSeconds) }
   try {
     const summary = await importMissedOrders({ gateway: stripeGateway(config), pseudonymKey: config.pseudonymKey })

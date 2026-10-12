@@ -48,7 +48,8 @@ export const ipSubject = (ip: string | null, key: string): string => `ip:${hashI
 export const accountSubject = (email: string, key: string): string =>
   `account:${hmac(key, `account:${email.trim().toLowerCase()}`)}`
 
-export const userSubject = (userId: string): string => `user:${userId}`
+/** A user's own counters and locks. Every sandbox copies the template's user ids, so the workspace is part of the key. */
+export const userSubject = (workspaceId: string, userId: string): string => `user:${workspaceId}:${userId}`
 
 /** Per-session limits (spec §5.4) are keyed by the session's token hash, which is also its row id. */
 export const sessionSubject = (sessionId: string): string => `session:${sessionId}`

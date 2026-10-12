@@ -1,5 +1,6 @@
 import type pg from 'pg'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { ownerWorkspaceId } from '@/server/auth/owner'
 import { isRecentAuth, reauthenticate } from '@/server/auth/reauth'
 import { generateRecoveryCodes, hashRecoveryCode } from '@/server/auth/recovery-codes'
 import { verifySecondFactor } from '@/server/auth/second-factor'
@@ -17,6 +18,7 @@ import { ensureOwner, nextTotp, OWNER } from './owner'
 let admin: pg.Pool
 let app: pg.Pool
 let ownerId: string
+let ownerWorkspace: string
 let address = 0
 const nextIp = () => `192.0.2.${++address}`
 const account = accountSubject(OWNER.email, TEST_AUTH_ENV.IP_HASH_KEY)
@@ -25,15 +27,16 @@ beforeAll(async () => {
   admin = adminPool()
   app = appPool()
   ownerId = await ensureOwner(admin, app)
+  ownerWorkspace = await ownerWorkspaceId(app)
 })
 // Every test starts without counters or locks on the owner.
 beforeEach(async () => {
   await clearSubject(account, app)
-  await clearSubject(userSubject(ownerId), app)
+  await clearSubject(userSubject(ownerWorkspace, ownerId), app)
 })
 afterAll(async () => {
   await clearSubject(account, app)
-  await clearSubject(userSubject(ownerId), app)
+  await clearSubject(userSubject(ownerWorkspace, ownerId), app)
   await closeAll()
 })
 
@@ -147,7 +150,7 @@ describe('second-factor step', () => {
     expect(results.slice(0, 9).every(r => !r.ok && r.error === 'code_invalid')).toBe(true)
     expect(results[9]).toEqual({ ok: false, error: 'second_factor_locked' })
     expect(await sessionExists(pending)).toBe(false)
-    expect(await lockRemaining('mfa.lock', userSubject(ownerId), app)).toBeGreaterThan(3590)
+    expect(await lockRemaining('mfa.lock', userSubject(ownerWorkspace, ownerId), app)).toBeGreaterThan(3590)
     expect(await letters('auth.second_factor_locked')).toBe(lettersBefore + 1)
     const next = await pendingSession()
     const totp = await nextTotp(admin)

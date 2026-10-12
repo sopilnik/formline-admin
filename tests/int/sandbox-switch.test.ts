@@ -6,7 +6,9 @@ import { validateSessionToken, type Session } from '@/server/auth/sessions'
 import { generateToken, hashToken } from '@/server/auth/tokens'
 import { encryptTotpSecret } from '@/server/auth/totp'
 import { authConfig } from '@/server/config'
+import { LIMITS, SECOND_FACTOR_LOCK_SECONDS } from '@/server/ratelimit/limits'
 import { switchUser } from '@/server/sandbox/sign-in-as'
+import { roomInWindow } from '../windows'
 import { adminPool, appPool, closeAll } from './db'
 import { asSchemaOwner } from './fixtures'
 
@@ -23,6 +25,12 @@ async function enter(): Promise<{ session: Session; token: string; users: Record
   const session = (await validateSessionToken(token, app))!
   const members = await admin.query<{ id: string; role: string }>('select id, role from fa.users where workspace_id = $1', [session.workspaceId])
   return { session, token, users: Object.fromEntries(members.rows.map(r => [r.role, r.id])) }
+}
+
+/** Gives a member of a sandbox an authenticator with this key. */
+async function enrol(workspaceId: string, userId: string, secret: Uint8Array): Promise<void> {
+  const encrypted = encryptTotpSecret(secret, { workspaceId, userId }, authConfig().totpKeys)
+  await asSchemaOwner(admin, c => c.query('update fa.users set totp_secret_enc = $3 where workspace_id = $1 and id = $2', [workspaceId, userId, encrypted]))
 }
 
 beforeAll(() => {
@@ -87,6 +95,31 @@ describe('switchUser', () => {
     if (!replay.ok) return
     const viewer = (await validateSessionToken(replay.token, app))!
     expect(await switchUser(viewer, { targetUserId: users.admin!, code, ...meta }, { pool: app, now })).toMatchObject({ ok: false, error: 'code_invalid' })
+  })
+
+  it('locks a member\'s authenticator at the tenth wrong code, in that sandbox only, and logs and notifies it', async () => {
+    await roomInWindow(LIMITS.secondFactorFail.windowSeconds, 10)
+    const a = await enter()
+    const b = await enter()
+    const secret = new Uint8Array(20).fill(7)
+    await enrol(a.session.workspaceId, a.users.admin!, secret)
+    await enrol(b.session.workspaceId, b.users.admin!, secret)
+
+    const wrong = () => switchUser(a.session, { targetUserId: a.users.admin!, code: '000000', ...meta }, { pool: app })
+    for (let i = 1; i < LIMITS.secondFactorFail.limit; i++) expect(await wrong()).toMatchObject({ ok: false, error: 'code_invalid' })
+    expect(await wrong()).toMatchObject({ ok: false, error: 'second_factor_locked', retryAfterSeconds: SECOND_FACTOR_LOCK_SECONDS })
+
+    const log = await admin.query("select actor_user_id from fa.activity_log where workspace_id = $1 and action = 'auth.second_factor_locked'", [a.session.workspaceId])
+    expect(log.rows).toEqual([{ actor_user_id: a.users.admin }])
+    const notices = await admin.query<{ n: number }>(
+      "select count(*)::int as n from fa.notifications where workspace_id = $1 and user_id = $2 and kind = 'auth.second_factor_locked'", [a.session.workspaceId, a.users.admin])
+    expect(notices.rows[0]?.n).toBe(1)
+
+    // b's admin carries the same id as a's, but its own counters and lock: the right code still lets b switch.
+    const step = Math.floor(Date.now() / 30_000) + 50
+    const now = () => step * 30_000 + 5_000
+    const code = generateHOTP(secret, BigInt(step), 6)
+    expect((await switchUser(b.session, { targetUserId: b.users.admin!, code, ...meta }, { pool: app, now })).ok).toBe(true)
   })
 
   it('refuses a deactivated member, oneself and an unknown id, and never crosses into another sandbox', async () => {

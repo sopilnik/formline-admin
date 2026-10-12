@@ -1,5 +1,6 @@
 import 'server-only'
 import { and, count, eq, isNull, lt, or, sql } from 'drizzle-orm'
+import type { Pool } from 'pg'
 import type { AuthFailure } from '@/lib/auth-form'
 import { authDeps, type AuthDeps } from '@/server/auth/deps'
 import { securityNotice } from '@/server/auth/notices'
@@ -57,7 +58,7 @@ export async function attemptSecondFactor(
   const deps = authDeps(overrides)
   const { pool, config } = deps
   const ctx = workspaceContext(session)
-  const subject = userSubject(session.userId)
+  const subject = userSubject(session.workspaceId, session.userId)
   const ipHash = hashIp(input.ip, config.ipHashKey)
 
   if (await lockRemaining(LOCKS.secondFactor, subject, pool) > 0) {
@@ -76,9 +77,7 @@ export async function attemptSecondFactor(
   }, pool)
   if (check.ok) return { ok: true, method: check.method }
 
-  const failures = await consume(LIMITS.secondFactorFail, subject, pool)
-  if (failures.count >= LIMITS.secondFactorFail.limit) {
-    await setLock(LOCKS.secondFactor, subject, SECOND_FACTOR_LOCK_SECONDS, pool)
+  if (await recordSecondFactorFailure(subject, pool)) {
     await withWorkspace(ctx, async tx => {
       const self = (await getSelf(tx, session.userId))!
       await deleteSession(tx, session)
@@ -89,6 +88,18 @@ export async function attemptSecondFactor(
   }
   await withWorkspace(ctx, tx => logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.second_factor_failed', ipHash }), pool)
   return { ok: false, error: 'code_invalid', field: 'code' }
+}
+
+/**
+ * Counts a wrong code against a user's second factor, on sign-in and on a switch to them alike: the failure that reaches
+ * the hour's limit starts the hour's lock (spec §5.4). Answers whether the factor is locked now.
+ */
+export async function recordSecondFactorFailure(subject: string, pool: Pool): Promise<boolean> {
+  const failures = await consume(LIMITS.secondFactorFail, subject, pool)
+  if (failures.count < LIMITS.secondFactorFail.limit) return false
+
+  await setLock(LOCKS.secondFactor, subject, SECOND_FACTOR_LOCK_SECONDS, pool)
+  return true
 }
 
 /** Step two of the password sign-in (the /sign-in/verify page). */

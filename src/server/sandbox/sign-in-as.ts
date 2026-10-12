@@ -4,14 +4,17 @@ import type { Locale } from '@/i18n/locale'
 import type { AuthFailure } from '@/lib/auth-form'
 import type { Theme } from '@/lib/theme'
 import { authDeps, type AuthDeps } from '@/server/auth/deps'
+import { securityNotice } from '@/server/auth/notices'
+import { recordSecondFactorFailure } from '@/server/auth/second-factor'
 import { workspaceContext, type NewSession, type Session } from '@/server/auth/sessions'
 import { generateToken, hashToken } from '@/server/auth/tokens'
 import { decryptTotpSecret, verifyTotp } from '@/server/auth/totp'
+import { logActivity } from '@/server/dal/activity'
 import { getMemberFactor, getSelf, updateSelfPreferences } from '@/server/dal/users'
 import { withWorkspace } from '@/server/db/with-workspace'
-import { consume, lockRemaining, setLock } from '@/server/ratelimit/consume'
+import { lockRemaining } from '@/server/ratelimit/consume'
 import { userSubject } from '@/server/ratelimit/ip'
-import { LIMITS, LOCKS, SECOND_FACTOR_LOCK_SECONDS } from '@/server/ratelimit/limits'
+import { LOCKS, SECOND_FACTOR_LOCK_SECONDS } from '@/server/ratelimit/limits'
 
 export type SwitchInput = {
   targetUserId: string
@@ -43,19 +46,22 @@ export async function switchUser(session: Session, input: SwitchInput, overrides
 
   let step: number | null = null
   if (target.totpSecretEnc) {
-    const subject = userSubject(target.id)
+    const subject = userSubject(session.workspaceId, target.id)
     const locked = await lockRemaining(LOCKS.secondFactor, subject, deps.pool)
     if (locked > 0) return { ok: false, error: 'second_factor_locked', field: 'code', retryAfterSeconds: locked }
 
     const secret = decryptTotpSecret(target.totpSecretEnc, { workspaceId: session.workspaceId, userId: target.id }, deps.config.totpKeys)
     const verdict = verifyTotp(secret, input.code, target.totpLastStep, deps.now())
     if (!verdict.ok) {
-      const failures = await consume(LIMITS.secondFactorFail, subject, deps.pool)
-      if (!failures.allowed) {
-        await setLock(LOCKS.secondFactor, subject, SECOND_FACTOR_LOCK_SECONDS, deps.pool)
-        return { ok: false, error: 'second_factor_locked', field: 'code', retryAfterSeconds: SECOND_FACTOR_LOCK_SECONDS }
-      }
-      return { ok: false, error: 'code_invalid', field: 'code' }
+      if (!(await recordSecondFactorFailure(subject, deps.pool))) return { ok: false, error: 'code_invalid', field: 'code' }
+
+      // The member hears of the lock as the owner does of theirs: in the log, the bell and a letter.
+      await withWorkspace(ctx, async tx => {
+        const member = (await getSelf(tx, target.id))!
+        await logActivity(tx, session.workspaceId, { actorUserId: target.id, action: 'auth.second_factor_locked', ipHash: input.ipHash })
+        await securityNotice(tx, session.workspaceId, member, 'auth.second_factor_locked', {})
+      }, deps.pool)
+      return { ok: false, error: 'second_factor_locked', field: 'code', retryAfterSeconds: SECOND_FACTOR_LOCK_SECONDS }
     }
     step = verdict.step
   }
