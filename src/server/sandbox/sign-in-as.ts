@@ -60,13 +60,16 @@ export async function switchUser(session: Session, input: SwitchInput, overrides
 
   const token = generateToken()
   const id = hashToken(token)
-  const result = await withWorkspace(ctx, tx => tx.execute<{ expires_at: string }>(
+  const result = await withWorkspace(ctx, tx => tx.execute<{ expires_at: string | null }>(
     sql`select fa.sandbox_sign_in_as(${target.id}, ${session.id}, ${id}, ${step}, ${input.userAgentSummary}, ${input.ipHash}) as expires_at`), deps.pool)
+  const expiresAt = result.rows[0]!.expires_at
+  // Null: a switch that ran alongside this one stored the code's step first, so the code is used.
+  if (expiresAt === null) return wrongCode(ctx, target.id, claim!, input.ipHash, deps)
   if (claim) await giveBack(GUARDS.secondFactor, subject, claim, deps.pool)
 
   // Row-level security lets a member write only their own row, so this runs as the member just switched to.
   await withWorkspace({ ...ctx, userId: target.id, role: target.role }, tx => updateSelfPreferences(tx, { workspaceId: session.workspaceId, userId: target.id }, { ...input.preferences, shortcutsEnabled }), deps.pool)
-  return { ok: true, token, id, expiresAt: asDate(result.rows[0]!.expires_at) }
+  return { ok: true, token, id, expiresAt: asDate(expiresAt) }
 }
 
 /**

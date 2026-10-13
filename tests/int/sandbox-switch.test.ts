@@ -2,9 +2,12 @@ import { randomUUID } from 'node:crypto'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { generateHOTP } from '@/lib/otp'
+import { sql } from 'drizzle-orm'
 import { validateSessionToken, type Session } from '@/server/auth/sessions'
+import { generateToken, hashToken } from '@/server/auth/tokens'
 import { encryptTotpSecret } from '@/server/auth/totp'
 import { authConfig } from '@/server/config'
+import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 import { LIMITS, SECOND_FACTOR_LOCK_SECONDS } from '@/server/ratelimit/limits'
 import { switchUser } from '@/server/sandbox/sign-in-as'
 import { roomInWindow } from '../windows'
@@ -90,6 +93,26 @@ describe('switchUser', () => {
     if (!replay.ok) return
     const viewer = (await validateSessionToken(replay.token, app))!
     expect(await switchUser(viewer, { targetUserId: users.admin!, code, ...meta }, { pool: app, now })).toMatchObject({ ok: false, error: 'code_invalid' })
+  })
+
+  it('stores a code\'s step once: a second switch that carries the same step changes nothing', async () => {
+    const { session, users } = await enter()
+    await enrol(session.workspaceId, users.admin!, new Uint8Array(20).fill(3))
+    // A second session of the same visitor, as two tabs that switched at once would hold.
+    const other = hashToken(generateToken())
+    await admin.query(
+      `insert into fa.sessions (workspace_id, id, user_id, expires_at, second_factor_verified)
+       select workspace_id, $2, user_id, expires_at, true from fa.sessions where id = $1`, [session.id, other])
+    const step = Math.floor(Date.now() / 30_000) + 50
+    const switchFrom = (current: string) => withWorkspace(workspaceContext(session), tx => tx.execute<{ expires_at: string | null }>(
+      sql`select fa.sandbox_sign_in_as(${users.admin}, ${current}, ${hashToken(generateToken())}, ${step}, 'Vitest', null) as expires_at`), app)
+
+    const first = await switchFrom(session.id)
+    const second = await switchFrom(other)
+
+    expect(first.rows[0]?.expires_at).not.toBeNull()
+    expect(second.rows[0]?.expires_at).toBeNull()
+    expect((await admin.query('select 1 from fa.sessions where id = $1', [other])).rowCount).toBe(1)
   })
 
   it('locks a member\'s authenticator at the tenth wrong code, in that sandbox only, and logs and notifies it', async () => {
