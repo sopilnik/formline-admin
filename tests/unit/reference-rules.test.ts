@@ -12,9 +12,6 @@ const SKIP = new Set([
 const FROZEN = 'src/server/db/migrations'
 const TEXT = /\.(css|json|md|mjs|sql|ts|tsx|yml)$|^(Dockerfile|\.env\.example)$/
 const SELF = 'tests/unit/reference-rules.test.ts'
-// The sweep reaches the repository part by part: the parts covered so far, and every file at the root but the README.
-const AREAS = ['.github/', 'app/', 'db/', 'messages/', 'scripts/', 'src/components/', 'src/i18n/', 'src/lib/', 'src/server/', 'tests/']
-const covered = (name: string) => (name.includes('/') ? AREAS.some(area => name.startsWith(area)) : name !== 'README.md')
 
 function textFiles(dir = ''): string[] {
   return readdirSync(join(root, dir), { withFileTypes: true }).flatMap(entry => {
@@ -31,7 +28,7 @@ const PRIVATE = new RegExp([
 ].join('|'), 'i')
 
 describe('text files', () => {
-  it.each(textFiles().filter(covered))('%s cites no private note, dated decision or tracker label', name => {
+  it.each(textFiles())('%s cites no private note, dated decision or tracker label', name => {
     expect(readFileSync(join(root, name), 'utf8')).not.toMatch(PRIVATE)
   })
 })

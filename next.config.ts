@@ -16,6 +16,8 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   output: 'standalone',
   poweredByHeader: false,
+  // `next dev` writes no rules file of its own into the repository.
+  agentRules: false,
   // Metadata arrives with the page for every browser, not streamed after it: a streamed title left the tab without one for
   // up to 0.3 s after a refresh or a navigation. A page and its title read the same cached query, so nothing waits
   // longer, and the panel is never indexed, so there is no crawler to tell apart.

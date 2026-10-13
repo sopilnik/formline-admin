@@ -34,6 +34,8 @@ describe('the end-to-end config', () => {
         const worker = e2eWorker(index)
         return [`http://127.0.0.1:${worker.port}/api/health`, worker.baseUrl, worker.appUrl, worker.mediaDir]
       }))
+    // A developer's .env, which the build copies beside the server, must not turn the edge check off.
+    expect(servers.map(server => server.env?.ORIGIN_AUTH_DISABLED)).toEqual(Array(E2E_WORKERS).fill('0'))
   })
 
   it('dispatches the owner tests first, on their own project', async () => {

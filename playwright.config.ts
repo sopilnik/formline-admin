@@ -42,6 +42,8 @@ export default defineConfig({
         PORT: String(worker.port),
         HOSTNAME: '127.0.0.1',
         ORIGIN_AUTH_SECRET: E2E_ORIGIN_SECRET,
+        // The build carries a developer's `.env` along; this wins over its ORIGIN_AUTH_DISABLED=1, which production refuses.
+        ORIGIN_AUTH_DISABLED: '0',
         DATABASE_URL: worker.appUrl,
         MEDIA_STORAGE_DIR: worker.mediaDir,
         ...E2E_AUTH_ENV,

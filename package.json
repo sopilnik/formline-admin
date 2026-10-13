@@ -28,6 +28,7 @@
     "test:e2e": "playwright test",
     "db:migrate": "node --env-file-if-exists=.env scripts/db-migrate.ts",
     "owner:recovery": "node --env-file-if-exists=.env scripts/owner-recovery.ts",
+    "posters:thumbs": "node scripts/poster-thumbs.ts",
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down -v"
   },
