@@ -11,7 +11,8 @@ export type Tx = NodePgDatabase<typeof schema>
 
 /**
  * No statement of a workspace transaction runs longer: the slowest query the panel makes takes well under a second.
- * Statements on the bare pool (the rate-limit counters, sandbox creation, the daily job) carry no such limit.
+ * Statements on the bare pool (the rate-limit counters, sandbox creation, the daily job) fall under the same bound
+ * through the app role's own default, which the migrator sets (scripts/migrate.ts), with a 10 s bound on lock waits.
  */
 const STATEMENT_TIMEOUT = '30s'
 

@@ -1,7 +1,7 @@
 import pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { migrate } from '../../scripts/migrate'
-import { ADMIN_URL, APP_POOLED_URL, MIGRATOR_URL, withDatabase } from './env'
+import { ADMIN_URL, APP_DIRECT_URL, APP_POOLED_URL, MIGRATOR_URL, withDatabase } from './env'
 
 const DB = 'formline_migrate_test'
 const migratorUrl = withDatabase(MIGRATOR_URL, DB)
@@ -50,6 +50,17 @@ describe('migrate', () => {
     await expect(client.query('set role schema_owner')).rejects.toThrow(/permission denied/)
     await expect(client.query('create table fa.t_app (id integer)')).rejects.toThrow(/permission denied/)
     await client.end()
+  })
+
+  it('bounds every statement of the app role and every lock it waits for', async () => {
+    // Roles belong to the whole cluster: start from a role without defaults, as a first start meets it.
+    await admin(c => c.query('alter role app reset all'))
+    await migrate({ migratorUrl, appUrl, dir: fixtures('migrations-ok'), retryDelaysMs: [] })
+
+    // A connection of its own, as a new one through the pooler is: the defaults apply when a connection starts.
+    const settings = await admin(c => c.query<{ statement: string; lock: string }>(
+      "select current_setting('statement_timeout') as statement, current_setting('lock_timeout') as lock"), withDatabase(APP_DIRECT_URL, DB))
+    expect(settings.rows[0]).toEqual({ statement: '30s', lock: '10s' })
   })
 
   it('starts again under a migrator that is not a superuser, as Neon\'s owner role is', async () => {

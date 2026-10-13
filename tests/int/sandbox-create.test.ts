@@ -1,3 +1,4 @@
+import { setTimeout as sleep } from 'node:timers/promises'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { validateSessionToken } from '@/server/auth/sessions'
@@ -134,6 +135,25 @@ describe('create_sandbox', () => {
     expect((await create(randomIpHash())).outcome).toBe('created')
     const { rows } = await admin.query<{ count: number }>("select count from fa.rate_limits where purpose = 'sandbox.create.ip' and subject = $1", [`ip:${ip}`])
     expect(rows[0]?.count).toBe(6)
+  })
+
+  it('answers an address over its limit at once, without waiting for an entry in progress', async () => {
+    await roomInWindow(60 * 60, 10)
+    const ip = randomIpHash()
+    await admin.query(
+      `insert into fa.rate_limits (purpose, subject, window_start, count)
+       values ('sandbox.create.ip', $1, to_timestamp(floor(extract(epoch from now()) / 3600) * 3600), 5)`, [`ip:${ip}`])
+    // Another entry in progress holds the lock every creation takes (7201327 in create_sandbox).
+    const holder = await admin.connect()
+    try {
+      await holder.query('begin')
+      await holder.query('select pg_advisory_xact_lock(7201327)')
+      const answer = await Promise.race([create(ip), sleep(2000).then(() => 'still waiting')])
+      expect(answer).toMatchObject({ outcome: 'rate_limited' })
+    } finally {
+      await holder.query('rollback')
+      holder.release()
+    }
   })
 
   it('holds the cap under concurrent entries and evicts only idle sandboxes', async () => {

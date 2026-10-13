@@ -13,11 +13,10 @@ beforeAll(() => {
 afterAll(closeAll)
 
 describe('withWorkspace', () => {
-  it('ends any statement of the transaction that runs past 30 seconds, and only inside it', async () => {
+  it('ends any statement of a workspace transaction that runs past 30 seconds', async () => {
+    // The bare pool falls under the app role's own default (tests/int/migrate.test.ts).
     const inside = await withWorkspace({ workspaceId: randomUUID(), userId: null, role: 'system' }, async tx =>
       (await tx.execute<{ timeout: string }>(sql`select current_setting('statement_timeout') as timeout`)).rows[0]!.timeout, app)
     expect(inside).toBe('30s')
-    const after = await app.query<{ timeout: string }>("select current_setting('statement_timeout') as timeout")
-    expect(after.rows[0]!.timeout).toBe('0')
   })
 })

@@ -65,6 +65,10 @@ async function bootstrap(client: pg.Client, password: string): Promise<void> {
   await client.query(exists.rowCount
     ? `alter role app with login password ${lit}`
     : `create role app login password ${lit} ${attrs}`)
+  // Every statement of the server is bounded, those outside a workspace transaction (the rate-limit counters, sandbox
+  // creation, the daily job) included. A role's defaults apply to each new connection, so they hold behind the pooler.
+  await client.query("alter role app set statement_timeout = '30s'")
+  await client.query("alter role app set lock_timeout = '10s'")
 
   const { rows } = await client.query<{ db: string }>('select current_database() as db')
   await client.query(`grant connect on database ${client.escapeIdentifier(rows[0]!.db)} to app`)
