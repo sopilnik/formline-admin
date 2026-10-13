@@ -27,9 +27,9 @@ export type SwitchInput = {
 }
 
 /**
- * "Switch user" in a sandbox (spec §6.4): a verified session of another demo user
+ * "Switch user" in a sandbox: a verified session of another demo user
  * replaces the current one. A target with an enrolled authenticator asks for its
- * code first, under the same per-account limit and lock as sign-in (spec §5.4).
+ * code first, under the same per-account limit and lock as sign-in.
  * The member takes the language and theme the visitor sees, so the profile, and the
  * letters written in the member's language, agree with the interface; and the
  * visitor's shortcut switch, so shortcuts turned off stay off (WCAG 2.2 SC 2.1.4).

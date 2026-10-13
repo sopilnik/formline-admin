@@ -34,7 +34,7 @@ export type SetupInput = {
 }
 
 /**
- * The one-time owner setup (spec §5.8, amended): the token from OWNER_SETUP_TOKEN,
+ * The one-time owner setup: the token from OWNER_SETUP_TOKEN,
  * compared in constant time, then the owner with a password and an authenticator
  * in one definer call.
  */

@@ -12,7 +12,7 @@ import { log } from '@/server/log'
 import type { Processed } from '@/server/media/image'
 import { mediaPath, thumbPath, type MediaStorage } from '@/server/media/storage'
 
-/** Spec §5.4: per workspace at most 30 uploaded images or 20 MB of them. */
+/** Per workspace at most 30 uploaded images or 20 MB of them. */
 export const MEDIA_CAP = { images: 30, bytes: 20 * 1024 * 1024 } as const
 
 export type ImageUpload = { ok: true; imageId: string; width: number; height: number } | { ok: false; reason: 'not_found' | 'cap' }
@@ -25,7 +25,7 @@ async function fits(tx: Tx, workspaceId: string, productImageId: string | null, 
 }
 
 /**
- * Stores a processed upload as the product's image (spec §8.4). The file and its small copy go to
+ * Stores a processed upload as the product's image. The file and its small copy go to
  * storage first, outside any transaction; then the image row, the product's new image and the release of the
  * old one commit together. When the database step refuses or fails, the stored files are removed
  * again, or queued for the daily job if storage refuses that too (the queue takes the copy along).
@@ -85,7 +85,7 @@ export async function storeProductImage(actor: Actor, productId: string, image: 
   }
 }
 
-/** "Remove image" (spec §8.4): the product keeps no image; an uploaded file is queued for deletion. */
+/** "Remove image": the product keeps no image; an uploaded file is queued for deletion. */
 export async function removeProductImage(actor: Actor, productId: string, pool: Pool = getPool()): Promise<{ ok: true } | { ok: false; reason: 'not_found' }> {
   return withWorkspace(workspaceContext(actor), async tx => {
     const [product] = await tx.select({ slug: products.slug, imageId: products.imageId }).from(products)

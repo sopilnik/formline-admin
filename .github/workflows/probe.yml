@@ -1,7 +1,7 @@
 name: Probe
 
-# The probes of spec §15 against the live panel, one at a time, by hand (scripts/probe.ts). They print field names,
-# figures, timings and statuses — never a key, a secret or a raw hostname.
+# The probes of the hosting setup against the live panel, one at a time, by hand (scripts/probe.ts). They print field
+# names, figures, timings and statuses — never a key, a secret or a raw hostname.
 on:
   workflow_dispatch:
     inputs:

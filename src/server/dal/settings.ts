@@ -9,7 +9,7 @@ export type StoreSettings = { storeName: string; supportEmail: string; timezone:
 
 export const DEFAULT_SETTINGS: StoreSettings = { storeName: 'Formline', supportEmail: 'support@formline.example', timezone: TIME_ZONE, lowStockDefault: 3 }
 
-/** The workspace's settings row; the defaults when it has none (spec §6.1). The zone is checked against Intl. */
+/** The workspace's settings row; the defaults when it has none. The zone is checked against Intl. */
 export async function getStoreSettings(tx: Tx, workspaceId: string): Promise<StoreSettings> {
   const [row] = await tx.select().from(storeSettings).where(eq(storeSettings.workspaceId, workspaceId))
   if (!row) return DEFAULT_SETTINGS
@@ -17,7 +17,7 @@ export async function getStoreSettings(tx: Tx, workspaceId: string): Promise<Sto
 }
 
 /**
- * The store form's save (spec §8.8): owners and admins, as row-level security allows. Only what changed is
+ * The store form's save: owners and admins, as row-level security allows. Only what changed is
  * written; the fields it changed come back, or null when the workspace has no settings row to change.
  */
 export async function updateStoreSettings(tx: Tx, workspaceId: string, input: StoreSettings): Promise<(keyof StoreSettings)[] | null> {

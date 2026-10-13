@@ -10,7 +10,7 @@ const EVERYONE = ROLES
 const EDITORS = ['owner', 'admin', 'manager'] as const
 const LEADS = ['owner', 'admin'] as const
 
-/** Who may do what in each kind of workspace (spec §5.5), written out in full: a kind left out allows no one. */
+/** Who may do what in each kind of workspace, written out in full: a kind left out allows no one. */
 const expected: Record<Action, Allowed> = {
   'data.read': { sandbox: EVERYONE, owner: EVERYONE },
   'csv.export': { sandbox: EVERYONE, owner: EVERYONE },

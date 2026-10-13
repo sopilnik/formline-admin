@@ -20,7 +20,7 @@ import { LIMITS, LOCKS, passwordLockSeconds } from '@/server/ratelimit/limits'
 export type SignInInput = { email: string; password: string; ip: string | null; userAgent: string | null }
 export type SignedIn = { token: string; expiresAt: Date; locale: Locale; theme: Theme }
 
-/** Seconds until this address and this account may try a password again; 0 means now (spec §5.4, amended). */
+/** Seconds until this address and this account may try a password again; 0 means now. */
 export async function passwordLockout(input: { email: string; ip: string | null }, deps: AuthDeps): Promise<number> {
   const { pool, config } = deps
   const address = await peek(LIMITS.signInFailIp, ipSubject(input.ip, config.ipHashKey), pool)
@@ -40,8 +40,8 @@ export async function recordPasswordFailure(input: { email: string; ip: string |
 
 /**
  * Step one of the owner sign-in. Success is a pending session that reaches only
- * the second-factor step (spec §5.1). A wrong email and a wrong password fail the
- * same way, after the same hashing work (spec §5.2).
+ * the second-factor step. A wrong email and a wrong password fail the
+ * same way, after the same hashing work.
  */
 export async function signInWithPassword(input: SignInInput, overrides: Partial<AuthDeps> = {}): Promise<{ ok: true; token: string; expiresAt: Date } | AuthFailure> {
   const deps = authDeps(overrides)
@@ -87,7 +87,7 @@ export async function signInWithPassword(input: SignInInput, overrides: Partial<
 
 /**
  * The end of every sign-in: a verified session (the pending one rotated, or a new
- * one), the activity entry and the new-sign-in notice (spec §5.1, §8.9).
+ * one), the activity entry and the new-sign-in notice.
  */
 export async function finishSignIn(tx: Tx, input: {
   workspaceId: string

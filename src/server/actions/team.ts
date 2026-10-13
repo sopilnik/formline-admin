@@ -20,7 +20,7 @@ import { changeMemberActive, changeMemberRole } from '@/server/team/members'
 const roleInput = z.strictObject({ userId: z.uuid(), role: z.enum(ASSIGNABLE_ROLES) })
 const activeInput = z.strictObject({ userId: z.uuid(), active: z.boolean() })
 
-/** "Make admin / manager / viewer" on the team page (spec §8.6): owners and admins, in sandboxes. */
+/** "Make admin / manager / viewer" on the team page: owners and admins, in sandboxes. */
 export async function changeMemberRoleAction(input: unknown): Promise<ActionResult<{ name: string }>> {
   const session = await requireSession()
   if (!can(session.role, 'team.manage', session.workspaceKind)) return fail('forbidden')
@@ -54,7 +54,7 @@ export type InviteState =
   /** `count` tells one invitation from the next. */
   | { status: 'done'; email: string; count: number }
 
-/** "Invite" on the team page (spec §8.6): the letter with the link goes to the outbox. */
+/** "Invite" on the team page: the letter with the link goes to the outbox. */
 export async function inviteMemberAction(previous: InviteState, form: FormData): Promise<InviteState> {
   const session = await requireSession()
   const values = { email: formText(form, 'email').trim(), role: formText(form, 'role') }
@@ -76,7 +76,7 @@ export async function resendInvitationAction(input: unknown): Promise<ActionResu
   if (!parsed.success) return fail('invalid')
   const result = await resendInvitation(await actorOf(session), parsed.data.id)
   if (!result) return fail('not_found')
-  // The new letter and its log entry show on other pages, which the browser keeps for a minute (W.1).
+  // The new letter and its log entry show on other pages, which the browser keeps for a minute.
   refresh()
   return ok(result)
 }
@@ -95,7 +95,7 @@ export async function revokeInvitationAction(input: unknown): Promise<ActionResu
 
 export type AcceptState = { status: 'idle' } | { status: 'error'; error: 'name_required' | 'invalid' | 'taken'; name: string }
 
-/** Accepting an invitation from the letter's link: the visitor continues as the new member (spec §8.6). */
+/** Accepting an invitation from the letter's link: the visitor continues as the new member. */
 export async function acceptInvitationAction(_previous: AcceptState, form: FormData): Promise<AcceptState> {
   const session = await requireSession()
   const typed = formText(form, 'name').trim()

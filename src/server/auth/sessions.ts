@@ -16,7 +16,7 @@ export const SESSION_COOKIE = '__Host-formline_session'
 /**
  * Set beside the session cookie of a sandbox and cleared by every owner sign-in
  * and by sign-out. A request whose session no longer resolves while this marker
- * is present belongs to a visitor whose sandbox has ended (spec §6.4).
+ * is present belongs to a visitor whose sandbox has ended.
  */
 export const DEMO_COOKIE = '__Host-formline_demo'
 
@@ -73,7 +73,7 @@ export async function validateSessionToken(token: string, pool: Pool = getPool()
 
 /**
  * Inserts a session in the caller's transaction. A pending session (second factor
- * not yet given) lives 10 minutes; a verified one 7 days (spec §5.1). A new sign-in
+ * not yet given) lives 10 minutes; a verified one 7 days. A new sign-in
  * gets a new sign-in id; a rotation passes the old one on.
  */
 export async function createSession(
@@ -98,7 +98,7 @@ export async function createSession(
 
 /**
  * A fresh token for a full authentication (the second factor, or a re-authentication):
- * the new session is verified with a new lifetime, the old row is deleted (spec §5.1).
+ * the new session is verified with a new lifetime, the old row is deleted.
  * The sign-in id stays, so the device is still the one that signed in.
  */
 export async function rotateSession(tx: Tx, session: Session, meta: { userAgentSummary: string | null; ipHash: string | null }): Promise<CreatedSession> {
@@ -114,7 +114,7 @@ export async function deleteSession(tx: Tx, session: Session): Promise<void> {
 
 // The session cookie can only be written by Server Actions and route handlers.
 // __Host- requires Secure and Path=/ and forbids Domain; SameSite=Lax is what
-// stops a cross-site POST when a browser sends no Origin (spec §5.6).
+// stops a cross-site POST when a browser sends no Origin.
 export async function setSessionCookie(token: string, expiresAt: Date, options: { demo?: boolean } = {}): Promise<void> {
   const store = await cookies()
   store.set(SESSION_COOKIE, token, { ...COOKIE, expires: expiresAt })
@@ -138,7 +138,7 @@ export const getSession = cache(async (): Promise<Session | null> => {
  * For pages and Server Actions: a verified session, or a redirect into the
  * sign-in flow. `pending: true` also accepts a session that still waits for its
  * second factor (the verification step itself). A missing session with the demo
- * marker cookie lands on the ended-sandbox notice (spec §6.4).
+ * marker cookie lands on the ended-sandbox notice.
  */
 export async function requireSession(options: { pending?: boolean } = {}): Promise<Session> {
   const session = await getSession()

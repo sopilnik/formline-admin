@@ -7,13 +7,13 @@ import { getPool } from '@/server/db/pool'
 import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 import { entryFromRow, type EntryRow, type SandboxEntry, type VisitorMeta } from '@/server/sandbox/enter'
 
-/** Deletes the current sandbox; its session goes with it (spec §6.4). Returns the number of image paths queued. */
+/** Deletes the current sandbox; its session goes with it. Returns the number of image paths queued. */
 export async function endSandbox(session: Session, pool: Pool = getPool()): Promise<number> {
   const result = await withWorkspace(workspaceContext(session), tx => tx.execute<{ queued: number }>(sql`select fa.end_sandbox() as queued`), pool)
   return result.rows[0]?.queued ?? 0
 }
 
-/** A fresh copy for the same visitor; counts against the per-address limit like an entry (spec §6.4). */
+/** A fresh copy for the same visitor; counts against the per-address limit like an entry. */
 export async function resetSandbox(session: Session, input: VisitorMeta, pool: Pool = getPool()): Promise<SandboxEntry> {
   const token = generateToken()
   const result = await withWorkspace(workspaceContext(session), tx => tx.execute<EntryRow>(

@@ -5,7 +5,7 @@ import { decodeBase32IgnorePadding, decodeBase64urlIgnorePadding, encodeBase32Up
 import { createTOTPKeyURI, verifyHOTP } from '@/lib/otp'
 import type { Keyring } from '@/server/config'
 
-// Spec §5.3: SHA-1, 6 digits, 30 seconds — what every authenticator app accepts.
+// SHA-1, 6 digits, 30 seconds — what every authenticator app accepts.
 const PERIOD = 30
 const DIGITS = 6
 const CODE = new RegExp(`^\\d{${DIGITS}}$`)
@@ -41,7 +41,7 @@ export function isTotpShape(code: string): boolean {
 
 /**
  * Accepts the code of the current 30-second step or of one step either side, and
- * only a step later than the last accepted one, so every code works once (spec §5.3).
+ * only a step later than the last accepted one, so every code works once.
  */
 export function verifyTotp(secret: Uint8Array, code: string, lastStep: number | null, nowMs: number = Date.now()): { ok: true; step: number } | { ok: false } {
   const otp = code.replace(/\s+/g, '')
@@ -57,7 +57,7 @@ export function verifyTotp(secret: Uint8Array, code: string, lastStep: number | 
 export type TotpBinding = { workspaceId: string; userId: string }
 
 // The additional authenticated data ties a ciphertext to its user row: copied to
-// another row it no longer decrypts (spec §5.3).
+// another row it no longer decrypts.
 const aad = (binding: TotpBinding): Buffer => Buffer.from(`${binding.workspaceId}${binding.userId}`)
 
 /** AES-256-GCM with the current key: `<key id>.<iv>.<ciphertext>.<tag>`, the parts in base64url. */

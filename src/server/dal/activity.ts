@@ -19,7 +19,7 @@ export type ActivityEntry = {
   ipHash?: string | null
 }
 
-/** Security and data events (spec §5.7). Every role appends; owners and admins read. */
+/** Security and data events. Every role appends; owners and admins read. */
 export async function logActivity(tx: Tx, workspaceId: string, entry: ActivityEntry): Promise<void> {
   await tx.insert(activityLog).values({
     workspaceId,
@@ -62,8 +62,8 @@ const idsOf = (rows: ActivityRow[], type: string): string[] =>
   [...new Set(rows.flatMap(row => (row.entityType === type && row.entityId && UUID_PATTERN.test(row.entityId) ? [row.entityId] : [])))]
 
 /**
- * One page of the activity log (spec §8.7), newest first, filtered by actor, action and period in the store's zone.
- * The page reads the log alone; the names of its people and entities come from one query per table (spec §6.1).
+ * One page of the activity log, newest first, filtered by actor, action and period in the store's zone.
+ * The page reads the log alone; the names of its people and entities come from one query per table.
  * Row-level security shows the log to owners and admins only.
  */
 export async function listActivity(tx: Tx, workspaceId: string, query: ActivityQuery, now: Date, timeZone: string): Promise<ActivityPage> {

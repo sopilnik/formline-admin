@@ -18,14 +18,14 @@ export type ReauthField = 'password' | 'code'
 
 /**
  * Sensitive owner actions need an authentication within the last ten minutes;
- * sandboxes skip it, their demo users have no password (spec §5.1).
+ * sandboxes skip it, their demo users have no password.
  */
 export function isRecentAuth(session: Pick<Session, 'workspaceKind' | 'reauthAt'>, nowMs: number = Date.now()): boolean {
   if (session.workspaceKind === 'sandbox') return true
   return session.reauthAt !== null && nowMs - session.reauthAt.getTime() < REAUTH_WINDOW_MS
 }
 
-/** The password and a second factor again, under the sign-in limits; the session is rotated (spec §5.1). */
+/** The password and a second factor again, under the sign-in limits; the session is rotated. */
 export async function reauthenticate(
   session: Session,
   input: { password: string; code: string; ip: string | null; userAgent: string | null },

@@ -1,6 +1,6 @@
 name: CI
 
-# The checks of spec §13: on every branch but main and on pull requests; deploy.yml calls the same workflow before it
+# The checks: on every branch but main and on pull requests; deploy.yml calls the same workflow before it
 # builds the image, so main runs it once.
 on:
   push:

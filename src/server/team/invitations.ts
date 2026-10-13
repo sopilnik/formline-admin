@@ -15,7 +15,7 @@ import { getPool } from '@/server/db/pool'
 import { withWorkspace, workspaceContext, type Tx } from '@/server/db/with-workspace'
 import { mail } from '@/server/mail/outbox'
 
-/** The letter with the link, in the inviter's language: the visitor who reads it is the one who wrote it (spec §9). */
+/** The letter with the link, in the inviter's language: the visitor who reads it is the one who wrote it. */
 async function sendInvitation(tx: Tx, actor: Actor, invitation: { email: string; role: string; token: string }): Promise<void> {
   const inviter = await getSelf(tx, actor)
   if (!inviter) throw new Error(`the inviter ${actor.userId} is not a member of workspace ${actor.workspaceId}`)
@@ -25,7 +25,7 @@ async function sendInvitation(tx: Tx, actor: Actor, invitation: { email: string;
   })
 }
 
-/** "Invite" on the team page (spec §8.6): the invitation, its letter and the log entry, in one transaction. */
+/** "Invite" on the team page: the invitation, its letter and the log entry, in one transaction. */
 export async function inviteMember(actor: Actor, input: { email: string; role: AssignableRole; expiresAt: Date }, pool: Pool = getPool()): Promise<NewInvitation> {
   const token = generateToken()
   return withWorkspace(workspaceContext(actor), async tx => {
@@ -69,7 +69,7 @@ export async function revokeMemberInvitation(actor: Actor, id: string, pool: Poo
 export type Acceptance = ({ ok: true } & NewSession) | { ok: false; reason: 'invalid' | 'taken' }
 
 /**
- * Accepting an invitation from a session in the same sandbox (his decision, 29 September):
+ * Accepting an invitation from a session in the same sandbox:
  * `accept_invitation` creates the member with the language, the theme and the shortcut switch
  * the visitor has, as "Switch user" hands them over, and replaces the caller's session with
  * theirs, all in one statement.

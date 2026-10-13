@@ -5,9 +5,9 @@ import type { Tx } from '@/server/db/with-workspace'
 
 export type OwnSession = { id: string; createdAt: Date; lastSeenAt: Date; userAgentSummary: string | null }
 
-// Row-level security shows each user only their own sessions (spec §6.2).
+// Row-level security shows each user only their own sessions.
 
-/** One's signed-in devices, the most recently active first (spec §8.8): the sessions past their second step. */
+/** One's signed-in devices, the most recently active first: the sessions past their second step. */
 export async function listOwnSessions(tx: Tx, userId: string): Promise<OwnSession[]> {
   return tx.select({ id: sessions.id, createdAt: sessions.createdAt, lastSeenAt: sessions.lastSeenAt, userAgentSummary: sessions.userAgentSummary })
     .from(sessions)
@@ -29,7 +29,7 @@ export async function sessionSignInId(tx: Tx, sessionId: string): Promise<string
   return row?.signInId ?? null
 }
 
-/** Ends every other session of the user — a password or second-factor change does (spec §5.1); how many there were. */
+/** Ends every other session of the user — a password or second-factor change does; how many there were. */
 export async function deleteOtherOwnSessions(tx: Tx, session: { workspaceId: string; userId: string; id: string }): Promise<number> {
   const ended = await tx.delete(sessions).where(and(
     eq(sessions.workspaceId, session.workspaceId),

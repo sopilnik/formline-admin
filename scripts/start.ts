@@ -1,4 +1,4 @@
-// The container's first process (spec §13): the migrations, the role check, then the server, which never sees the
+// The container's first process: the migrations, the role check, then the server, which never sees the
 // migrator's address. While the database cannot be reached the server answers in maintenance mode and the migrations
 // keep retrying; a role with too many rights, a refused login or a failed migration stops the container instead.
 import { spawn } from 'node:child_process'

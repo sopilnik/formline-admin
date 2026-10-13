@@ -6,7 +6,7 @@ export type BuildResult = { rebuilt: boolean; version: number; templateWorkspace
 
 /**
  * Builds or rebuilds the template workspace and gives the owner workspace the
- * catalog (spec §6.3). Runs inside migrate as schema_owner in one transaction.
+ * catalog. Runs inside migrate as schema_owner in one transaction.
  * Generated rows are replaced; copies of store orders (source = 'stripe' and
  * customers with pseudonymised_at) are kept and numbered after the generated
  * orders; every existing sandbox is untouched; the owner workspace receives the

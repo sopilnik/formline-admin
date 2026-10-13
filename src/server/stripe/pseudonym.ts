@@ -1,12 +1,12 @@
 import 'server-only'
 import { createHmac } from 'node:crypto'
-// The demo's own people (spec §6.3): a store customer becomes one of them.
+// The demo's own people: a store customer becomes one of them.
 import { FIRST_NAMES, LAST_NAMES, PLACES } from '@seed/people'
 
 export type Pseudonym = { name: string; email: string; city: string; country: string }
 
 /**
- * The demo person a store customer becomes (spec §7.3, §7.4), chosen by an HMAC of their email under PSEUDONYM_KEY: the
+ * The demo person a store customer becomes, chosen by an HMAC of their email under PSEUDONYM_KEY: the
  * same customer is always the same person, and without the key the person does not lead back to the email. The name
  * and the place come from the demo's lists; the email carries part of the HMAC, so two customers never share one.
  */

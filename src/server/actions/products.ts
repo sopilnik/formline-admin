@@ -31,7 +31,7 @@ export type DetailsState =
   | { status: 'done'; slug: string; count: number }
 
 /**
- * The details form of the product page (spec §8.3). When the slug changes the page's address
+ * The details form of the product page. When the slug changes the page's address
  * changes with it: the form moves the browser there, so the old address is not rendered again.
  */
 export async function updateProductDetailsAction(previous: DetailsState, form: FormData): Promise<DetailsState> {
@@ -63,7 +63,7 @@ export type CreateState =
   }
   | { status: 'done'; slug: string; id: string }
 
-/** The new-product form (spec §8.3): a draft whose variants start without stock; the form then opens its page. */
+/** The new-product form: a draft whose variants start without stock; the form then opens its page. */
 export async function createProductAction(_previous: CreateState, form: FormData): Promise<CreateState> {
   const session = await requireSession()
   const values = Object.fromEntries(DETAIL_FIELDS.map(field => [field, formText(form, field)])) as Record<DetailField, string>
@@ -96,7 +96,7 @@ export type VariantsState =
   }
   | { status: 'done'; count: number }
 
-/** The variant form of the product page (spec §8.3): own prices, stock and thresholds in one save. */
+/** The variant form of the product page: own prices, stock and thresholds in one save. */
 export async function saveVariantsAction(previous: VariantsState, form: FormData): Promise<VariantsState> {
   const session = await requireSession()
   const variantIds = form.getAll('variant').filter((value): value is string => typeof value === 'string')
@@ -119,7 +119,7 @@ export async function saveVariantsAction(previous: VariantsState, form: FormData
 
 const statusInput = z.strictObject({ productId: z.uuid(), to: z.enum(PRODUCT_STATUSES) })
 
-/** The status control of the product page (spec §8.3): `conflict` when the product moved on meanwhile. */
+/** The status control of the product page: `conflict` when the product moved on meanwhile. */
 export async function changeProductStatusAction(input: unknown): Promise<ActionResult<{ to: ProductStatus }>> {
   const session = await requireSession()
   if (!can(session.role, 'catalog.write', session.workspaceKind)) return refused('forbidden')
@@ -133,7 +133,7 @@ export async function changeProductStatusAction(input: unknown): Promise<ActionR
 
 const deleteInput = z.strictObject({ productId: z.uuid() })
 
-/** "Delete product" (spec §8.3): only a draft without orders; `conflict` when the product is no longer one. */
+/** "Delete product": only a draft without orders; `conflict` when the product is no longer one. */
 export async function deleteProductAction(input: unknown): Promise<ActionResult<{ name: string }>> {
   const session = await requireSession()
   if (!can(session.role, 'catalog.delete', session.workspaceKind)) return refused('forbidden')
@@ -148,7 +148,7 @@ export async function deleteProductAction(input: unknown): Promise<ActionResult<
 
 const imageInput = z.strictObject({ productId: z.uuid() })
 
-/** "Remove image" of the product page (spec §8.4): the product keeps no image; an upload's file is queued for deletion. */
+/** "Remove image" of the product page: the product keeps no image; an upload's file is queued for deletion. */
 export async function removeProductImageAction(input: unknown): Promise<ActionResult<null>> {
   const session = await requireSession()
   if (!can(session.role, 'catalog.write', session.workspaceKind)) return refused('forbidden')

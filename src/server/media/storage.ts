@@ -4,7 +4,7 @@ import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { readEnv, type EnvSource } from '@/server/env'
 
-/** Where uploaded images live (spec §8.4): the bunny media zone, or a local folder in development and tests. */
+/** Where uploaded images live: the bunny media zone, or a local folder in development and tests. */
 export interface MediaStorage {
   put(path: string, bytes: Buffer): Promise<void>
   /** The stored bytes, or null when nothing is stored at the path. */
@@ -20,7 +20,7 @@ export function mediaPath(workspaceId: string, imageId: string): string {
   return `ws/${workspaceId}/${imageId}.webp`
 }
 
-/** Where an upload's small copy lives: beside it, under the same name (spec §8.4). */
+/** Where an upload's small copy lives: beside it, under the same name. */
 export function thumbPath(path: string): string {
   return path.replace(/\.webp$/, '.thumb.webp')
 }

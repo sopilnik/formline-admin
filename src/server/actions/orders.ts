@@ -16,7 +16,7 @@ import { addNote } from '@/server/orders/notes'
 const statusInput = z.strictObject({ ids: z.array(z.uuid()).min(1).max(ORDER_SELECTION_MAX), to: z.enum(ORDER_STATUSES) })
 const oneStatusInput = z.strictObject({ orderId: z.uuid(), to: z.enum(ORDER_STATUSES) })
 
-/** "Change status" of the bulk bar (spec §8.2): the valid orders change, the others come back as skipped. */
+/** "Change status" of the bulk bar: the valid orders change, the others come back as skipped. */
 export async function changeStatusesAction(input: unknown): Promise<ActionResult<StatusOutcome>> {
   const session = await requireSession()
   if (!can(session.role, 'orders.update', session.workspaceKind)) return fail('forbidden')
@@ -28,7 +28,7 @@ export async function changeStatusesAction(input: unknown): Promise<ActionResult
   return ok(outcome)
 }
 
-/** The status control of the order page (amendment 7): `conflict` when the order moved on meanwhile. */
+/** The status control of the order page: `conflict` when the order moved on meanwhile. */
 export async function changeOrderStatusAction(input: unknown): Promise<ActionResult<{ number: number; to: OrderStatus }>> {
   const session = await requireSession()
   if (!can(session.role, 'orders.update', session.workspaceKind)) return fail('forbidden')
@@ -45,7 +45,7 @@ export type NoteState =
   | { status: 'error'; error: NoteError | 'forbidden' | 'not_found'; note: string }
   | { status: 'done'; count: number }
 
-/** The internal note form of the order page (amendment 8). `count` tells one success from the next. */
+/** The internal note form of the order page. `count` tells one success from the next. */
 export async function addOrderNoteAction(previous: NoteState, form: FormData): Promise<NoteState> {
   const session = await requireSession()
   const text = formText(form, 'note')

@@ -40,7 +40,7 @@ export const CHALLENGE_COOKIE = '__Host-formline_passkey'
 export const CHALLENGE_TTL_SECONDS = 300
 export const CHALLENGE_COOKIE_OPTIONS = { httpOnly: true, secure: true, sameSite: 'strict', path: '/' } as const
 
-/** The WebAuthn user handle: the 16 bytes of the user id (spec §5.3). */
+/** The WebAuthn user handle: the 16 bytes of the user id. */
 export function handleFromUserId(userId: string): Uint8Array<ArrayBuffer> {
   return new Uint8Array(decodeHex(userId.replace(/-/g, '')))
 }
@@ -57,7 +57,7 @@ export function userIdFromHandle(handle: string | undefined): string | null {
   }
 }
 
-/** The challenge travels in a signed five-minute cookie: no database row until it is used (spec §5.3, §6.5). */
+/** The challenge travels in a signed five-minute cookie: no database row until it is used. */
 export function challengeCookie(challenge: string, purpose: Purpose, sessionId: string | undefined, config: AuthConfig, nowMs: number): string {
   const payload: ChallengePayload = { c: challenge, p: purpose, s: sessionId, e: nowMs + CHALLENGE_TTL_SECONDS * 1000 }
   return signValue(payload, config.cookieSigningKey)
@@ -72,7 +72,7 @@ export function readChallenge(value: string | undefined, purpose: Purpose, sessi
   return payload.c
 }
 
-/** A challenge counts once: the first use stores its hash (spec §5.3). */
+/** A challenge counts once: the first use stores its hash. */
 export async function markChallengeUsed(challenge: string, pool: Pool): Promise<boolean> {
   const { rowCount } = await pool.query('insert into fa.used_challenges (challenge_hash) values ($1) on conflict do nothing', [hashToken(challenge)])
   return rowCount === 1
@@ -83,7 +83,7 @@ export function authenticationOptions(config: AuthConfig): Promise<PublicKeyCred
 }
 
 // SimpleWebAuthn checks the signature counter only when one of the two counters is
-// non-zero, as the spec asks: synced passkeys always report 0.
+// non-zero, as the WebAuthn specification asks: synced passkeys always report 0.
 async function verifyAssertion(response: AuthenticationResponseJSON, challenge: string, passkey: Passkey, config: AuthConfig): Promise<{ newCounter: number } | null> {
   try {
     const result = await verifyAuthenticationResponse({
@@ -107,7 +107,7 @@ async function verifyAssertion(response: AuthenticationResponseJSON, challenge: 
 
 export type PasskeySignInResult = ({ ok: true } & SignedIn) | AuthFailure | { ok: false; error: 'passkey_unknown'; credentialId: string }
 
-/** Passkey-first sign-in to the owner workspace: a full sign-in, outside the password lockout (spec §5.3, §5.4). */
+/** Passkey-first sign-in to the owner workspace: a full sign-in, outside the password lockout. */
 export async function signInWithPasskey(
   response: AuthenticationResponseJSON,
   cookie: string | undefined,
@@ -147,7 +147,7 @@ export async function signInWithPasskey(
   return { ok: true, ...signedIn }
 }
 
-/** A passkey as the proof of a re-authentication; it must belong to the session's user (spec §5.1). */
+/** A passkey as the proof of a re-authentication; it must belong to the session's user. */
 export async function reauthenticateWithPasskey(
   session: Session,
   response: AuthenticationResponseJSON,
@@ -174,7 +174,7 @@ export async function reauthenticateWithPasskey(
   return { ok: true, ...fresh }
 }
 
-/** Options for a new passkey: the owner workspace only, after a recent authentication (spec §5.1, §5.3). */
+/** Options for a new passkey: the owner workspace only, after a recent authentication. */
 export async function beginRegistration(
   session: Session,
   overrides: Partial<AuthDeps> = {},
@@ -250,7 +250,7 @@ export async function renameOwnPasskey(session: Session, passkeyId: string, name
   return renamed ? { ok: true } : { ok: false, error: 'generic' }
 }
 
-/** Never the last second factor (spec §5.3); signs out the owner's other sessions (spec §5.1). */
+/** Never the last second factor; signs out the owner's other sessions. */
 export async function removeOwnPasskey(session: Session, passkeyId: string, meta: Meta, overrides: Partial<AuthDeps> = {}): Promise<{ ok: true } | AuthFailure> {
   const deps = authDeps(overrides)
   if (session.workspaceKind !== 'owner') return { ok: false, error: 'generic' }

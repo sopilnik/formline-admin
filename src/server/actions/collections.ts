@@ -18,7 +18,7 @@ export type CollectionState =
   | { status: 'done'; slug: string; count: number }
 
 /**
- * The collection form (spec §8.3): a new collection when the form carries no id, the saved one
+ * The collection form: a new collection when the form carries no id, the saved one
  * otherwise. Like the product form, it moves the browser when the slug changes.
  */
 export async function saveCollectionAction(previous: CollectionState, form: FormData): Promise<CollectionState> {
@@ -41,7 +41,7 @@ export async function saveCollectionAction(previous: CollectionState, form: Form
 
 const moveInput = z.strictObject({ id: z.uuid(), direction: z.enum(['up', 'down']) })
 
-/** "Move up" / "Move down" of the collections list (spec §8.3): the new place, to announce it. */
+/** "Move up" / "Move down" of the collections list: the new place, to announce it. */
 export async function moveCollectionAction(input: unknown): Promise<ActionResult<{ position: number; of: number }>> {
   const session = await requireSession()
   if (!can(session.role, 'catalog.write', session.workspaceKind)) return refused('forbidden')
@@ -54,7 +54,7 @@ export async function moveCollectionAction(input: unknown): Promise<ActionResult
 
 const deleteInput = z.strictObject({ id: z.uuid() })
 
-/** "Delete collection" (spec §8.3): only an empty one; `conflict` when it holds products by now. */
+/** "Delete collection": only an empty one; `conflict` when it holds products by now. */
 export async function deleteCollectionAction(input: unknown): Promise<ActionResult<{ name: string }>> {
   const session = await requireSession()
   if (!can(session.role, 'catalog.delete', session.workspaceKind)) return refused('forbidden')

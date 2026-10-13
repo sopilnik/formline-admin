@@ -2,7 +2,7 @@ import 'server-only'
 import sharp from 'sharp'
 import { THUMB } from '@/lib/thumbs'
 
-// Spec §8.4 and §4.1: the container caps itself, so image work is serialised and uncached.
+// The container caps itself, so image work is serialised and uncached.
 sharp.concurrency(1)
 sharp.cache(false)
 
@@ -15,7 +15,7 @@ export type ImageKind = 'jpeg' | 'png' | 'webp'
 const starts = (bytes: Uint8Array, signature: readonly number[], offset = 0): boolean =>
   bytes.length >= offset + signature.length && signature.every((byte, i) => bytes[offset + i] === byte)
 
-/** The format by its magic bytes: JPEG, PNG and WebP only (spec §8.4); anything else, SVG and GIF included, is null. */
+/** The format by its magic bytes: JPEG, PNG and WebP only; anything else, SVG and GIF included, is null. */
 export function sniff(bytes: Uint8Array): ImageKind | null {
   if (starts(bytes, [0xff, 0xd8, 0xff])) return 'jpeg'
   if (starts(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) return 'png'
@@ -26,7 +26,7 @@ export function sniff(bytes: Uint8Array): ImageKind | null {
 export type Processed = { bytes: Buffer; width: number; height: number; thumb: Buffer }
 export type ImageProblem = 'type' | 'pixels' | 'decode'
 
-// One image at a time, process-wide: a second upload waits for the first (spec §8.4).
+// One image at a time, process-wide: a second upload waits for the first.
 let queue: Promise<unknown> = Promise.resolve()
 
 function oneAtATime<T>(work: () => Promise<T>): Promise<T> {
@@ -36,7 +36,7 @@ function oneAtATime<T>(work: () => Promise<T>): Promise<T> {
 }
 
 /**
- * Checks and re-encodes an upload (spec §8.4): the magic bytes and the decoder must agree on
+ * Checks and re-encodes an upload: the magic bytes and the decoder must agree on
  * JPEG, PNG or WebP; at most 40 megapixels; the first frame only; turned upright by its EXIF
  * orientation; at most 2000 px on the longest side; WebP at quality 82 with every piece of
  * metadata stripped. Beside it, the small copy the lists show.

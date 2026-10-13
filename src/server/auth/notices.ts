@@ -6,7 +6,7 @@ import { mail } from '@/server/mail/outbox'
 import type { LetterTemplate } from '@/server/mail/transport'
 
 /**
- * A security event the user hears about twice: in the bell and in a letter (spec §8.9, §9).
+ * A security event the user hears about twice: in the bell and in a letter.
  * The letter greets them by name and is written in their language. A new sign-in also
  * names itself in the bell's copy, so the device that signed in can tell its own entry apart.
  */

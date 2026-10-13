@@ -7,7 +7,7 @@ import { logActivity } from '@/server/dal/activity'
 import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 import { endSandbox } from '@/server/sandbox/lifecycle'
 
-/** Signs out of this device (spec §5.1); in a sandbox that ends the sandbox itself (spec §6.4). */
+/** Signs out of this device; in a sandbox that ends the sandbox itself. */
 export async function signOutAction(): Promise<void> {
   const session = await getSession()
   if (session?.workspaceKind === 'sandbox') {

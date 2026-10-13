@@ -1,4 +1,4 @@
-# The panel's image (spec §13): built with the repository's pnpm, run on Node 26 as the unprivileged node user. Its start,
+# The panel's image: built with the repository's pnpm, run on Node 26 as the unprivileged node user. Its start,
 # scripts/container.ts (which runs scripts/start.ts) bundled to dist/start.mjs and copied in as scripts/start.mjs, migrates
 # the database, checks the role and then runs the standalone server.
 # Both stages name the same Node image by digest, so Dependabot moves them together (tests/unit/versions.test.ts).
@@ -21,7 +21,7 @@ COPY --from=build /src/public ./public
 COPY --from=build /src/dist/start.mjs ./scripts/start.mjs
 COPY --from=build /src/src/server/db/migrations ./src/server/db/migrations
 RUN mkdir -p .next/cache && chown node:node .next/cache
-# The caps of spec §4.1: bunny limits a container only by its host, so the process limits itself.
+# The caps: bunny limits a container only by its host, so the process limits itself.
 ENV NODE_ENV=production \
     FORMLINE_RUNTIME=container \
     NEXT_TELEMETRY_DISABLED=1 \

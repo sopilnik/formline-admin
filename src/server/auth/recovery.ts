@@ -22,7 +22,7 @@ export type RecoverInput = {
   userAgent: string | null
 }
 
-/** Redeems a code printed by `pnpm owner:recovery` for a new password, authenticator and recovery codes (spec §5.8). */
+/** Redeems a code printed by `pnpm owner:recovery` for a new password, authenticator and recovery codes. */
 export async function recoverOwner(
   input: RecoverInput,
   overrides: Partial<AuthDeps> = {},

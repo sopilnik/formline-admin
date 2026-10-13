@@ -8,7 +8,7 @@ import { log } from '@/server/log'
 import type { StripeGateway } from '@/server/stripe/gateway'
 import { ingestOrder } from '@/server/stripe/ingest'
 
-/** A Checkout Session event is a few kilobytes; anything near this is not one (spec §7.1). */
+/** A Checkout Session event is a few kilobytes; anything near this is not one. */
 export const WEBHOOK_MAX_BYTES = 64 * 1024
 
 export type WebhookAnswer = { status: 200 | 400 | 500; body: { received: boolean; error?: 'signature' | 'failed' } }
@@ -16,7 +16,7 @@ export type WebhookAnswer = { status: 200 | 400 | 500; body: { received: boolean
 const received: WebhookAnswer = { status: 200, body: { received: true } }
 
 /**
- * One delivery of the store's webhook (spec §7.1): the signature against the endpoint's secret and Stripe's five-minute
+ * One delivery of the store's webhook: the signature against the endpoint's secret and Stripe's five-minute
  * tolerance, then only a paid `checkout.session.completed` goes on. Its line items are fetched before any transaction
  * opens; a session the panel cannot keep is recorded and answered 200, so Stripe does not send it again; a failure on
  * the way answers 500, and Stripe retries.

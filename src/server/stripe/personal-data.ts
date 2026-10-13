@@ -11,9 +11,9 @@ import { pseudonymFor } from '@/server/stripe/pseudonym'
 export const PSEUDONYMISE_AFTER_DAYS = 30
 
 /**
- * The daily job's part of spec §7.4: an owner-workspace customer becomes their pseudonym 30 days after the panel first saw
- * them — name, email and place, and the name in their "New order" notifications. Orders and amounts stay. Returns how
- * many customers it changed.
+ * The daily job's part of the store data: an owner-workspace customer becomes their pseudonym 30 days after the panel
+ * first saw them — name, email and place, and the name in their "New order" notifications. Orders and amounts stay.
+ * Returns how many customers it changed.
  */
 export async function pseudonymiseOldCustomers(pseudonymKey: string, pool: Pool = getPool()): Promise<number> {
   const workspaceId = await ownerWorkspaceId(pool)

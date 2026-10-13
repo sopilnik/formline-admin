@@ -15,7 +15,7 @@ export type CustomerNotesState =
   /** `count` tells one success from the next. */
   | { status: 'done'; count: number }
 
-/** The notes form of the customer page (spec §8.5): owners, admins and managers; last save wins. */
+/** The notes form of the customer page: owners, admins and managers; last save wins. */
 export async function saveCustomerNotesAction(previous: CustomerNotesState, form: FormData): Promise<CustomerNotesState> {
   const session = await requireSession()
   const text = formText(form, 'notes')

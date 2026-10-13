@@ -4,7 +4,7 @@ import { images, pendingMediaDeletions, products } from '@/server/db/schema'
 import type { Tx } from '@/server/db/with-workspace'
 
 /**
- * Removes an image row that no product uses any more (spec §8.4); call it after the product
+ * Removes an image row that no product uses any more; call it after the product
  * row was deleted or pointed elsewhere. An upload's stored file is queued in
  * `pending_media_deletions`, which the daily job drains; a template poster ships with the
  * app under `public/`, so only its row goes. Returns the queued path, or null.
@@ -20,7 +20,7 @@ export async function releaseImage(tx: Tx, workspaceId: string, imageId: string)
   return image.storagePath
 }
 
-/** An uploaded image of the workspace (spec §8.4); null for another workspace's image or a template poster, which `/posters/` serves. */
+/** An uploaded image of the workspace; null for another workspace's image or a template poster, which `/posters/` serves. */
 export async function getUpload(tx: Tx, workspaceId: string, imageId: string): Promise<{ storagePath: string; bytes: number } | null> {
   const [image] = await tx.select({ storagePath: images.storagePath, bytes: images.bytes }).from(images)
     .where(and(eq(images.workspaceId, workspaceId), eq(images.id, imageId), eq(images.source, 'upload')))

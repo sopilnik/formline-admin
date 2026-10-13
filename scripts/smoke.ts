@@ -1,4 +1,4 @@
-// The smoke test after every deploy (spec §13), run by deploy.yml against the live panel through the edge: liveness and
+// The smoke test after every deploy, run by deploy.yml against the live panel through the edge: liveness and
 // readiness, the security headers of the sign-in page, nothing private served from the edge's cache, the pull zone's own
 // bunny hostnames refusing a request that went around the panel's address, and "Enter the demo" timed, an image uploaded in the
 // sandbox and read back — sharp and the storage zone at work in the container — and the demo ended, so the sandbox it
@@ -21,10 +21,10 @@ export const SECURITY_HEADERS: Record<string, RegExp> = {
   'x-robots-tag': /noindex/,
 }
 
-/** "Enter the demo" may take longer than the 3 s of spec §1 here: the database may have slept until this deploy. */
+/** "Enter the demo" may take longer than its usual 3 s here: the database may have slept until this deploy. */
 export const DEMO_ENTRY_LIMIT_MS = 10_000
 
-/** A template product with a poster (spec §6.3); the upload replaces the poster inside the sandbox only. */
+/** A template product with a poster; the upload replaces the poster inside the sandbox only. */
 export const UPLOAD_PRODUCT = 'hush'
 /** An 8 × 8 PNG, small enough to sit in the source; the panel re-encodes it to WebP like any upload. */
 const UPLOAD_PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAEUlEQVQImWNYeXYTVsQwtCQA6aOKASzfMAMAAAAASUVORK5CYII='

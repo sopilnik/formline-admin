@@ -3,7 +3,7 @@ import { encodeBase32LowerCaseNoPadding } from '@/lib/encoding'
 
 export const TOKEN_PATTERN = /^[a-z2-7]{32}$/
 
-/** 20 random bytes as lower-case base32: 32 characters, 160 bits (spec §5.1). */
+/** 20 random bytes as lower-case base32: 32 characters, 160 bits. */
 export function generateToken(): string {
   return encodeBase32LowerCaseNoPadding(randomBytes(20))
 }

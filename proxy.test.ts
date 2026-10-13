@@ -119,7 +119,7 @@ describe('request decoration', () => {
 })
 
 describe('buildCsp', () => {
-  it('is the spec policy, with unsafe-eval only in development', () => {
+  it('is the panel\'s policy, with unsafe-eval only in development', () => {
     expect(buildCsp('n0nce', false)).toBe([
       "default-src 'self'",
       "script-src 'self' 'nonce-n0nce' 'strict-dynamic'",

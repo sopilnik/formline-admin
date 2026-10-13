@@ -14,8 +14,8 @@ export function retryDelayHours(attempts: number): number {
 type Pending = { storage_path: string; attempts: number }
 
 /**
- * Deletes queued image paths from storage (spec §6.4, §6.5), an upload together with its small
- * copy (spec §8.4); a copy that was never made counts as deleted. A failed attempt puts
+ * Deletes queued image paths from storage, an upload together with its small
+ * copy; a copy that was never made counts as deleted. A failed attempt puts
  * the row back with its next time; `app` has no UPDATE on the queue, so that is a
  * delete and an insert in one transaction.
  */

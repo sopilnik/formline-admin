@@ -1,6 +1,6 @@
 name: Budget guard
 
-# Every hour at minute 17, the top of the hour being GitHub's most delayed slot (spec §10): stops the panel's
+# Every hour at minute 17, the top of the hour being GitHub's most delayed slot: stops the panel's
 # application at $4 of this month's cost and fails — which emails the owner — on anything it cannot vouch for.
 # deploy.yml switches this workflow back on after every deploy, in case GitHub disabled it for inactivity.
 on:

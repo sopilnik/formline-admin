@@ -8,7 +8,7 @@ import { updateProfile } from '@/server/dal/users'
 import { getPool } from '@/server/db/pool'
 import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
-/** Saves one's own profile and logs what changed as `profile.updated` (spec §5.7). */
+/** Saves one's own profile and logs what changed as `profile.updated`. */
 export async function saveProfile(actor: Actor, profile: Profile, pool: Pool = getPool()): Promise<string[] | null> {
   return withWorkspace(workspaceContext(actor), async tx => {
     const changed = await updateProfile(tx, actor, profile)
@@ -21,7 +21,7 @@ export async function saveProfile(actor: Actor, profile: Profile, pool: Pool = g
   }, pool)
 }
 
-/** Saves the store settings and logs what changed as `settings.store_updated` (spec §5.7); null when nothing could be saved. */
+/** Saves the store settings and logs what changed as `settings.store_updated`; null when nothing could be saved. */
 export async function saveStoreSettings(actor: Actor, input: StoreSettingsInput, pool: Pool = getPool()): Promise<string[] | null> {
   return withWorkspace(workspaceContext(actor), async tx => {
     const changed = await updateStoreSettings(tx, actor.workspaceId, input)

@@ -2,7 +2,7 @@ import 'server-only'
 
 /**
  * Reads a request body up to `max` bytes and stops reading beyond it: the streaming guard of the image upload
- * (spec §8.4) and of the Stripe webhook (spec §7.1), which both take a raw body.
+ * and of the Stripe webhook, which both take a raw body.
  */
 export async function readCapped(body: ReadableStream<Uint8Array> | null, max: number): Promise<Buffer | 'too_large'> {
   if (!body) return Buffer.alloc(0)

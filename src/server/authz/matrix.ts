@@ -12,7 +12,7 @@ const EVERYONE: readonly Role[] = ['owner', 'admin', 'manager', 'viewer']
 const EDITORS: readonly Role[] = ['owner', 'admin', 'manager']
 const LEADS: readonly Role[] = ['owner', 'admin']
 
-// Spec §5.5. The database enforces the same boundaries again (row-level security
+// Who may do what. The database enforces the same boundaries again (row-level security
 // and the users trigger); this matrix decides what the interface offers and what
 // every Server Action accepts.
 const MATRIX: Record<Action, { roles: readonly Role[]; kinds: readonly WorkspaceKind[] }> = {
@@ -24,7 +24,7 @@ const MATRIX: Record<Action, { roles: readonly Role[]; kinds: readonly Workspace
   'customers.notes': { roles: EDITORS, kinds: ['owner', 'sandbox'] },
   'activity.read': { roles: LEADS, kinds: ['owner', 'sandbox'] },
   'outbox.read': { roles: LEADS, kinds: ['owner', 'sandbox'] },
-  // The team page: owners and admins (his decision, 29 September); in the owner workspace it shows the owner and a note.
+  // The team page: owners and admins; in the owner workspace it shows the owner and a note.
   'team.read': { roles: LEADS, kinds: ['owner', 'sandbox'] },
   'team.manage': { roles: LEADS, kinds: ['sandbox'] },
   'settings.store': { roles: LEADS, kinds: ['owner', 'sandbox'] },

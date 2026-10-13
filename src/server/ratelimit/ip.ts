@@ -20,7 +20,7 @@ function expandIpv6(ip: string): string[] {
 }
 
 /**
- * The rate-limit identity of a client address (spec §5.4): IPv4 exactly, IPv6 by
+ * The rate-limit identity of a client address: IPv4 exactly, IPv6 by
  * its /64 (one customer network), an IPv4-mapped IPv6 address as its IPv4 address.
  */
 export function ipKey(ip: string | null): string | null {
@@ -35,7 +35,7 @@ export function ipKey(ip: string | null): string | null {
 
 const hmac = (key: string, value: string): string => createHmac('sha256', key).update(value).digest('hex')
 
-/** The only form in which an address is ever stored (spec §5.4, §5.7). */
+/** The only form in which an address is ever stored. */
 export function hashIp(ip: string | null, key: string): string | null {
   const k = ipKey(ip)
   return k ? hmac(key, k) : null
@@ -51,5 +51,5 @@ export const accountSubject = (email: string, key: string): string =>
 /** A user's own counters and locks. Every sandbox copies the template's user ids, so the workspace is part of the key. */
 export const userSubject = (workspaceId: string, userId: string): string => `user:${workspaceId}:${userId}`
 
-/** Per-session limits (spec §5.4) are keyed by the session's token hash, which is also its row id. */
+/** Per-session limits are keyed by the session's token hash, which is also its row id. */
 export const sessionSubject = (sessionId: string): string => `session:${sessionId}`

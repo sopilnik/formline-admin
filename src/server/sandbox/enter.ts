@@ -27,7 +27,7 @@ export function entryFromRow(row: EntryRow, token: string): SandboxEntry {
 }
 
 /**
- * Opens a fresh sandbox for a visitor (spec §6.4) and returns the raw session
+ * Opens a fresh sandbox for a visitor and returns the raw session
  * token for its cookie. The database does the copying, the limit and the cap in
  * one call; no workspace context exists yet, so this runs on the bare pool.
  */

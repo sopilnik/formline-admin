@@ -11,7 +11,7 @@ import { requireSession } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'
 import { getClientIp } from '@/server/request'
 
-/** Settings → Security → Password (spec §8.8): the owner's new password; the other devices are signed out. */
+/** Settings → Security → Password: the owner's new password; the other devices are signed out. */
 export async function changePasswordAction(_previous: FormState<'password'>, form: FormData): Promise<FormState<'password'>> {
   const session = await requireSession()
   if (!can(session.role, 'self.manage', session.workspaceKind)) return { status: 'error', error: 'generic' }
@@ -43,7 +43,7 @@ export async function revokeOtherSessionsAction(): Promise<ActionResult<{ count:
   return ok({ count })
 }
 
-/** Settings → Security → Authenticator app: turn it on or replace it with the key the page showed (spec §8.8). */
+/** Settings → Security → Authenticator app: turn it on or replace it with the key the page showed. */
 export async function enableTotpAction(_previous: FormState<'code'>, form: FormData): Promise<FormState<'code'>> {
   const session = await requireSession()
   if (!can(session.role, 'self.manage', session.workspaceKind)) return { status: 'error', error: 'generic' }

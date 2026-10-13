@@ -10,7 +10,7 @@ export type PendingInvitation = { id: string; email: string; role: Role; created
 /** Neither accepted nor revoked, and not past the sandbox's end. */
 const pending = and(isNull(invitations.acceptedAt), isNull(invitations.revokedAt), gt(invitations.expiresAt, sql`now()`))
 
-/** The open invitations, newest first (spec §8.6). Row-level security shows them to owners and admins. */
+/** The open invitations, newest first. Row-level security shows them to owners and admins. */
 export async function listPendingInvitations(tx: Tx, workspaceId: string): Promise<PendingInvitation[]> {
   return tx.select({ id: invitations.id, email: invitations.email, role: invitations.role, createdAt: invitations.createdAt, expiresAt: invitations.expiresAt })
     .from(invitations).where(and(eq(invitations.workspaceId, workspaceId), pending)).orderBy(desc(invitations.createdAt), desc(invitations.id))
@@ -20,8 +20,8 @@ export type NewInvitation = { ok: true; id: string } | { ok: false; reason: 'mem
 
 /**
  * An invitation, unless the email already belongs to a member or to an open invitation, or the sandbox
- * holds TEAM_CAP members and open invitations. It lives as long as the sandbox (spec §8.6); the raw token
- * is kept beside its hash because the outbox shows the letter again (spec §6.1).
+ * holds TEAM_CAP members and open invitations. It lives as long as the sandbox; the raw token
+ * is kept beside its hash because the outbox shows the letter again.
  */
 export async function createInvitation(tx: Tx, workspaceId: string, input: {
   email: string; role: AssignableRole; invitedBy: string; token: string; tokenHash: string; expiresAt: Date

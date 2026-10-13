@@ -3,7 +3,7 @@ import Stripe from 'stripe'
 import type { CheckoutSessionLike, LineItemLike } from '@/lib/stripe/checkout'
 import type { StripeConfig } from '@/server/config'
 
-/** The two reads the ingest makes from Stripe with the restricted key (spec §4.4, §7.5); the tests stand in their own. */
+/** The two reads the ingest makes from Stripe with the restricted key; the tests stand in their own. */
 export type StripeGateway = {
   /** Every line item of a session. */
   lineItems(sessionId: string): Promise<LineItemLike[]>

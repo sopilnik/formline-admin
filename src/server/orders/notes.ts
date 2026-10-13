@@ -6,7 +6,7 @@ import { addOrderNote } from '@/server/dal/orders'
 import { getPool } from '@/server/db/pool'
 import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
-/** Adds an internal note and logs it (amendment 8); the order's number, or null when there is no such order. */
+/** Adds an internal note and logs it; the order's number, or null when there is no such order. */
 export async function addNote(actor: Actor, orderId: string, note: string, pool: Pool = getPool()): Promise<number | null> {
   return withWorkspace(workspaceContext(actor), async tx => {
     const added = await addOrderNote(tx, { workspaceId: actor.workspaceId, userId: actor.userId }, { orderId, note })

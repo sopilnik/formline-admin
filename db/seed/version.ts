@@ -1,6 +1,6 @@
 /**
  * Bump on any change to the catalog snapshot or the generator; migrate rebuilds the template on a different value.
- * Version 2 charges express shipping as the store does: $19 at any amount (stage 8).
+ * Version 2 charges express shipping as the store does: $19 at any amount.
  */
 export const TEMPLATE_VERSION = 2
 

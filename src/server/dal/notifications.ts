@@ -9,7 +9,7 @@ import type { Tx } from '@/server/db/with-workspace'
 
 export type { NotificationKind }
 
-/** A notification for one user, or for every member when userId is null (spec §8.9). */
+/** A notification for one user, or for every member when userId is null. */
 export async function notify(tx: Tx, workspaceId: string, notification: { userId: string | null; kind: NotificationKind; payload: Record<string, unknown> }): Promise<void> {
   await tx.insert(notifications).values({ workspaceId, userId: notification.userId, kind: notification.kind, payload: notification.payload })
 }

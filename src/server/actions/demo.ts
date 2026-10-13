@@ -24,7 +24,7 @@ async function visitorMeta(): Promise<VisitorMeta> {
   }
 }
 
-/** "Enter the demo": a new sandbox and its session, then the overview (spec §6.4). */
+/** "Enter the demo": a new sandbox and its session, then the overview. */
 export async function enterDemoAction(_previous: FormState, _form: FormData): Promise<FormState> {
   const entry = await enterSandbox(await visitorMeta())
   if (!entry.ok) return failureState(entry)
@@ -33,7 +33,7 @@ export async function enterDemoAction(_previous: FormState, _form: FormData): Pr
   redirect('/overview')
 }
 
-/** "Reset data": a fresh copy and a new session for the same visitor (spec §6.4). */
+/** "Reset data": a fresh copy and a new session for the same visitor. */
 export async function resetDemoAction(_previous: FormState, _form: FormData): Promise<FormState> {
   const session = await requireSession()
   if (session.workspaceKind !== 'sandbox') redirect('/overview')
@@ -43,7 +43,7 @@ export async function resetDemoAction(_previous: FormState, _form: FormData): Pr
   redirect('/overview')
 }
 
-/** "Switch user": continue as another demo user of the same sandbox (spec §6.4). */
+/** "Switch user": continue as another demo user of the same sandbox. */
 export async function switchUserAction(_previous: FormState<'code'>, form: FormData): Promise<FormState<'code'>> {
   const session = await requireSession()
   if (session.workspaceKind !== 'sandbox') redirect('/overview')

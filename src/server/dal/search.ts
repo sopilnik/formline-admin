@@ -7,7 +7,7 @@ import type { Tx } from '@/server/db/with-workspace'
 import { orderCustomer, unicodeName } from '@/server/dal/sql'
 
 /**
- * The palette's search (spec §8.10): orders by their number or the customer's email, newest first; customers by name or
+ * The palette's search: orders by their number or the customer's email, newest first; customers by name or
  * email and products by name or slug, by name. Five of each; every query reads at most two tables.
  */
 export async function searchWorkspace(tx: Tx, workspaceId: string, term: string): Promise<SearchResults> {

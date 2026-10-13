@@ -23,27 +23,27 @@ export type ProductsList = {
   page: number; pages: number
 }
 
-/** At most this many products per workspace, so a sandbox stays small (stage 5 amendment). */
+/** At most this many products per workspace, so a sandbox stays small. */
 export const PRODUCT_CAP = 200
 
 /** The unique constraints a product save can break, and the refusal each one means. */
 const SLUG_TAKEN = { products_workspace_id_slug_key: 'slug_taken' } as const
 const SLUG_OR_SKU_TAKEN = { ...SLUG_TAKEN, product_variants_workspace_id_sku_key: 'sku_taken' } as const
 
-/** The collections in their order (spec §8.3): the filter's choices and the product form's. */
+/** The collections in their order: the filter's choices and the product form's. */
 export async function listCollectionOptions(tx: Tx, workspaceId: string): Promise<CollectionOption[]> {
   return tx.select({ id: collections.id, slug: collections.slug, name: collections.name }).from(collections)
     .where(eq(collections.workspaceId, workspaceId)).orderBy(asc(collections.position), asc(collections.name))
 }
 
-/** Variants join their product inside the same workspace (composite keys, spec §6.1). */
+/** Variants join their product inside the same workspace (composite keys). */
 const variantJoin = and(eq(productVariants.workspaceId, products.workspaceId), eq(productVariants.productId, products.id))!
 
 /** A variant's price in SQL, as `variantPriceCents` computes it: the override, else the base price plus the size's surcharge. */
 const variantPriceSql = sql`coalesce(${productVariants.priceOverrideCents}, ${products.basePriceCents} + case ${productVariants.size} ${
   sql.join(SIZE_IDS.map(size => sql`when ${size} then ${SIZE_SURCHARGE_CENTS[size]}::int`), sql` `)} end)`
 
-/** Archived products never count as sold out or low (spec §8.1), as on the overview. */
+/** Archived products never count as sold out or low, as on the overview. */
 const soldOutSql = sql<number>`(case when ${products.status} <> 'archived' then count(*) filter (where ${productVariants.stock} = 0) else 0 end)::int`
 const lowSql = sql<number>`(case when ${products.status} <> 'archived' then count(*) filter (where ${productVariants.stock} <= ${productVariants.lowStockThreshold}) else 0 end)::int`
 const priceFromSql = sql<number | null>`min(${variantPriceSql})::int`
@@ -86,9 +86,9 @@ function productSort(query: ProductsQuery): SQL[] {
 }
 
 /**
- * The products list (spec §8.3): one page, filtered, counted and sorted in the database.
+ * The products list: one page, filtered, counted and sorted in the database.
  * Each query joins at most two tables — the products and their variants, grouped per
- * product — as spec §6.1 asks of queries over a new sandbox's rows; the collections and
+ * product — which keeps the planner's estimates right for a new sandbox's rows; the collections and
  * the images of the page are read on their own and joined here.
  */
 export async function listProducts(tx: Tx, workspaceId: string, query: ProductsQuery): Promise<ProductsList> {
@@ -150,13 +150,13 @@ export type ProductDetail = {
   version: string
   /** In the store's order: by palette, then A3, A2, A1. */
   variants: VariantDetail[]
-  /** Whether any order line points at one of the variants: such a product is archived, never deleted (spec §8.3). */
+  /** Whether any order line points at one of the variants: such a product is archived, never deleted. */
   hasOrders: boolean
 }
 
 const versionSql = sql<string>`(extract(epoch from ${products.updatedAt}) * 1000000)::bigint::text`
 
-/** One product by the slug in its address (spec §8.3), with everything its page shows. One table per query (spec §6.1). */
+/** One product by the slug in its address, with everything its page shows. One table per query. */
 export async function getProduct(tx: Tx, workspaceId: string, slug: string): Promise<ProductDetail | null> {
   const [product] = await tx.select({
     id: products.id, slug: products.slug, name: products.name, description: products.description, status: products.status,
@@ -196,7 +196,7 @@ export type DetailsChange =
   | { ok: false; reason: 'not_found' | 'conflict' | 'slug_taken' | 'collection_missing' }
 
 /**
- * Saves the details form (spec §8.3). The row is locked and its version compared, so a save
+ * Saves the details form. The row is locked and its version compared, so a save
  * made from a page opened before someone else's change reports a conflict instead of
  * overwriting it. For a viewer, row-level security hides the row from the locking read.
  */
@@ -241,7 +241,7 @@ export type ProductCreation =
   | { ok: false; reason: 'cap' | 'slug_taken' | 'sku_taken' | 'collection_missing' }
 
 /**
- * A new product (spec §8.3): a draft with one variant per size and chosen palette, no stock,
+ * A new product: a draft with one variant per size and chosen palette, no stock,
  * and the store's low-stock threshold. SKUs are made from the slug once and never change, so
  * a product that later took another slug still holds them: a new slug may collide with its SKUs.
  */
@@ -280,7 +280,7 @@ export type VariantsSave =
   | { ok: false; reason: 'stock_conflict'; skus: string[] }
 
 /**
- * Saves the variant form (spec §8.3). The variants are locked first. A stock the person changed
+ * Saves the variant form. The variants are locked first. A stock the person changed
  * while the stored stock moved on since the page opened (a sale, another person) is a conflict,
  * and nothing is written; a stock the person left alone is not written at all, so a sale made
  * meanwhile stays counted.
@@ -322,7 +322,7 @@ export type ProductStatusChange =
   | { ok: false; reason: 'not_found' }
   | { ok: false; reason: 'invalid_transition'; from: ProductStatus }
 
-/** One status step (spec §8.3): the row is locked and the machine checked; the step counts as a change of the product. */
+/** One status step: the row is locked and the machine checked; the step counts as a change of the product. */
 export async function changeProductStatus(tx: Tx, workspaceId: string, input: { productId: string; to: ProductStatus }): Promise<ProductStatusChange> {
   const [row] = await tx.select({ slug: products.slug, status: products.status }).from(products)
     .where(and(eq(products.workspaceId, workspaceId), eq(products.id, input.productId))).for('update')
@@ -338,7 +338,7 @@ export type ProductDeletion =
   | { ok: false; reason: 'not_found' | DeleteBlocker }
 
 /**
- * Deletes a draft without orders (spec §8.3) with its variants and its image; the image's
+ * Deletes a draft without orders with its variants and its image; the image's
  * stored file, if it is an upload, is queued for deletion. Anything else is archived instead.
  */
 export async function deleteProduct(tx: Tx, workspaceId: string, productId: string): Promise<ProductDeletion> {

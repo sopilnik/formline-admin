@@ -1,4 +1,4 @@
-// Prints a one-time owner recovery code, valid for 30 minutes (spec §5.8; README,
+// Prints a one-time owner recovery code, valid for 30 minutes (README,
 // "Owner recovery"). It needs DATABASE_URL_MIGRATOR: only schema_owner may issue a
 // code, the application's own role cannot.
 import { createHash, randomBytes } from 'node:crypto'

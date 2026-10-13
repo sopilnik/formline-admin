@@ -25,7 +25,7 @@ export async function countUnusedRecoveryCodes(tx: Tx, who: Who): Promise<number
   return row?.n ?? 0
 }
 
-/** Ten new codes in place of every old one; the plain codes are shown once (spec §5.3). */
+/** Ten new codes in place of every old one; the plain codes are shown once. */
 async function replaceRecoveryCodes(tx: Tx, session: Session): Promise<string[]> {
   const codes = generateRecoveryCodes()
   await tx.delete(recoveryCodes).where(ownCodes(session))
@@ -34,8 +34,8 @@ async function replaceRecoveryCodes(tx: Tx, session: Session): Promise<string[]>
 }
 
 /**
- * Turns the authenticator on, or replaces it (spec §5.3, §8.8): the key the page showed and its first code.
- * A first authenticator comes with ten new recovery codes. Every other session ends (spec §5.1); the owner
+ * Turns the authenticator on, or replaces it: the key the page showed and its first code.
+ * A first authenticator comes with ten new recovery codes. Every other session ends; the owner
  * needs a recent authentication, a sandbox does not.
  */
 export async function enableOwnTotp(
@@ -63,7 +63,7 @@ export async function enableOwnTotp(
   }, deps.pool)
 }
 
-/** Turns the authenticator off — never the owner's last factor (spec §5.3); every other session ends. */
+/** Turns the authenticator off — never the owner's last factor; every other session ends. */
 export async function disableOwnTotp(session: Session, meta: Meta, overrides: Partial<AuthDeps> = {}): Promise<{ ok: true } | AuthFailure> {
   const deps = authDeps(overrides)
   if (!isRecentAuth(session, deps.now())) return { ok: false, error: 'reauth_required' }
@@ -82,7 +82,7 @@ export async function disableOwnTotp(session: Session, meta: Meta, overrides: Pa
   }, deps.pool)
 }
 
-/** Ten new recovery codes; the old ones stop working (spec §5.3). Only beside a second factor they stand in for. */
+/** Ten new recovery codes; the old ones stop working. Only beside a second factor they stand in for. */
 export async function regenerateOwnRecoveryCodes(session: Session, meta: Meta, overrides: Partial<AuthDeps> = {}): Promise<{ ok: true; recoveryCodes: string[] } | AuthFailure> {
   const deps = authDeps(overrides)
   if (!isRecentAuth(session, deps.now())) return { ok: false, error: 'reauth_required' }

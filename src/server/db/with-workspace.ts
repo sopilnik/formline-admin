@@ -38,7 +38,7 @@ export async function withWorkspace<T>(ctx: WorkspaceContext, fn: (tx: Tx) => Pr
 }
 
 /**
- * One transaction across workspaces, which only the order ingest uses (spec §7.3): the owner's order and its
+ * One transaction across workspaces, which only the order ingest uses: the owner's order and its
  * pseudonymised copy in the template commit together or not at all. `enter` sets the identity of the statements
  * that follow it, and row-level security checks each statement against the identity entered last.
  */

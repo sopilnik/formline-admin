@@ -27,7 +27,7 @@ export default defineConfig({
   ],
   webServer: [
     {
-      // Stripe's API as the panel reads it, so the order ingest runs end to end without the network (spec §12.3).
+      // Stripe's API as the panel reads it, so the order ingest runs end to end without the network.
       command: 'node tests/e2e/stripe-stub.ts',
       url: `http://127.0.0.1:${E2E_STRIPE_PORT}/health`,
       reuseExistingServer: false,

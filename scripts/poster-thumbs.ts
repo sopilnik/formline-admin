@@ -1,4 +1,4 @@
-// Makes the small copies of the template posters that the lists show (spec §8.4): every public/posters/<slug>.webp cut to
+// Makes the small copies of the template posters that the lists show: every public/posters/<slug>.webp cut to
 // fill 120 × 170 px, WebP at quality 75 — the size and quality of src/lib/thumbs.ts, which a unit test holds them to.
 // Run it again whenever a poster changes: node scripts/poster-thumbs.ts
 import { mkdir, readdir } from 'node:fs/promises'

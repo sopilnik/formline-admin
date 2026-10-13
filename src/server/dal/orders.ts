@@ -19,7 +19,7 @@ export const itemsSql = sql<number>`(select coalesce(sum(l.qty), 0)::int from fa
 
 const SORT_COLUMNS = { placed: orders.placedAt, number: orders.number, total: orders.totalCents } as const
 
-/** Every filter of the query as one condition; `withStatus: false` leaves the status out (the chip counts, spec §8.2). */
+/** Every filter of the query as one condition; `withStatus: false` leaves the status out (the chip counts). */
 export function orderFilters(workspaceId: string, query: OrdersQuery, now: Date, timeZone: string, withStatus = true): SQL {
   const parts: SQL[] = [eq(orders.workspaceId, workspaceId)]
   if (withStatus && query.status.length > 0) parts.push(inArray(orders.status, query.status))
@@ -41,7 +41,7 @@ export function orderSort(query: OrdersQuery): SQL[] {
   return [direction(SORT_COLUMNS[query.sort]), direction(orders.id)]
 }
 
-/** The columns of one list row; the overview's latest orders (task 4.8) read the same shape. */
+/** The columns of one list row; the overview's latest orders read the same shape. */
 export const ROW_FIELDS = {
   id: orders.id, number: orders.number, placedAt: orders.placedAt, customerName: customers.name, customerEmail: customers.email,
   items: itemsSql, totalCents: orders.totalCents, status: orders.status, source: orders.source,
@@ -63,7 +63,7 @@ export async function listOrders(tx: Tx, workspaceId: string, query: OrdersQuery
   return { rows, filtered, total: totalRow?.n ?? 0, statusCounts, page: query.page, pages: pageCount(filtered, query.size) }
 }
 
-/** The orders waiting in "paid": the sidebar count and the first link of the overview's strip (spec §8.1, §11). */
+/** The orders waiting in "paid": the sidebar count and the first link of the overview's strip. */
 export async function ordersToProcess(tx: Tx, workspaceId: string): Promise<number> {
   const [row] = await tx.select({ n: count() }).from(orders).where(and(eq(orders.workspaceId, workspaceId), eq(orders.status, 'paid')))
   return row?.n ?? 0
@@ -75,7 +75,7 @@ export type StatusChange =
   | { ok: false; reason: 'invalid_transition'; number: number; from: OrderStatus; to: OrderStatus }
 
 /**
- * One status step (spec §8.2): the row is locked, the machine is checked, the event is
+ * One status step: the row is locked, the machine is checked, the event is
  * written, and cancelling or refunding before shipping puts the line quantities back
  * on their variants. For a viewer, row-level security applies the update policy to the
  * locking read as well, so the order is simply not found (checked on Postgres 18).
@@ -140,14 +140,14 @@ function toEventDetail(event: EventRow): OrderEventDetail {
   throw new Error(`order event ${event.id} breaks order_events_shape`)
 }
 
-/** The newest orders (spec §8.1: eight on the overview), in the list's row shape and order. */
+/** The newest orders (eight on the overview), in the list's row shape and order. */
 export async function latestOrders(tx: Tx, workspaceId: string, limit = 8): Promise<OrderRow[]> {
   return tx.select(ROW_FIELDS).from(orders).innerJoin(customers, orderCustomer)
     .where(eq(orders.workspaceId, workspaceId))
     .orderBy(desc(orders.placedAt), desc(orders.id)).limit(limit)
 }
 
-/** One order by the number people quote (amendment 3), with everything its page shows (spec §8.2). */
+/** One order by the number people quote, with everything its page shows. */
 export async function getOrder(tx: Tx, workspaceId: string, number: number): Promise<OrderDetail | null> {
   const [order] = await tx
     .select({
@@ -196,7 +196,7 @@ export async function getOrder(tx: Tx, workspaceId: string, number: number): Pro
   }
 }
 
-/** An internal note on an order (amendment 8); null when the workspace holds no such order. */
+/** An internal note on an order; null when the workspace holds no such order. */
 export async function addOrderNote(tx: Tx, ctx: { workspaceId: string; userId: string }, input: { orderId: string; note: string }): Promise<{ number: number } | null> {
   const [row] = await tx.select({ number: orders.number }).from(orders)
     .where(and(eq(orders.workspaceId, ctx.workspaceId), eq(orders.id, input.orderId)))

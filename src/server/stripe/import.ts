@@ -32,7 +32,7 @@ async function importSession(session: Session, deps: ImportDeps, pool: Pool): Pr
 
 /**
  * The paid sessions of the last 30 days the owner workspace does not have yet, kept through the same ingest as the
- * webhook (spec §7.5), oldest first so their numbers follow time. A session the webhook keeps meanwhile counts as
+ * webhook, oldest first so their numbers follow time. A session the webhook keeps meanwhile counts as
  * already there.
  */
 export async function importMissedOrders(deps: ImportDeps): Promise<ImportSummary> {

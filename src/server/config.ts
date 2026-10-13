@@ -14,7 +14,7 @@ export type AuthConfig = {
   origin: string
 }
 
-/** `id:base64,id:base64`: the first key encrypts, every key decrypts, so keys can rotate (spec §5.3). */
+/** `id:base64,id:base64`: the first key encrypts, every key decrypts, so keys can rotate. */
 export function parseKeyring(value: string): Keyring {
   const keys = new Map<string, Buffer>()
   for (const entry of value.split(',')) {
@@ -46,7 +46,7 @@ export function authConfig(source?: EnvSource): AuthConfig {
   return config
 }
 
-/** The Stripe ingest's settings (spec §7); null when they are not set, and the webhook and the import then answer 503. */
+/** The Stripe ingest's settings; null when they are not set, and the webhook and the import then answer 503. */
 export type StripeConfig = {
   webhookSecret: string
   restrictedKey: string

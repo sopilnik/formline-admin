@@ -1,6 +1,6 @@
 export type Limit = { purpose: string; limit: number; windowSeconds: number }
 
-// Spec §5.4. Windows are fixed. Failure limits are checked with peek() before an
+// The rate limits. Windows are fixed. Failure limits are checked with peek() before an
 // attempt and counted with consume() after a failed one.
 export const LIMITS = {
   signInFailIp: { purpose: 'signin.fail.ip', limit: 20, windowSeconds: 15 * 60 },

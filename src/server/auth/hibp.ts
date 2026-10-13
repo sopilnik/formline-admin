@@ -9,7 +9,7 @@ export type Fetcher = (url: string, init: RequestInit) => Promise<Response>
  * Have I Been Pwned, range API with k-anonymity: only the first five characters
  * of the password's SHA-1 leave the server, and padding hides the answer's size.
  * true = found in a breach, false = not found, null = the service could not be
- * asked; the check is then skipped and logged, never blocking (spec §5.2).
+ * asked; the check is then skipped and logged, never blocking.
  */
 export async function isBreachedPassword(password: string, options: { fetcher?: Fetcher; timeoutMs?: number } = {}): Promise<boolean | null> {
   const { fetcher = fetch, timeoutMs = 3000 } = options

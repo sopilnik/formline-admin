@@ -25,7 +25,7 @@ describe('TOTP secrets', () => {
     expect(parseTotpSecret('!!!!')).toBeNull()
   })
 
-  it('go into an otpauth URI with the spec parameters', () => {
+  it('go into an otpauth URI with the issuer, the account and the code parameters', () => {
     const uri = new URL(totpUri(RFC_KEY, 'owner'))
     expect(uri.protocol).toBe('otpauth:')
     expect(uri.searchParams.get('issuer')).toBe('Formline Admin')

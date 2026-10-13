@@ -6,7 +6,7 @@ import { revenueStatuses } from '@/server/dal/sql'
 import { asDate } from '@/server/db/as-date'
 import type { Tx } from '@/server/db/with-workspace'
 
-/** Revenue, orders and new customers of a period (spec §8.1). Sums and counts arrive as strings. */
+/** Revenue, orders and new customers of a period. Sums and counts arrive as strings. */
 export async function revenueTotals(tx: Tx, workspaceId: string, range: Range): Promise<Totals> {
   const { rows } = await tx.execute<{ revenue: string; orders: string; new_customers: string }>(sql`
     select coalesce(sum(o.total_cents), 0) as revenue,
@@ -78,7 +78,7 @@ export async function collectionRevenue(tx: Tx, workspaceId: string, range: Rang
   }
 }
 
-/** The "action now" strip (spec §8.1): orders to process, orders in processing, sold-out variants of live products. */
+/** The "action now" strip: orders to process, orders in processing, sold-out variants of live products. */
 export async function attentionCounts(tx: Tx, workspaceId: string): Promise<{ toProcess: number; processing: number; soldOut: number }> {
   const { rows } = await tx.execute<{ to_process: string; processing: string; sold_out: string }>(sql`
     select (select count(*) from fa.orders o where o.workspace_id = ${workspaceId} and o.status = 'paid') as to_process,
@@ -96,7 +96,7 @@ export type LowStockRow = {
   image: { id: string; storagePath: string; source: 'static' | 'upload' } | null
 }
 
-/** Variants at or below their threshold, sold out first (spec §8.1): the first `limit` of them and how many there are. */
+/** Variants at or below their threshold, sold out first: the first `limit` of them and how many there are. */
 export async function lowStock(tx: Tx, workspaceId: string, limit = 5): Promise<{ total: number; rows: LowStockRow[] }> {
   const low = sql`v.workspace_id = ${workspaceId} and v.stock <= v.low_stock_threshold and p.status <> 'archived'`
   const counted = await tx.execute<{ n: string }>(sql`

@@ -1,4 +1,4 @@
-// The hourly budget guard (spec §10, .github/workflows/budget-guard.yml). It reads what the panel's application has cost
+// The hourly budget guard (.github/workflows/budget-guard.yml). It reads what the panel's application has cost
 // this month and the account's balance from bunny's API, stops the application at $4, and fails — so GitHub emails the
 // owner — whenever it stops the application, cannot read a figure, finds the balance under $1 or the panel silent.
 // A stopped application is left alone: resuming it is the owner's step (README, "Budget guard").

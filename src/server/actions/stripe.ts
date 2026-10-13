@@ -18,7 +18,7 @@ import { getRequestId } from '@/server/request'
 import { stripeGateway } from '@/server/stripe/gateway'
 import { importMissedOrders } from '@/server/stripe/import'
 
-/** Settings → Store → "Import missed orders" (spec §7.5): the owner, after a fresh sign-in, three times an hour. */
+/** Settings → Store → "Import missed orders": the owner, after a fresh sign-in, three times an hour. */
 export async function importStripeOrdersAction(_previous: ImportState, _form: FormData): Promise<ImportState> {
   const session = await requireSession()
   if (!can(session.role, 'stripe.import', session.workspaceKind)) return { status: 'error', error: 'forbidden' }

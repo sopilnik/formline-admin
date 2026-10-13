@@ -12,11 +12,11 @@ describe('passwordLockSeconds', () => {
 })
 
 describe('LIMITS', () => {
-  it('allows ten CSV exports a minute (spec §5.4)', () => {
+  it('allows ten CSV exports a minute', () => {
     expect(LIMITS.csvExport).toEqual({ purpose: 'csv.export', limit: 10, windowSeconds: 60 })
   })
 
-  it('allows twenty uploads an hour per session (spec §5.4)', () => {
+  it('allows twenty uploads an hour per session', () => {
     expect(LIMITS.upload).toEqual({ purpose: 'media.upload', limit: 20, windowSeconds: 3600 })
   })
 })

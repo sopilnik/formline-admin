@@ -16,13 +16,13 @@ const schema = z.object({
   COOKIE_SIGNING_KEY: z.string().min(32),
   TOTP_ENCRYPTION_KEYS: z.string().regex(KEYRING, 'comma-separated id:key pairs, each key 32 bytes in base64'),
   OWNER_SETUP_TOKEN: z.string().min(32).optional(),
-  // The media zone for uploads (spec §8.4): the three go together; the host is one of bunny's storage endpoints.
+  // The media zone for uploads: the three go together; the host is one of bunny's storage endpoints.
   BUNNY_STORAGE_ZONE: z.string().regex(/^[a-z0-9-]{1,64}$/).optional(),
   BUNNY_STORAGE_HOST: z.string().regex(/^([a-z0-9-]+\.)?storage\.bunnycdn\.com$/).optional(),
   BUNNY_STORAGE_KEY: z.string().min(20).optional(),
   /** A local folder that stands in for the media zone in development and in the end-to-end tests. */
   MEDIA_STORAGE_DIR: z.string().min(1).optional(),
-  // The Stripe ingest (spec §7): the webhook's signing secret, a restricted test key that reads Checkout Sessions and
+  // The Stripe ingest: the webhook's signing secret, a restricted test key that reads Checkout Sessions and
   // the key that picks a store customer's pseudonym. The three go together; without them the ingest answers 503.
   STRIPE_WEBHOOK_SECRET: z.string().regex(/^whsec_[A-Za-z0-9_-]{8,}$/, 'a webhook signing secret (whsec_…)').optional(),
   STRIPE_RESTRICTED_KEY: z.string().regex(/^rk_test_[A-Za-z0-9_-]{8,}$/, 'a restricted test key (rk_test_…)').optional(),
@@ -34,7 +34,7 @@ const schema = z.object({
   STRIPE_API_BASE: z.url({ protocol: /^https?$/ }).optional(),
   /** Set by the image (Dockerfile): the deployed container, where the media zone and the Stripe ingest are required. */
   FORMLINE_RUNTIME: z.enum(['container']).optional(),
-  /** Set by the container start while the database is unreachable: every page answers 503 until it is back (spec §13). */
+  /** Set by the container start while the database is unreachable: every page answers 503 until it is back. */
   FORMLINE_MAINTENANCE: z.enum(['1']).optional(),
 }).superRefine((env, ctx) => {
   const bunny = [env.BUNNY_STORAGE_ZONE, env.BUNNY_STORAGE_HOST, env.BUNNY_STORAGE_KEY].filter(Boolean).length

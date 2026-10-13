@@ -48,7 +48,7 @@ async function checkCode(tx: Tx, session: Session, code: string, deps: AuthDeps)
 /**
  * One second-factor attempt: an authenticator code or a recovery code. The tenth
  * failure in an hour locks the second factor for an hour, ends the session and
- * notifies the user (spec §5.4, amended); a locked factor ends the session too.
+ * notifies the user; a locked factor ends the session too.
  */
 export async function attemptSecondFactor(
   session: Session,
@@ -92,7 +92,7 @@ export async function attemptSecondFactor(
 
 /**
  * Counts a wrong code against a user's second factor, on sign-in and on a switch to them alike: the failure that reaches
- * the hour's limit starts the hour's lock (spec §5.4). Answers whether the factor is locked now.
+ * the hour's limit starts the hour's lock. Answers whether the factor is locked now.
  */
 export async function recordSecondFactorFailure(subject: string, pool: Pool): Promise<boolean> {
   const failures = await consume(LIMITS.secondFactorFail, subject, pool)

@@ -1,6 +1,6 @@
 name: Deploy
 
-# A push to main (spec §13): the checks of ci.yml, then the image to GitHub's registry with provenance and an SBOM, the
+# A push to main: the checks of ci.yml, then the image to GitHub's registry with provenance and an SBOM, the
 # panel's container pointed at it, the budget guard switched on again and the smoke test through the edge.
 on:
   push:

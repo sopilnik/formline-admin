@@ -15,7 +15,7 @@ export function normalizePassword(password: string): string {
   return password.normalize('NFKC')
 }
 
-/** Length only, counted in characters; no composition rules (spec §5.2). */
+/** Length only, counted in characters; no composition rules. */
 export function checkPasswordShape(password: string): PasswordShape {
   const length = [...normalizePassword(password)].length
   if (length < PASSWORD_MIN) return 'too_short'
@@ -39,7 +39,7 @@ let dummy: Promise<string> | undefined
 
 /**
  * Does the work of a real verification for an email that has no account, so the
- * response time does not tell which emails exist (spec §5.2).
+ * response time does not tell which emails exist.
  */
 export async function verifyAgainstDummy(password: string): Promise<false> {
   dummy ??= hash('formline-admin-dummy-password', OPTIONS)

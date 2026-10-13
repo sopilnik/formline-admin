@@ -5,7 +5,7 @@ import { hashToken } from '@/server/auth/tokens'
 
 export const RECOVERY_CODE_COUNT = 10
 
-/** Ten codes of ten base32 characters (50 bits each), shown as `abcde-fghij` (spec §5.3). */
+/** Ten codes of ten base32 characters (50 bits each), shown as `abcde-fghij`. */
 export function generateRecoveryCodes(): string[] {
   return Array.from({ length: RECOVERY_CODE_COUNT }, () => {
     const code = encodeBase32LowerCaseNoPadding(randomBytes(7)).slice(0, 10)

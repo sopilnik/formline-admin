@@ -16,7 +16,7 @@ export type CustomerExportLabels = { header: readonly string[] }
 
 /**
  * The customers of the file in the list's order: every customer the search keeps, at most
- * EXPORT_CAP, as the orders export (spec §8.5). One more than the cap is read to learn whether
+ * EXPORT_CAP, as the orders export. One more than the cap is read to learn whether
  * the list was cut.
  */
 export async function planCustomerExport(

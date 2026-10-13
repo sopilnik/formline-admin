@@ -9,7 +9,7 @@ export type Verdict = { allowed: boolean; count: number; retryAfterSeconds: numb
 // subject and the start of a fixed window; a lock row's window_start is the
 // moment of the lock. Every statement runs on its own pooled connection, outside
 // any caller transaction, so a counted failure survives the rollback of the
-// attempt it counts. The daily job purges old rows (stage 6).
+// attempt it counts. The daily job purges old rows.
 
 /** Counts one attempt; allowed while the count, this attempt included, is within the limit. */
 export async function consume(limit: Limit, subject: string, pool: Pool = getPool()): Promise<Verdict> {
@@ -56,7 +56,7 @@ export async function lockRemaining(purpose: string, subject: string, pool: Pool
   return Math.max(rows[0]?.remaining ?? 0, 0)
 }
 
-/** Clears every counter and lock of a subject (owner recovery, spec §5.8). The app role cannot delete. */
+/** Clears every counter and lock of a subject (owner recovery). The app role cannot delete. */
 export async function clearSubject(subject: string, pool: Pool = getPool()): Promise<void> {
   await pool.query('update fa.rate_limits set count = 0 where subject = $1', [subject])
 }

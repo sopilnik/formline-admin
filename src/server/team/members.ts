@@ -7,7 +7,7 @@ import { setMemberActive, setMemberRole, type MemberChange } from '@/server/dal/
 import { getPool } from '@/server/db/pool'
 import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
-/** A role change on the team page, logged as `team.role_changed` (spec §5.7). */
+/** A role change on the team page, logged as `team.role_changed`. */
 export async function changeMemberRole(actor: Actor, userId: string, role: AssignableRole, pool: Pool = getPool()): Promise<MemberChange> {
   return withWorkspace(workspaceContext(actor), async tx => {
     const result = await setMemberRole(tx, actor.workspaceId, actor.userId, userId, role)

@@ -1,7 +1,7 @@
 // The panel's CDN endpoint is a bunny pull zone, and the zone answers on its own hostnames as well as on the panel's
 // address: bunny's system `*.b-cdn.net` name and the endpoint's managed `*.bunny.run` name. Once the panel's address is
 // linked to the endpoint, bunny reports that address as the endpoint's `publicHost`, so the hostnames that go around the
-// panel's address are read from the pull zone instead (spec §15, P2).
+// panel's address are read from the pull zone instead (probe p2).
 
 type Fetch = typeof fetch
 

@@ -15,7 +15,7 @@ import { hashIp } from '@/server/ratelimit/ip'
 type Meta = { ip: string | null }
 
 /**
- * A new password for the owner (spec §5.1, §5.2, §8.8): only in the owner workspace — demo members have none —
+ * A new password for the owner: only in the owner workspace — demo members have none —
  * after a recent authentication, under the length and breach rules of setup. Every other session ends.
  */
 export async function changeOwnPassword(
@@ -41,7 +41,7 @@ export async function changeOwnPassword(
   return { ok: true, signedOut }
 }
 
-/** "Sign out" on one of one's other devices (spec §8.8), logged as `auth.session_revoked`. */
+/** "Sign out" on one of one's other devices, logged as `auth.session_revoked`. */
 export async function revokeOwnSession(session: Session, id: string, meta: Meta, overrides: Partial<AuthDeps> = {}): Promise<boolean> {
   const deps = authDeps(overrides)
   return withWorkspace(workspaceContext(session), async tx => {

@@ -21,7 +21,7 @@ export const spentSql = sql<number>`coalesce(sum(${orders.totalCents}) filter (w
 export const lastSql = sql<Date | null>`max(${orders.placedAt})`
 const nameSql = unicodeName(customers.name)
 
-/** The search: a case-insensitive part of the name or the email (spec §8.5). */
+/** The search: a case-insensitive part of the name or the email. */
 export function customerFilters(workspaceId: string, query: CustomersQuery): SQL {
   const parts: SQL[] = [eq(customers.workspaceId, workspaceId)]
   if (query.q) {
@@ -41,9 +41,9 @@ export function customerSort(query: CustomersQuery): SQL[] {
 }
 
 /**
- * The customers list (spec §8.5): one page, searched, counted and sorted in the database.
+ * The customers list: one page, searched, counted and sorted in the database.
  * The page is one query over the customers and their orders, grouped per customer — two
- * tables, the rule of spec §6.1.
+ * tables, which keeps the planner's estimates right for a new sandbox's rows.
  */
 export async function listCustomers(tx: Tx, workspaceId: string, query: CustomersQuery): Promise<CustomersList> {
   const where = customerFilters(workspaceId, query)
@@ -75,7 +75,7 @@ export type CustomerDetail = {
 /** The customer page lists this many orders; the orders list, searched by the email, has the rest. */
 export const CUSTOMER_ORDERS_SHOWN = 50
 
-/** One customer with the figures and the orders the page shows (spec §8.5); each query reads one table. */
+/** One customer with the figures and the orders the page shows; each query reads one table. */
 export async function getCustomer(tx: Tx, workspaceId: string, id: string): Promise<CustomerDetail | null> {
   const [customer] = await tx.select({
     id: customers.id, name: customers.name, email: customers.email, city: customers.city, country: customers.country,
@@ -100,7 +100,7 @@ export async function getCustomer(tx: Tx, workspaceId: string, id: string): Prom
   }
 }
 
-/** Replaces the notes; last save wins (spec §8.5). Null when the workspace holds no such customer. */
+/** Replaces the notes; last save wins. Null when the workspace holds no such customer. */
 export async function updateCustomerNotes(tx: Tx, workspaceId: string, id: string, notes: string): Promise<{ name: string; changed: boolean } | null> {
   const [current] = await tx.select({ name: customers.name, notes: customers.notes }).from(customers)
     .where(and(eq(customers.workspaceId, workspaceId), eq(customers.id, id)))

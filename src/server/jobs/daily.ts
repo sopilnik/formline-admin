@@ -20,7 +20,7 @@ export type DailyReport = {
   sandboxes: number
   purged: { rateLimits: number; challenges: number; sessions: number; failedSignIns: number }
   media: { deleted: number; retried: number }
-  /** Owner-workspace customers pseudonymised (spec §7.4); none while the Stripe ingest is not configured. */
+  /** Owner-workspace customers pseudonymised; none while the Stripe ingest is not configured. */
   customers: number
   /** The steps that failed this time; each is logged as `daily.step_failed` and runs again the next day. */
   failed: DailyStep[]
@@ -56,7 +56,7 @@ async function step<T>(name: DailyStep, failed: DailyStep[], fallback: T, run: (
 }
 
 /**
- * The daily job (spec §6.5, §7.4): expired sandboxes, old counters, challenges and sessions, the storage queue, then the
+ * The daily job: expired sandboxes, old counters, challenges and sessions, the storage queue, then the
  * store customers due for their pseudonym. The steps are independent: one that fails never holds back the ones after it.
  */
 export async function runDailyJob(deps: { pool?: Pool; storage?: MediaStorage; pseudonymKey?: string | null } = {}): Promise<DailyReport> {

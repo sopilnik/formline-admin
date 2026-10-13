@@ -16,8 +16,8 @@ export type TeamMember = {
 }
 
 /**
- * Every member of the workspace, the deactivated ones included (spec §8.6): active first, the owner
- * first among them, then by role and name. Three one-table queries joined here (spec §6.1).
+ * Every member of the workspace, the deactivated ones included: active first, the owner
+ * first among them, then by role and name. Three one-table queries joined here.
  */
 export async function listTeam(tx: Tx, workspaceId: string): Promise<TeamMember[]> {
   const rows = await tx.select({
@@ -51,7 +51,7 @@ async function target(tx: Tx, workspaceId: string, userId: string): Promise<Targ
 }
 
 /**
- * A new role for another active non-owner member (spec §5.5). The owner row and one's own row are
+ * A new role for another active non-owner member. The owner row and one's own row are
  * refused here as the users trigger refuses them in the database.
  */
 export async function setMemberRole(tx: Tx, workspaceId: string, actorId: string, userId: string, role: AssignableRole): Promise<MemberChange> {
@@ -66,7 +66,7 @@ export async function setMemberRole(tx: Tx, workspaceId: string, actorId: string
 
 /**
  * Deactivates or reactivates another non-owner member. Deactivating ends every session of theirs at
- * once — the definer trigger `users_revoke_sessions` does it in the same statement (spec §6.2).
+ * once — the definer trigger `users_revoke_sessions` does it in the same statement.
  */
 export async function setMemberActive(tx: Tx, workspaceId: string, actorId: string, userId: string, active: boolean): Promise<MemberChange> {
   const member = await target(tx, workspaceId, userId)

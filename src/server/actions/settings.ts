@@ -16,7 +16,7 @@ export type ProfileState =
   /** `count` tells one save from the next. */
   | { status: 'done'; count: number }
 
-/** Settings → Profile (spec §8.8): the name, and the language and theme the menus in the top bar also set. */
+/** Settings → Profile: the name, and the language and theme the menus in the top bar also set. */
 export async function saveProfileAction(previous: ProfileState, form: FormData): Promise<ProfileState> {
   const session = await requireSession()
   const values = Object.fromEntries(PROFILE_FIELDS.map(field => [field, formText(form, field)])) as Record<ProfileField, string>
@@ -36,7 +36,7 @@ export type StoreSettingsState =
   | { status: 'error'; error: 'invalid' | 'forbidden' | 'failed'; fieldErrors: Partial<Record<StoreField, StoreIssue>>; values: Record<StoreField, string> }
   | { status: 'done'; count: number }
 
-/** Settings → Store (spec §8.8): owners and admins. */
+/** Settings → Store: owners and admins. */
 export async function saveStoreSettingsAction(previous: StoreSettingsState, form: FormData): Promise<StoreSettingsState> {
   const session = await requireSession()
   const values = Object.fromEntries(STORE_FIELDS.map(field => [field, formText(form, field)])) as Record<StoreField, string>

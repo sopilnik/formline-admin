@@ -14,7 +14,7 @@ const SLUG_TAKEN = { collections_workspace_id_slug_key: 'slug_taken' } as const
 
 export type CollectionRow = { id: string; slug: string; name: string; description: string; position: number; products: number }
 
-/** The collections in their order (spec §8.3), each with its number of products; one table per query (spec §6.1). */
+/** The collections in their order, each with its number of products; one table per query. */
 export async function listCollections(tx: Tx, workspaceId: string): Promise<CollectionRow[]> {
   const rows = await tx.select({ id: collections.id, slug: collections.slug, name: collections.name, description: collections.description, position: collections.position })
     .from(collections).where(eq(collections.workspaceId, workspaceId)).orderBy(asc(collections.position), asc(collections.name))
@@ -46,7 +46,7 @@ export async function getCollection(tx: Tx, workspaceId: string, slug: string): 
 
 export type CollectionWrite = { ok: true; id: string; slug: string; previousSlug: string } | { ok: false; reason: 'not_found' | 'slug_taken' | 'cap' }
 
-/** A new collection at the end of the order (spec §8.3). */
+/** A new collection at the end of the order. */
 export async function createCollection(tx: Tx, workspaceId: string, input: { name: string; slug: string; description: string }): Promise<CollectionWrite> {
   await lockCap(tx, workspaceId, 'collections')
   const all = await tx.select({ slug: collections.slug, position: collections.position }).from(collections).where(eq(collections.workspaceId, workspaceId))
@@ -92,7 +92,7 @@ async function renumber(tx: Tx, workspaceId: string, ids: readonly string[]): Pr
 
 export type CollectionMove = { ok: true; slug: string; from: number; to: number; of: number } | { ok: false; reason: 'not_found' }
 
-/** Moves a collection one place up or down (spec §8.3); at either end it stays where it is. */
+/** Moves a collection one place up or down; at either end it stays where it is. */
 export async function moveCollection(tx: Tx, workspaceId: string, input: { id: string; direction: 'up' | 'down' }): Promise<CollectionMove> {
   const order = await lockedOrder(tx, workspaceId)
   const index = order.findIndex(c => c.id === input.id)
@@ -106,7 +106,7 @@ export async function moveCollection(tx: Tx, workspaceId: string, input: { id: s
 
 export type CollectionDeletion = { ok: true; slug: string; name: string } | { ok: false; reason: 'not_found' | 'not_empty' }
 
-/** Deletes an empty collection (spec §8.3) and closes the gap in the order. */
+/** Deletes an empty collection and closes the gap in the order. */
 export async function deleteCollection(tx: Tx, workspaceId: string, id: string): Promise<CollectionDeletion> {
   const order = await lockedOrder(tx, workspaceId)
   const row = order.find(c => c.id === id)

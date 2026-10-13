@@ -45,7 +45,7 @@ async function templateWorkspaceId(pool: Pool): Promise<string> {
 
 /**
  * The customer with one of the emails, or a new one. An owner-workspace customer the daily job has pseudonymised is
- * found by the pseudonym's email, so a returning customer stays one customer (spec §7.4).
+ * found by the pseudonym's email, so a returning customer stays one customer.
  */
 async function customerFor(tx: Tx, workspaceId: string, emails: string[], fresh: { email: string; name: string; city: string | null; country: string | null; pseudonymised: boolean }): Promise<string> {
   const found = () => tx.select({ id: customers.id }).from(customers)
@@ -100,7 +100,7 @@ async function ownerLocale(tx: Tx, workspaceId: string): Promise<Locale> {
 const matchedSkus = (order: IncomingOrder): string[] => [...new Set(order.lines.flatMap(line => line.variant ? [line.variant.sku] : []))]
 
 /**
- * The copy every sandbox created afterwards may show (spec §7.3): the pseudonymised customer and only the order's
+ * The copy every sandbox created afterwards may show: the pseudonymised customer and only the order's
  * lines, amounts, delivery, status and time — no notes, no later events, no Stripe ids, no store reference. Lines link
  * to the template's variants by SKU; the template's stock does not move.
  */
@@ -211,9 +211,9 @@ async function notifyOrder(tx: Tx, owner: string, created: Created, totalCents: 
 }
 
 /**
- * One paid store order (spec §7.1–§7.3), in one transaction: the event, the owner's customer, order, lines, first status,
+ * One paid store order, in one transaction: the event, the owner's customer, order, lines, first status,
  * the stock the lines take and the notifications, then the pseudonymised copy in the template — all of it or nothing, so
- * a Stripe retry redoes the whole (his decision, 1 October). A repeat — the same event, or a session already kept
+ * a Stripe retry redoes the whole. A repeat — the same event, or a session already kept
  * through the import — changes nothing.
  */
 export async function ingestOrder(order: IncomingOrder, options: { eventId: string | null; pseudonymKey: string }, pool: Pool = getPool()): Promise<IngestResult> {

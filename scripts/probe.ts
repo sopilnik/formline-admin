@@ -1,6 +1,6 @@
-// The probes of spec §15 against the live panel, run by hand from .github/workflows/probe.yml. Each prints JSON lines of
-// field names, figures, timings and statuses — never a key, a secret or the pull zone's raw hostnames — and exits 1 when
-// what it found contradicts the design.
+// The probes of the hosting setup against the live panel, run by hand from .github/workflows/probe.yml. Each prints JSON
+// lines of field names, figures, timings and statuses — never a key, a secret or the pull zone's raw hostnames — and exits 1
+// when what it found contradicts the design.
 //   p1 — usage: the fields of the summary, the statistics and the billing, and how old the newest statistics point is.
 //   p2 — the edge: forged X-Origin-Auth and X-Client-IP are overwritten at the edge, and the pull zone's own hostnames refuse
 //        a request with or without them.
@@ -100,7 +100,7 @@ export async function runProbe(o: ProbeOptions): Promise<boolean> {
     }
 
     case 'p6': {
-      // The first entry may wake the database; the second shows the warm figure of spec §1.
+      // The first entry may wake the database; the second shows the warm figure, which should stay under 3 s.
       const first = await demoChecks({ siteUrl: o.siteUrl })
       const second = await demoChecks({ siteUrl: o.siteUrl })
       for (const check of [...first, ...second]) o.log({ probe: 'p6', ...check })

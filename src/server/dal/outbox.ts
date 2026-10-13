@@ -8,7 +8,7 @@ export type StoredLetter = { id: string; to: string; template: string; payload: 
 
 const columns = { id: outboxEmails.id, to: outboxEmails.toAddress, template: outboxEmails.template, payload: outboxEmails.payload, createdAt: outboxEmails.createdAt }
 
-/** One page of the outbox, newest first (spec §9). Row-level security shows it to owners and admins only. */
+/** One page of the outbox, newest first. Row-level security shows it to owners and admins only. */
 export async function listLetters(tx: Tx, workspaceId: string, query: { page: number; size: number }): Promise<{ rows: StoredLetter[]; total: number; pages: number }> {
   const [totalRow] = await tx.select({ n: count() }).from(outboxEmails).where(eq(outboxEmails.workspaceId, workspaceId))
   const rows = await tx.select(columns).from(outboxEmails).where(eq(outboxEmails.workspaceId, workspaceId))

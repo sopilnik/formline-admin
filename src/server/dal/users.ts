@@ -68,7 +68,7 @@ export async function lockSelf(tx: Tx, who: Who): Promise<void> {
   await tx.select({ id: users.id }).from(users).where(isUser(who)).for('update')
 }
 
-/** The profile form's save (spec §8.8): only what changed is written; the fields it changed come back. */
+/** The profile form's save: only what changed is written; the fields it changed come back. */
 export async function updateProfile(
   tx: Tx,
   who: Who,

@@ -13,7 +13,7 @@ export type StatusOutcome = { changed: number[]; skipped: number[] }
 const newestFirst = (a: number, b: number): number => b - a
 
 /**
- * One status for one or many orders (spec §8.2): every order the machine allows moves,
+ * One status for one or many orders: every order the machine allows moves,
  * each with its event and an activity entry; the others are reported by number. The ids
  * are walked in sorted order in one transaction, so two overlapping changes lock their
  * rows in the same order. An id the workspace does not hold is neither changed nor reported.

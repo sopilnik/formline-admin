@@ -28,7 +28,7 @@ const columns = {
   lastUsedAt: passkeys.lastUsedAt,
 }
 
-// Row-level security shows each user only their own passkeys (spec §6.2); every query names the workspace and the user as
+// Row-level security shows each user only their own passkeys; every query names the workspace and the user as
 // well, as the rest of the data access layer does.
 const own = (who: Who) => and(eq(passkeys.workspaceId, who.workspaceId), eq(passkeys.userId, who.userId))
 

@@ -10,7 +10,7 @@ import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 import { readerOf } from '@/server/notifications/feed'
 
 /**
- * Opens a notification (spec §8.9): it is marked read for the member and the page of its subject opens.
+ * Opens a notification: it is marked read for the member and the page of its subject opens.
  * One the member cannot see leaves them on the notifications page.
  */
 export async function openNotificationAction(form: FormData): Promise<void> {
@@ -21,7 +21,7 @@ export async function openNotificationAction(form: FormData): Promise<void> {
     const opened = await markNotificationRead(tx, await readerOf(tx, session), id.data)
     return opened ? notificationHref(tx, session.workspaceId, opened.kind, opened.payload) : '/notifications'
   })
-  // The page of notifications shows the mark; this also clears the pages the browser keeps for a minute (W.1).
+  // The page of notifications shows the mark; this also clears the pages the browser keeps for a minute.
   revalidatePath('/notifications')
   redirect(href)
 }
