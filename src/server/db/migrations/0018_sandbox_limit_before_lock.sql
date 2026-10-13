@@ -1,7 +1,7 @@
--- An address over its hourly limit of demo entries is answered at once: its count is taken
--- before the lock that serialises every creation, so an address that is refused never waits
--- for, nor holds a connection behind, an entry in progress. Everything else is the function
--- of 0014 unchanged.
+-- An address over its hourly limit of demo entries is refused without waiting for the lock
+-- that serialises every creation: its count is taken first. Only an entry of the same address
+-- still in progress holds that count's row, and the refusal waits for that one alone.
+-- Everything else is the function of 0014 unchanged.
 create or replace function fa.create_sandbox(p_ip_hash text, p_session_hash text, p_user_agent text, p_locale text)
   returns table (outcome text, sandbox_id uuid, demo_user_id uuid, sandbox_expires_at timestamptz, retry_after_seconds integer)
   language plpgsql security definer set search_path = pg_catalog, pg_temp as $$
