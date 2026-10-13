@@ -19,13 +19,13 @@ export async function register(): Promise<void> {
 export const onRequestError: Instrumentation.onRequestError = async (error, request, context) => {
   if (process.env.NEXT_RUNTIME !== 'nodejs') return
 
-  const { log } = await import('@/server/log')
+  const { log, pathOnly } = await import('@/server/log')
   const id = request.headers['x-request-id']
   log.error({
     event: 'request.failed',
     requestId: Array.isArray(id) ? id[0] : id,
     method: request.method,
-    path: request.path,
+    path: pathOnly(request.path),
     route: context.routePath,
     err: error,
   })
