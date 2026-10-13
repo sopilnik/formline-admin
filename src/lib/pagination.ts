@@ -1,6 +1,6 @@
 import { one, type SearchParams } from '@/lib/search-params'
 
-/** The page sizes every list offers (spec §11); the first is the default. */
+/** The page sizes every list offers; the first is the default. */
 export const PAGE_SIZES = [25, 50, 100] as const
 export type PageSize = (typeof PAGE_SIZES)[number]
 export const DEFAULT_PAGE_SIZE: PageSize = PAGE_SIZES[0]

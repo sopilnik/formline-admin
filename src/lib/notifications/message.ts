@@ -18,7 +18,7 @@ export type NotificationMessage = { title: MessagePart; detail: MessagePart }
 const DASH = '—'
 
 /**
- * Which words a notification takes (spec §8.9): the page and the bell translate the keys. Money is formatted in the
+ * Which words a notification takes: the page and the bell translate the keys. Money is formatted in the
  * reader's language, and a role takes its name from `roleName`.
  */
 export function notificationMessage(view: NotificationView, locale: Locale, roleName: (role: string) => string): NotificationMessage {

@@ -1,7 +1,7 @@
 export const PRODUCT_STATUSES = ['published', 'draft', 'archived'] as const
 export type ProductStatus = (typeof PRODUCT_STATUSES)[number]
 
-// Spec §8.3: draft and published both ways, either of them to archived, archived back to draft.
+// Draft and published both ways, either of them to archived, archived back to draft.
 const NEXT: Record<ProductStatus, readonly ProductStatus[]> = {
   published: ['draft', 'archived'],
   draft: ['published', 'archived'],
@@ -24,7 +24,7 @@ export function canTransitionProduct(from: ProductStatus, to: ProductStatus): bo
 export type DeleteBlocker = 'has_orders' | 'not_draft'
 
 /**
- * Only a draft that no order line points at can be deleted (spec §8.3); a product with orders is archived instead. Orders
+ * Only a draft that no order line points at can be deleted; a product with orders is archived instead. Orders
  * come first: moving a product with orders to drafts would not make it deletable.
  */
 export function deleteBlocker(status: ProductStatus, hasOrders: boolean): DeleteBlocker | null {

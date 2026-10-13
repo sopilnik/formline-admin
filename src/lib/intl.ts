@@ -1,6 +1,6 @@
 import { INTL_LOCALE, type Locale } from '@/i18n/locale'
 
-/** A calendar date in the interface language and the store's time zone (spec §11). */
+/** A calendar date in the interface language and the store's time zone. */
 export function formatDate(date: Date, locale: Locale, timeZone: string): string {
   return new Intl.DateTimeFormat(INTL_LOCALE[locale], { day: 'numeric', month: 'short', year: 'numeric', timeZone }).format(date)
 }

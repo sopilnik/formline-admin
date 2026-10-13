@@ -99,7 +99,7 @@ export function addMonths(date: Date, months: number, timeZone: string): Date {
   return zonedToDate({ ...p, year, month, day: Math.min(p.day, daysInMonth(year, month)) }, timeZone)
 }
 
-/** The date filter of the orders list (spec §8.2, amendment 2): whole calendar days of the zone, today included. */
+/** The date filter of the orders list: whole calendar days of the zone, today included. */
 export function presetRange(preset: DatePreset, now: Date, timeZone: string): Range | null {
   if (preset === 'any') return null
   const end = addDays(startOfDay(now, timeZone), 1, timeZone)
@@ -109,7 +109,7 @@ export function presetRange(preset: DatePreset, now: Date, timeZone: string): Ra
   return { start: startOfMonth(now, timeZone), end }
 }
 
-/** The overview's periods (spec §8.1); the selector is a set of links with `?period=`. */
+/** The overview's periods; the selector is a set of links with `?period=`. */
 export const PERIODS = ['7d', '30d', '90d', 'month'] as const
 export type Period = (typeof PERIODS)[number]
 export const DEFAULT_PERIOD: Period = '30d'
@@ -120,7 +120,7 @@ export function parsePeriod(value: string | string[] | undefined): Period {
 }
 
 /**
- * A period of the overview with its previous period and the chart's buckets (amendment 4).
+ * A period of the overview with its previous period and the chart's buckets.
  * The buckets are contiguous and cover `current` exactly; `previousBuckets` are the same
  * buckets moved back and cover `previous` exactly, with null for a day the previous month lacks.
  */

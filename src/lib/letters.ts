@@ -3,7 +3,7 @@ import { formatDateTime } from '@/lib/intl'
 import { asRecord, count, text, type Payload } from '@/lib/payload'
 import { ASSIGNABLE_ROLES } from '@/lib/team'
 
-/** Every letter the panel writes (spec §9); nothing is ever sent, the outbox keeps them. */
+/** Every letter the panel writes; nothing is ever sent, the outbox keeps them. */
 export const LETTER_TEMPLATES = ['auth.new_sign_in', 'auth.second_factor_locked', 'auth.recovery_code_used', 'team.invitation'] as const
 export type LetterTemplate = (typeof LETTER_TEMPLATES)[number]
 
@@ -20,7 +20,7 @@ export type LetterKey =
 
 /** What a letter says, independent of how it is shown: the outbox page renders it with the dictionaries. */
 export type LetterContent = {
-  /** The recipient's language when the letter was written (his decision, 29 September). */
+  /** The recipient's language when the letter was written: a letter keeps the language it was written in. */
   locale: Locale
   /** The greeting's name; null writes no greeting. */
   name: string | null
@@ -43,7 +43,7 @@ const SECURITY = '/settings/security'
 const INVITATION_TOKEN = /^[a-z2-7]{32}$/
 
 /**
- * Reads a stored letter (spec §9). The payload is what the letter was written with; a missing or
+ * Reads a stored letter. The payload is what the letter was written with; a missing or
  * malformed field falls back to a plainer sentence instead of failing, and an unknown template shows
  * as a letter without a body.
  */

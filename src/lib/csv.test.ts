@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { CSV_BOM, csvMoney, csvRecord, csvText } from '@/lib/csv'
 
-describe('csv (spec §8.2, amendment 3)', () => {
+describe('csv', () => {
   it('leaves plain text alone and quotes commas, quotes and line breaks', () => {
     expect(csvText('Maya Lindqvist')).toBe('Maya Lindqvist')
     expect(csvText('Анна Иванова')).toBe('Анна Иванова')

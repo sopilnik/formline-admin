@@ -1,4 +1,4 @@
-// The keyboard shortcuts (spec §8.10). Every one of them is a single character, so the profile can turn them all off
+// The keyboard shortcuts. Every one of them is a single character, so the profile can turn them all off
 // (WCAG 2.2 SC 2.1.4); ⌘K / Ctrl+K belongs to the command palette and stays on.
 
 /** "g" then one of these letters goes to the page. */

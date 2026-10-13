@@ -1,6 +1,6 @@
 import type { Range } from '@/lib/periods'
 
-/** The three sums the KPI cards need for one period (spec §8.1). */
+/** The three sums the KPI cards need for one period. */
 export type Totals = { revenueCents: number; orders: number; newCustomers: number }
 export type Kpi = { value: number | null; previous: number | null; change: number | null }
 export type Kpis = { revenue: Kpi; orders: Kpi; averageOrder: Kpi; newCustomers: Kpi }
@@ -49,7 +49,7 @@ export function bucketSums(points: readonly RevenuePoint[], buckets: readonly (R
 }
 
 export type CollectionRevenue = { slug: string; name: string; posters: number; cents: number }
-/** `share` of all posters, `bar` relative to the largest collection (spec §8.1: no track, scaled to the largest). */
+/** `share` of all posters, `bar` relative to the largest collection: no track, scaled to the largest. */
 export type CollectionShare = CollectionRevenue & { share: number; bar: number }
 
 export function collectionShares(rows: readonly CollectionRevenue[], postersCents: number): { rows: CollectionShare[]; otherCents: number } {

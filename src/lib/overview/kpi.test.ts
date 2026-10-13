@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { averageOrderCents, bucketSums, change, collectionShares, kpis, trendOf } from '@/lib/overview/kpi'
 
-describe('KPI arithmetic (spec §8.1, §12.1)', () => {
+describe('KPI arithmetic', () => {
   it('divides revenue by orders for the average order value, and has none without orders', () => {
     expect(averageOrderCents({ revenueCents: 1428600, orders: 214, newCustomers: 61 })).toBe(6676)
     expect(averageOrderCents({ revenueCents: 0, orders: 0, newCustomers: 0 })).toBeNull()

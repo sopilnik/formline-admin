@@ -3,7 +3,7 @@
 const SIZE_NAMES: Record<string, string> = { a3: 'A3', a2: 'A2', a1: 'A1' }
 const PALETTE_NAMES: Record<string, string> = { paper: 'Paper', ink: 'Ink', signal: 'Signal', ocean: 'Ocean', sage: 'Sage', sand: 'Sand' }
 
-/** The store's palettes in its own order: the choices of a new product and the order of its variants (spec §8.3). */
+/** The store's palettes in its own order: the choices of a new product and the order of its variants. */
 export const PALETTE_IDS: readonly string[] = Object.keys(PALETTE_NAMES)
 const SIZE_ORDER = Object.keys(SIZE_NAMES)
 
@@ -22,7 +22,7 @@ export function variantLabel(size: string, palette: string): string {
   return `${SIZE_NAMES[size] ?? size.toUpperCase()} · ${paletteName(palette)}`
 }
 
-/** Template posters ship with the app under public/; an upload is served by the media route after a session check (stage 5). */
+/** Template posters ship with the app under public/; an upload is served by the media route after a session check. */
 export function imageSrc(image: { id: string; storagePath: string; source: 'static' | 'upload' }): string {
   return image.source === 'static' ? `/${image.storagePath}` : `/media/${image.id}`
 }

@@ -4,7 +4,7 @@ import { orderHref } from '@/lib/orders/view'
 import { asRecord, text, whole, type Payload } from '@/lib/payload'
 import { productHref } from '@/lib/products/view'
 
-/** What the log knows about the entities of one page, read from their tables by id (spec §8.7: the entity is linked). */
+/** What the log knows about the entities of one page, read from their tables by id, so each entry links to its record. */
 export type Lookups = {
   users: ReadonlyMap<string, string>
   orders: ReadonlyMap<string, number>
@@ -164,7 +164,7 @@ function detailOf(action: string, details: Payload): Detail | null {
 }
 
 /**
- * What the log shows for an entry (spec §8.7): the entity it is about, linked while it exists, and a short detail.
+ * What the log shows for an entry: the entity it is about, linked while it exists, and a short detail.
  * A malformed or missing detail shows nothing rather than failing: the log is read long after it is written.
  */
 export function describeEntry(entry: EntryInput, lookups: Lookups): { subject: Subject | null; detail: Detail | null } {

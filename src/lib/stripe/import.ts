@@ -1,4 +1,4 @@
-// "Import missed Stripe orders" (spec §7.5): what the settings page and the server action share, without server code.
+// "Import missed Stripe orders": what the settings page and the server action share, without server code.
 
 /** How far back the import looks: Stripe retries a sandbox webhook only for a few hours (three days in live mode); the import covers a month. */
 export const IMPORT_DAYS = 30

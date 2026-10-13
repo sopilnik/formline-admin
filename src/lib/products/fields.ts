@@ -16,11 +16,11 @@ export type DetailIssue =
 
 export type ProductDetails = { name: string; slug: string; collectionId: string; basePriceCents: number; tags: string[]; description: string }
 
-/** The new-product form adds the palettes: each chosen one comes in every size (spec §8.3). */
+/** The new-product form adds the palettes: each chosen one comes in every size. */
 export type NewProductField = DetailField | 'palettes'
 export type NewProductIssue = DetailIssue | 'palettes_missing' | 'sku_taken'
 
-// The variant form (spec §8.3): one row per variant, its fields named `<field>:<variant id>`.
+// The variant form: one row per variant, its fields named `<field>:<variant id>`.
 export const STOCK_MAX = 100_000
 export const THRESHOLD_MAX = 1_000
 /** A store product has at most six palettes in three sizes. */

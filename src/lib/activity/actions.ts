@@ -1,5 +1,5 @@
 /**
- * Every action the activity log records (spec §5.7), in the groups the log's filter offers.
+ * Every action the activity log records, in the groups the log's filter offers.
  * `tests/unit/activity-actions.test.ts` holds this list against the code that writes the log.
  */
 export const ACTIVITY_GROUPS = [

@@ -1,4 +1,4 @@
-// The palette's search (spec §8.10): what it sends to the server and what comes back.
+// The palette's search: what it sends to the server and what comes back.
 import type { OrderStatus } from '@/lib/orders/status'
 import type { ProductStatus } from '@/lib/products/status'
 

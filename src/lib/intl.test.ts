@@ -19,7 +19,7 @@ describe('countryName', () => {
   })
 })
 
-describe('money, numbers and dates (spec §11)', () => {
+describe('money, numbers and dates', () => {
   it('formats money with the narrow symbol in each language', () => {
     expect(formatMoney(1428600, 'en', 'whole')).toBe('$14,286')
     expect(formatMoney(6676, 'en')).toBe('$66.76')

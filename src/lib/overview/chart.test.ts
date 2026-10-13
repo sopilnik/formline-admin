@@ -18,7 +18,7 @@ describe('the scale', () => {
   })
 })
 
-describe('tickIndexes (amendment 4)', () => {
+describe('tickIndexes', () => {
   it('labels every day on 7 days and every week, ending on today, on 30 days and this month', () => {
     expect(tickIndexes(periodPlan('7d', now, berlin)).map(t => t.index)).toEqual([0, 1, 2, 3, 4, 5, 6])
     expect(tickIndexes(periodPlan('30d', now, berlin)).map(t => t.index)).toEqual([1, 8, 15, 22, 29])

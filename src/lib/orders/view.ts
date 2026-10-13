@@ -14,7 +14,7 @@ export type OrderRowView = {
   items: number; total: string; status: OrderStatus; source: 'seed' | 'stripe'
 }
 
-/** The order page is addressed by the number people quote (amendment 3). */
+/** The order page is addressed by the number people quote. */
 export function orderHref(number: number): string {
   return `/orders/${number}`
 }

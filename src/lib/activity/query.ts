@@ -4,10 +4,10 @@ import { DEFAULT_PAGE_SIZE, parsePage, parsePageSize, type PageSize } from '@/li
 import { UUID_PATTERN } from '@/lib/payload'
 import { one, type SearchParams } from '@/lib/search-params'
 
-/** Entries without a person: the Stripe ingest and the seed (spec §8.2, "System"). */
+/** Entries without a person, shown as "System": the Stripe ingest and the seed. */
 export const SYSTEM_ACTOR = 'system'
 
-/** The whole state of the activity log (spec §8.7); it lives in the URL, as on the other lists. Newest first, always. */
+/** The whole state of the activity log; it lives in the URL, as on the other lists. Newest first, always. */
 export type ActivityQuery = {
   /** '' for everyone, SYSTEM_ACTOR, or a member's id. */
   actor: string

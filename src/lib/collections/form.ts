@@ -17,7 +17,7 @@ const schema = z.strictObject({
 
 export type CollectionResult = { ok: true; data: CollectionInput } | { ok: false; fieldErrors: Partial<Record<CollectionField, CollectionIssue>> }
 
-/** The collection form (spec §8.3): the slug comes from the name when it is left empty, as for products. */
+/** The collection form: the slug comes from the name when it is left empty, as for products. */
 export function parseCollection(input: Record<CollectionField, string>): CollectionResult {
   const fieldErrors: Partial<Record<CollectionField, CollectionIssue>> = {}
   const parsed = schema.safeParse(input)

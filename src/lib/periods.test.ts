@@ -60,7 +60,7 @@ describe('presetRange', () => {
   })
 })
 
-describe('periodPlan (spec §8.1, amendment 4)', () => {
+describe('periodPlan', () => {
   const now = new Date('2026-09-27T09:00:00Z')  // Sunday 27 September, 11:00 in Berlin
   const range = (start: string, end: string) => ({ start: new Date(start), end: new Date(end) })
   const contiguous = (buckets: readonly ({ start: Date; end: Date } | null)[]) =>

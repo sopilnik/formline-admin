@@ -27,7 +27,7 @@ export type ProductRowView = {
   stock: string; soldOut: number; low: number; updated: string
 }
 
-/** The product page is addressed by its slug (spec §8.3), which the list links to. */
+/** The product page is addressed by its slug, which the list links to. */
 export function productHref(slug: string): string {
   return `/products/${slug}`
 }

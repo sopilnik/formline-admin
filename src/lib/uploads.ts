@@ -1,4 +1,4 @@
-// The upload route's terms, shared with the file picker (spec §8.4). The route checks the bytes
+// The upload route's terms, shared with the file picker. The route checks the bytes
 // themselves; the picker only saves a round trip for a file that could never pass.
 
 /** The largest body the route reads: 2 MB. */

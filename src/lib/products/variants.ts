@@ -9,7 +9,7 @@ export type VariantInput = {
   /** The own price; null to sell at the base price plus the size's surcharge. */
   priceOverrideCents: number | null
   stock: number
-  /** The stock the page showed when it was opened: a sale meanwhile must not be overwritten (spec §8.3). */
+  /** The stock the page showed when it was opened: a sale meanwhile must not be overwritten. */
   stockWas: number
   lowStockThreshold: number
 }

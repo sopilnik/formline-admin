@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { canTransition, isOrderStatus, nextStatuses, ORDER_STATUSES, REVENUE_STATUSES, returnsStock, transitionsForAny } from '@/lib/orders/status'
 
-describe('order status machine (spec §8.2)', () => {
+describe('order status machine', () => {
   it('lists the six statuses and the four that count as revenue', () => {
     expect(ORDER_STATUSES).toEqual(['paid', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'])
     expect(REVENUE_STATUSES).toEqual(['paid', 'processing', 'shipped', 'delivered'])

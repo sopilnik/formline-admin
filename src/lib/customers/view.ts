@@ -21,7 +21,7 @@ export type CustomerRowView = {
   last: string | null
 }
 
-/** A customer is addressed by id (spec §11): names repeat, emails are personal data in an address bar. */
+/** A customer is addressed by id: names repeat, emails are personal data in an address bar. */
 export function customerHref(id: string): string {
   return `/customers/${id}`
 }

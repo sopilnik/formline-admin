@@ -4,7 +4,7 @@ import en from '@messages/en.json'
 import ru from '@messages/ru.json'
 
 /**
- * What every request but liveness gets while the database is unreachable (spec §13): one short page in the visitor's
+ * What every request but liveness gets while the database is unreachable: one short page in the visitor's
  * language, without scripts or styles, so it needs no nonce.
  */
 export function maintenancePage(cookieLocale: string | undefined): string {

@@ -1,7 +1,7 @@
-/** At most this many rows in one file; above it the first ones in the list's order (amendment 3). */
+/** At most this many rows in one file; above it the first ones in the list's order. */
 export const EXPORT_CAP = 10_000
 
-/** First in the file: spreadsheets then read it as UTF-8 and show Cyrillic names (amendment 3). */
+/** First in the file: spreadsheets then read it as UTF-8 and show Cyrillic names. */
 export const CSV_BOM = '\uFEFF'
 
 // A cell a spreadsheet would evaluate (OWASP, "CSV injection"): =, +, -, @, tab, carriage return.

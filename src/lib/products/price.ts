@@ -3,14 +3,14 @@ import type { Locale } from '@/i18n/locale'
 export const SIZE_IDS = ['a3', 'a2', 'a1'] as const
 export type SizeId = (typeof SIZE_IDS)[number]
 
-/** The store's surcharges on the base price (spec §6.1): A3 none, A2 $16, A1 $40. */
+/** The store's surcharges on the base price: A3 none, A2 $16, A1 $40. */
 export const SIZE_SURCHARGE_CENTS: Record<SizeId, number> = { a3: 0, a2: 1600, a1: 4000 }
 
 /** $9,999.99: the largest base price or override the forms accept. */
 const MAX_PRICE_CENTS = 999_999
 
 /**
- * A variant's price (spec §6.1): its override when one is set, the base price plus the size's surcharge otherwise.
+ * A variant's price: its override when one is set, the base price plus the size's surcharge otherwise.
  * The products list computes the same in SQL (`variantPriceSql` in `src/server/dal/products.ts`).
  */
 export function variantPriceCents(baseCents: number, size: SizeId, overrideCents: number | null): number {

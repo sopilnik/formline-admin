@@ -1,4 +1,4 @@
-// The kinds of notification the bell shows (spec §8.9) and what each one says. The payload is
+// The kinds of notification the bell shows and what each one says. The payload is
 // written when the event happens and kept as it was, so a later rename does not rewrite history.
 import { asRecord, text, UUID_PATTERN, whole } from '@/lib/payload'
 

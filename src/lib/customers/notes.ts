@@ -2,7 +2,7 @@ export const CUSTOMER_NOTES_MAX = 2000
 export type CustomerNotesError = 'too_long'
 
 /**
- * A customer's notes (spec §8.5): plain text, trimmed; empty clears them. At most 2 000
+ * A customer's notes: plain text, trimmed; empty clears them. At most 2 000
  * characters, counted as code points, as the database's check counts them.
  */
 export function parseCustomerNotes(value: string): { ok: true; notes: string } | { ok: false; error: CustomerNotesError } {

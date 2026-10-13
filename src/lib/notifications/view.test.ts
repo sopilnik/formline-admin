@@ -4,7 +4,7 @@ import { NOTIFICATION_KINDS, notificationTarget, notificationView } from '@/lib/
 const PRODUCT = '0b6f3c1e-8d2a-4b7e-9f10-2a3b4c5d6e7f'
 
 describe('notification kinds', () => {
-  it('are the six of the spec', () => {
+  it('are the six the panel writes', () => {
     expect([...NOTIFICATION_KINDS].sort()).toEqual([
       'auth.new_sign_in', 'auth.recovery_code_used', 'auth.second_factor_locked', 'order.created', 'stock.low', 'team.invitation_accepted',
     ])

@@ -8,7 +8,7 @@ export const PRODUCT_SORTS = ['name', 'price', 'stock', 'updated'] as const
 export type StockFilter = (typeof STOCK_FILTERS)[number]
 export type ProductSort = (typeof PRODUCT_SORTS)[number]
 
-/** The whole state of the products list; it lives in the URL (spec §8.3, §11). */
+/** The whole state of the products list; it lives in the URL. */
 export type ProductsQuery = {
   status: ProductStatus[]
   q: string

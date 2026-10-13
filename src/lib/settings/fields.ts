@@ -1,4 +1,5 @@
-// The fields and limits the settings forms share with the server's parsers (spec §5.6: no Zod in the browser).
+// The fields and limits the settings forms share with the server's parsers, without Zod: the browser must not load it
+// (tests/unit/client-bundle.test.ts).
 
 export const PROFILE_FIELDS = ['name', 'locale', 'theme', 'shortcuts'] as const
 export type ProfileField = (typeof PROFILE_FIELDS)[number]

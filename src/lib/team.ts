@@ -1,4 +1,4 @@
-/** The roles an owner or an admin can give (spec §5.5): never `owner`, which only setup creates. */
+/** The roles an owner or an admin can give: never `owner`, which only setup creates. */
 export const ASSIGNABLE_ROLES = ['admin', 'manager', 'viewer'] as const
 export type AssignableRole = (typeof ASSIGNABLE_ROLES)[number]
 
@@ -19,5 +19,5 @@ export function memberName(raw: string): string | null {
   return length >= 1 && length <= MEMBER_NAME_MAX ? name : null
 }
 
-/** Members and open invitations together, so a sandbox stays small (spec §6.5). */
+/** Members and open invitations together, so a sandbox stays small. */
 export const TEAM_CAP = 20

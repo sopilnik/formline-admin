@@ -4,7 +4,7 @@ import { one, pick, searchText, type SearchParams } from '@/lib/search-params'
 export const CUSTOMER_SORTS = ['name', 'orders', 'spent', 'last'] as const
 export type CustomerSort = (typeof CUSTOMER_SORTS)[number]
 
-/** The whole state of the customers list; it lives in the URL, as on the orders and the products (spec §8.5, §11). */
+/** The whole state of the customers list; it lives in the URL, as on the orders and the products. */
 export type CustomersQuery = {
   q: string
   sort: CustomerSort
@@ -54,7 +54,7 @@ export function isCustomersFiltered(query: CustomersQuery): boolean {
   return query.q !== ''
 }
 
-/** The CSV of the list: its search and sort, without the page (spec §8.5). */
+/** The CSV of the list: its search and sort, without the page. */
 export function customersExportHref(query: CustomersQuery): string {
   const params = customersParams({ ...query, page: 1, size: DEFAULT_CUSTOMERS_QUERY.size }, {})
   const text = params.toString()

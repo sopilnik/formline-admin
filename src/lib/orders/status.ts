@@ -1,10 +1,10 @@
 export const ORDER_STATUSES = ['paid', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'] as const
 export type OrderStatus = (typeof ORDER_STATUSES)[number]
 
-/** The statuses whose orders count as revenue (spec §8.1). */
+/** The statuses whose orders count as revenue. */
 export const REVENUE_STATUSES: readonly OrderStatus[] = ['paid', 'processing', 'shipped', 'delivered']
 
-// Spec §8.2: forward one step; cancel before shipping; refund any time after payment.
+// Forward one step; cancel before shipping; refund any time after payment.
 const NEXT: Record<OrderStatus, readonly OrderStatus[]> = {
   paid: ['processing', 'cancelled', 'refunded'],
   processing: ['shipped', 'cancelled', 'refunded'],

@@ -21,7 +21,7 @@ export function parseTags(text: string): string[] | null {
 
 const issue = (error: DetailIssue) => ({ error })
 
-// Every field arrives as text; unknown keys are refused (spec §5.6).
+// Every field arrives as text; unknown keys are refused.
 const schema = z.strictObject({
   name: z.string().trim().min(1, issue('name_required')).max(PRODUCT_NAME_MAX, issue('name_too_long')),
   slug: z.string().trim().toLowerCase(),
@@ -33,7 +33,7 @@ const schema = z.strictObject({
 
 export type DetailsResult = { ok: true; data: ProductDetails } | { ok: false; fieldErrors: Partial<Record<DetailField, DetailIssue>> }
 
-/** The details form (spec §8.3): the slug comes from the name when it is left empty. */
+/** The details form: the slug comes from the name when it is left empty. */
 export function parseProductDetails(input: Record<DetailField, string>): DetailsResult {
   const fieldErrors: Partial<Record<DetailField, DetailIssue>> = {}
   const parsed = schema.safeParse(input)

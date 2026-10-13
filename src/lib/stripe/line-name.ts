@@ -1,4 +1,4 @@
-// The store names each Checkout line "<Product> · <Size> · <Palette>" and sends no SKU (spec §7.2). The name is read
+// The store names each Checkout line "<Product> · <Size> · <Palette>" and sends no SKU. The name is read
 // against the catalog snapshot the template is built from, never against the panel's catalog, which the owner may edit.
 import { PALETTES, PRODUCTS, SIZES, skuOf, type PaletteId, type SizeId } from '@seed/catalog'
 

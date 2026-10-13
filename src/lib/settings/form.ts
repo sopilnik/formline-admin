@@ -12,7 +12,7 @@ type Parsed<T, F extends string, I extends string> = { ok: true; data: T } | { o
 const length = (value: string): number => [...value].length
 
 /**
- * The profile form (spec §8.8): a name of 1 to 120 characters, one of the two languages, one of the three themes, and the
+ * The profile form: a name of 1 to 120 characters, one of the two languages, one of the three themes, and the
  * single-key shortcuts on or off — a checkbox, which a form sends only when it is ticked.
  */
 export function parseProfile(values: Record<ProfileField, string>): Parsed<Profile, ProfileField, ProfileIssue> {
@@ -29,7 +29,7 @@ export function parseProfile(values: Record<ProfileField, string>): Parsed<Profi
 }
 
 /**
- * The store form (spec §8.8): a name of 1 to 80 characters, a support email, a time zone the platform knows
+ * The store form: a name of 1 to 80 characters, a support email, a time zone the platform knows
  * (it draws the overview's day boundaries) and a low-stock threshold from 0 to 999 for new variants.
  */
 export function parseStoreSettings(values: Record<StoreField, string>): Parsed<StoreSettingsInput, StoreField, StoreIssue> {

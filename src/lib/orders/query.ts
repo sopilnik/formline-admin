@@ -9,7 +9,7 @@ export type DatePreset = (typeof DATE_PRESETS)[number]
 export type SourceFilter = (typeof SOURCES)[number]
 export type OrderSort = (typeof ORDER_SORTS)[number]
 
-/** The whole state of the orders list; it lives in the URL (spec §8.2, §11). */
+/** The whole state of the orders list; it lives in the URL. */
 export type OrdersQuery = {
   status: OrderStatus[]
   q: string
@@ -64,7 +64,7 @@ export function isOrdersFiltered(query: OrdersQuery): boolean {
   return query.status.length > 0 || query.q !== '' || query.placed !== DEFAULT_ORDERS_QUERY.placed || query.source !== DEFAULT_ORDERS_QUERY.source
 }
 
-/** The CSV of the list: its filters and sort without the page, or the chosen orders in the list's sort (spec §8.2). */
+/** The CSV of the list: its filters and sort without the page, or the chosen orders in the list's sort. */
 export function ordersExportHref(query: OrdersQuery, ids?: readonly string[]): string {
   const href = ordersHref({ ...query, page: 1, size: DEFAULT_ORDERS_QUERY.size })
   const at = href.indexOf('?')
