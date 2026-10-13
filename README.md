@@ -105,6 +105,8 @@ response carries a Content Security Policy built with a fresh per-request nonce,
 emitted can run. Inside the database, row-level security keeps every workspace's rows apart, and the `app` role is
 checked at startup so the server can never fall back to a role that bypasses it.
 
+To report a vulnerability, see [SECURITY.md](SECURITY.md).
+
 ## Owner setup
 
 The owner workspace has no user until the owner is set up, once. Set `OWNER_SETUP_TOKEN` (32 characters or more) in the

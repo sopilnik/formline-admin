@@ -20,7 +20,9 @@ COPY --from=build /src/.next/static ./.next/static
 COPY --from=build /src/public ./public
 COPY --from=build /src/dist/start.mjs ./scripts/start.mjs
 COPY --from=build /src/src/server/db/migrations ./src/server/db/migrations
-RUN mkdir -p .next/cache && chown node:node .next/cache
+# The server needs node alone. npm and npx come with the base image, outside the lockfile and its audit, so they go.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx \
+    && mkdir -p .next/cache && chown node:node .next/cache
 # The caps: bunny limits a container only by its host, so the process limits itself.
 ENV NODE_ENV=production \
     FORMLINE_RUNTIME=container \
