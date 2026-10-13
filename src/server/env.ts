@@ -4,6 +4,14 @@ import { z } from 'zod'
 const LOOPBACK = new Set(['127.0.0.1', '[::1]', 'localhost'])
 // id:base64 pairs; every key is 32 bytes (openssl rand -base64 32).
 const KEYRING = /^[a-z0-9]{1,8}:[A-Za-z0-9+/]{43}=(,[a-z0-9]{1,8}:[A-Za-z0-9+/]{43}=)*$/
+// The placeholder secrets this repository publishes (.env.example and the test settings) count up from zero: the digits
+// 0123456789, or the key whose 32 bytes are 0 to 31. A value made with openssl never does. Being public, they are known
+// to anyone, so the deployed container refuses them.
+const PLACEHOLDER = /0123456789|AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=/
+const SECRET_SETTINGS = [
+  'ORIGIN_AUTH_SECRET', 'IP_HASH_KEY', 'COOKIE_SIGNING_KEY', 'TOTP_ENCRYPTION_KEYS', 'OWNER_SETUP_TOKEN',
+  'BUNNY_STORAGE_KEY', 'STRIPE_WEBHOOK_SECRET', 'STRIPE_RESTRICTED_KEY', 'PSEUDONYM_KEY',
+] as const
 
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -49,6 +57,9 @@ const schema = z.object({
     if (env.STRIPE_API_BASE) ctx.addIssue({ code: 'custom', path: ['STRIPE_API_BASE'], message: 'not allowed in the container' })
     if (env.MEDIA_STORAGE_DIR) ctx.addIssue({ code: 'custom', path: ['MEDIA_STORAGE_DIR'], message: 'not allowed in the container' })
     if (new URL(env.SITE_URL).protocol !== 'https:') ctx.addIssue({ code: 'custom', path: ['SITE_URL'], message: 'must be https in the container' })
+    for (const key of SECRET_SETTINGS) {
+      if (PLACEHOLDER.test(env[key] ?? '')) ctx.addIssue({ code: 'custom', path: [key], message: 'a placeholder this repository publishes' })
+    }
   }
   if (env.NODE_ENV !== 'production') return
   if (env.STRIPE_API_BASE && !LOOPBACK.has(new URL(env.STRIPE_API_BASE).hostname)) {

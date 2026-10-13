@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { readEnv } from '@/server/env'
 
@@ -9,6 +10,18 @@ const base = {
   TOTP_ENCRYPTION_KEYS: `k1:${KEY}`,
 }
 const production = { ...base, NODE_ENV: 'production', ORIGIN_AUTH_SECRET: 'x'.repeat(64), SITE_URL: 'https://formline-admin.sopilnik.dev' }
+
+/** Every key, secret or token a settings file of this repository publishes, under the setting it would be given as. */
+function publishedSecrets(): { setting: string; value: string }[] {
+  const read = (file: string) => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8')
+  const lines = [
+    ...read('.env.example').matchAll(/^([A-Z_]+)=(\S+)$/gm),
+    ...['tests/e2e/constants.ts', 'tests/int/env.ts'].flatMap(file => [...read(file).matchAll(/^\s*(?:export const )?([A-Z0-9_]+)(?::| =) '([^']+)'/gm)]),
+  ]
+  return lines
+    .map(([, name, value]) => ({ setting: name === 'E2E_ORIGIN_SECRET' ? 'ORIGIN_AUTH_SECRET' : name!, value: value! }))
+    .filter(({ setting }) => /_(SECRET|KEYS?|TOKEN)$/.test(setting))
+}
 
 describe('readEnv', () => {
   it('requires the origin secret in production', () => {
@@ -74,6 +87,7 @@ describe('readEnv', () => {
       STRIPE_WEBHOOK_SECRET: `whsec_${'w'.repeat(32)}`,
       STRIPE_RESTRICTED_KEY: `rk_test_${'r'.repeat(32)}`,
       PSEUDONYM_KEY: 'p'.repeat(32),
+      TOTP_ENCRYPTION_KEYS: `k1:${'K'.repeat(43)}=`,
     }
 
     it('accepts the deployed configuration', () => {
@@ -90,6 +104,14 @@ describe('readEnv', () => {
       expect(() => readEnv({ ...container, MEDIA_STORAGE_DIR: '.media' })).toThrow(/MEDIA_STORAGE_DIR/)
       expect(() => readEnv({ ...container, SITE_URL: 'http://localhost:3000' })).toThrow(/https in the container/)
       expect(() => readEnv({ ...container, NODE_ENV: 'development' })).toThrow(/production in the container/)
+    })
+
+    it('refuses every placeholder secret this repository publishes', () => {
+      const published = publishedSecrets()
+      expect(published.length).toBeGreaterThanOrEqual(16)
+      for (const { setting, value } of published) {
+        expect(() => readEnv({ ...container, [setting]: value }), setting).toThrow(/a placeholder this repository publishes/)
+      }
     })
 
     it('knows the maintenance flag and nothing else', () => {
