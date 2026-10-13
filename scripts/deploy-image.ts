@@ -1,5 +1,5 @@
-// Points the panel's container at the image deploy.yml has just pushed and waits until the new container answers
-//. It is our own call to bunny's API rather than bunny's container-update action, which sends its update
+// Points the panel's container at the image deploy.yml has just pushed and waits until the new container answers.
+// It is our own call to bunny's API rather than bunny's container-update action, which sends its update
 // without waiting for the answer and never learns how the rollout ends.
 
 const API = 'https://api.bunny.net/mc'

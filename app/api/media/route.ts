@@ -23,8 +23,8 @@ const productParam = z.uuid()
 
 /**
  * `POST /api/media?product=<id>` with the image file as the body: a route handler, so
- * the Server Action body limit stays at 1 MB. The request proves itself as the panel's own
- *: a session that may write the catalog, `Origin` equal to the site, and the
+ * the Server Action body limit stays at 1 MB. The request proves itself as the panel's own:
+ * a session that may write the catalog, `Origin` equal to the site, and the
  * `X-Requested-With: formline` header, which a cross-site form cannot send without a preflight.
  */
 export async function POST(request: Request): Promise<Response> {
