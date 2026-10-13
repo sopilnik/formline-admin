@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { eq } from 'drizzle-orm'
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { variantLabel } from '@/lib/catalog'
 import type { IncomingLine, IncomingOrder } from '@/lib/stripe/checkout'
 import { parseLineName } from '@/lib/stripe/line-name'
 import { customers, users } from '@/server/db/schema'
@@ -160,6 +161,29 @@ describe('the Stripe ingest', () => {
       expect(await notificationsOf('stock.low')).toEqual([{ productId: farOrbit.product_id, product: 'Far Orbit', size: 'a2', palette: 'ink', stock: 0, threshold: 3, oversold: 2 }])
     } finally {
       await setOwnerLocale('en')
+    }
+  })
+
+  it('keeps a note on many oversold variants within what an order event holds, and counts the ones left out', async () => {
+    const { rows } = await admin.query<{ sku: string; name: string; size: string; palette: string }>(
+      `select v.sku, p.name, v.size, v.palette from fa.product_variants v join fa.products p on p.workspace_id = v.workspace_id and p.id = v.product_id
+        where v.workspace_id = $1 order by v.sku limit 20`, [owner])
+    for (const r of rows) await setStock(r.sku, 0, 3)
+    const lines = rows.map(r => line(`${r.name} · ${variantLabel(r.size, r.palette)}`, 10, 4700))
+    const last = { en: /^…and \d+ more variants\.$/, ru: /^…и ещё \d+ вариант(а|ов)?\.$/ }
+
+    for (const locale of ['en', 'ru'] as const) {
+      await setOwnerLocale(locale)
+      try {
+        const result = await ingest(storeOrder({ lines }))
+        const notes = await admin.query<{ note: string }>("select note from fa.order_events where workspace_id = $1 and order_id = $2 and kind = 'note'",
+          [owner, createdId(result)])
+        expect(notes.rows).toHaveLength(1)
+        expect(notes.rows[0]!.note.length).toBeLessThanOrEqual(1000)
+        expect(notes.rows[0]!.note.split('\n').at(-1)).toMatch(last[locale])
+      } finally {
+        await setOwnerLocale('en')
+      }
     }
   })
 

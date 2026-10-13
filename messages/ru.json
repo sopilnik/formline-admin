@@ -1324,7 +1324,8 @@
     "help": "Показать этот список"
   },
   "ingest": {
-    "oversold": "{line}: продано на {count} шт. больше, чем было на складе."
+    "oversold": "{line}: продано на {count} шт. больше, чем было на складе.",
+    "oversoldMore": "…и ещё {count, plural, one {# вариант} few {# варианта} many {# вариантов} other {# варианта}}."
   },
   "maintenance": {
     "title": "Formline Admin запускается",

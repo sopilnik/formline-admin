@@ -1324,7 +1324,8 @@
     "help": "Show this list"
   },
   "ingest": {
-    "oversold": "{line}: sold {count} more than there was in stock."
+    "oversold": "{line}: sold {count} more than there was in stock.",
+    "oversoldMore": "…and {count, plural, one {# more variant} other {# more variants}}."
   },
   "maintenance": {
     "title": "Formline Admin is starting",

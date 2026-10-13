@@ -4,6 +4,7 @@ import { createTranslator } from 'next-intl'
 import type { Pool } from 'pg'
 import { parseLocale, type Locale } from '@/i18n/locale'
 import { variantLabel } from '@/lib/catalog'
+import { fitNote } from '@/lib/orders/note'
 import type { IncomingOrder } from '@/lib/stripe/checkout'
 import { ownerWorkspaceId } from '@/server/auth/owner'
 import { notify } from '@/server/dal/notifications'
@@ -187,15 +188,19 @@ async function takeStock(tx: Tx, owner: string, order: IncomingOrder, variants: 
   return oversold
 }
 
-/** A note on the order of what was oversold, in the owner's language. */
+/**
+ * A note on the order of what was oversold, in the owner's language. An order with more oversold variants than one
+ * note holds lists the first of them and counts the rest.
+ */
 async function writeOversoldNote(tx: Tx, owner: string, orderId: string, order: IncomingOrder, oversold: Oversold[]): Promise<void> {
   if (oversold.length === 0) return
 
   const locale = await ownerLocale(tx, owner)
   const t = createTranslator({ locale, messages: locale === 'ru' ? ru : en, namespace: 'ingest' })
+  const lines = oversold.map(o => t('oversold', { line: o.label, count: o.count }))
   // A moment after the status event, so the history lists the payment first; with the same time their order was random.
   await tx.insert(orderEvents).values({
-    workspaceId: owner, orderId, kind: 'note', note: oversold.map(o => t('oversold', { line: o.label, count: o.count })).join('\n'), actorUserId: null,
+    workspaceId: owner, orderId, kind: 'note', note: fitNote(lines, left => t('oversoldMore', { count: left })), actorUserId: null,
     at: new Date(order.placedAt.getTime() + 1),
   })
 }
