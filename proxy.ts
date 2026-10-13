@@ -96,7 +96,8 @@ export function proxy(request: NextRequest): NextResponse {
 }
 
 // Static build assets and the public poster images need neither a nonce nor the
-// edge check: they are the same public files for everyone.
+// edge check: they are the same public files for everyone. Every other path, the
+// image optimiser's address included, passes the check.
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|posters/|favicon.ico).*)'],
+  matcher: ['/((?!_next/static|posters/|favicon.ico).*)'],
 }

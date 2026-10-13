@@ -23,6 +23,9 @@ const nextConfig: NextConfig = {
   // longer, and the panel is never indexed, so there is no crawler to tell apart.
   htmlLimitedBots: /.*/,
   reactStrictMode: true,
+  // Every image is served as it is, so the image optimiser stays off: /_next/image would otherwise resize public files
+  // for anyone who asked, on the pull zone's own hostnames too.
+  images: { unoptimized: true },
   // pino loads its transports at run time and @node-rs/argon2 is a native module; bundling breaks both.
   serverExternalPackages: ['pino', '@node-rs/argon2'],
   experimental: {

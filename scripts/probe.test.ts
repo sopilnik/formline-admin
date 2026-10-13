@@ -64,7 +64,9 @@ describe('runProbe', () => {
     refused.o.rawHosts = async () => hosts
     refused.o.fetch = answering(403)
     expect(await runProbe(refused.o)).toBe(true)
-    expect(refused.events).toEqual([{ probe: 'p2', viaEdgeWithForgedHeaders: 200, rawHosts: 2, rawWithForgedHeaders: [403, 403], rawWithout: [403, 403] }])
+    expect(refused.events).toEqual([{
+      probe: 'p2', viaEdgeWithForgedHeaders: 200, rawHosts: 2, rawWithForgedHeaders: [403, 403], rawWithout: [403, 403], rawImage: [403, 403],
+    }])
     expect(JSON.stringify(refused.events)).not.toContain('mc-abc')
 
     const served = options('p2', {})

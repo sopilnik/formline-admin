@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { buildCsp, proxy } from './proxy'
+import nextConfig from './next.config'
+import { buildCsp, config, proxy } from './proxy'
 
 const SECRET = 'x'.repeat(64)
 const good = { 'x-origin-auth': SECRET, 'x-client-ip': '203.0.113.10' }
@@ -135,5 +136,20 @@ describe('buildCsp', () => {
       "object-src 'none'",
     ].join('; '))
     expect(buildCsp('n0nce', true)).toContain("'strict-dynamic' 'unsafe-eval'")
+  })
+})
+
+describe('the paths the proxy sees', () => {
+  const seen = (path: string) => new RegExp(`^${config.matcher[0]}$`).test(path)
+
+  it('leaves only the built files, the posters and the icon outside the edge check', () => {
+    expect(['/_next/static/chunks/main.js', '/posters/hush.webp', '/favicon.ico'].map(seen)).toEqual([false, false, false])
+    expect(['/_next/image', '/sign-in', '/media/00000000-0000-4000-8000-000000000000'].map(seen)).toEqual([true, true, true])
+  })
+})
+
+describe('the image optimiser', () => {
+  it('is off: every image is served as it is', () => {
+    expect(nextConfig.images?.unoptimized).toBe(true)
   })
 })

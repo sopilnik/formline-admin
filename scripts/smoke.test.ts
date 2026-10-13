@@ -63,7 +63,9 @@ describe('requestChecks', () => {
     expect(checks.every(c => c.ok)).toBe(true)
     expect(checks.filter(c => c.check.startsWith('raw hostname'))).toEqual([
       { check: 'raw hostname 1 of 2 refuses a request around the panel\'s address', ok: true, detail: 'HTTP 403' },
+      { check: 'raw hostname 1 of 2 refuses the image optimiser', ok: true, detail: 'HTTP 403' },
       { check: 'raw hostname 2 of 2 refuses a request around the panel\'s address', ok: true, detail: 'HTTP 403' },
+      { check: 'raw hostname 2 of 2 refuses the image optimiser', ok: true, detail: 'HTTP 403' },
     ])
     expect(JSON.stringify(checks)).not.toContain('mc-abc')
 

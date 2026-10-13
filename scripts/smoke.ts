@@ -12,6 +12,9 @@ import { fetchRawHosts } from './raw-hosts.ts'
  */
 export type Check = { check: string; ok: boolean; detail?: string; kind?: 'cache'; page?: { url: string; snapshot: string } }
 
+/** The image optimiser asked for a public poster: off in the panel, and refused on a raw hostname like every other path. */
+export const OPTIMISER_PATH = '/_next/image?url=%2Fposters%2Fhush.webp&w=64&q=75'
+
 export const SECURITY_HEADERS: Record<string, RegExp> = {
   'strict-transport-security': /max-age=\d+/,
   'content-security-policy': /script-src 'self' 'nonce-[^']+' 'strict-dynamic'/,
@@ -91,9 +94,11 @@ export async function requestChecks(o: SmokeOptions): Promise<Check[]> {
   // The hostnames themselves stay out of the log: one numbered check each.
   if (o.rawHosts.length === 0) checks.push({ check: 'raw hostnames refuse a request around the panel\'s address', ok: true, detail: 'skipped: no raw hostname' })
   for (const [index, host] of o.rawHosts.entries()) {
+    const label = `raw hostname ${index + 1} of ${o.rawHosts.length}`
     const raw = await o.fetch(`https://${host}/sign-in`, { redirect: 'manual', signal: AbortSignal.timeout(20_000) }).catch(() => null)
-    const check = `raw hostname ${index + 1} of ${o.rawHosts.length} refuses a request around the panel's address`
-    checks.push({ check, ok: raw?.status === 403, detail: raw ? `HTTP ${raw.status}` : 'no answer' })
+    checks.push({ check: `${label} refuses a request around the panel's address`, ok: raw?.status === 403, detail: raw ? `HTTP ${raw.status}` : 'no answer' })
+    const image = await o.fetch(`https://${host}${OPTIMISER_PATH}`, { redirect: 'manual', signal: AbortSignal.timeout(20_000) }).catch(() => null)
+    checks.push({ check: `${label} refuses the image optimiser`, ok: image?.status === 403, detail: image ? `HTTP ${image.status}` : 'no answer' })
   }
 
   return checks
