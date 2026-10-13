@@ -1,6 +1,7 @@
 import type pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { clearSubject, consume, lockRemaining, peek, setLock } from '@/server/ratelimit/consume'
+import { claimAttempt, giveBack } from '@/server/ratelimit/attempts'
+import { clearSubject, consume, lockRemaining, peek, release, setLock } from '@/server/ratelimit/consume'
 import { roomInWindow } from '../windows'
 import { adminPool, appPool, closeAll } from './db'
 
@@ -94,5 +95,45 @@ describe('locks', () => {
 describe('privileges', () => {
   it('the application role can count but never delete', async () => {
     await expect(app.query('delete from fa.rate_limits')).rejects.toThrow(/permission denied/)
+  })
+})
+
+describe('claimed attempts', () => {
+  const GUARD = { limit: LIMIT, lock: 'test.claim.lock', lockSeconds: (count: number) => count >= LIMIT.limit ? 600 : 0 }
+
+  it('run one at a time per subject: a burst gets the limit, the claim that reaches it locks, the rest wait it out', async () => {
+    await roomInWindow(LIMIT.windowSeconds, 10)
+    const s = subject()
+
+    const claims = await Promise.all(Array.from({ length: 12 }, () => claimAttempt(GUARD, s, app)))
+
+    const granted = claims.filter(c => c.ok)
+    expect(granted.map(c => c.count).sort((a, b) => a - b)).toEqual([1, 2, 3])
+    expect(granted.filter(c => c.lockStart !== null).map(c => c.count)).toEqual([3])
+    expect(claims.filter(c => !c.ok).every(c => c.retryAfterSeconds > 590)).toBe(true)
+  })
+
+  it('give back their slot and lift the lock they set when the answer is right', async () => {
+    await roomInWindow(LIMIT.windowSeconds, 10)
+    const s = subject()
+    await consume(LIMIT, s, app)
+    await consume(LIMIT, s, app)
+
+    const claim = await claimAttempt(GUARD, s, app)
+    if (!claim.ok) throw new Error('refused')
+    expect(claim.lockStart).toEqual(expect.any(String))
+    await giveBack(GUARD, s, claim, app)
+
+    expect(await lockRemaining(GUARD.lock, s, app)).toBe(0)
+    expect((await peek(LIMIT, s, app)).count).toBe(2)
+  })
+
+  it('give back in the window they counted in, never in a later one', async () => {
+    const s = subject()
+    const counted = await consume(LIMIT, s, app)
+    await release(LIMIT, s, new Date(counted.windowStart.getTime() - LIMIT.windowSeconds * 1000), app)
+    expect((await peek(LIMIT, s, app)).count).toBe(1)
+    await release(LIMIT, s, counted.windowStart, app)
+    expect((await peek(LIMIT, s, app)).count).toBe(0)
   })
 })

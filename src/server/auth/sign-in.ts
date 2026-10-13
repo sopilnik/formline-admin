@@ -85,23 +85,29 @@ export async function signInWithPassword(input: SignInInput, overrides: Partial<
   return { ok: true, token: session.token, expiresAt: session.expiresAt }
 }
 
-/**
- * The end of every sign-in: a verified session (the pending one rotated, or a new
- * one), the activity entry and the new-sign-in notice.
- */
-export async function finishSignIn(tx: Tx, input: {
+type Finish = {
   workspaceId: string
   userId: string
   method: 'password' | 'passkey'
   userAgent: string | null
   ipHash: string | null
   at: Date
-  pending?: Session
-}): Promise<SignedIn> {
+}
+
+/**
+ * The end of every sign-in: a verified session (the pending one rotated, or a new
+ * one), the activity entry and the new-sign-in notice. A pending session that has
+ * ended meanwhile gives null: nothing is written.
+ */
+export async function finishSignIn(tx: Tx, input: Finish & { pending: Session }): Promise<SignedIn | null>
+export async function finishSignIn(tx: Tx, input: Finish): Promise<SignedIn>
+export async function finishSignIn(tx: Tx, input: Finish & { pending?: Session }): Promise<SignedIn | null> {
   const meta = { userAgentSummary: summariseUserAgent(input.userAgent), ipHash: input.ipHash }
-  const fresh: CreatedSession = input.pending
+  const fresh: CreatedSession | null = input.pending
     ? await rotateSession(tx, input.pending, meta)
     : await createSession(tx, { workspaceId: input.workspaceId, userId: input.userId, verified: true, ...meta })
+  if (!fresh) return null
+
   const self = (await getSelf(tx, input))!
   await logActivity(tx, input.workspaceId, { actorUserId: input.userId, action: 'auth.sign_in', details: { method: input.method }, ipHash: input.ipHash })
   await securityNotice(tx, input.workspaceId, self, 'auth.new_sign_in', { device: meta.userAgentSummary }, { at: input.at, signInId: fresh.signInId })

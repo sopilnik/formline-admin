@@ -59,6 +59,9 @@ const letters = (template: string) =>
 const sessionExists = async (session: Session) =>
   (await count('select count(*)::int as n from fa.sessions where id = $1', [session.id])) === 1
 
+const entries = (action: string) =>
+  count('select count(*)::int as n from fa.activity_log where action = $1 and actor_user_id = $2', [action, ownerId])
+
 describe('password step', () => {
   it('refuses a wrong password and an unknown email the same way, and logs both', async () => {
     const before = await count("select count(*)::int as n from fa.activity_log where action = 'auth.sign_in_failed'")
@@ -157,6 +160,35 @@ describe('second-factor step', () => {
     expect(await verifySecondFactor(next, { code: totp.code, ip: nextIp(), userAgent: null }, { pool: app, now: totp.now }))
       .toEqual({ ok: false, error: 'second_factor_locked' })
     expect(await sessionExists(next)).toBe(false)
+  })
+
+  it('checks at most ten codes of a burst: the tenth locks, the others are refused unchecked', async () => {
+    await roomInWindow(LIMITS.secondFactorFail.windowSeconds, 20)
+    const lettersBefore = await letters('auth.second_factor_locked')
+    const failedBefore = await entries('auth.second_factor_failed')
+    const pending = await pendingSession()
+
+    const results = await Promise.all(Array.from({ length: 30 }, () =>
+      verifySecondFactor(pending, { code: '12345', ip: nextIp(), userAgent: null }, { pool: app })))
+
+    expect(results.filter(r => !r.ok && r.error === 'code_invalid')).toHaveLength(9)
+    expect(results.filter(r => !r.ok && r.error === 'second_factor_locked')).toHaveLength(21)
+    expect(await entries('auth.second_factor_failed')).toBe(failedBefore + 9)
+    expect(await letters('auth.second_factor_locked')).toBe(lettersBefore + 1)
+    expect(await sessionExists(pending)).toBe(false)
+  })
+
+  it('signs nobody in when the pending session ended while its code was checked', async () => {
+    const pending = await pendingSession()
+    const verified = () => count('select count(*)::int as n from fa.sessions where user_id = $1 and second_factor_verified', [ownerId])
+    const before = await verified()
+    await admin.query('delete from fa.sessions where id = $1', [pending.id])
+
+    const totp = await nextTotp(admin)
+    const result = await verifySecondFactor(pending, { code: totp.code, ip: nextIp(), userAgent: null }, { pool: app, now: totp.now })
+
+    expect(result).toEqual({ ok: false, error: 'session_expired' })
+    expect(await verified()).toBe(before)
   })
 })
 

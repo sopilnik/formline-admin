@@ -51,8 +51,9 @@ export async function reauthenticate(
   const ipHash = hashIp(input.ip, config.ipHashKey)
   const fresh = await withWorkspace(ctx, async tx => {
     const rotated = await rotateSession(tx, session, { userAgentSummary: summariseUserAgent(input.userAgent), ipHash })
-    await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.reauthenticated', details: { method: 'password' }, ipHash })
+    if (rotated) await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.reauthenticated', details: { method: 'password' }, ipHash })
     return rotated
   }, pool)
+  if (!fresh) return { ok: false, error: 'session_expired' }
   return { ok: true, ...fresh }
 }

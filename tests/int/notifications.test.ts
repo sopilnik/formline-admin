@@ -148,7 +148,7 @@ describe('a new sign-in', () => {
       id: first.id, workspaceId: other.workspaceId, workspaceKind: 'sandbox', userId: other.users.owner, role: 'owner',
       secondFactorVerified: true, reauthAt: new Date(), expiresAt: first.expiresAt,
     }
-    const rotated = await withWorkspace(ctx(other, 'owner'), tx => rotateSession(tx, session, meta), app)
+    const rotated = (await withWorkspace(ctx(other, 'owner'), tx => rotateSession(tx, session, meta), app))!
     expect(rotated.id).not.toBe(first.id)
     expect(rotated.signInId).toBe(first.signInId)
     expect(await withWorkspace(ctx(other, 'owner'), tx => sessionSignInId(tx, rotated.id), app)).toBe(first.signInId)

@@ -168,9 +168,10 @@ export async function reauthenticateWithPasskey(
   const fresh = await withWorkspace(ctx, async tx => {
     await recordPasskeyUse(tx, session, passkey.id, verified.newCounter)
     const rotated = await rotateSession(tx, session, { userAgentSummary: summariseUserAgent(meta.userAgent), ipHash })
-    await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.reauthenticated', details: { method: 'passkey' }, ipHash })
+    if (rotated) await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.reauthenticated', details: { method: 'passkey' }, ipHash })
     return rotated
   }, pool)
+  if (!fresh) return { ok: false, error: 'session_expired' }
   return { ok: true, ...fresh }
 }
 

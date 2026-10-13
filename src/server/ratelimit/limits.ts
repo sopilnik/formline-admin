@@ -1,7 +1,9 @@
 export type Limit = { purpose: string; limit: number; windowSeconds: number }
 
-// The rate limits. Windows are fixed. Failure limits are checked with peek() before an
-// attempt and counted with consume() after a failed one.
+// The rate limits. Windows are fixed. The limits on guesses (the second factor, and the
+// password) are claimed before an attempt is checked (attempts.ts), so a burst of requests
+// cannot all pass before the first failure counts. The passkey limit is checked with peek()
+// before an attempt and counted with consume() after a failed one: a passkey cannot be guessed.
 export const LIMITS = {
   signInFailIp: { purpose: 'signin.fail.ip', limit: 20, windowSeconds: 15 * 60 },
   signInFailAccount: { purpose: 'signin.fail.account', limit: 5, windowSeconds: 60 * 60 },
@@ -30,3 +32,15 @@ export function passwordLockSeconds(failures: number): number {
   if (beyond < 0) return 0
   return Math.min(PASSWORD_LOCK_FIRST_SECONDS * 2 ** beyond, PASSWORD_LOCK_MAX_SECONDS)
 }
+
+/** A limit on attempts, the lock it ends in, and how long that lock holds after a given count of attempts. */
+export type AttemptGuard = { limit: Limit; lock: string; lockSeconds: (count: number) => number }
+
+/** The second factor: ten attempts an hour, and the tenth that fails locks it for an hour. */
+export const GUARDS = {
+  secondFactor: {
+    limit: LIMITS.secondFactorFail,
+    lock: LOCKS.secondFactor,
+    lockSeconds: count => count >= LIMITS.secondFactorFail.limit ? SECOND_FACTOR_LOCK_SECONDS : 0,
+  },
+} as const satisfies Record<string, AttemptGuard>

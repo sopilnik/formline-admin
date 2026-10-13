@@ -117,6 +117,21 @@ describe('switchUser', () => {
     expect((await switchUser(b.session, { targetUserId: b.users.admin!, code, ...meta }, { pool: app, now })).ok).toBe(true)
   })
 
+  it('checks at most ten codes of a burst for one member', async () => {
+    await roomInWindow(LIMITS.secondFactorFail.windowSeconds, 20)
+    const a = await enter()
+    await enrol(a.session.workspaceId, a.users.admin!, new Uint8Array(20).fill(5))
+
+    const results = await Promise.all(Array.from({ length: 30 }, () =>
+      switchUser(a.session, { targetUserId: a.users.admin!, code: '000000', ...meta }, { pool: app })))
+
+    expect(results.filter(r => !r.ok && r.error === 'code_invalid')).toHaveLength(9)
+    expect(results.filter(r => !r.ok && r.error === 'second_factor_locked')).toHaveLength(21)
+    const locks = await admin.query<{ n: number }>(
+      "select count(*)::int as n from fa.activity_log where workspace_id = $1 and action = 'auth.second_factor_locked'", [a.session.workspaceId])
+    expect(locks.rows[0]?.n).toBe(1)
+  })
+
   it('refuses a deactivated member, oneself and an unknown id, and never crosses into another sandbox', async () => {
     const a = await enter()
     const b = await enter()

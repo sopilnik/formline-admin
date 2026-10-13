@@ -98,14 +98,19 @@ export async function createSession(
 
 /**
  * A fresh token for a full authentication (the second factor, or a re-authentication):
- * the new session is verified with a new lifetime, the old row is deleted.
- * The sign-in id stays, so the device is still the one that signed in.
+ * the old row is deleted, the new session is verified with a new lifetime.
+ * The sign-in id stays, so the device is still the one that signed in. Null when the
+ * old row is already gone: a session that ended meanwhile (a lock, a sign-out elsewhere,
+ * its expiry) is never turned into a new one.
  */
-export async function rotateSession(tx: Tx, session: Session, meta: { userAgentSummary: string | null; ipHash: string | null }): Promise<CreatedSession> {
+export async function rotateSession(tx: Tx, session: Session, meta: { userAgentSummary: string | null; ipHash: string | null }): Promise<CreatedSession | null> {
   const signInId = await sessionSignInId(tx, session.id)
-  const fresh = await createSession(tx, { workspaceId: session.workspaceId, userId: session.userId, verified: true, ...meta, ...(signInId ? { signInId } : {}) })
-  await deleteSession(tx, session)
-  return fresh
+  const deleted = await tx.delete(sessions)
+    .where(and(eq(sessions.workspaceId, session.workspaceId), eq(sessions.id, session.id)))
+    .returning({ id: sessions.id })
+  if (deleted.length === 0) return null
+
+  return createSession(tx, { workspaceId: session.workspaceId, userId: session.userId, verified: true, ...meta, ...(signInId ? { signInId } : {}) })
 }
 
 export async function deleteSession(tx: Tx, session: Session): Promise<void> {

@@ -119,12 +119,25 @@ describe('session changes', () => {
   it('rotation issues a fresh verified token and retires the old one', async () => {
     const pending = await newSession(sandbox, member, false)
     const session = (await validateSessionToken(pending.token, app))!
-    const fresh = await withWorkspace({ workspaceId: sandbox, userId: member, role: 'admin' }, tx => rotateSession(tx, session, meta), app)
+    const fresh = (await withWorkspace({ workspaceId: sandbox, userId: member, role: 'admin' }, tx => rotateSession(tx, session, meta), app))!
     expect(fresh.token).not.toBe(pending.token)
     expect(await validateSessionToken(pending.token, app)).toBeNull()
     const rotated = await validateSessionToken(fresh.token, app)
     expect(rotated?.secondFactorVerified).toBe(true)
     expect(rotated?.reauthAt).toBeInstanceOf(Date)
+  })
+
+  it('rotation of a session that ended meanwhile gives nothing and writes nothing', async () => {
+    const pending = await newSession(sandbox, member, false)
+    const session = (await validateSessionToken(pending.token, app))!
+    await admin.query('delete from fa.sessions where id = $1', [session.id])
+    const before = await admin.query<{ n: number }>('select count(*)::int as n from fa.sessions where workspace_id = $1 and user_id = $2', [sandbox, member])
+
+    const fresh = await withWorkspace({ workspaceId: sandbox, userId: member, role: 'admin' }, tx => rotateSession(tx, session, meta), app)
+
+    expect(fresh).toBeNull()
+    const after = await admin.query<{ n: number }>('select count(*)::int as n from fa.sessions where workspace_id = $1 and user_id = $2', [sandbox, member])
+    expect(after.rows[0]!.n).toBe(before.rows[0]!.n)
   })
 
   it("signing out other sessions keeps the current one and other users' sessions", async () => {

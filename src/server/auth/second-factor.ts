@@ -1,6 +1,5 @@
 import 'server-only'
 import { and, eq, isNull, lt, or, sql } from 'drizzle-orm'
-import type { Pool } from 'pg'
 import type { AuthFailure } from '@/lib/auth-form'
 import { authDeps, type AuthDeps } from '@/server/auth/deps'
 import { securityNotice } from '@/server/auth/notices'
@@ -13,9 +12,9 @@ import { logActivity } from '@/server/dal/activity'
 import { getSelf, isUser } from '@/server/dal/users'
 import { recoveryCodes, users } from '@/server/db/schema'
 import { withWorkspace, workspaceContext, type Tx } from '@/server/db/with-workspace'
-import { consume, lockRemaining, setLock } from '@/server/ratelimit/consume'
+import { claimAttempt, giveBack } from '@/server/ratelimit/attempts'
 import { hashIp, userSubject } from '@/server/ratelimit/ip'
-import { LIMITS, LOCKS, SECOND_FACTOR_LOCK_SECONDS } from '@/server/ratelimit/limits'
+import { GUARDS } from '@/server/ratelimit/limits'
 
 type Method = 'totp' | 'recovery_code'
 type Check = { ok: true; method: Method; remaining?: number } | { ok: false }
@@ -46,9 +45,10 @@ async function checkCode(tx: Tx, session: Session, code: string, deps: AuthDeps)
 }
 
 /**
- * One second-factor attempt: an authenticator code or a recovery code. The tenth
- * failure in an hour locks the second factor for an hour, ends the session and
- * notifies the user; a locked factor ends the session too.
+ * One second-factor attempt: an authenticator code or a recovery code. Every attempt
+ * is counted before its code is checked, and a right code gives its slot back; the
+ * tenth that fails in an hour locks the second factor for an hour, ends the session
+ * and notifies the user. A locked factor ends the session too.
  */
 export async function attemptSecondFactor(
   session: Session,
@@ -61,7 +61,8 @@ export async function attemptSecondFactor(
   const subject = userSubject(session.workspaceId, session.userId)
   const ipHash = hashIp(input.ip, config.ipHashKey)
 
-  if (await lockRemaining(LOCKS.secondFactor, subject, pool) > 0) {
+  const claim = await claimAttempt(GUARDS.secondFactor, subject, pool)
+  if (!claim.ok) {
     await withWorkspace(ctx, tx => deleteSession(tx, session), pool)
     return { ok: false, error: 'second_factor_locked' }
   }
@@ -75,9 +76,12 @@ export async function attemptSecondFactor(
     }
     return result
   }, pool)
-  if (check.ok) return { ok: true, method: check.method }
+  if (check.ok) {
+    await giveBack(GUARDS.secondFactor, subject, claim, pool)
+    return { ok: true, method: check.method }
+  }
 
-  if (await recordSecondFactorFailure(subject, pool)) {
+  if (claim.lockStart) {
     await withWorkspace(ctx, async tx => {
       const self = (await getSelf(tx, session))!
       await deleteSession(tx, session)
@@ -90,18 +94,6 @@ export async function attemptSecondFactor(
   return { ok: false, error: 'code_invalid', field: 'code' }
 }
 
-/**
- * Counts a wrong code against a user's second factor, on sign-in and on a switch to them alike: the failure that reaches
- * the hour's limit starts the hour's lock. Answers whether the factor is locked now.
- */
-export async function recordSecondFactorFailure(subject: string, pool: Pool): Promise<boolean> {
-  const failures = await consume(LIMITS.secondFactorFail, subject, pool)
-  if (failures.count < LIMITS.secondFactorFail.limit) return false
-
-  await setLock(LOCKS.secondFactor, subject, SECOND_FACTOR_LOCK_SECONDS, pool)
-  return true
-}
-
 /** Step two of the password sign-in (the /sign-in/verify page). */
 export async function verifySecondFactor(
   session: Session,
@@ -111,6 +103,7 @@ export async function verifySecondFactor(
   const deps = authDeps(overrides)
   const attempt = await attemptSecondFactor(session, input, deps)
   if (!attempt.ok) return attempt
+
   const signedIn = await withWorkspace(workspaceContext(session), tx => finishSignIn(tx, {
     workspaceId: session.workspaceId,
     userId: session.userId,
@@ -120,5 +113,7 @@ export async function verifySecondFactor(
     at: new Date(deps.now()),
     pending: session,
   }), deps.pool)
+  // The pending session ended while its code was checked (the lock of a parallel attempt, its expiry): no sign-in.
+  if (!signedIn) return { ok: false, error: 'session_expired' }
   return { ok: true, ...signedIn }
 }
