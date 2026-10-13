@@ -31,7 +31,7 @@ export function databaseNow(): Promise<Date> {
 /**
  * Deletes, as the schema owner, every sandbox created since `since`: the ones the fixtures made and the ones a test entered
  * through the demo button. Each worker has its own database and runs one test at a time, so they are all the current
- * test's. A run creates one or more per test, and the demo holds at most 100 live sandboxes (spec §6.5): without this a
+ * test's. A run creates one or more per test, and the demo holds at most 100 live sandboxes: without this a
  * growing suite would fill the cap before it ends.
  */
 export async function deleteSandboxesSince(since: Date): Promise<void> {
@@ -63,7 +63,7 @@ export function createSandboxSession(role: Role = 'owner'): Promise<{ token: str
 
 /**
  * Enrols an authenticator on a sandbox user: the same AES-256-GCM envelope as the server's
- * totp module, which is server-only and cannot be imported here (spec §5.3).
+ * totp module, which is server-only and cannot be imported here.
  */
 export async function enrolAuthenticator(workspaceId: string, userId: string, secret: Uint8Array): Promise<void> {
   const [keyId = '', encoded = ''] = E2E_AUTH_ENV.TOTP_ENCRYPTION_KEYS.split(',')[0]!.split(':')

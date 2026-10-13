@@ -159,7 +159,7 @@ test('a sensitive change asks for the password and a code once ten minutes have 
   await signOut(page)
 })
 
-// Keep this the last test before the recovery test of task 2.9: it locks the second factor for an hour.
+// Keep this the last test before the recovery test: it locks the second factor for an hour.
 test('ten wrong codes lock the second factor', async ({ page }) => {
   test.setTimeout(120_000)
   await signInWithPassword(page)

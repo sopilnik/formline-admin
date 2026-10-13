@@ -3,7 +3,7 @@ import { expect, test } from './test.ts'
 
 test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip': '203.0.113.24' } })
 
-test('Enter the demo shows the overview within 3 seconds on a warm database (spec §1)', async ({ page, context }) => {
+test('Enter the demo shows the overview within 3 seconds on a warm database', async ({ page, context }) => {
   // The first entry pays for cold caches and plans and is not measured.
   await page.goto('/sign-in')
   await page.getByRole('button', { name: 'Enter the demo' }).click()

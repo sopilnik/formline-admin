@@ -12,7 +12,7 @@ const paint = (target: Locator) =>
     return { border: s.borderTopColor, background: s.backgroundColor }
   })
 
-/** The input token on the card surface (spec §11): light #858880 on #FFFFFF, dark #74777D on #1A1B1D. */
+/** The input token on the card surface: light #858880 on #FFFFFF, dark #74777D on #1A1B1D. */
 const OUTLINE_BUTTON = {
   light: { border: 'rgb(133, 136, 128)', background: 'rgb(255, 255, 255)' },
   dark: { border: 'rgb(116, 119, 125)', background: 'rgb(26, 27, 29)' },

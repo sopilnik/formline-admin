@@ -128,7 +128,7 @@ describe('isolation', () => {
   })
 })
 
-// Expected write rights per table and actor — spec §6.2.
+// Expected write rights per table and actor.
 type Rights = { insert: Actor[]; update: Actor[]; delete: Actor[] }
 const MANAGERS: Actor[] = ['owner', 'admin', 'manager']
 const business: Record<string, { rights: Rights; insert: (s: Seeded) => ReturnType<typeof sql>; update: (s: Seeded) => ReturnType<typeof sql>; del: (s: Seeded) => ReturnType<typeof sql> }> = {

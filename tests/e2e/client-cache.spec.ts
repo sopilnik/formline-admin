@@ -5,7 +5,7 @@ import { expect, test } from './test.ts'
 
 test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip': '203.0.113.56' } })
 
-// The browser keeps a visited page for 60 seconds (W.1, `staleTimes` in next.config.ts); an own change must clear it.
+// The browser keeps a visited page for 60 seconds (`staleTimes` in next.config.ts); an own change must clear it.
 test.describe('client cache', () => {
   test('a section opened a moment ago opens again without asking the server', async ({ page, context }) => {
     await signInAsSandboxUser(context)

@@ -41,7 +41,7 @@ test.describe('product image', () => {
     expect(served).toEqual({ status: 200, type: 'image/webp', cache: 'private, no-store', sniff: 'nosniff' })
 
     await page.goto('/products?status=draft')
-    // The list shows the upload's small copy (spec §8.4).
+    // The list shows the upload's small copy.
     await expect(page.getByRole('table', { name: 'Products' }).locator(`img[src="${src}?size=thumb"]`)).toBeVisible()
 
     const stranger = await browser.newContext({ extraHTTPHeaders: EDGE })

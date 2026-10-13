@@ -34,7 +34,7 @@ async function fillProduct(page: Page, name: string): Promise<void> {
   await page.getByLabel('Ink', { exact: true }).check()
 }
 
-// The image is chosen in the form and sent to the product once it exists (W.9; spec §8.4: no image without a product).
+// The image is chosen in the form and sent to the product once it exists, as an image belongs to a product.
 test.describe('new product image', () => {
   test('creates the product and gives it the image chosen in the form', async ({ page, context }) => {
     await signInAsSandboxUser(context)

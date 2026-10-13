@@ -58,7 +58,7 @@ test.describe('overview layout', () => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/overview')
     const card = page.locator('section[aria-labelledby=latest-title]')
-    // React may still hold the streamed table in a hidden template; measure it once it is shown (10 October).
+    // React may still hold the streamed table in a hidden template; measure it once it is shown.
     await expect(card.getByRole('table', { name: 'Latest orders' })).toBeVisible()
     const lastHeader = card.locator('thead th').last()
     const contentRight = await lastHeader.evaluate(el => el.getBoundingClientRect().right - parseFloat(getComputedStyle(el).paddingRight))

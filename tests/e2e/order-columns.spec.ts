@@ -22,7 +22,7 @@ const roomBesideStatus = (table: Locator, status: number) => table.evaluate((ele
   })
 }, status)
 
-// The numbers come last, right-aligned, and the status chip stands midway between its neighbours (W.11).
+// The numbers come last, right-aligned, and the status chip stands midway between its neighbours.
 test.describe('order columns', () => {
   test('the orders list: Source, Status, Items, Total, the chip midway between the source and the count', async ({ page, context }) => {
     await signInAsSandboxUser(context)

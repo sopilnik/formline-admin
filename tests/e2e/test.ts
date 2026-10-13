@@ -2,7 +2,7 @@ import { test as base, expect } from '@playwright/test'
 import { databaseNow, deleteSandboxesSince } from './db.ts'
 
 /**
- * Every test fails on any Content Security Policy violation of its pages (spec §12.3), and every sandbox made while it
+ * Every test fails on any Content Security Policy violation of its pages, and every sandbox made while it
  * ran, by a fixture or through the demo button, is deleted after it, so a whole run stays under the cap of 100 live
  * sandboxes.
  */

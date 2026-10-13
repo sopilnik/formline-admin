@@ -23,7 +23,7 @@ describe('local database stack', () => {
   })
 
   it('runs the Postgres major version of production', async () => {
-    // Neon runs Postgres 18 (spec §12.2, probe P5); the migrations and the policies are proven on the same major locally.
+    // Neon runs Postgres 18 (probe p5 shows it there); the migrations and the policies are proven on the same major locally.
     const { rows } = await adminPool().query<{ num: string }>("select current_setting('server_version_num') as num")
     const version = Number(rows[0]?.num)
     expect(version).toBeGreaterThanOrEqual(180000)

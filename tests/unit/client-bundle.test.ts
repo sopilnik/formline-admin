@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
 // Zod checks whether it may compile code with `new Function`; in the browser the Content
-// Security Policy refuses that and reports a violation (spec §5.6). So no module the browser
+// Security Policy refuses that and reports a violation. So no module the browser
 // loads may import Zod: this walks every client component's imports to find out.
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const FORBIDDEN = /^zod(\/|$)/

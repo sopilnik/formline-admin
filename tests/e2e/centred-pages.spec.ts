@@ -18,7 +18,7 @@ const offCentre = (page: Page) => page.locator('main').evaluate(main => {
   return Math.round((card.left + card.right) / 2 - middle)
 })
 
-// On a wide screen a narrow page stands in the middle of the content area, not beside the menu (W.10).
+// On a wide screen a narrow page stands in the middle of the content area, not beside the menu.
 test.describe('narrow pages', () => {
   test('stand in the middle of the content area', async ({ page, context }) => {
     await signInAsSandboxUser(context)

@@ -99,7 +99,7 @@ describe('listOrders', () => {
   })
 })
 
-describe('changeOrderStatus (spec §8.2)', () => {
+describe('changeOrderStatus', () => {
   const paidOrder = async () => (await admin.query<{ id: string; number: number }>(
     "select o.id, o.number from fa.orders o where o.workspace_id = $1 and o.status = 'paid' and exists (select 1 from fa.order_lines l where l.workspace_id = o.workspace_id and l.order_id = o.id and l.variant_id is not null) order by o.number limit 1",
     [owner.workspaceId])).rows[0]!

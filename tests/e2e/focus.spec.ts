@@ -3,7 +3,7 @@ import { frameHydrated } from './ready.ts'
 import { signInAsSandboxUser } from './sessions.ts'
 import { expect, test } from './test.ts'
 
-/** The primary colour of the light theme, which every focus indicator outside the sidebar draws (spec §11). */
+/** The primary colour of the light theme, which every focus indicator outside the sidebar draws. */
 const RING = 'rgb(191, 58, 14)'
 
 /** Focuses the element the way a keyboard reaches it, so `:focus-visible` matches as it does for a visitor. */

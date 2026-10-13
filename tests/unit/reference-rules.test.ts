@@ -13,7 +13,7 @@ const FROZEN = 'src/server/db/migrations'
 const TEXT = /\.(css|json|md|mjs|sql|ts|tsx|yml)$|^(Dockerfile|\.env\.example)$/
 const SELF = 'tests/unit/reference-rules.test.ts'
 // The sweep reaches the repository part by part: the parts covered so far, and every file at the root but the README.
-const AREAS = ['.github/', 'app/', 'db/', 'messages/', 'scripts/', 'src/components/', 'src/i18n/', 'src/lib/', 'src/server/']
+const AREAS = ['.github/', 'app/', 'db/', 'messages/', 'scripts/', 'src/components/', 'src/i18n/', 'src/lib/', 'src/server/', 'tests/']
 const covered = (name: string) => (name.includes('/') ? AREAS.some(area => name.startsWith(area)) : name !== 'README.md')
 
 function textFiles(dir = ''): string[] {

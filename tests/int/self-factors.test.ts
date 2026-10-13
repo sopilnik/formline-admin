@@ -38,7 +38,7 @@ beforeAll(async () => {
   admin = adminPool()
   app = appPool()
   const { workspaceId, userId } = await createSandbox(app)
-  // A sandbox member: no fresh sign-in is asked for (spec §5.1).
+  // A sandbox member: no fresh sign-in is asked for.
   current = await device(workspaceId, userId, null)
   other = await device(workspaceId, userId, null)
 })

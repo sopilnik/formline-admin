@@ -67,7 +67,7 @@ test.describe('switch user', () => {
     await expect(page.getByRole('button', { name: 'Меню аккаунта: Noah Becker, Администратор' })).toBeVisible()
     await page.goto('/settings/profile')
     await expect(page.getByLabel('Язык', { exact: true })).toHaveValue('ru')
-    // An invitation is written in its inviter's language (spec §9).
+    // An invitation is written in its inviter's language.
     await page.goto('/team')
     await page.getByLabel('Email').fill('lena.vogel@example.test')
     await page.getByRole('button', { name: 'Отправить приглашение' }).click()

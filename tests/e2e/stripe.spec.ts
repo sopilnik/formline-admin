@@ -8,7 +8,7 @@ import { signInAsOwner, signInAsSandboxUser } from './sessions.ts'
 import { expect, test } from './test.ts'
 
 // The store's orders reach the owner workspace through the signed webhook, with the line items read from the local
-// stand-in for Stripe's API (spec §7, §12.3). The tests share the owner workspace and run in order.
+// stand-in for Stripe's API. The tests share the owner workspace and run in order.
 test.describe.configure({ mode: 'serial' })
 test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip': '203.0.113.54' } })
 

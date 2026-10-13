@@ -70,7 +70,7 @@ describe('the template build', () => {
   })
 
   it('rebuilds generated rows only: store-order copies, owner edits and sandboxes survive, the copies numbered after the generated orders', async () => {
-    // A store-order copy in the template (what stage 8 writes), an owner stock edit and a sandbox with data.
+    // A store-order copy in the template (what the Stripe ingest writes), an owner stock edit and a sandbox with data.
     const copy = await asSchemaOwner(admin, async c => {
       const customer = await c.query<{ id: string }>(
         "insert into fa.customers (workspace_id, email, name, pseudonymised_at) values ($1, 'copy@example.test', 'Store Copy', now()) returning id", [template])

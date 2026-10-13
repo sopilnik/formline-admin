@@ -7,7 +7,7 @@ import { expect, test } from './test.ts'
 
 test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip': '203.0.113.53' } })
 
-// Long Russian names in every place a name shows (spec §11, Review Focus 5), well inside their limits.
+// Long Russian names in every place a name shows, well inside their limits.
 const LONG = {
   product: 'Тихая заводь на рассвете: пастельная серия для спальни и гостиной',
   collection: 'Пастельные мотивы для спокойных светлых интерьеров',

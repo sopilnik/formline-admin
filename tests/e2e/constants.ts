@@ -17,12 +17,12 @@ export function e2eWorker(index: number): E2eWorker {
   const database = `formline_e2e_${index}`
   return {
     port,
-    // localhost, not 127.0.0.1: passkeys need a host name as the relying party (task 2.8).
+    // localhost, not 127.0.0.1: passkeys need a host name as the relying party.
     baseUrl: `http://localhost:${port}`,
     database,
     migratorUrl: `postgres://postgres:postgres@127.0.0.1:55432/${database}`,
     appUrl: `postgres://app:app-local-password@127.0.0.1:56432/${database}`,
-    // The folder that stands in for the media zone while the server runs (spec §8.4). Absolute, from the repository root
+    // The folder that stands in for the media zone while the server runs. Absolute, from the repository root
     // the test commands run in: the standalone server changes its own directory.
     mediaDir: resolve('test-media', String(index)),
   }
@@ -43,7 +43,7 @@ export const E2E_MIGRATOR_URL = worker.migratorUrl
 /** The local stand-in for Stripe's API (tests/e2e/stripe-stub.ts), which every e2e server reads instead of Stripe. */
 export const E2E_STRIPE_PORT = 4334
 
-/** The Stripe ingest's settings of the e2e servers (spec §7); local test values only. */
+/** The Stripe ingest's settings of the e2e servers; local test values only. */
 export const E2E_STRIPE_ENV = {
   STRIPE_WEBHOOK_SECRET: 'whsec_e2e-webhook-secret-0123456789abcdef',
   STRIPE_RESTRICTED_KEY: 'rk_test_e2e-restricted-key-0123456789abcdef',

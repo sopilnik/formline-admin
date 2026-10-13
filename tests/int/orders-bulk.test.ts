@@ -27,7 +27,7 @@ beforeAll(() => {
 })
 afterAll(closeAll)
 
-describe('changeStatuses (spec §8.2)', () => {
+describe('changeStatuses', () => {
   it('moves the orders the machine allows, reports the others by number and logs every change', async () => {
     const { workspaceId, users } = await sandbox()
     const paid = await ordersWith(workspaceId, 'paid', 2)
@@ -49,7 +49,7 @@ describe('changeStatuses (spec §8.2)', () => {
     const mine = await sandbox()
     const theirs = await sandbox()
     const [order] = await ordersWith(theirs.workspaceId, 'paid', 1)
-    // Sandboxes copy the template with its ids (spec §6.1): the same id names one order in each workspace.
+    // Sandboxes copy the template with its ids: the same id names one order in each workspace.
     const outcome = await changeStatuses(actor(mine.workspaceId, mine.users.owner!, 'owner'), [order!.id, randomUUID()], 'processing', app)
     expect(outcome).toEqual({ changed: [order!.number], skipped: [] })
     const rows = await admin.query<{ workspace_id: string; status: string }>(

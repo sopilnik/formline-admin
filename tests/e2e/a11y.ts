@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test'
 import { expect } from './test.ts'
 
 /**
- * axe with the WCAG 2.2 A and AA rules; serious and critical findings fail the test (spec §1). `scope` limits it to one
+ * axe with the WCAG 2.2 A and AA rules; serious and critical findings fail the test. `scope` limits it to one
  * element: an open popover covers the page under it, and axe counts a covered target as too small.
  */
 export async function expectNoSeriousA11yViolations(page: Page, scope?: string): Promise<void> {
@@ -29,7 +29,7 @@ export async function expectNoSeriousA11yViolations(page: Page, scope?: string):
   expect(serious).toEqual([])
 }
 
-/** axe in the light and the dark scheme (spec §12.3); the panel follows the system scheme unless a theme is chosen. */
+/** axe in the light and the dark scheme; the panel follows the system scheme unless a theme is chosen. */
 export async function expectNoSeriousA11yViolationsInBothThemes(page: Page, scope?: string): Promise<void> {
   for (const colorScheme of ['light', 'dark'] as const) {
     await page.emulateMedia({ colorScheme })

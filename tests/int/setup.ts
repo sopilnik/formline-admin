@@ -1,5 +1,5 @@
 // Every integration file deletes, when it ends, the sandboxes made while it ran. The files run one after another on one
-// database (vitest.int.config.ts), so those are all its own, and the demo holds at most 100 live sandboxes (spec §6.5):
+// database (vitest.int.config.ts), so those are all its own, and the demo holds at most 100 live sandboxes:
 // without this the suite would run into that cap.
 import pg from 'pg'
 import { afterAll, beforeAll } from 'vitest'

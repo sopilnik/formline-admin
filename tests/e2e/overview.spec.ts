@@ -8,7 +8,7 @@ test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip'
 
 const one = (text: string, params: unknown[]) => asSchemaOwner(async c => Number((await c.query<{ n: string }>(text, params)).rows[0]!.n))
 const REVENUE = "o.status in ('paid', 'processing', 'shipped', 'delivered')"
-// The 30-day period: from midnight 29 days ago in the store's zone to now (amendment 4).
+// The 30-day period: from midnight 29 days ago in the store's zone to now.
 const LAST_30_DAYS = "o.placed_at >= (date_trunc('day', now() at time zone 'Europe/Berlin') - interval '29 days') at time zone 'Europe/Berlin'"
 
 const dollars = (cents: number) =>

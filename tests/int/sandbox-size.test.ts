@@ -26,7 +26,7 @@ async function create(): Promise<string> {
   return workspaceId
 }
 
-describe('sandbox size (spec §6.5)', () => {
+describe('sandbox size', () => {
   it('stays at or under 2 MB of table and index space per sandbox', async () => {
     // Earlier files deleted rows; a full vacuum returns that space, so growth below measures new rows only.
     const { rows: tables } = await admin.query<{ name: string }>("select table_name as name from information_schema.tables where table_schema = 'fa'")

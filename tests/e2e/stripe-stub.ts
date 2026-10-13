@@ -1,4 +1,4 @@
-// A stand-in for the two Stripe API reads the panel makes (spec §12.3), on 127.0.0.1 only: the e2e server reaches it
+// A stand-in for the two Stripe API reads the panel makes, on 127.0.0.1 only: the e2e server reaches it
 // through STRIPE_API_BASE. A test registers the sessions it expects with POST /__stub/sessions; the stub forgets them
 // when the run ends.
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
