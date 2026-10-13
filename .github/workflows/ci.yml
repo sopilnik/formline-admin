@@ -16,9 +16,10 @@ jobs:
   checks:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # A push and the pull request it updates share one group: the later run replaces the earlier one.
+    # A pull request is grouped by its number and a push by its ref, so a fork's branch, whatever its name, never shares a
+    # group with a branch here: a later run replaces only an earlier run of the same pull request or the same branch.
     concurrency:
-      group: checks-${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+      group: checks-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
