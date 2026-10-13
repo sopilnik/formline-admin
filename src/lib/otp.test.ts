@@ -22,6 +22,10 @@ describe('verifyHOTP', () => {
     expect(verifyHOTP(KEY, 1n, 6, '28708')).toBe(false)
     expect(verifyHOTP(KEY, 1n, 6, '2870820')).toBe(false)
   })
+
+  it('refuses six digits of another script instead of throwing', () => {
+    expect(verifyHOTP(KEY, 1n, 6, '٢٨٧٠٨٢')).toBe(false)
+  })
 })
 
 describe('createTOTPKeyURI', () => {

@@ -17,7 +17,7 @@ export function generateHOTP(key: Uint8Array, counter: bigint, digits: number): 
 
 /** Whether `code` is the code for `counter`, compared in constant time. */
 export function verifyHOTP(key: Uint8Array, counter: bigint, digits: number, code: string): boolean {
-  if (code.length !== digits) return false
+  if (Buffer.byteLength(code) !== digits) return false
   return timingSafeEqual(Buffer.from(generateHOTP(key, counter, digits)), Buffer.from(code))
 }
 
