@@ -524,7 +524,7 @@
       },
       "stripe": {
         "title": "Store orders",
-        "intro": "Paid orders from the store's checkout arrive by themselves. If the panel was away for more than three days — as long as Stripe keeps trying — import the ones it missed from the last 30 days.",
+        "intro": "Paid orders from the store's checkout arrive by themselves. Stripe retries a delivery for a few hours in test mode and for up to three days in live mode; if the panel was away longer, import the ones it missed from the last 30 days.",
         "import": "Import missed orders",
         "importing": "Importing…",
         "confirmFirst": "Confirm it's you above to import.",

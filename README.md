@@ -79,11 +79,12 @@ restricted test key (`STRIPE_RESTRICTED_KEY`, `rk_test_…`, reading Checkout Se
 the names the store gives its lines. One transaction keeps the order in the owner workspace — the customer, the lines,
 the first status, the stock the lines take, "New order" and "Low stock" — and a copy in the template under a pseudonym
 that an HMAC of the email picks (`PSEUDONYM_KEY`); sandboxes created afterwards show the latest 50 copies. A repeated
-delivery changes nothing. If the panel was away for longer than Stripe retries — three days — Settings → Store → "Import
-missed orders" reads the completed sessions of the last 30 days and keeps the missing ones through the same code: the
-owner only, after a fresh sign-in, three times an hour. Without the three variables the webhook and the import answer
-503. `STRIPE_API_BASE` points the panel at a local stand-in for Stripe's API (`tests/e2e/stripe-stub.ts`) in development
-and in the end-to-end tests; in production it is accepted only on a loopback address.
+delivery changes nothing. If the panel was away for longer than Stripe retries — a few hours in test mode, up to three
+days in live mode — Settings → Store → "Import missed orders" reads the completed sessions of the last 30 days and keeps
+the missing ones through the same code: the owner only, after a fresh sign-in, three times an hour. Without the three
+variables the webhook and the import answer 503. `STRIPE_API_BASE` points the panel at a local stand-in for Stripe's API
+(`tests/e2e/stripe-stub.ts`) in development and in the end-to-end tests; in production it is accepted only on a loopback
+address.
 
 ## Limits and measurements
 
