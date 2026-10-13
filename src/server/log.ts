@@ -9,16 +9,21 @@ const ONE_TIME_CODES = ['input.code', 'body.code']
 // hold a customer's email or name, which no log line keeps.
 const QUERY_VALUES = ['params', 'detail']
 
-/** The text drizzle adds to the message of every failed query in an error's chain: the values it ran with. */
-function valueTexts(error: Error): string[] {
-  const texts: string[] = []
+/** An error and its causes, outermost first. */
+function chain(error: Error): Error[] {
+  const errors: Error[] = []
   let current: unknown = error
   for (let depth = 0; current instanceof Error && depth < 10; depth++) {
-    const { params, query } = current as Error & { params?: unknown; query?: unknown }
-    if (Array.isArray(params) && typeof query === 'string') texts.push(`\nparams: ${params.join(',')}`)
+    errors.push(current)
     current = current.cause
   }
-  return texts
+  return errors
+}
+
+/** The text drizzle adds to a failed query's message, the values it ran with; null for any other error. */
+function valueText(error: Error): string | null {
+  const { params, query } = error as Error & { params?: unknown; query?: unknown }
+  return Array.isArray(params) && typeof query === 'string' ? `\nparams: ${params.join(',')}` : null
 }
 
 /** pino's own serializer, without the values of a failed query, wherever they appear. */
@@ -26,11 +31,29 @@ export function serializeError(error: Error): pino.SerializedError {
   const serialized = pino.stdSerializers.err(error)
   for (const key of QUERY_VALUES) delete serialized[key]
 
-  for (const text of valueTexts(error)) {
+  for (const text of chain(error).map(valueText)) {
+    if (text === null) continue
     serialized.message = serialized.message.replaceAll(text, '')
     serialized.stack = serialized.stack.replaceAll(text, '')
   }
   return serialized
+}
+
+/**
+ * Takes the values of a failed query out of an error and its causes, in place. Next's production server prints the error
+ * a request ended in once more, on its own, after onRequestError (instrumentation.ts) has returned.
+ */
+export function scrubError(error: unknown): void {
+  if (!(error instanceof Error)) return
+
+  for (const link of chain(error)) {
+    const text = valueText(link)
+    if (text !== null) {
+      link.message = link.message.replaceAll(text, '')
+      if (link.stack) link.stack = link.stack.replaceAll(text, '')
+    }
+    for (const key of QUERY_VALUES) delete (link as Error & Record<string, unknown>)[key]
+  }
 }
 
 /**

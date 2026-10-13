@@ -15,11 +15,15 @@ export async function register(): Promise<void> {
   }
 }
 
-/** Logs every error a request ends in with the id its response carried in X-Request-Id, so a reported id finds its line. */
+/**
+ * Logs every error a request ends in with the id its response carried in X-Request-Id, so a reported id finds its line.
+ * Next prints the same error once more after this returns, so the values of a failed query are taken out of it first.
+ */
 export const onRequestError: Instrumentation.onRequestError = async (error, request, context) => {
   if (process.env.NEXT_RUNTIME !== 'nodejs') return
 
-  const { log, pathOnly } = await import('@/server/log')
+  const { log, pathOnly, scrubError } = await import('@/server/log')
+  scrubError(error)
   const id = request.headers['x-request-id']
   log.error({
     event: 'request.failed',
