@@ -22,7 +22,7 @@ in shape and builds the template data; `pnpm db:down` stops the stack and remove
 Checks: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:int` and `pnpm test:e2e`, the last two with `pnpm db:up`
 running. The end-to-end tests build first and need a browser once: `pnpm exec playwright install --with-deps chromium`.
 They run on four workers, each against its own production server (ports 4331, 4332, 4333 and 4335; the Stripe stand-in
-takes 4334), database (`formline_e2e_0` to `_3`) and media folder (`test-media/0` to `/3`).
+takes 4334), database (`formline_e2e_0` to `_3`) and media folder (`test-media/0` to `/3`). CI runs them on one worker.
 
 `src/components/ui/` holds the shadcn primitives the panel uses, changed only where its focus, colour and language rules
 need it. Each keeps its unused exports, so it still compares line for line with a fresh copy from the generator.

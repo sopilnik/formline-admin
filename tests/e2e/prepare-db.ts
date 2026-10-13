@@ -1,4 +1,4 @@
-// Recreates the four end-to-end databases, one per worker, and applies the migrations to each. `pnpm test:e2e` runs it
+// Recreates the end-to-end databases, one per worker, and applies the migrations to each. `pnpm test:e2e` runs it
 // after the build and before Playwright starts the servers.
 import { rm } from 'node:fs/promises'
 import pg from 'pg'

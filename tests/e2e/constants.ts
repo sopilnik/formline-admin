@@ -4,9 +4,10 @@ import { resolve } from 'node:path'
  * Four workers run the suite, each against its own server, database and media folder, so the owner workspace, the
  * template and the rate-limit windows of one worker never meet another's. Playwright names a worker in
  * TEST_PARALLEL_INDEX (0 to 3, kept when a worker restarts after a failure); the config's own process has none and starts
- * every worker's server through `e2eWorker`.
+ * every worker's server through `e2eWorker`. CI runs one: its runner has too few cores for four servers and browsers, and
+ * the timing tests fail under that load.
  */
-export const E2E_WORKERS = 4
+export const E2E_WORKERS = process.env.CI ? 1 : 4
 // The ports of the four servers; 4334 is the Stripe stand-in's.
 const PORTS = [4331, 4332, 4333, 4335]
 
