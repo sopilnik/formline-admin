@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t('title') }
 }
 
-// Without a session cookie this page does not touch the database (spec §6.5).
+// Without a session cookie this page does not touch the database.
 export default async function SignInPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   if ((await getSession())?.secondFactorVerified) redirect('/overview')
   const ended = (await searchParams).ended === '1'

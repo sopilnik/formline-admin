@@ -7,7 +7,7 @@ import { BELL_SIZE, notificationItems, readerOf } from '@/server/notifications/f
 
 export const dynamic = 'force-dynamic'
 
-/** What the bell shows (spec §8.9): the unread count and the latest notifications. It is read on every navigation, never pushed. */
+/** What the bell shows: the unread count and the latest notifications. It is read on every navigation, never pushed. */
 export async function GET(): Promise<Response> {
   const session = await getSession()
   if (!session?.secondFactorVerified) return new Response(null, { status: 401 })

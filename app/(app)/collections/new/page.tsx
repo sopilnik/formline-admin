@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: await titleFor('catalog.write', t('new')) }
 }
 
-/** The new-collection form (spec §8.3); a role that cannot write the catalog gets the not-found page. */
+/** The new-collection form; a role that cannot write the catalog gets the not-found page. */
 export default async function NewCollectionPage() {
   const session = await requireSession()
   if (!can(session.role, 'catalog.write', session.workspaceKind)) notFound()

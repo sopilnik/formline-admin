@@ -58,7 +58,7 @@ export function NavLinks({ items, collapsed = false, onNavigate }: { items: NavI
         return (
           <li key={item.key} className={cn(startsGroup && 'mt-2.5 border-t border-sidebar-border pt-2.5')}>
             {/* Always inside the tooltip, which is off while the labels show: the link stays the same element across
-                a collapse, so its label fades instead of being drawn anew (W.2). */}
+                a collapse, so its label fades instead of being drawn anew. */}
             <Tooltip disabled={!collapsed}>
               <TooltipTrigger render={link} />
               <TooltipContent side="right">{t(item.key)}</TooltipContent>

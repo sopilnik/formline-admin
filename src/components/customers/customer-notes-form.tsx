@@ -11,7 +11,7 @@ import { saveCustomerNotesAction, type CustomerNotesState } from '@/server/actio
 const IDLE: CustomerNotesState = { status: 'idle' }
 
 /**
- * The customer's notes (spec §8.5). After a save the refreshed page brings the stored text, which React writes into the
+ * The customer's notes. After a save the refreshed page brings the stored text, which React writes into the
  * field when it resets the form; after an error the typed text comes back instead.
  */
 export function CustomerNotesForm({ customerId, notes }: { customerId: string; notes: string }) {

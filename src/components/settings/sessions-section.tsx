@@ -8,7 +8,7 @@ import { revokeOtherSessionsAction, revokeSessionAction } from '@/server/actions
 
 type SessionView = { id: string; device: string | null; signedIn: string; lastActive: string; current: boolean }
 
-/** One's signed-in devices (spec §8.8): each other one can be signed out, or all of them at once. */
+/** One's signed-in devices: each other one can be signed out, or all of them at once. */
 export function SessionsSection({ sessions }: { sessions: SessionView[] }) {
   const t = useTranslations('settings.security.sessions')
   const toast = useToast()

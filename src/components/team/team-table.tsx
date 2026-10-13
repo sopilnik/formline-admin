@@ -22,7 +22,7 @@ function Pill({ children, tone = 'plain' }: { children: ReactNode; tone?: 'plain
 }
 
 /**
- * The members (spec §8.6) as a table while the list is at least 56 rem wide, as cards below — the container
+ * The members as a table while the list is at least 56 rem wide, as cards below — the container
  * query of the other lists. A deactivated member is marked and keeps only "Reactivate".
  */
 export function TeamTable({ members }: { members: MemberView[] }) {

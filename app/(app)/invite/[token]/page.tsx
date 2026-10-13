@@ -16,8 +16,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * The link of an invitation letter (spec §8.6, §9). It works from a session in the sandbox that sent it (his decision,
- * 29 September): the invitation is looked up in the caller's own workspace only, and the owner workspace has none.
+ * The link of an invitation letter. It works from a session in the sandbox that sent it: the invitation is looked up
+ * in the caller's own workspace only, and the owner workspace has none.
  */
 export default async function InvitePage({ params }: Params) {
   const session = await requireSession()

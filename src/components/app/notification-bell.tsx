@@ -14,7 +14,7 @@ import { markAllNotificationsReadAction } from '@/server/actions/notifications'
 type Feed = { unread: number; total: number; items: NotificationItem[] }
 
 /**
- * The bell in the top bar (spec §8.9): the unread count, and the latest notifications in a popover. There is no real
+ * The bell in the top bar: the unread count, and the latest notifications in a popover. There is no real
  * time: the bell reads its feed again on every navigation, whenever it opens, and when the server renders the frame
  * with another count (an action that refreshes the page).
  */

@@ -8,7 +8,7 @@ import { ACTIVITY_GROUPS, type ActivityAction } from '@/lib/activity/actions'
 import { activityHref, DEFAULT_ACTIVITY_QUERY, isActivityFiltered, SYSTEM_ACTOR, type ActivityQuery } from '@/lib/activity/query'
 import { DATE_PRESETS, type DatePreset } from '@/lib/orders/query'
 
-/** The log's filters (spec §8.7): who, which action and when, each a navigation, as the other lists' filters. */
+/** The log's filters: who, which action and when, each a navigation, as the other lists' filters. */
 export function ActivityFilters({ query, members }: { query: ActivityQuery; members: { id: string; name: string }[] }) {
   const t = useTranslations('activity.filters')
   const actions = useTranslations('activity.actions')

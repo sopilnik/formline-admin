@@ -9,7 +9,7 @@ import { importStripeOrdersAction } from '@/server/actions/stripe'
 
 const IDLE: ImportState = { status: 'idle' }
 
-/** Settings → Store → Store orders (spec §7.5): the owner imports the paid store orders the webhook missed. */
+/** Settings → Store → Store orders: the owner imports the paid store orders the webhook missed. */
 export function StripeImportSection({ recent }: { recent: boolean }) {
   const t = useTranslations('settings.store.stripe')
   const [state, action, pending] = useActionState(importStripeOrdersAction, IDLE)

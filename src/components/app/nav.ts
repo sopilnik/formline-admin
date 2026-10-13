@@ -18,7 +18,7 @@ const ITEMS: (NavItem & { action?: Action })[] = [
 
 /**
  * The menu for a role. It only hides what the role cannot use; every page checks again on the server.
- * `counts` puts a number on an item — today the orders to process (spec §11); zero shows nothing.
+ * `counts` puts a number on an item — today the orders to process; zero shows nothing.
  */
 export function navItems(role: Role, kind: WorkspaceKind, counts: Partial<Record<NavKey, number>> = {}): NavItem[] {
   return ITEMS.filter(item => !item.action || can(role, item.action, kind)).map(({ key, href, group }) => {

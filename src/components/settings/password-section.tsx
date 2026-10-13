@@ -10,7 +10,7 @@ import { IDLE, type FormState } from '@/lib/auth-form'
 import { changePasswordAction } from '@/server/actions/security'
 
 /**
- * The owner's password (spec §5.1, §8.8). Demo members have none, so a sandbox gets a note; the form shows once the
+ * The owner's password. Demo members have none, so a sandbox gets a note; the form shows once the
  * owner has confirmed it is them, and the new password signs the other devices out.
  */
 export function PasswordSection({ available, recent }: { available: boolean; recent: boolean }) {

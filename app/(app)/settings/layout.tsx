@@ -4,7 +4,7 @@ import { SettingsTabs } from '@/components/settings/settings-tabs'
 import { requireSession } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'
 
-/** Settings (spec §8.8): the profile and security for everyone, the store for owners and admins. */
+/** Settings: the profile and security for everyone, the store for owners and admins. */
 export default async function SettingsLayout({ children }: { children: ReactNode }) {
   const session = await requireSession()
   const t = await getTranslations('settings')

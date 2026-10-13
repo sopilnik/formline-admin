@@ -6,7 +6,7 @@ type Props = {
   id: string
   label: string
   value: string
-  /** A filter that differs from its default shows its value in the selected style (spec §8.2). */
+  /** A filter that differs from its default shows its value in the selected style. */
   active?: boolean
   onChange: (event: ChangeEvent<HTMLSelectElement>) => void
   children: ReactNode

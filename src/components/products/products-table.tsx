@@ -28,8 +28,8 @@ function StockNote({ row, stacked = false }: { row: ProductRowView; stacked?: bo
 }
 
 /**
- * The products (spec §8.3) as a table while the list is at least 56 rem wide, as cards below —
- * a container query on the list, as on the orders page (stage 4 amendment 10).
+ * The products as a table while the list is at least 56 rem wide, as cards below —
+ * a container query on the list, as on the orders page.
  */
 export function ProductsTable({ rows, query }: { rows: ProductRowView[]; query: ProductsQuery }) {
   const t = useTranslations('products')

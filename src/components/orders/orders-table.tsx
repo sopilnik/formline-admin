@@ -58,7 +58,7 @@ export function OrdersTable({ rows, query, canUpdate }: { rows: OrderRowView[]; 
         </colgroup>
         <thead className="sticky top-0 z-20">
           {chosen.length > 0 ? (
-            // The bulk bar takes the header row's place at the same height (spec §8.2).
+            // The bulk bar takes the header row's place at the same height.
             <tr>
               <th scope="col" className={cn(TH, 'w-10 border-border-strong bg-secondary')}>{allBox}</th>
               <th colSpan={7} className={cn(TH, 'border-border-strong bg-secondary font-normal text-foreground')}>

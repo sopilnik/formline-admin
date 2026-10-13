@@ -6,7 +6,7 @@ import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 export const dynamic = 'force-dynamic'
 
-/** The palette's search across orders, customers and products (spec §8.10); every role reads them. */
+/** The palette's search across orders, customers and products; every role reads them. */
 export async function GET(request: Request): Promise<Response> {
   const session = await getSession()
   if (!session?.secondFactorVerified) return new Response(null, { status: 401 })

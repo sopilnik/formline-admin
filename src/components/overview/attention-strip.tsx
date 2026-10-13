@@ -13,7 +13,7 @@ const PARTS: Part[] = [
   { key: 'soldOut', href: productsHref(DEFAULT_PRODUCTS_QUERY, { stock: 'out' }), icon: TriangleAlert, tone: 'text-status-bad' },
 ]
 
-/** "What needs action now" (spec §8.1): up to three links; a part without work is left out, and so is the strip. */
+/** "What needs action now": up to three links; a part without work is left out, and so is the strip. */
 export function AttentionStrip({ counts }: { counts: Counts }) {
   const t = useTranslations('overview.attention')
   const parts = PARTS.filter(part => counts[part.key] > 0)

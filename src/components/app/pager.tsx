@@ -23,7 +23,7 @@ type Props = {
   href: (changes: { page?: number; size?: PageSize }) => string
 }
 
-/** The pager under a list (spec §11): the range shown, up to five page links and the page size. */
+/** The pager under a list: the range shown, up to five page links and the page size. */
 export function Pager({ namespace, sizeId, page, pages, size, filtered, href }: Props) {
   const t = useTranslations(namespace)
   const from = (page - 1) * size + 1

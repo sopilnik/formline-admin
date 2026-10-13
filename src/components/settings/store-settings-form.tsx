@@ -11,7 +11,7 @@ import { saveStoreSettingsAction, type StoreSettingsState } from '@/server/actio
 
 const IDLE: StoreSettingsState = { status: 'idle' }
 
-/** Settings → Store (spec §8.8): the store's name, its support email, its time zone and the threshold new variants start with. */
+/** Settings → Store: the store's name, its support email, its time zone and the threshold new variants start with. */
 export function StoreSettingsForm({ settings, zones }: { settings: Record<StoreField, string>; zones: string[] }) {
   const t = useTranslations('settings.store')
   const toast = useToast()

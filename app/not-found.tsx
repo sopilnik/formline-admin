@@ -8,7 +8,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 // Next's own built-in 404 page injects an inline style with no CSP nonce; this
-// replacement stays inside the site's stylesheet instead (spec §12.3). A signed-out
+// replacement stays inside the site's stylesheet instead. A signed-out
 // visitor who follows the link is sent on to the sign-in page.
 export default async function NotFound() {
   const t = await getTranslations('notFound')

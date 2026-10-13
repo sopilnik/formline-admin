@@ -24,7 +24,7 @@ function moved(rows: CollectionItem[], move: { id: string; direction: Direction 
 }
 
 /**
- * The collections in their order (spec §8.3) with "Move up" and "Move down" for a role that may
+ * The collections in their order with "Move up" and "Move down" for a role that may
  * change them. The row moves at once; focus stays on the button that moved it, or on its
  * neighbour when that one is now disabled, and the new place is announced.
  */

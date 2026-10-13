@@ -26,7 +26,7 @@ function segments(bars: readonly ChartBar[], max: number): string[] {
 type Props = { model: ChartModel; title: string; summary: string; legend: { current: string; previous: string } }
 
 /**
- * Revenue by day or week (spec §8.1): graphite bars, today's bar hatched, the previous
+ * Revenue by day or week: graphite bars, today's bar hatched, the previous
  * period as a dashed line over an under-stroke in the card colour. "Show as table" swaps
  * the plot for the same numbers as a table.
  */

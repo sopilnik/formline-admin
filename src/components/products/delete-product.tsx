@@ -12,7 +12,7 @@ import { deleteProductAction } from '@/server/actions/products'
 type Props = { productId: string; name: string; variants: number; hasImage: boolean; blocked: DeleteBlocker | null }
 
 /**
- * "Delete product" (spec §8.3): a draft without orders goes after a confirmation that names it;
+ * "Delete product": a draft without orders goes after a confirmation that names it;
  * any other product says why it stays and points to archiving instead.
  */
 export function DeleteProduct({ productId, name, variants, hasImage, blocked }: Props) {
@@ -27,7 +27,7 @@ export function DeleteProduct({ productId, name, variants, hasImage, blocked }: 
       setOpen(false)
       toast.success(t('done', { name }))
       router.push('/products')
-      // The refresh after the move clears the pages the browser keeps for a minute (W.1), so the list drops the deleted one.
+      // The refresh after the move clears the pages the browser keeps for a minute, so the list drops the deleted one.
       router.refresh()
     } else {
       setOpen(false)

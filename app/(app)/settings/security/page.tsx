@@ -26,8 +26,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * Settings → Security (spec §8.8). In the owner workspace the sensitive changes wait for a fresh sign-in, asked for once
- * at the top of the page (spec §5.1); sandboxes skip it, their demo members have no password.
+ * Settings → Security. In the owner workspace the sensitive changes wait for a fresh sign-in, asked for once
+ * at the top of the page; sandboxes skip it, their demo members have no password.
  */
 export default async function SecurityPage() {
   const session = await requireSession()

@@ -3,7 +3,7 @@ import { useTranslations } from 'next-intl'
 import { DEFAULT_PERIOD, PERIODS, type Period } from '@/lib/periods'
 import { cn } from '@/lib/utils'
 
-/** The period selector (spec §8.1): links, so it works with Back and without scripts. */
+/** The period selector: links, so it works with Back and without scripts. */
 export function PeriodNav({ period }: { period: Period }) {
   const t = useTranslations('overview.periods')
   return (

@@ -10,8 +10,8 @@ const TH = 'h-10 border-b bg-card px-3 text-left font-medium whitespace-nowrap t
 const TD = 'border-b px-3 py-2 group-last/row:border-b-0'
 
 /**
- * The customers (spec §8.5) as a table while the list is at least 56 rem wide, as cards below —
- * a container query on the list, as on the orders and the products (stage 4 amendment 10).
+ * The customers as a table while the list is at least 56 rem wide, as cards below —
+ * a container query on the list, as on the orders and the products.
  */
 export function CustomersTable({ rows, query }: { rows: CustomerRowView[]; query: CustomersQuery }) {
   const t = useTranslations('customers')

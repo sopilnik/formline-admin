@@ -12,7 +12,7 @@ import { createShortcutReader, GO_KEYS, isTypingTarget, type GoPage } from '@/li
 const ShortcutsContext = createContext<{ showHelp: () => void } | null>(null)
 
 /**
- * The single-key shortcuts of spec §8.10 and the list of them: "/" finds the page's search field, "g" and a letter
+ * The single-key shortcuts and the list of them: "/" finds the page's search field, "g" and a letter
  * goes to a page the role may open, "?" lists them all. They never fire while the user types in a field, and the
  * profile turns them off (WCAG 2.2 SC 2.1.4); the palette can still show the list.
  */

@@ -3,7 +3,7 @@ import { readiness } from '@/server/health'
 import { log } from '@/server/log'
 
 // Liveness by default: bunny's health check and the budget guard call it every few minutes, so it never wakes the
-// database. `?db=1` is the readiness check of the smoke test and the probes (spec §13); unlike liveness it must pass the
+// database. `?db=1` is the readiness check of the smoke test and the probes; unlike liveness it must pass the
 // edge check (proxy.ts), so nobody can wake the database through it from outside.
 export const dynamic = 'force-dynamic'
 

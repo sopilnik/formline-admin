@@ -4,7 +4,7 @@ import type { UploadError } from '@/lib/uploads'
 export type UploadProblem = { error: Exclude<UploadError, 'rate_limited'> } | { error: 'rate_limited'; minutes: number }
 
 /**
- * Sends one image to its product (spec §8.4): the file is the request body of `POST /api/media`. Null when the server
+ * Sends one image to its product: the file is the request body of `POST /api/media`. Null when the server
  * took it; otherwise what it refused, `unavailable` when no answer came.
  */
 export async function sendProductImage(productId: string, file: File): Promise<UploadProblem | null> {

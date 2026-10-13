@@ -24,7 +24,7 @@ async function labels(): Promise<ExportLabels> {
   }
 }
 
-/** The CSV of the orders list (spec §8.2): every order matching the filters, or the selected ones. */
+/** The CSV of the orders list: every order matching the filters, or the selected ones. */
 export async function GET(request: Request): Promise<Response> {
   const session = await exportSession()
   if (session instanceof Response) return session

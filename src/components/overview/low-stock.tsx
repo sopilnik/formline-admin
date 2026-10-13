@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 /** One low-stock variant as the page formats it. */
 type LowStockView = { key: string; href: string; product: string; variant: string; stock: number; imageSrc: string | null }
 
-/** Variants at or below their threshold (spec §8.1): sold out first, at most five, then "View all N". */
+/** Variants at or below their threshold: sold out first, at most five, then "View all N". */
 export function LowStock({ rows, total }: { rows: LowStockView[]; total: number }) {
   const t = useTranslations('overview.lowStock')
   return (

@@ -20,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * The team (spec §8.6): owners and admins see it (his decision, 29 September). In a sandbox they change roles
+ * The team: owners and admins see it. In a sandbox they change roles
  * and deactivate members; in the owner workspace the team is the owner alone, and a note says why.
  */
 export default async function TeamPage() {
@@ -38,7 +38,7 @@ export default async function TeamPage() {
   const views: MemberView[] = members.map(member => {
     const self = member.id === session.userId
     const active = member.deactivatedAt === null
-    // Nobody changes the owner row or their own (spec §5.5).
+    // Nobody changes the owner row or their own.
     const changeable = manage && !self
     return {
       id: member.id, name: member.name, email: member.email, role: member.role, self, twoFactor: member.twoFactor, active,

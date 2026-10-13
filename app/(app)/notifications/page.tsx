@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t('title') }
 }
 
-/** Every notification of the member, newest first (spec §8.9); the bell shows the latest few. */
+/** Every notification of the member, newest first; the bell shows the latest few. */
 export default async function NotificationsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const session = await requireSession()
   const query = parsePageQuery(await searchParams)

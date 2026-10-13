@@ -8,7 +8,7 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { useToast } from '@/components/ui/toast'
 import { deleteCollectionAction } from '@/server/actions/collections'
 
-/** "Delete collection" (spec §8.3): an empty one after a confirmation that names it; otherwise why it stays. */
+/** "Delete collection": an empty one after a confirmation that names it; otherwise why it stays. */
 export function DeleteCollection({ id, name, products }: { id: string; name: string; products: number }) {
   const t = useTranslations('collections.delete')
   const toast = useToast()
@@ -21,7 +21,7 @@ export function DeleteCollection({ id, name, products }: { id: string; name: str
     if (result.ok) {
       toast.success(t('done', { name }))
       router.push('/collections')
-      // The refresh after the move clears the pages the browser keeps for a minute (W.1), so the list drops the deleted one.
+      // The refresh after the move clears the pages the browser keeps for a minute, so the list drops the deleted one.
       router.refresh()
     } else {
       toast.error(result.code === 'conflict' ? t('conflict') : t('failed'))

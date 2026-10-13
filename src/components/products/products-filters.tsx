@@ -11,7 +11,7 @@ import { PRODUCT_STATUSES, type ProductStatus } from '@/lib/products/status'
 
 type Props = { query: ProductsQuery; statusCounts: Record<ProductStatus, number>; collections: { slug: string; name: string }[] }
 
-/** The filters of the products list (spec §8.3), built like the orders filters: every change is a navigation. */
+/** The filters of the products list, built like the orders filters: every change is a navigation. */
 export function ProductsFilters({ query, statusCounts, collections }: Props) {
   const t = useTranslations('products.filters')
   const statusLabel = useTranslations('products.status')

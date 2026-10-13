@@ -18,7 +18,7 @@ export function StockLevel({ stock, threshold, spelled = false }: { stock: numbe
   return <span>{spelled ? t('inStock', { stock }) : stock}</span>
 }
 
-/** The variants (spec §8.3) for a role that cannot change them: a table while the card is 36 rem wide, a list below. */
+/** The variants for a role that cannot change them: a table while the card is 36 rem wide, a list below. */
 export function VariantsTable({ variants }: { variants: VariantView[] }) {
   const t = useTranslations('products.variants')
   return (

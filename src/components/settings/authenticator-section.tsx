@@ -14,7 +14,7 @@ import { disableTotpAction, enableTotpAction } from '@/server/actions/security'
 type Props = {
   enabled: boolean
   recent: boolean
-  /** Whether turning it off leaves a second factor: in the owner workspace a passkey must remain (spec §5.3). */
+  /** Whether turning it off leaves a second factor: in the owner workspace a passkey must remain. */
   canDisable: boolean
   /** The new key for an enrolment, made on the server for this page view. */
   secret: string
@@ -22,7 +22,7 @@ type Props = {
 }
 
 /**
- * The authenticator app (spec §5.3, §8.8): turn it on with the key and the first code, replace it the same way, or turn it
+ * The authenticator app: turn it on with the key and the first code, replace it the same way, or turn it
  * off while another factor remains. A first authenticator comes with ten recovery codes, shown once.
  */
 export function AuthenticatorSection({ enabled, recent, canDisable, secret, qr }: Props) {

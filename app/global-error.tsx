@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils'
 
 const subscribe = () => () => {}
 
-// The root layout itself failed (spec §11, states): this page brings its own document — the layout's fonts and the
+// The root layout itself failed: this page brings its own document — the layout's fonts and the
 // theme the visitor chose, read from the cookies on the client — and its own words.
 export default function GlobalError({ retry }: { error: Error & { digest?: string }; retry: () => void }) {
   const locale = useSyncExternalStore(subscribe, () => globalErrorLocale(document.cookie), () => 'en' as const)

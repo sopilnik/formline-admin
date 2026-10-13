@@ -13,7 +13,7 @@ import { changeProductStatusAction } from '@/server/actions/products'
 type Props = { productId: string; name: string; status: ProductStatus; canWrite: boolean }
 
 /**
- * The product's status and "Change status" (spec §8.3), built like the order page's control: the
+ * The product's status and "Change status", built like the order page's control: the
  * badge takes the chosen status at once; after a failure the refreshed page shows the real one.
  */
 export function ProductStatusControl({ productId, name, status, canWrite }: Props) {

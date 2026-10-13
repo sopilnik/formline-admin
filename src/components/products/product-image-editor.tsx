@@ -16,9 +16,9 @@ import { removeProductImageAction } from '@/server/actions/products'
 type Props = { productId: string; name: string; image: PosterImage | null }
 
 /**
- * The image of the product page for a role that may change it (spec §8.4). The file goes to
+ * The image of the product page for a role that may change it. The file goes to
  * `POST /api/media` as the request body; the picker refuses what could never pass, the server
- * decides the rest. Removing asks first, as every deletion does (spec §11).
+ * decides the rest. Removing asks first, as every deletion does.
  */
 export function ProductImageEditor({ productId, name, image }: Props) {
   const t = useTranslations('products.image')

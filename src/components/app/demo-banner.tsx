@@ -12,7 +12,7 @@ import { IDLE, type FormState } from '@/lib/auth-form'
 import { resetDemoAction } from '@/server/actions/demo'
 
 /**
- * The strip under the top bar of every sandbox page (spec §6.4, §11): the rule,
+ * The strip under the top bar of every sandbox page: the rule,
  * "Reset data" behind a confirmation, "Switch user" and at phone width one
  * overflow menu that holds the actions.
  */

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { IDLE, type FormState } from '@/lib/auth-form'
 import { enterDemoAction } from '@/server/actions/demo'
 
-/** The demo panel at the top of the sign-in card: one button, no sign-up (spec §2). */
+/** The demo panel at the top of the sign-in card: one button, no sign-up. */
 export function DemoEntry({ ended = false }: { ended?: boolean }) {
   const t = useTranslations('demo.entry')
   const [state, action, pending] = useActionState(enterDemoAction, IDLE as FormState)

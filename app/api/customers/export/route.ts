@@ -7,7 +7,7 @@ import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 export const dynamic = 'force-dynamic'
 
-/** The CSV of the customers list (spec §8.5): every customer the search keeps, with the limits and the log entry of the orders export. */
+/** The CSV of the customers list: every customer the search keeps, with the limits and the log entry of the orders export. */
 export async function GET(request: Request): Promise<Response> {
   const session = await exportSession()
   if (session instanceof Response) return session

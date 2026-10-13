@@ -6,7 +6,7 @@ import { useEffect, useRef } from 'react'
 import { Button, buttonVariants } from '@/components/ui/button'
 
 /**
- * The new recovery codes, shown once (spec §5.3). Focus moves to the heading, so the change is announced. After setup
+ * The new recovery codes, shown once. Focus moves to the heading, so the change is announced. After setup
  * and recovery the link continues to the dashboard; the security settings close the view in place instead.
  */
 export function RecoveryCodesView({ codes, done }: { codes: string[]; done?: { label: string; onClick: () => void } }) {

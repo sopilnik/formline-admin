@@ -3,7 +3,7 @@ import { useTranslations } from 'next-intl'
 import type { ProductStatus } from '@/lib/products/status'
 import { cn } from '@/lib/utils'
 
-// The order badges' pill, icon and colour pairs (spec §11; every pair is in tests/unit/contrast.test.ts):
+// The order badges' pill, icon and colour pairs (every pair is in tests/unit/contrast.test.ts):
 // published reads as done, a draft as work in progress, archived as put away.
 const LOOK: Record<ProductStatus, { icon: LucideIcon; className: string }> = {
   published: { icon: CircleCheck, className: 'bg-badge-delivered text-status-ok' },

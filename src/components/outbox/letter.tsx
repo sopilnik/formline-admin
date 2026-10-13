@@ -4,7 +4,7 @@ import { buttonVariants } from '@/components/ui/button'
 import type { LetterContent } from '@/lib/letters'
 
 /**
- * A letter as its recipient would read it (spec §9): the greeting, the paragraphs and its one link — a real
+ * A letter as its recipient would read it: the greeting, the paragraphs and its one link — a real
  * address inside the panel — in the letter's own language, which may differ from the interface's.
  */
 export async function LetterBody({ content }: { content: LetterContent }) {

@@ -20,7 +20,7 @@ import { NO_RESULTS, searchTerm, type SearchResults } from '@/lib/search'
 import { THEMES } from '@/lib/theme'
 import { setLocaleAction, setThemeAction } from '@/server/actions/preferences'
 
-/** What the palette may offer beyond the pages: the actions the member's role allows (spec §5.5). */
+/** What the palette may offer beyond the pages: the actions the member's role allows. */
 type PaletteAccess = { newProduct: boolean; invite: boolean }
 
 type Entry = { value: string; label: string; hint?: string; run: () => void }
@@ -30,7 +30,7 @@ type Group = { value: 'pages' | 'actions' | 'orders' | 'customers' | 'products';
 const DEBOUNCE_MS = 200
 
 /**
- * The command palette (spec §8.10): ⌘K or Ctrl+K anywhere, or the search button in the top bar. It lists the pages and
+ * The command palette: ⌘K or Ctrl+K anywhere, or the search button in the top bar. It lists the pages and
  * the actions the member may use, and searches orders, customers and products on the server as they type.
  */
 export function CommandPalette({ items, access }: { items: NavItem[]; access: PaletteAccess }) {

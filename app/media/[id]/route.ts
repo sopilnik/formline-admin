@@ -7,12 +7,12 @@ import { mediaStorage, thumbPath } from '@/server/media/storage'
 
 export const dynamic = 'force-dynamic'
 
-// Uploads are never cached anywhere and never read as anything but an image (spec §4.5, §8.4).
+// Uploads are never cached anywhere and never read as anything but an image.
 const NO_STORE = { 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' }
 const empty = (status: number): Response => new Response(null, { status, headers: NO_STORE })
 
 /**
- * `GET /media/<id>` (spec §8.4): an uploaded image, only to a signed-in member of its workspace.
+ * `GET /media/<id>`: an uploaded image, only to a signed-in member of its workspace.
  * Another workspace's image and a template poster answer 404 alike, so nobody learns what
  * another sandbox holds and the demo cannot serve as image hosting. `?size=thumb` asks for the
  * small copy the lists show; an image stored before the copies existed answers with itself.

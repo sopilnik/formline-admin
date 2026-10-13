@@ -15,7 +15,7 @@ type PasskeyView = { id: string; name: string; added: string; lastUsed: string |
 
 type Props = { available: boolean; recent: boolean; passkeys: PasskeyView[] }
 
-/** The owner's passkeys (spec §5.3); adding and removing wait until the owner has confirmed it is them, at the top of the page. */
+/** The owner's passkeys; adding and removing wait until the owner has confirmed it is them, at the top of the page. */
 export function PasskeysSection({ available, recent, passkeys }: Props) {
   const t = useTranslations('settings.security.passkeys')
   const errors = useTranslations('auth.errors')

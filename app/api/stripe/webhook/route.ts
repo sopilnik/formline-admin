@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 const NO_STORE = { 'Cache-Control': 'no-store' }
 
 /**
- * `POST /api/stripe/webhook`: the panel's own endpoint in the store's Stripe sandbox (spec §4.4, §7.1). No session and
+ * `POST /api/stripe/webhook`: the panel's own endpoint in the store's Stripe sandbox. No session and
  * no Origin check — Stripe proves the request with its signature over the raw body, which is why the body is read here
  * and nowhere parsed first.
  */

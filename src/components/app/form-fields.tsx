@@ -20,7 +20,7 @@ function Messages({ id, hint, error }: { id: string; hint?: string; error?: stri
   )
 }
 
-/** A labelled input with its hint and its error, both announced with the field (spec §11, forms). */
+/** A labelled input with its hint and its error, both announced with the field. */
 export function TextField({ id, label, hint, error, ...input }: Common & ComponentProps<'input'>) {
   return (
     <div className="flex flex-col gap-1.5">
@@ -62,7 +62,7 @@ export function SelectField({ id, label, hint, error, children, className, ...se
   )
 }
 
-/** A textarea with its label, hint and error, announced with the field (spec §11, forms). */
+/** A textarea with its label, hint and error, announced with the field. */
 export function TextAreaField({ id, label, hint, error, className, ...area }: Common & ComponentProps<'textarea'>) {
   return (
     <div className="flex flex-col gap-1.5">

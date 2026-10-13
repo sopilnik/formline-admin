@@ -23,7 +23,7 @@ type Props = {
 }
 
 /**
- * The details form of the product page (spec §8.3). After a save React resets the fields to the
+ * The details form of the product page. After a save React resets the fields to the
  * stored values the refreshed page brings; after a conflict "Load the current version" starts
  * the form afresh from them, dropping what was typed.
  */
@@ -49,7 +49,7 @@ function DetailsForm({ productId, slug, version, values, collections, reloading,
     if (result.status === 'done') {
       toast.success(t('saved'))
       if (result.slug !== slug) {
-        // The refresh after the move clears the pages the browser keeps for a minute (W.1), so the list links to the new
+        // The refresh after the move clears the pages the browser keeps for a minute, so the list links to the new
         // address. The action cannot refresh: that would draw the old address again.
         router.replace(productHref(result.slug))
         router.refresh()

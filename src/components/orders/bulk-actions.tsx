@@ -15,7 +15,7 @@ import { changeStatusesAction } from '@/server/actions/orders'
 
 type Props = { chosen: OrderRowView[]; query: OrdersQuery; canUpdate: boolean; onClear: () => void }
 
-/** The actions on the selected orders (spec §8.2); the table and the phone bar render the same controls. */
+/** The actions on the selected orders; the table and the phone bar render the same controls. */
 export function BulkActions({ chosen, query, canUpdate, onClear }: Props) {
   const t = useTranslations('orders.bulk')
   const statusLabel = useTranslations('orders.status')

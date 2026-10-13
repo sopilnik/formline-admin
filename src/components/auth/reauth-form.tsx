@@ -13,7 +13,7 @@ import { reauthWithPasskeyAction } from '@/server/actions/passkeys'
 import { reauthAction } from '@/server/actions/reauth'
 import type { ReauthField } from '@/server/auth/reauth'
 
-/** "Confirm it's you": the password and a code, or a passkey, before a sensitive change (spec §5.1). */
+/** "Confirm it's you": the password and a code, or a passkey, before a sensitive change. */
 export function ReauthForm({ intro }: { intro?: string } = {}) {
   const t = useTranslations('auth')
   const router = useRouter()

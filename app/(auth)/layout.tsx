@@ -6,7 +6,7 @@ import { ThemeMenu } from '@/components/app/theme-menu'
 import { parseTheme, THEME_COOKIE } from '@/lib/theme'
 
 // Sign-in, setup and recovery: no session is needed and none is looked up here, so
-// the sign-in page never wakes the database (spec §6.5).
+// the sign-in page never wakes the database.
 export default async function AuthLayout({ children }: { children: ReactNode }) {
   const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value)
   return (

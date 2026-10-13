@@ -14,7 +14,7 @@ const toasts = {
 }
 
 // Base UI Toast instead of sonner: sonner injects a <style> element at run
-// time, which the nonce-based style-src-elem policy blocks (spec §4.2).
+// time, which the nonce-based style-src-elem policy blocks.
 function ToastProvider({ children, closeLabel, regionLabel }: { children: React.ReactNode; closeLabel: string; regionLabel: string }) {
   return (
     <Toast.Provider toastManager={toastManager}>

@@ -9,7 +9,7 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { IDLE, type FormState } from '@/lib/auth-form'
 import { regenerateRecoveryCodesAction } from '@/server/actions/security'
 
-/** Recovery codes (spec §5.3): how many are left, and ten new ones in place of the old, shown once. */
+/** Recovery codes: how many are left, and ten new ones in place of the old, shown once. */
 export function RecoveryCodesSection({ remaining, hasFactor, recent }: { remaining: number; hasFactor: boolean; recent: boolean }) {
   const t = useTranslations('settings.security.recoveryCodes')
   const [confirming, setConfirming] = useState(false)

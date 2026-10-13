@@ -39,7 +39,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   return { title: found ? await letterSubject(letterContent(found.letter.template, found.letter.payload, found.settings.timezone)) : t('notFoundTitle') }
 }
 
-/** One letter as its recipient would get it (spec §9): who it is from and to, when, and what it says. */
+/** One letter as its recipient would get it: who it is from and to, when, and what it says. */
 export default async function LetterPage({ params }: Params) {
   const id = parseId((await params).id)
   const found = id === null ? null : await load(id)

@@ -71,7 +71,7 @@ function DetailText({ detail }: { detail: Detail | null }) {
 }
 
 /**
- * The log (spec §8.7): when, who, what, which entity (linked while it exists) and a detail — a table while the list is at
+ * The log: when, who, what, which entity (linked while it exists) and a detail — a table while the list is at
  * least 56 rem wide, cards below, as the other lists.
  */
 export function ActivityTable({ entries }: { entries: ActivityEntryView[] }) {

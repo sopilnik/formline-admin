@@ -4,7 +4,7 @@ import { authConfig } from '@/server/config'
 
 export const dynamic = 'force-dynamic'
 
-/** A passkey sign-in challenge in a signed five-minute cookie. No database access (spec §5.3, §6.5). */
+/** A passkey sign-in challenge in a signed five-minute cookie. No database access. */
 export async function GET(): Promise<Response> {
   const config = authConfig()
   const options = await authenticationOptions(config)

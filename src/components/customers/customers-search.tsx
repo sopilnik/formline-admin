@@ -6,7 +6,7 @@ import { ListSearch } from '@/components/app/list-search'
 import { useListQuery } from '@/components/app/use-list-query'
 import { customersHref, DEFAULT_CUSTOMERS_QUERY, isCustomersFiltered, type CustomersQuery } from '@/lib/customers/query'
 
-/** The customers list's one filter (spec §8.5): a debounced search by name or email, as on the orders and the products. */
+/** The customers list's one filter: a debounced search by name or email, as on the orders and the products. */
 export function CustomersSearch({ query }: { query: CustomersQuery }) {
   const t = useTranslations('customers.search')
   const { go } = useListQuery(query, customersHref)

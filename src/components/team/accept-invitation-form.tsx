@@ -10,7 +10,7 @@ import { acceptInvitationAction, type AcceptState } from '@/server/actions/team'
 
 const IDLE: AcceptState = { status: 'idle' }
 
-/** The new member's name, then the visitor continues as them (spec §8.6). */
+/** The new member's name, then the visitor continues as them. */
 export function AcceptInvitationForm({ token }: { token: string }) {
   const t = useTranslations('invite')
   const [state, action, pending] = useActionState(acceptInvitationAction, IDLE)

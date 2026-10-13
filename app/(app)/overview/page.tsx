@@ -30,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 type Format = (value: number) => string
 
-/** The strings of one card; "—" for a change the previous period cannot give (spec §8.1). */
+/** The strings of one card; "—" for a change the previous period cannot give. */
 function kpiView(id: string, label: string, hint: string, kpi: Kpi, format: Format, locale: Locale): KpiView {
   return {
     id,

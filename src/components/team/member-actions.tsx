@@ -13,7 +13,7 @@ import { changeMemberActiveAction, changeMemberRoleAction } from '@/server/actio
 type Props = { userId: string; person: string; role: AssignableRole; active: boolean }
 
 /**
- * The actions on another member (spec §8.6): a new role at once, deactivating after a confirmation
+ * The actions on another member: a new role at once, deactivating after a confirmation
  * that names them (their sessions end), reactivating at once.
  */
 export function MemberActions({ userId, person, role, active }: Props) {

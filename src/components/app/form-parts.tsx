@@ -29,7 +29,7 @@ export function FormAlert({ state }: { state: FormState }) {
   return <ErrorAlert>{message(state)}</ErrorAlert>
 }
 
-/** After a failed submit, focus goes to the field in error, or to the first field (spec §11, forms). */
+/** After a failed submit, focus goes to the field in error, or to the first field. */
 export function useFocusOnError(state: FormState, prefix: string, firstField: string): void {
   useEffect(() => {
     if (state.status !== 'error') return

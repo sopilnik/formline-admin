@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t('title') }
 }
 
-/** The activity log (spec §8.7): owners and admins; for other roles the address does not exist. */
+/** The activity log: owners and admins; for other roles the address does not exist. */
 export default async function ActivityPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const session = await requireSession()
   if (!can(session.role, 'activity.read', session.workspaceKind)) notFound()

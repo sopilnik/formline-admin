@@ -17,7 +17,7 @@ const EMPTY: Record<CollectionField, string> = { name: '', slug: '', description
 
 type Props = { collection?: { id: string; slug: string; name: string; description: string } }
 
-/** A new collection, or the fields of an existing one (spec §8.3). The slug field shows the slug the name gives while it is empty. */
+/** A new collection, or the fields of an existing one. The slug field shows the slug the name gives while it is empty. */
 export function CollectionForm({ collection }: Props) {
   const t = useTranslations('collections.form')
   const toast = useToast()
@@ -29,7 +29,7 @@ export function CollectionForm({ collection }: Props) {
   const settle = useEffectEvent((result: CollectionState) => {
     if (result.status === 'done') {
       toast.success(collection ? t('saved') : t('created'))
-      // The refresh after a move clears the pages the browser keeps for a minute (W.1), so the list shows the change.
+      // The refresh after a move clears the pages the browser keeps for a minute, so the list shows the change.
       // The action refreshes only when the address stays: refreshing there would draw the old address again.
       if (!collection) {
         router.push(collectionHref(result.slug))

@@ -22,7 +22,7 @@ export function Sidebar({ items, collapsed: initiallyCollapsed }: { items: NavIt
   }
 
   return (
-    // Always the dark token set, in the light theme too (spec §11). The width moves in 200 ms; the labels fade inside it.
+    // Always the dark token set, in the light theme too. The width moves in 200 ms; the labels fade inside it.
     <aside
       className={cn(
         'dark sticky top-0 hidden h-dvh shrink-0 flex-col gap-1 overflow-hidden border-r border-sidebar-border bg-sidebar px-3.5 py-4.5 text-sidebar-foreground transition-[width] duration-200 ease-in-out md:flex',

@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t('title') }
 }
 
-/** Every letter the panel wrote (spec §9), newest first; owners and admins only. */
+/** Every letter the panel wrote, newest first; owners and admins only. */
 export default async function OutboxPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const session = await requireSession()
   if (!can(session.role, 'outbox.read', session.workspaceKind)) notFound()

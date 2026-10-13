@@ -9,7 +9,7 @@ import { NavLinks } from '@/components/app/nav-links'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 
-/** Below 768 px the menu is a drawer (spec §11). */
+/** Below 768 px the menu is a drawer. */
 export function MobileNav({ items }: { items: NavItem[] }) {
   const t = useTranslations('nav')
   const [open, setOpen] = useState(false)

@@ -3,7 +3,7 @@ import { useTranslations } from 'next-intl'
 import type { OrderStatus } from '@/lib/orders/status'
 import { cn } from '@/lib/utils'
 
-// Spec §11: a tinted pill with a text label and a per-status icon, so the six statuses stay
+// A tinted pill with a text label and a per-status icon, so the six statuses stay
 // apart without colour. Every text/background pair is in tests/unit/contrast.test.ts.
 const LOOK: Record<OrderStatus, { icon: LucideIcon; className: string }> = {
   paid: { icon: CircleDollarSign, className: 'bg-badge-paid text-status-info' },

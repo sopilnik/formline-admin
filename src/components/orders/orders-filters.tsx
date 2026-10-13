@@ -9,7 +9,7 @@ import { useListQuery } from '@/components/app/use-list-query'
 import { DATE_PRESETS, DEFAULT_ORDERS_QUERY, isOrdersFiltered, ordersHref, SOURCES, type DatePreset, type OrdersQuery, type SourceFilter } from '@/lib/orders/query'
 import { ORDER_STATUSES, type OrderStatus } from '@/lib/orders/status'
 
-/** The filters of the orders list (spec §8.2). Every change is a navigation: the state lives in the URL. */
+/** The filters of the orders list. Every change is a navigation: the state lives in the URL. */
 export function OrdersFilters({ query, statusCounts }: { query: OrdersQuery; statusCounts: Record<OrderStatus, number> }) {
   const t = useTranslations('orders.filters')
   const statusLabel = useTranslations('orders.status')

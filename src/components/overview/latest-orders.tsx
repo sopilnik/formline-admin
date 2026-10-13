@@ -9,7 +9,7 @@ const TH = 'h-9 border-b px-3 text-left font-medium whitespace-nowrap text-muted
 const TD = 'h-11 border-b px-3 first:pl-0 last:pr-0 group-last/row:border-b-0'
 
 /**
- * The eight newest orders (spec §8.1), in the columns and order of the orders table. The five columns need about
+ * The eight newest orders, in the columns and order of the orders table. The five columns need about
  * 560 px, so below 36 rem of the card's own width the rows become a two-line list, as the orders page becomes cards.
  */
 export function LatestOrders({ rows }: { rows: OrderRowView[] }) {

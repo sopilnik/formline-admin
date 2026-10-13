@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 /** One collection as the page formats it; `bar` is its revenue relative to the largest collection. */
 export type CollectionRow = { slug: string; name: string; posters: number; amount: string; share: string; bar: number }
 
-// The store's collection colours (spec §11); a collection added later falls back to the chart ink.
+// The store's collection colours; a collection added later falls back to the chart ink.
 const COLOURS: Record<string, string> = {
   monochrome: 'bg-collection-mono',
   primary: 'bg-collection-primary',
@@ -14,7 +14,7 @@ const COLOURS: Record<string, string> = {
 
 type Props = { rows: CollectionRow[]; other: string | null; posters: string; shipping: string }
 
-/** Revenue by collection (spec §8.1): an HTML list; the bars are decoration, the numbers are text. */
+/** Revenue by collection: an HTML list; the bars are decoration, the numbers are text. */
 export function CollectionRevenue({ rows, other, posters, shipping }: Props) {
   const t = useTranslations('overview.collections')
   return (

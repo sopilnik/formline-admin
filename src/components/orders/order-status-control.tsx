@@ -13,7 +13,7 @@ import { changeOrderStatusAction } from '@/server/actions/orders'
 type Props = { orderId: string; number: number; status: OrderStatus; canUpdate: boolean }
 
 /**
- * The order's status and "Change status" (amendment 7): the badge takes the chosen status at
+ * The order's status and "Change status": the badge takes the chosen status at
  * once; when the action fails the transition ends on the refreshed page, whose status is the real one.
  */
 export function OrderStatusControl({ orderId, number, status, canUpdate }: Props) {

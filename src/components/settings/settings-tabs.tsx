@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 
-/** The sections of Settings (spec §8.8) as links: each section has its own address, Back works between them. */
+/** The sections of Settings as links: each section has its own address, Back works between them. */
 export function SettingsTabs({ label, tabs }: { label: string; tabs: { href: string; label: string }[] }) {
   const pathname = usePathname()
   return (

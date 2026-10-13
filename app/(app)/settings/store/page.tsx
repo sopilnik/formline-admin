@@ -18,8 +18,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * Settings → Store (spec §8.8): owners and admins; for other roles the address does not exist. The owner of the owner
- * workspace also imports the store orders the webhook missed, after a fresh sign-in (spec §7.5).
+ * Settings → Store: owners and admins; for other roles the address does not exist. The owner of the owner
+ * workspace also imports the store orders the webhook missed, after a fresh sign-in.
  */
 export default async function StoreSettingsPage() {
   const session = await requireSession()

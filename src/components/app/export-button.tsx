@@ -27,7 +27,7 @@ async function fetchFile(href: string): Promise<{ response: Response; file: Blob
 }
 
 /**
- * Fetches the CSV and hands it to the browser as a download (spec §8.2, §8.5): a fetch rather than a
+ * Fetches the CSV and hands it to the browser as a download: a fetch rather than a
  * plain link, so a refused export (the rate limit) or a dropped connection becomes a message instead of a failed download.
  */
 export function ExportButton({ href, label, size = 'default', namespace, cap }: Props) {

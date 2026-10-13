@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { resendInvitationAction, revokeInvitationAction } from '@/server/actions/team'
 
-/** "Resend" writes the same link into a new letter; "Revoke" stops the link (spec §8.6). */
+/** "Resend" writes the same link into a new letter; "Revoke" stops the link. */
 export function InvitationActions({ id, email }: { id: string; email: string }) {
   const t = useTranslations('team.invitations')
   const toast = useToast()

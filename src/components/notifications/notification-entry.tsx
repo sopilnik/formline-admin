@@ -16,7 +16,7 @@ const ICONS: Record<NotificationKind, LucideIcon> = {
 }
 
 /**
- * One notification in the bell or on the page: pressing it marks it read and opens its subject (spec §8.9).
+ * One notification in the bell or on the page: pressing it marks it read and opens its subject.
  * It is a form, so the page works before its scripts load too.
  */
 export function NotificationEntry({ item, onOpen }: { item: NotificationItem; onOpen?: (id: string) => void }) {

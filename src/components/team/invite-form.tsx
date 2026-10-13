@@ -10,7 +10,7 @@ import { inviteMemberAction, type InviteState } from '@/server/actions/team'
 
 const IDLE: InviteState = { status: 'idle' }
 
-/** "Invite a member" (spec §8.6): an email and a role; the letter with the link goes to the outbox. */
+/** "Invite a member": an email and a role; the letter with the link goes to the outbox. */
 export function InviteForm() {
   const t = useTranslations('team.invite')
   const role = useTranslations('user.roles')

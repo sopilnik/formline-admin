@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* Spec §11. The hex values are pinned: Tailwind's palette steps are OKLCH and may fall
+/* The colour tokens. The hex values are pinned: Tailwind's palette steps are OKLCH and may fall
    below the contrast targets. Every themed token is one light-dark() pair, which
    tests/unit/contrast.test.ts reads from this file. */
 
@@ -62,7 +62,7 @@
   --collection-primary: light-dark(#D62828, #F0605A);
   --collection-pastel: light-dark(#57826A, #A9CDB2);
   --collection-night: light-dark(#1D3557, #7EA6DD);
-  /* The sidebar always renders with the dark token set (spec §11); only its surface
+  /* The sidebar always renders with the dark token set; only its surface
      follows the page theme, so these are plain values, not light-dark() pairs. */
   --sidebar: #17181A;
   --sidebar-foreground: #C9CAC7;
@@ -95,7 +95,7 @@
   }
 }
 
-/* Space Grotesk has no Cyrillic: Russian headings are set in Inter (spec §11). */
+/* Space Grotesk has no Cyrillic: Russian headings are set in Inter. */
 :root:lang(ru) {
   --heading-family: var(--font-inter), system-ui, sans-serif;
 }
@@ -172,7 +172,7 @@
     @apply font-heading;
   }
   /* Browsers give buttons the arrow, and Tailwind v4 no longer overrides it; the hand marks everything that can be pressed,
-     as in the store (W.3). */
+     as in the store. */
   button:not(:disabled),
   [role='button']:not([aria-disabled='true']),
   [role='checkbox']:not([aria-disabled='true']),
@@ -189,7 +189,7 @@
   summary {
     cursor: pointer;
   }
-  /* One solid focus indicator everywhere (spec §11): the primary colour, 2 px, offset 2 px. */
+  /* One solid focus indicator everywhere: the primary colour, 2 px, offset 2 px. */
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-ring;
   }

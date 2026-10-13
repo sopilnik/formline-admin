@@ -13,7 +13,7 @@ async function attempt(autofill: boolean): Promise<PasskeyOutcome> {
   const options = await passkeyChallenge()
   const outcome = await signInWithPasskeyAction(await startAuthentication({ optionsJSON: options, useBrowserAutofill: autofill }))
   if (!outcome.ok && outcome.error === 'passkey_unknown' && outcome.credentialId) {
-    // Lets the password manager hide a passkey this site no longer knows (spec §5.3).
+    // Lets the password manager hide a passkey this site no longer knows.
     await sendSignal({ signalName: 'unknownCredential', rpID: options.rpId ?? location.hostname, credentialID: outcome.credentialId }).catch(() => undefined)
   }
   return outcome
@@ -24,7 +24,7 @@ async function attempt(autofill: boolean): Promise<PasskeyOutcome> {
 const enter = () => window.location.assign('/overview')
 
 /**
- * Passkey-first sign-in (spec §5.3): the browser offers saved passkeys in the
+ * Passkey-first sign-in: the browser offers saved passkeys in the
  * email field's autofill (conditional UI), and the button asks for one directly.
  */
 export function PasskeySignIn() {

@@ -12,8 +12,8 @@ import { cn } from '@/lib/utils'
 type Props = { file: File | null; onChange: (file: File | null) => void; disabled?: boolean }
 
 /**
- * The image field of the new-product form (W.9): a file dropped on the frame or chosen with the button, shown as a
- * preview until the product exists — the form sends it then (spec §8.4: no image without a product). The input has no
+ * The image field of the new-product form: a file dropped on the frame or chosen with the button, shown as a
+ * preview until the product exists — the form sends it then, as an image belongs to a product. The input has no
  * name, so the file never travels in the form's own request.
  */
 export function NewProductImage({ file, onChange, disabled = false }: Props) {

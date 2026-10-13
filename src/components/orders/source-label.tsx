@@ -6,7 +6,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 
 /**
  * "Store" with a store icon for an order from the live shop, a muted "Sample" for a
- * generated one (spec §8.2). The label sits above the row's stretched link so the
+ * generated one. The label sits above the row's stretched link so the
  * tooltip can open; the hint is also in the text for screen readers.
  */
 export function SourceLabel({ source }: { source: 'seed' | 'stripe' }) {

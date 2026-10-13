@@ -23,7 +23,7 @@ type Props = { productId: string; rows: VariantRow[] }
 const ROW = 'grid gap-x-3 gap-y-2 @xl:grid-cols-[minmax(0,1fr)_7rem_6rem_5rem] @xl:items-center'
 
 /**
- * The variants of the product page for a role that may change them (spec §8.3). Like the details
+ * The variants of the product page for a role that may change them. Like the details
  * form, a conflict offers to start afresh from the stored values; a save resets to them anyway.
  */
 export function VariantsForm(props: Props) {

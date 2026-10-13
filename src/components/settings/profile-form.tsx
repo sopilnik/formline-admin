@@ -14,7 +14,7 @@ import { saveProfileAction, type ProfileState } from '@/server/actions/settings'
 
 const IDLE: ProfileState = { status: 'idle' }
 
-/** Settings → Profile (spec §8.8). After a save the page follows the new language and theme. */
+/** Settings → Profile. After a save the page follows the new language and theme. */
 export function ProfileForm({ profile }: { profile: Record<ProfileField, string> }) {
   const t = useTranslations('settings.profile')
   const language = useTranslations('language')

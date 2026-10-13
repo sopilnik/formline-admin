@@ -2,7 +2,7 @@ import { useTranslations } from 'next-intl'
 import { SIDEBAR_LABEL } from '@/components/app/sidebar-label'
 import { cn } from '@/lib/utils'
 
-/** The Formline mark and name; the name stays in Space Grotesk in every language (spec §11). */
+/** The Formline mark and name; the name stays in Space Grotesk in every language. */
 export function Brand({ collapsed = false }: { collapsed?: boolean }) {
   const t = useTranslations('common')
   return (

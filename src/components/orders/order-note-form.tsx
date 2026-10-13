@@ -10,7 +10,7 @@ import { addOrderNoteAction, type NoteState } from '@/server/actions/orders'
 
 const IDLE: NoteState = { status: 'idle' }
 
-/** The internal note form (amendment 8). After an error the text comes back: React resets the form after every result. */
+/** The internal note form. After an error the text comes back: React resets the form after every result. */
 export function OrderNoteForm({ orderId }: { orderId: string }) {
   const t = useTranslations('orders.detail')
   const toast = useToast()

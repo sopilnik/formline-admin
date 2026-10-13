@@ -14,7 +14,7 @@ type Props = {
 }
 
 /**
- * The product's own fields (spec §8.3), shared by the product page and the new-product form. The
+ * The product's own fields, shared by the product page and the new-product form. The
  * fields are uncontrolled: `values` are their starting text, which after a failed save is what was sent.
  */
 export function ProductDetailsFields({ values, errors, collections, slugPlaceholder, onNameInput }: Props) {

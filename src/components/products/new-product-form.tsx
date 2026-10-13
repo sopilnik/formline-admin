@@ -20,11 +20,11 @@ const IDLE: CreateState = { status: 'idle' }
 type Props = { collections: { id: string; name: string }[] }
 
 /**
- * The new-product form (spec §8.3). The slug field shows the slug the name gives while it is
+ * The new-product form. The slug field shows the slug the name gives while it is
  * empty; the palettes are plain checkboxes, so a failed save puts back exactly what was ticked.
- * An image chosen here is sent once the product exists (W.9); if the server refuses it, the
+ * An image chosen here is sent once the product exists; if the server refuses it, the
  * product stays and the toast says why. While it uploads the fields stay as typed, and the
- * owner may go elsewhere (W.12).
+ * owner may go elsewhere.
  */
 export function NewProductForm({ collections }: Props) {
   const t = useTranslations('products.new')
@@ -49,7 +49,7 @@ export function NewProductForm({ collections }: Props) {
 
   const settle = useEffectEvent((result: CreateState) => {
     if (result.status === 'done') {
-      // The refresh clears the pages the browser keeps for a minute (W.1), so the list shows the product; an owner who
+      // The refresh clears the pages the browser keeps for a minute, so the list shows the product; an owner who
       // went elsewhere while the image uploaded stays there.
       const moveOn = (): void => {
         if (!left.current) router.push(productHref(result.slug))
