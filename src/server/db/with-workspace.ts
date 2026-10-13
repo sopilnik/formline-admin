@@ -9,7 +9,10 @@ export type Role = (typeof schema.roleEnum.enumValues)[number]
 export type WorkspaceContext = { workspaceId: string; userId: string | null; role: Role | 'system' }
 export type Tx = NodePgDatabase<typeof schema>
 
-/** No statement of a request runs longer: the slowest query the panel makes takes well under a second. */
+/**
+ * No statement of a workspace transaction runs longer: the slowest query the panel makes takes well under a second.
+ * Statements on the bare pool (the rate-limit counters, sandbox creation, the daily job) carry no such limit.
+ */
 const STATEMENT_TIMEOUT = '30s'
 
 const contextSchema = z.object({
