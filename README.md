@@ -156,13 +156,14 @@ request it must come through the edge.
 
 A push to `main` runs `.github/workflows/deploy.yml`: the checks of `ci.yml`, then the image to
 `ghcr.io/sopilnik/formline-admin:<commit>` with provenance and an SBOM, built in a job that holds the registry's write
-token and installs nothing, by a builder and an SBOM scanner pinned by digest; then, in a job of its own, `scripts/deploy-image.ts` (it points the container at the new
-image by tag and digest through bunny's API and waits until liveness answers with the new commit), the budget guard
-switched on again, and `scripts/smoke.ts` through the edge (liveness, readiness, the headers, nothing private cached,
-the pull zone's own hostnames refused, and in a demo sandbox an image uploaded and read back, so sharp and the storage
-zone are proven in the container on every deploy; a demo step that fails logs its name, the page's address and its
-accessibility snapshot). The workflows read the bunny account key from the `production` environment's secret
-`BUNNY_API_KEY` and three repository variables: `MC_APP_ID`, `MC_CONTAINER_NAME` and `SITE_URL`.
+token and installs nothing, by a builder and an SBOM scanner pinned by digest; then, in a job of its own,
+`scripts/deploy-image.ts` (it points the container at the new image by tag and digest through bunny's API and waits
+until liveness answers with the new commit), the budget guard switched on again, and `scripts/smoke.ts` through the edge
+(liveness, readiness, the headers, nothing private cached, the pull zone's own hostnames refused, and in a demo sandbox
+an image uploaded and read back, so sharp and the storage zone are proven in the container on every deploy; a demo step
+that fails logs its name, the page's address and its accessibility snapshot). The workflows read the bunny account key
+from the `production` environment's secret `BUNNY_API_KEY` and three repository variables: `MC_APP_ID`,
+`MC_CONTAINER_NAME` and `SITE_URL`.
 
 `.github/workflows/probe.yml` runs one probe of the hosting setup at a time by hand (`scripts/probe.ts`): `p1` the usage
 figures and how old bunny's newest statistics are, `p2` that the edge overwrites a forged origin secret and client
