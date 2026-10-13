@@ -4,7 +4,7 @@ import { authDeps, type AuthDeps } from '@/server/auth/deps'
 import { verifyPassword } from '@/server/auth/passwords'
 import { attemptSecondFactor } from '@/server/auth/second-factor'
 import { rotateSession, type NewSession, type Session } from '@/server/auth/sessions'
-import { passwordLockout, recordPasswordFailure } from '@/server/auth/sign-in'
+import { claimPasswordAttempt, passwordAccepted } from '@/server/auth/sign-in'
 import { summariseUserAgent } from '@/server/auth/user-agent'
 import { logActivity } from '@/server/dal/activity'
 import { isUser } from '@/server/dal/users'
@@ -40,12 +40,11 @@ export async function reauthenticate(
     .where(isUser(session)), pool)
   if (!self?.passwordHash) return { ok: false, error: 'credentials_invalid', field: 'password' }
   const attempt = { email: self.email, ip: input.ip }
-  const locked = await passwordLockout(attempt, deps)
-  if (locked > 0) return { ok: false, error: 'rate_limited', retryAfterSeconds: locked }
-  if (!(await verifyPassword(self.passwordHash, input.password))) {
-    await recordPasswordFailure(attempt, deps)
-    return { ok: false, error: 'credentials_invalid', field: 'password' }
-  }
+  const claim = await claimPasswordAttempt(attempt, deps)
+  if (!claim.ok) return { ok: false, error: 'rate_limited', retryAfterSeconds: claim.retryAfterSeconds }
+  if (!(await verifyPassword(self.passwordHash, input.password))) return { ok: false, error: 'credentials_invalid', field: 'password' }
+
+  await passwordAccepted(attempt, claim, deps)
   const factor = await attemptSecondFactor(session, input, deps)
   if (!factor.ok) return factor
   const ipHash = hashIp(input.ip, config.ipHashKey)

@@ -36,8 +36,16 @@ export function passwordLockSeconds(failures: number): number {
 /** A limit on attempts, the lock it ends in, and how long that lock holds after a given count of attempts. */
 export type AttemptGuard = { limit: Limit; lock: string; lockSeconds: (count: number) => number }
 
-/** The second factor: ten attempts an hour, and the tenth that fails locks it for an hour. */
+/**
+ * The guesses. A password: five failures an hour on an account lock it for 15 minutes, every further one doubles the
+ * lock. The second factor: ten attempts an hour, and the tenth that fails locks it for an hour.
+ */
 export const GUARDS = {
+  password: {
+    limit: LIMITS.signInFailAccount,
+    lock: LOCKS.signInAccount,
+    lockSeconds: passwordLockSeconds,
+  },
   secondFactor: {
     limit: LIMITS.secondFactorFail,
     lock: LOCKS.secondFactor,

@@ -104,6 +104,28 @@ describe('password step', () => {
     expect(await signInWithPassword(correct(), { pool: app })).toMatchObject({ ok: false, error: 'rate_limited' })
   })
 
+  it('checks at most five passwords of a burst on one account: the fifth locks, the others wait it out', async () => {
+    await roomInWindow(LIMITS.signInFailAccount.windowSeconds, 20)
+    const failed = () => count("select count(*)::int as n from fa.activity_log where action = 'auth.sign_in_failed' and entity_id = $1", [ownerId])
+    const before = await failed()
+
+    const results = await Promise.all(Array.from({ length: 20 }, (_, i) =>
+      signInWithPassword(correct({ password: `wrong-password-${i}` }), { pool: app })))
+
+    expect(results.filter(r => !r.ok && r.error === 'credentials_invalid')).toHaveLength(5)
+    expect(results.filter(r => !r.ok && r.error === 'rate_limited')).toHaveLength(15)
+    expect(await failed()).toBe(before + 5)
+  })
+
+  it('a right password neither counts as a failure nor keeps the lock its claim set', async () => {
+    await roomInWindow(LIMITS.signInFailAccount.windowSeconds, 20)
+    for (let i = 0; i < 4; i++) await signInWithPassword(correct({ password: `wrong-password-${i}` }), { pool: app })
+    expect((await signInWithPassword(correct(), { pool: app })).ok).toBe(true)
+
+    expect(await signInWithPassword(correct({ password: 'wrong-password-4' }), { pool: app })).toEqual({ ok: false, error: 'credentials_invalid' })
+    expect(await signInWithPassword(correct(), { pool: app })).toMatchObject({ ok: false, error: 'rate_limited' })
+  })
+
   it('stops an address after twenty failures, even with the right password', async () => {
     await roomInWindow(LIMITS.signInFailIp.windowSeconds, 10)
     const ip = nextIp()

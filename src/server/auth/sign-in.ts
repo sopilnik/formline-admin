@@ -13,29 +13,38 @@ import { logActivity } from '@/server/dal/activity'
 import { getSelf } from '@/server/dal/users'
 import { users } from '@/server/db/schema'
 import { withWorkspace, type Tx } from '@/server/db/with-workspace'
-import { consume, lockRemaining, peek, setLock } from '@/server/ratelimit/consume'
+import { claimAttempt, giveBack, type Granted } from '@/server/ratelimit/attempts'
+import { consume, release, type Counted } from '@/server/ratelimit/consume'
 import { accountSubject, hashIp, ipSubject } from '@/server/ratelimit/ip'
-import { LIMITS, LOCKS, passwordLockSeconds } from '@/server/ratelimit/limits'
+import { GUARDS, LIMITS } from '@/server/ratelimit/limits'
 
 export type SignInInput = { email: string; password: string; ip: string | null; userAgent: string | null }
 export type SignedIn = { token: string; expiresAt: Date; locale: Locale; theme: Theme }
 
-/** Seconds until this address and this account may try a password again; 0 means now. */
-export async function passwordLockout(input: { email: string; ip: string | null }, deps: AuthDeps): Promise<number> {
+type PasswordAttempt = { email: string; ip: string | null }
+
+/** A password that may be checked, with the slots a right one gives back; or the seconds until one may. */
+export type PasswordClaim = { ok: true; address: Counted; account: Granted } | { ok: false; retryAfterSeconds: number }
+
+/**
+ * Counts a password attempt before it is checked: at the address (20 in 15 minutes), then on the account, one claim
+ * at a time, whose fifth failure in an hour locks it for 15 minutes and every further one doubles the lock.
+ */
+export async function claimPasswordAttempt(input: PasswordAttempt, deps: AuthDeps): Promise<PasswordClaim> {
   const { pool, config } = deps
-  const address = await peek(LIMITS.signInFailIp, ipSubject(input.ip, config.ipHashKey), pool)
-  if (!address.allowed) return address.retryAfterSeconds
-  return lockRemaining(LOCKS.signInAccount, accountSubject(input.email, config.ipHashKey), pool)
+  const address = await consume(LIMITS.signInFailIp, ipSubject(input.ip, config.ipHashKey), pool)
+  if (!address.allowed) return { ok: false, retryAfterSeconds: address.retryAfterSeconds }
+
+  const account = await claimAttempt(GUARDS.password, accountSubject(input.email, config.ipHashKey), pool)
+  if (!account.ok) return account
+  return { ok: true, address, account }
 }
 
-/** Counts a wrong password against the address and the account; from the fifth, the account is locked. */
-export async function recordPasswordFailure(input: { email: string; ip: string | null }, deps: AuthDeps): Promise<void> {
+/** A right password: both slots are given back, and the lock its claim set, if any, is lifted. */
+export async function passwordAccepted(input: PasswordAttempt, claim: Extract<PasswordClaim, { ok: true }>, deps: AuthDeps): Promise<void> {
   const { pool, config } = deps
-  await consume(LIMITS.signInFailIp, ipSubject(input.ip, config.ipHashKey), pool)
-  const account = accountSubject(input.email, config.ipHashKey)
-  const failures = await consume(LIMITS.signInFailAccount, account, pool)
-  const lock = passwordLockSeconds(failures.count)
-  if (lock > 0) await setLock(LOCKS.signInAccount, account, lock, pool)
+  await release(LIMITS.signInFailIp, ipSubject(input.ip, config.ipHashKey), claim.address.windowStart, pool)
+  await giveBack(GUARDS.password, accountSubject(input.email, config.ipHashKey), claim.account, pool)
 }
 
 /**
@@ -46,8 +55,8 @@ export async function recordPasswordFailure(input: { email: string; ip: string |
 export async function signInWithPassword(input: SignInInput, overrides: Partial<AuthDeps> = {}): Promise<{ ok: true; token: string; expiresAt: Date } | AuthFailure> {
   const deps = authDeps(overrides)
   const { pool, config } = deps
-  const locked = await passwordLockout(input, deps)
-  if (locked > 0) return { ok: false, error: 'rate_limited', retryAfterSeconds: locked }
+  const claim = await claimPasswordAttempt(input, deps)
+  if (!claim.ok) return { ok: false, error: 'rate_limited', retryAfterSeconds: claim.retryAfterSeconds }
 
   const workspaceId = await ownerWorkspaceId(pool)
   const system = { workspaceId, userId: null, role: 'system' } as const
@@ -61,7 +70,6 @@ export async function signInWithPassword(input: SignInInput, overrides: Partial<
   const ipHash = hashIp(input.ip, config.ipHashKey)
 
   if (!user || !hash || !valid) {
-    await recordPasswordFailure(input, deps)
     await withWorkspace(system, tx => logActivity(tx, workspaceId, {
       actorUserId: null,
       action: 'auth.sign_in_failed',
@@ -73,6 +81,7 @@ export async function signInWithPassword(input: SignInInput, overrides: Partial<
     return { ok: false, error: 'credentials_invalid' }
   }
 
+  await passwordAccepted(input, claim, deps)
   const successes = await consume(LIMITS.signInSuccessAccount, accountSubject(input.email, config.ipHashKey), pool)
   if (!successes.allowed) return { ok: false, error: 'rate_limited', retryAfterSeconds: successes.retryAfterSeconds }
   const session = await withWorkspace({ workspaceId, userId: user.id, role: 'system' }, tx => createSession(tx, {
