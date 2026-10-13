@@ -7,8 +7,8 @@ import { verifySecondFactor } from '@/server/auth/second-factor'
 import { validateSessionToken, type Session } from '@/server/auth/sessions'
 import { signInWithPassword, type SignInInput } from '@/server/auth/sign-in'
 import { hashToken } from '@/server/auth/tokens'
-import { clearSubject, lockRemaining } from '@/server/ratelimit/consume'
-import { accountSubject, userSubject } from '@/server/ratelimit/ip'
+import { clearSubject, lockRemaining, peek } from '@/server/ratelimit/consume'
+import { accountSubject, ipSubject, userSubject } from '@/server/ratelimit/ip'
 import { LIMITS, LOCKS } from '@/server/ratelimit/limits'
 import { roomInWindow } from '../windows'
 import { adminPool, appPool, closeAll } from './db'
@@ -124,6 +124,15 @@ describe('password step', () => {
 
     expect(await signInWithPassword(correct({ password: 'wrong-password-4' }), { pool: app })).toEqual({ ok: false, error: 'credentials_invalid' })
     expect(await signInWithPassword(correct(), { pool: app })).toMatchObject({ ok: false, error: 'rate_limited' })
+  })
+
+  it('counts nothing at the address while the account is locked and no password is checked', async () => {
+    await admin.query('insert into fa.rate_limits (purpose, subject, window_start, count) values ($1, $2, now(), 900)', [LOCKS.signInAccount, account])
+    const ip = nextIp()
+
+    expect(await signInWithPassword(correct({ ip }), { pool: app })).toMatchObject({ ok: false, error: 'rate_limited' })
+
+    expect((await peek(LIMITS.signInFailIp, ipSubject(ip, TEST_AUTH_ENV.IP_HASH_KEY), app)).count).toBe(0)
   })
 
   it('stops an address after twenty failures, even with the right password', async () => {

@@ -28,15 +28,20 @@ export type PasswordClaim = { ok: true; address: Counted; account: Granted } | {
 
 /**
  * Counts a password attempt before it is checked: at the address (20 in 15 minutes), then on the account, one claim
- * at a time, whose fifth failure in an hour locks it for 15 minutes and every further one doubles the lock.
+ * at a time, whose fifth failure in an hour locks it for 15 minutes and every further one doubles the lock. An attempt
+ * a locked account refuses checks no password, so the address gets its slot back.
  */
 export async function claimPasswordAttempt(input: PasswordAttempt, deps: AuthDeps): Promise<PasswordClaim> {
   const { pool, config } = deps
-  const address = await consume(LIMITS.signInFailIp, ipSubject(input.ip, config.ipHashKey), pool)
+  const addressSubject = ipSubject(input.ip, config.ipHashKey)
+  const address = await consume(LIMITS.signInFailIp, addressSubject, pool)
   if (!address.allowed) return { ok: false, retryAfterSeconds: address.retryAfterSeconds }
 
   const account = await claimAttempt(GUARDS.password, accountSubject(input.email, config.ipHashKey), pool)
-  if (!account.ok) return account
+  if (!account.ok) {
+    await release(LIMITS.signInFailIp, addressSubject, address.windowStart, pool)
+    return account
+  }
   return { ok: true, address, account }
 }
 
