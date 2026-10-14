@@ -89,7 +89,7 @@ export default async function CustomerPage({ params }: Params) {
             {can(session.role, 'customers.notes', session.workspaceKind) ? (
               <CustomerNotesForm customerId={customer.id} notes={customer.notes} />
             ) : (
-              <p className={cn('text-[13px] whitespace-pre-wrap', !customer.notes && 'text-muted-foreground')}>{customer.notes || t('detail.noNotes')}</p>
+              <p className={cn('text-[13px] whitespace-pre-wrap wrap-anywhere', !customer.notes && 'text-muted-foreground')}>{customer.notes || t('detail.noNotes')}</p>
             )}
           </section>
         </div>

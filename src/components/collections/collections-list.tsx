@@ -67,7 +67,7 @@ export function CollectionsList({ rows, canWrite }: { rows: CollectionItem[]; ca
               <Link
                 href={collectionHref(row.slug)}
                 prefetch={false}
-                className={cn(ROW_LINK, 'w-fit font-medium')}
+                className={cn(ROW_LINK, 'w-fit max-w-full font-medium wrap-anywhere')}
               >
                 {row.name}
               </Link>

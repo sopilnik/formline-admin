@@ -63,7 +63,8 @@ export function ProductImageEditor({ productId, name, image }: Props) {
     <div className="flex flex-col gap-3">
       <ProductImage image={image} />
       <input ref={picker} type="file" accept={UPLOAD_ACCEPT} hidden onChange={upload} />
-      <div data-focus-key="product-image" className="flex flex-wrap gap-2">
+      {/* One button under the other in every language: a long Russian label no longer wraps the second below the first. */}
+      <div data-focus-key="product-image" className="flex flex-col items-start gap-2">
         <Button type="button" variant="outline" size="sm" disabled={uploading} onClick={() => picker.current?.click()}>
           <ImageUp aria-hidden />
           {uploading ? t('uploading') : image ? t('replace') : t('upload')}

@@ -128,7 +128,7 @@ export default async function OrderPage({ params }: Params) {
                     <time dateTime={event.at.toISOString()}>{formatDateTime(event.at, locale, timeZone)}</time>
                     {` · ${event.actorName ?? t('detail.system')}`}
                   </span>
-                  <span className={event.kind === 'note' ? 'whitespace-pre-wrap' : 'font-medium'}>{describe(event)}</span>
+                  <span className={cn(event.kind === 'note' ? 'whitespace-pre-wrap' : 'font-medium', 'wrap-anywhere')}>{describe(event)}</span>
                 </li>
               ))}
             </ol>

@@ -24,7 +24,7 @@ export function CollectionRevenue({ rows, other, posters, shipping }: Props) {
         {rows.map(row => (
           <li key={row.slug} className="col-span-3 grid grid-cols-subgrid items-center">
             <span className="min-w-[5.75rem]">
-              <span className="block">{row.name}</span>
+              <span className="block wrap-anywhere">{row.name}</span>
               <small className="block text-xs text-muted-foreground">{t('posters', { count: row.posters })}</small>
             </span>
             <span aria-hidden className="h-2.5">

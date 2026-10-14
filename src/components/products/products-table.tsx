@@ -84,7 +84,7 @@ export function ProductsTable({ rows, query }: { rows: ProductRowView[]; query: 
             <ProductThumb src={row.imageSrc} size="md" />
             <div className="flex min-w-0 flex-1 flex-col gap-1">
               <div className="flex items-start justify-between gap-3">
-                <Link href={row.href} prefetch={false} className={cn(ROW_LINK, 'font-medium min-w-0 text-sm')}>{row.name}</Link>
+                <Link href={row.href} prefetch={false} className={cn(ROW_LINK, 'font-medium min-w-0 text-sm wrap-anywhere')}>{row.name}</Link>
                 <ProductStatusBadge status={row.status} />
               </div>
               <span className="text-xs text-muted-foreground">{`${row.collection} · ${price(row)}`}</span>
