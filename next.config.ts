@@ -13,6 +13,10 @@ const securityHeaders = [
   { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
 ]
 
+// The template posters and their small copies change only with a release: the browser and the CDN keep them for a day
+// instead of asking the origin in Frankfurt for each one. Uploads are a sandbox's own and stay private (app/media).
+const posterCaching = [{ key: 'Cache-Control', value: 'public, max-age=86400' }]
+
 const nextConfig: NextConfig = {
   output: 'standalone',
   poweredByHeader: false,
@@ -38,7 +42,7 @@ const nextConfig: NextConfig = {
     staleTimes: { dynamic: 60 },
   },
   async headers() {
-    return [{ source: '/:path*', headers: securityHeaders }]
+    return [{ source: '/:path*', headers: securityHeaders }, { source: '/posters/:path*', headers: posterCaching }]
   },
 }
 

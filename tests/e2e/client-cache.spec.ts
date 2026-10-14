@@ -183,4 +183,12 @@ test.describe('client cache', () => {
     await menu.getByRole('link', { name: 'Outbox' }).click()
     await expect(letters).toHaveCount(2)
   })
+
+  test('a template poster and its small copy are kept for a day by the browser and the CDN', async ({ request }) => {
+    for (const path of ['/posters/hush.webp', '/posters/thumb/hush.webp']) {
+      const res = await request.get(path)
+      expect(res.status(), path).toBe(200)
+      expect(res.headers()['cache-control'], path).toBe('public, max-age=86400')
+    }
+  })
 })
