@@ -38,6 +38,7 @@ function focusOnArrival(id: string): void {
   }
   requestAnimationFrame(look)
 }
+
 type Group = { value: 'pages' | 'actions' | 'orders' | 'customers' | 'products'; items: Entry[] }
 
 /** The pause after the last keystroke before the palette asks the server. */
