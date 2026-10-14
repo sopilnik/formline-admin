@@ -3,7 +3,7 @@ import {
   DESCRIPTION_MAX, DETAIL_FIELDS, PRODUCT_NAME_MAX, PRODUCT_SLUG_MAX, TAG_MAX, TAGS_MAX, type DetailField, type DetailIssue, type ProductDetails,
 } from '@/lib/products/fields'
 import { PALETTE_IDS } from '@/lib/catalog'
-import { parsePrice } from '@/lib/products/price'
+import { parseBasePrice } from '@/lib/products/price'
 import { isSlug, slugify } from '@/lib/slug'
 import { cleanLine, cleanText } from '@/lib/text'
 
@@ -44,7 +44,7 @@ export function parseProductDetails(input: Record<DetailField, string>): Details
       if (typeof field === 'string' && (DETAIL_FIELDS as readonly string[]).includes(field)) fieldErrors[field as DetailField] ??= problem.message as DetailIssue
     }
   }
-  const basePriceCents = parsePrice(input.basePrice)
+  const basePriceCents = parseBasePrice(input.basePrice)
   if (basePriceCents === null) fieldErrors.basePrice = 'price_invalid'
   const tags = parseTags(input.tags)
   if (tags === null) fieldErrors.tags = 'tags_invalid'

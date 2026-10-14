@@ -23,32 +23,44 @@ type Props = { productId: string; rows: VariantRow[] }
 const ROW = 'grid gap-x-3 gap-y-2 @xl:grid-cols-[minmax(0,1fr)_7rem_6rem_5rem] @xl:items-center'
 
 /**
- * The variants of the product page for a role that may change them. Like the details
- * form, a conflict offers to start afresh from the stored values; a save resets to them anyway.
+ * The variants of the product page for a role that may change them; a save resets them to the stored values. A stock
+ * that moved while the page was open refuses the save: "Load the current stock" takes the stored stock into the stock
+ * fields and leaves every other value typed, to be saved again.
  */
-export function VariantsForm(props: Props) {
-  const router = useRouter()
-  const [reloading, startReload] = useTransition()
-  const [generation, setGeneration] = useState(0)
-  const reload = (): void => startReload(() => {
-    router.refresh()
-    setGeneration(n => n + 1)
-  })
-  return <Variants key={generation} {...props} reloading={reloading} onReload={reload} />
-}
-
-function Variants({ productId, rows, reloading, onReload }: Props & { reloading: boolean; onReload: () => void }) {
+export function VariantsForm({ productId, rows }: Props) {
   const t = useTranslations('products.variants')
   const toast = useToast()
+  const router = useRouter()
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending] = useActionState(saveVariantsAction, IDLE)
+  const [reloading, startReload] = useTransition()
+  // The conflict whose stock was loaded: its alert goes, and its stock fields show the stored stock.
+  const [reloadedAfter, setReloadedAfter] = useState<VariantsState | null>(null)
   const settle = useEffectEvent((result: VariantsState) => {
     if (result.status === 'done') toast.success(t('saved'))
     if (result.status === 'error') form.current?.querySelector<HTMLElement>('[aria-invalid="true"], [role="alert"]')?.focus()
   })
   useEffect(() => settle(state), [state])
-  const error = state.status === 'error' ? state : null
-  const value = (field: VariantField, row: VariantRow, initial: string): string => error?.values[variantFieldName(field, row.id)] ?? initial
+
+  // A stock field typed in after the conflict keeps its text when its default changes: the stored stock is written in.
+  const loaded = reloadedAfter !== null && state === reloadedAfter && !reloading
+  useEffect(() => {
+    if (!loaded) return
+    for (const row of rows) {
+      const input = form.current?.elements.namedItem(variantFieldName('stock', row.id))
+      if (input instanceof HTMLInputElement) input.value = String(row.stock)
+    }
+  }, [loaded, rows])
+
+  const reload = (): void => {
+    setReloadedAfter(state)
+    startReload(() => router.refresh())
+  }
+
+  const error = state.status === 'error' && state !== reloadedAfter ? state : null
+  const typed = state.status === 'error' ? state.values : null
+  const value = (field: VariantField, row: VariantRow, initial: string): string =>
+    (field === 'stock' && loaded ? null : typed?.[variantFieldName(field, row.id)]) ?? initial
   const problem = (field: VariantField, row: VariantRow): string | undefined => {
     const issue = error?.errors[row.id]?.[field]
     return issue ? t(`errors.${issue}`) : undefined
@@ -58,12 +70,11 @@ function Variants({ productId, rows, reloading, onReload }: Props & { reloading:
     const message = problem(name, row)
     return (
       <div className="flex min-w-0 flex-col gap-1">
-        <label htmlFor={id} className="text-xs text-muted-foreground">
-          <span className="@xl:sr-only">{t(`fields.${name}`)}</span>
-          <span className="sr-only">{`, ${row.label}`}</span>
-        </label>
+        <label htmlFor={id} className="text-xs text-muted-foreground @xl:sr-only">{t(`fields.${name}`)}</label>
         <Input
           id={id}
+          // One name with the variant's, written as one text: a label of two parts read as "Stock , A3 · Ink".
+          aria-label={`${t(`fields.${name}`)}, ${row.label}`}
           name={variantFieldName(name, row.id)}
           defaultValue={value(name, row, initial)}
           inputMode={name === 'price' ? 'decimal' : 'numeric'}
@@ -84,7 +95,7 @@ function Variants({ productId, rows, reloading, onReload }: Props & { reloading:
         <ErrorAlert>
           {error.error === 'stock_conflict' ? t('failed.stock_conflict', { skus: error.skus.join(', ') }) : t(`failed.${error.error}`)}
           {error.error === 'stock_conflict' ? (
-            <Button type="button" variant="link" disabled={reloading} className="ml-1 h-auto p-0 text-sm underline" onClick={onReload}>{t('reload')}</Button>
+            <Button type="button" variant="link" disabled={reloading} className="ml-1 h-auto p-0 text-sm underline" onClick={reload}>{t('reload')}</Button>
           ) : null}
         </ErrorAlert>
       ) : null}

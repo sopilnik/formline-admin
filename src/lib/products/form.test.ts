@@ -34,6 +34,10 @@ describe('parseProductDetails', () => {
     expect(parseProductDetails({ ...valid, slug: 'new' })).toEqual({ ok: false, fieldErrors: { slug: 'slug_invalid' } })
   })
 
+  it('refuses a base price whose largest size would cost more than $9,999.99', () => {
+    expect(parseProductDetails({ ...valid, basePrice: '9999.99' })).toEqual({ ok: false, fieldErrors: { basePrice: 'price_invalid' } })
+  })
+
   it('keeps a long name out', () => {
     expect(parseProductDetails({ ...valid, name: 'x'.repeat(121) })).toEqual({ ok: false, fieldErrors: { name: 'name_too_long' } })
   })

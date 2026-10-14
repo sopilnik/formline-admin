@@ -643,7 +643,7 @@
         "slug_invalid": "Use lowercase Latin letters, digits and single hyphens, up to 80 characters. “new” is taken.",
         "slug_taken": "Another product already has this slug.",
         "collection_missing": "Choose a collection.",
-        "price_invalid": "Enter a price from 0.01 to 9999.99.",
+        "price_invalid": "Enter a price from 0.01 to 9959.99. The largest size costs $40 more.",
         "tags_invalid": "Use up to 12 tags of letters, digits and hyphens, each up to 30 characters.",
         "description_too_long": "Keep the description to 4,000 characters.",
         "palettes_missing": "Choose at least one palette.",

@@ -69,7 +69,7 @@ test.describe('product page', () => {
     await details(page).getByLabel('Collection').selectOption({ label: 'Pastel' })
     await details(page).getByRole('button', { name: 'Save changes' }).click()
     await expect(details(page).getByText('Enter a name.')).toBeVisible()
-    await expect(details(page).getByText('Enter a price from 0.01 to 9999.99.')).toBeVisible()
+    await expect(details(page).getByText('Enter a price from 0.01 to 9959.99. The largest size costs $40 more.')).toBeVisible()
     await expect(details(page).getByText(/^Use up to 12 tags/)).toBeVisible()
     await expect(details(page).getByLabel('Name')).toBeFocused()
     await expect(details(page).getByLabel('Name')).toHaveAttribute('aria-invalid', 'true')

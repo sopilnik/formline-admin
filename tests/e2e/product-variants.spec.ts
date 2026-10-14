@@ -48,6 +48,8 @@ test.describe('product variants', () => {
     await page.goto('/products/loud')
     await asSchemaOwner(c => c.query("update fa.product_variants set stock = 3 where workspace_id = $1 and sku = 'loud-a3-signal'", [workspaceId]))
     await variants(page).getByLabel('Stock, A3 · Signal').fill('25')
+    await variants(page).getByLabel('Own price, $, A2 · Signal').fill('55')
+    await variants(page).getByLabel('Low at, A1 · Signal').fill('1')
     await variants(page).getByRole('button', { name: 'Save variants' }).click()
     const alert = variants(page).getByRole('alert')
     await expect(alert).toContainText('The stock of loud-a3-signal changed while the page was open')
@@ -59,6 +61,29 @@ test.describe('product variants', () => {
     await alert.getByRole('button', { name: 'Load the current stock' }).click()
     await expect(variants(page).getByLabel('Stock, A3 · Signal')).toHaveValue('3')
     await expect(variants(page).getByRole('alert')).toHaveCount(0)
+    // Only the stock is loaded: the own price and the threshold typed before stay to be saved.
+    await expect(variants(page).getByLabel('Own price, $, A2 · Signal')).toHaveValue('55')
+    await expect(variants(page).getByLabel('Low at, A1 · Signal')).toHaveValue('1')
+    await variants(page).getByRole('button', { name: 'Save variants' }).click()
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText('Variants saved.')).toBeVisible()
+    const saved = await asSchemaOwner(async c => (await c.query<{ sku: string; price: number | null; threshold: number; stock: number }>(
+      `select sku, price_override_cents as price, low_stock_threshold as threshold, stock from fa.product_variants
+        where workspace_id = $1 and sku in ('loud-a3-signal', 'loud-a2-signal', 'loud-a1-signal') order by sku`, [workspaceId])).rows)
+    expect(saved.map(row => [row.sku, row.price, row.threshold, row.stock])).toEqual([
+      ['loud-a1-signal', null, 1, saved[0]!.stock], ['loud-a2-signal', 5500, saved[1]!.threshold, saved[1]!.stock], ['loud-a3-signal', null, saved[2]!.threshold, 3],
+    ])
+  })
+
+  test('names each field with its variant, a comma straight after the field', async ({ page, context }) => {
+    await signInAsSandboxUser(context)
+    await page.goto('/products/far-orbit')
+    await expect(variants(page).getByRole('group', { name: 'A3 · Ink' })).toBeVisible()
+    // The name Chrome itself gives each field, as a screen reader hears it.
+    const cdp = await page.context().newCDPSession(page)
+    const { nodes } = await cdp.send('Accessibility.getFullAXTree')
+    const names = nodes.filter(node => node.role?.value === 'textbox').map(node => String(node.name?.value ?? ''))
+    expect(names).toEqual(expect.arrayContaining(['Own price, $, A3 · Ink', 'Stock, A3 · Ink', 'Low at, A3 · Ink']))
+    expect(names.filter(name => name.includes(' ,'))).toEqual([])
   })
 
   test('puts the fields under each variant on a phone', async ({ page, context }) => {

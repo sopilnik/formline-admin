@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parsePrice, priceField, SIZE_IDS, SIZE_SURCHARGE_CENTS, variantPriceCents } from '@/lib/products/price'
+import { MAX_BASE_PRICE_CENTS, parseBasePrice, parsePrice, priceField, SIZE_IDS, SIZE_SURCHARGE_CENTS, variantPriceCents } from '@/lib/products/price'
 // The generator's catalog holds the store's surcharges; this test keeps the panel's copy in step with it.
 import { SIZES } from '@seed/catalog'
 
@@ -27,6 +27,14 @@ describe('price fields', () => {
 
   it('refuses anything else', () => {
     for (const bad of ['', '0', '0.00', '10000', '29.999', '-5', '1,234.00', '$29', '29 00', 'abc']) expect(parsePrice(bad), bad).toBeNull()
+  })
+
+  it('takes a base price only as high as keeps its largest size within $9,999.99', () => {
+    expect(MAX_BASE_PRICE_CENTS + Math.max(...Object.values(SIZE_SURCHARGE_CENTS))).toBe(999_999)
+    expect(parseBasePrice('9959.99')).toBe(995_999)
+    expect(parseBasePrice('9960')).toBeNull()
+    expect(parseBasePrice('9999.99')).toBeNull()
+    expect(parseBasePrice('29,5')).toBe(2950)
   })
 
   it('writes the field in the language of the page', () => {

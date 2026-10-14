@@ -38,7 +38,7 @@ test.describe('new product', () => {
     await page.getByLabel('Name').fill('Far Orbit')
     await page.getByLabel('Base price, $').fill('abc')
     await page.getByRole('button', { name: 'Create product' }).click()
-    await expect(page.getByText('Enter a price from 0.01 to 9999.99.')).toBeVisible()
+    await expect(page.getByText('Enter a price from 0.01 to 9959.99. The largest size costs $40 more.')).toBeVisible()
     await expect(page.getByText('Choose at least one palette.')).toBeVisible()
     await expect(page.getByLabel('Base price, $')).toBeFocused()
     await page.getByLabel('Base price, $').fill('31')
