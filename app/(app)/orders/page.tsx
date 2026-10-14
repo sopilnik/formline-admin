@@ -62,23 +62,23 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         <OrdersFilters query={query} statusCounts={page.statusCounts} />
         <ListBody className="@container rounded-lg border bg-card p-2 pb-3">
           {page.rows.length > 0 ? (
-            <>
-              <OrdersTable
-                key={ordersHref(query)}
-                rows={page.rows.map(row => toOrderRowView(row, locale, timeZone))}
-                query={query}
-                canUpdate={can(session.role, 'orders.update', session.workspaceKind)}
-              />
-              <Pager
-                namespace="orders.pager"
-                sizeId="orders-page-size"
-                page={query.page}
-                pages={page.pages}
-                size={query.size}
-                filtered={page.filtered}
-                href={changes => ordersHref(query, changes)}
-              />
-            </>
+            <OrdersTable
+              key={ordersHref(query)}
+              rows={page.rows.map(row => toOrderRowView(row, locale, timeZone))}
+              query={query}
+              canUpdate={can(session.role, 'orders.update', session.workspaceKind)}
+              pager={(
+                <Pager
+                  namespace="orders.pager"
+                  sizeId="orders-page-size"
+                  page={query.page}
+                  pages={page.pages}
+                  size={query.size}
+                  filtered={page.filtered}
+                  href={changes => ordersHref(query, changes)}
+                />
+              )}
+            />
           ) : (
             <div className="flex flex-col items-start gap-1.5 px-3 py-8">
               <h2 className="font-sans text-base font-semibold">{empty}</h2>

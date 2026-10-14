@@ -97,6 +97,19 @@ describe('listOrders', () => {
     expect(page.rows.map(r => r.id)).toEqual(expected.rows.map(r => r.id))
     expect(page.page).toBe(2)
   })
+
+  it('finds an order typed with its "#", and a whole email only in its own orders, not in the emails that contain it', async () => {
+    expect((await list({ q: '#1300' })).rows.map(r => r.number)).toEqual([1300])
+    const customer = async (name: string, email: string) => (await admin.query<{ id: string }>(
+      'insert into fa.customers (workspace_id, name, email) values ($1, $2, $3) returning id', [owner.workspaceId, name, email])).rows[0]!.id
+    const ann = await customer('Ann Berg', 'ann@qa2-mail.test')
+    const joann = await customer('Joann Lund', 'joann@qa2-mail.test')
+    await placeOrder(admin, owner.workspaceId, { number: 91004, customerId: ann, status: 'paid', subtotalCents: 3000, placedAt: now })
+    await placeOrder(admin, owner.workspaceId, { number: 91005, customerId: joann, status: 'paid', subtotalCents: 3000, placedAt: now })
+    expect((await list({ q: 'ann@qa2-mail.test' })).rows.map(r => r.number)).toEqual([91004])
+    expect((await list({ q: 'ANN@QA2-mail.test' })).rows.map(r => r.number)).toEqual([91004])
+    expect((await list({ q: 'qa2-mail' })).rows.map(r => r.number).sort((a, b) => a - b)).toEqual([91004, 91005])
+  })
 })
 
 describe('changeOrderStatus', () => {

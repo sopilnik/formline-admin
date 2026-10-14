@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { IntentLink } from '@/components/app/intent-link'
 import { ROW_LINK } from '@/components/app/row-link'
 import { SortHeader, type SortDir } from '@/components/app/sort-header'
@@ -16,7 +16,14 @@ import { cn } from '@/lib/utils'
 const TH = 'h-10 border-b bg-card px-3 text-left font-medium whitespace-nowrap text-muted-foreground'
 const TD = 'h-11 border-b px-3 group-last/row:border-b-0'
 
-export function OrdersTable({ rows, query, canUpdate }: { rows: OrderRowView[]; query: OrdersQuery; canUpdate: boolean }) {
+type Props = { rows: OrderRowView[]; query: OrdersQuery; canUpdate: boolean; pager: ReactNode }
+
+/**
+ * The orders of one page, as a table from 56 rem and as cards below. The actions on a selection lie over the table's
+ * column headers as a toolbar, which leaves the headers naming the cells; on a phone they float at the foot of the view
+ * and come to rest under the pager.
+ */
+export function OrdersTable({ rows, query, canUpdate, pager }: Props) {
   const t = useTranslations('orders')
   const sortHref = (sort: OrderSort, dir: SortDir): string => ordersHref(query, { sort, dir })
   const [selected, setSelected] = useState<ReadonlySet<string>>(() => new Set())
@@ -46,6 +53,12 @@ export function OrdersTable({ rows, query, canUpdate }: { rows: OrderRowView[]; 
   return (
     <>
       <p aria-live="polite" className="sr-only">{chosen.length > 0 ? t('bulk.selected', { count: chosen.length }) : ''}</p>
+      {chosen.length > 0 ? (
+        // Over the header row beside the select-all box (no space of its own), and sticky with it.
+        <div role="toolbar" aria-label={t('selection.region')} className="sticky top-0 z-30 -mb-10 ml-10 hidden h-10 items-center border-b border-border-strong bg-secondary px-3 @4xl:flex">
+          <BulkActions chosen={chosen} query={query} canUpdate={canUpdate} onClear={clear} />
+        </div>
+      ) : null}
       <table aria-label={t('title')} className="hidden w-full table-fixed border-separate border-spacing-0 text-[13px] @4xl:table">
         <colgroup>
           <col className="w-10" />
@@ -58,26 +71,16 @@ export function OrdersTable({ rows, query, canUpdate }: { rows: OrderRowView[]; 
           <col className="w-24" />
         </colgroup>
         <thead className="sticky top-0 z-20">
-          {chosen.length > 0 ? (
-            // The bulk bar takes the header row's place at the same height.
-            <tr>
-              <th scope="col" className={cn(TH, 'w-10 border-border-strong bg-secondary')}>{allBox}</th>
-              <th colSpan={7} className={cn(TH, 'border-border-strong bg-secondary font-normal text-foreground')}>
-                <BulkActions chosen={chosen} query={query} canUpdate={canUpdate} onClear={clear} />
-              </th>
-            </tr>
-          ) : (
-            <tr>
-              <th scope="col" className={cn(TH, 'w-10')}>{allBox}</th>
-              <SortHeader query={query} sort="number" first="desc" href={sortHref} label={t('columns.order')} />
-              <SortHeader query={query} sort="placed" first="desc" href={sortHref} label={t('columns.placed')} />
-              <th scope="col" className={TH}>{t('columns.customer')}</th>
-              <th scope="col" className={TH}>{t('columns.source')}</th>
-              <th scope="col" className={cn(TH, 'text-center')}>{t('columns.status')}</th>
-              <th scope="col" className={cn(TH, 'text-center')}>{t('columns.items')}</th>
-              <SortHeader query={query} sort="total" first="desc" href={sortHref} label={t('columns.total')} align="right" />
-            </tr>
-          )}
+          <tr>
+            <th scope="col" className={cn(TH, 'w-10', chosen.length > 0 && 'border-border-strong bg-secondary')}>{allBox}</th>
+            <SortHeader query={query} sort="number" first="desc" href={sortHref} label={t('columns.order')} />
+            <SortHeader query={query} sort="placed" first="desc" href={sortHref} label={t('columns.placed')} />
+            <th scope="col" className={TH}>{t('columns.customer')}</th>
+            <th scope="col" className={TH}>{t('columns.source')}</th>
+            <th scope="col" className={cn(TH, 'text-center')}>{t('columns.status')}</th>
+            <th scope="col" className={cn(TH, 'text-center')}>{t('columns.items')}</th>
+            <SortHeader query={query} sort="total" first="desc" href={sortHref} label={t('columns.total')} align="right" />
+          </tr>
         </thead>
         <tbody>
           {rows.map(row => (
@@ -126,15 +129,17 @@ export function OrdersTable({ rows, query, canUpdate }: { rows: OrderRowView[]; 
             </li>
           ))}
         </ul>
-        {chosen.length > 0 ? (
-          <section
-            aria-label={t('selection.region')}
-            className="fixed inset-x-4 bottom-4 z-30 mx-auto max-w-xl rounded-lg border border-border-strong bg-card px-3 py-2 shadow-lg"
-          >
-            <BulkActions chosen={chosen} query={query} canUpdate={canUpdate} onClear={clear} />
-          </section>
-        ) : null}
       </div>
+      {pager}
+      {chosen.length > 0 ? (
+        // Sticky at the foot of the view, and at rest under the pager once the list has scrolled to its end.
+        <section
+          aria-label={t('selection.region')}
+          className="sticky bottom-4 z-30 mx-auto mt-3 max-w-xl rounded-lg border border-border-strong bg-card px-3 py-2 shadow-lg @4xl:hidden"
+        >
+          <BulkActions chosen={chosen} query={query} canUpdate={canUpdate} onClear={clear} />
+        </section>
+      ) : null}
     </>
   )
 }

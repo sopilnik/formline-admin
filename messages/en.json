@@ -181,6 +181,7 @@
       "selected": "{count, number} selected",
       "changeStatus": "Change status",
       "changing": "Changing…",
+      "noTransitions": "Canceled and refunded orders keep their status.",
       "changed": "{count, plural, one {# order changed to {status}.} other {# orders changed to {status}.}}",
       "skipped": "{count, plural, one {Skipped {numbers}: not allowed from its status.} other {Skipped {numbers}: not allowed from their status.}}",
       "noneChanged": "No orders changed.",

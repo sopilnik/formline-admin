@@ -45,7 +45,7 @@ test.describe('CSV export', () => {
     await table.getByRole('checkbox', { name: `Select order #${numbers[0]}` }).check()
     await table.getByRole('checkbox', { name: `Select order #${numbers[1]}` }).check()
     const download = page.waitForEvent('download')
-    await table.getByRole('button', { name: 'Export selected' }).click()
+    await page.getByRole('toolbar', { name: 'Selected orders' }).getByRole('button', { name: 'Export selected' }).click()
     const { lines } = await csvLines(await (await download).path())
     expect(lines.slice(1).map(line => line.split(',')[0])).toEqual(numbers)
   })

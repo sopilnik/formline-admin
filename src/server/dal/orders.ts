@@ -7,6 +7,7 @@ import { canTransition, isOrderStatus, ORDER_STATUSES, returnsStock, type OrderS
 import type { OrderRow } from '@/lib/orders/view'
 import { pageCount } from '@/lib/pagination'
 import { presetRange } from '@/lib/periods'
+import { orderNumberOf } from '@/lib/search'
 import { orderCustomer } from '@/server/dal/sql'
 import { containsPattern } from '@/server/db/like'
 import { customers, images, orderEvents, orderLines, orders, products, productVariants, users } from '@/server/db/schema'
@@ -19,16 +20,25 @@ export const itemsSql = sql<number>`(select coalesce(sum(l.qty), 0)::int from fa
 
 const SORT_COLUMNS = { placed: orders.placedAt, number: orders.number, total: orders.totalCents } as const
 
+// A whole address ("ann@example.com") names one customer: it matches that address only, not the ones that contain it.
+const WHOLE_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+/** The search: an order number with or without its "#", a whole email, or a fragment of a customer's name or email. */
+function searchCondition(term: string): SQL {
+  const number = orderNumberOf(term)
+  const byNumber = number !== null ? eq(orders.number, number) : sql`false`
+  if (WHOLE_EMAIL.test(term)) return or(byNumber, sql`lower(${customers.email}) = lower(${term})`)!
+
+  const pattern = containsPattern(term)
+  return or(byNumber, ilike(customers.name, pattern), ilike(customers.email, pattern))!
+}
+
 /** Every filter of the query as one condition; `withStatus: false` leaves the status out (the chip counts). */
 export function orderFilters(workspaceId: string, query: OrdersQuery, now: Date, timeZone: string, withStatus = true): SQL {
   const parts: SQL[] = [eq(orders.workspaceId, workspaceId)]
   if (withStatus && query.status.length > 0) parts.push(inArray(orders.status, query.status))
   const term = query.q.trim()
-  if (term) {
-    const pattern = containsPattern(term)
-    const byNumber = /^\d{1,9}$/.test(term) ? eq(orders.number, Number(term)) : sql`false`
-    parts.push(or(byNumber, ilike(customers.name, pattern), ilike(customers.email, pattern))!)
-  }
+  if (term) parts.push(searchCondition(term))
   const range = presetRange(query.placed, now, timeZone)
   if (range) parts.push(gte(orders.placedAt, range.start), lt(orders.placedAt, range.end))
   if (query.source !== 'any') parts.push(eq(orders.source, query.source))

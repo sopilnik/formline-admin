@@ -2,7 +2,7 @@
 
 import { ChevronDown } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useTransition } from 'react'
+import { useId, useTransition } from 'react'
 import { ExportButton } from '@/components/app/export-button'
 import { useReach } from '@/components/app/use-reach'
 import { Button } from '@/components/ui/button'
@@ -24,6 +24,7 @@ export function BulkActions({ chosen, query, canUpdate, onClear }: Props) {
   const send = useReach()
   const [pending, startTransition] = useTransition()
   const targets = transitionsForAny(chosen.map(row => row.status))
+  const hint = useId()
 
   const apply = (to: OrderStatus): void => startTransition(async () => {
     const result = await send(() => changeStatusesAction({ ids: chosen.map(row => row.id), to }))
@@ -44,7 +45,14 @@ export function BulkActions({ chosen, query, canUpdate, onClear }: Props) {
       <span className="mr-1.5 font-semibold tabular-nums">{t('selected', { count: chosen.length })}</span>
       {canUpdate ? (
         <DropdownMenu>
-          <DropdownMenuTrigger render={<Button type="button" variant="outline" size="sm" disabled={pending || targets.length === 0} data-focus-key="orders-selection" />}>
+          <DropdownMenuTrigger
+            render={(
+              <Button
+                type="button" variant="outline" size="sm" disabled={pending || targets.length === 0} data-focus-key="orders-selection"
+                aria-describedby={targets.length === 0 ? hint : undefined}
+              />
+            )}
+          >
             {pending ? t('changing') : t('changeStatus')}
             <ChevronDown aria-hidden />
           </DropdownMenuTrigger>
@@ -55,6 +63,7 @@ export function BulkActions({ chosen, query, canUpdate, onClear }: Props) {
           </DropdownMenuContent>
         </DropdownMenu>
       ) : null}
+      {canUpdate && targets.length === 0 ? <span id={hint} className="text-xs text-muted-foreground">{t('noTransitions')}</span> : null}
       <ExportButton namespace="orders.export" cap={EXPORT_CAP} href={ordersExportHref(query, chosen.map(row => row.id))} label={t('exportSelected')} size="sm" />
       <button type="button" onClick={onClear} data-focus-key="orders-selection" className="ml-auto rounded-sm text-ink-2 underline underline-offset-3 hover:text-foreground">
         {t('clear')}
