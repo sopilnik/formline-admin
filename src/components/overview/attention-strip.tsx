@@ -29,7 +29,7 @@ export function AttentionStrip({ counts }: { counts: Counts }) {
               className="inline-flex items-center gap-2 rounded-lg border bg-card px-3.5 py-2 text-[13px] font-medium hover:bg-secondary"
             >
               <Icon aria-hidden className={`size-4 ${tone}`} />
-              <span>{t.rich(key, { count: counts[key], b: chunks => <b className="font-brand text-[15px] font-bold tabular-nums">{chunks}</b> })}</span>
+              <span>{t.rich(key, { count: counts[key], b: chunks => <b className="font-brand text-[15px] font-bold">{chunks}</b> })}</span>
               <ArrowRight aria-hidden className="size-4 text-muted-foreground" />
             </Link>
           </li>
