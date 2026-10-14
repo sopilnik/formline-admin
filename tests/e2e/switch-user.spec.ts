@@ -57,6 +57,27 @@ test.describe('switch user', () => {
     await expect(page.getByRole('button', { name: 'Account menu: Noah Becker, Admin' })).toBeVisible()
   })
 
+  test('says a wrong code aloud and keeps the focus in the code field', async ({ page, context }) => {
+    const { workspaceId } = await signInAsSandboxUser(context)
+    const admin = await asSchemaOwner(async c => (await c.query<{ id: string }>("select id from fa.users where workspace_id = $1 and role = 'admin'", [workspaceId])).rows[0]!)
+    await enrolAuthenticator(workspaceId, admin.id, new Uint8Array(20).fill(7))
+    await page.goto('/overview')
+    await page.getByRole('region', { name: 'Demo sandbox' }).getByRole('button', { name: 'Switch user' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Switch user' })
+    await dialog.getByRole('radio', { name: /Noah Becker/ }).check()
+    const code = dialog.getByLabel('Authenticator code')
+    await code.fill('123456')
+    await code.press('Enter')
+    await expect(dialog.getByRole('alert')).toHaveText('The code is not correct. Check it and try again.')
+    await expect(code).toBeFocused()
+
+    // Sent from the button, the next wrong code brings the focus back to the field it is about.
+    await code.fill('654321')
+    await dialog.getByRole('button', { name: 'Switch', exact: true }).press('Enter')
+    await expect(code).toBeFocused()
+    await expect(dialog.getByRole('alert')).toHaveText('The code is not correct. Check it and try again.')
+  })
+
   test('hands the visitor’s language to the member they continue as', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/overview?lang=ru')

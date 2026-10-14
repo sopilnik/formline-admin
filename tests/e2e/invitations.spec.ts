@@ -40,6 +40,18 @@ test.describe('invitations', () => {
     await expect(page.getByText('It has already been accepted.')).toBeVisible()
   })
 
+  test('puts the focus on an empty name and says why', async ({ page, context }) => {
+    const { workspaceId } = await signInAsSandboxUser(context)
+    await page.goto('/team')
+    await page.getByLabel('Email').fill('lee.park@example.test')
+    await page.getByRole('button', { name: 'Send invitation' }).click()
+    await expect(page.getByRole('list', { name: 'Open invitations' }).getByRole('listitem')).toHaveCount(1)
+    await page.goto(`/invite/${await tokenOfLetter(workspaceId, 'lee.park@example.test')}`)
+    await page.getByRole('button', { name: 'Accept and continue' }).press('Enter')
+    await expect(page.getByRole('main').getByRole('alert')).toHaveText('Enter a name of up to 120 characters.')
+    await expect(page.getByLabel('Your name')).toBeFocused()
+  })
+
   test('says why an invitation is refused', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/team')

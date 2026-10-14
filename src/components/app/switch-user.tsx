@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { useActionState, useState } from 'react'
 import { TextField } from '@/components/app/form-fields'
-import { FormAlert, useErrorText } from '@/components/app/form-parts'
+import { FormAlert, useErrorText, useFocusOnError } from '@/components/app/form-parts'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { IDLE, type FormState } from '@/lib/auth-form'
@@ -19,6 +19,7 @@ export function SwitchUserDialog({ open, onOpenChange, members }: { open: boolea
   const [selected, setSelected] = useState<SwitchTarget | null>(null)
   const [state, action, pending] = useActionState(switchUserAction, IDLE as FormState<'code'>)
   const errorText = useErrorText(state)
+  useFocusOnError(state, 'switch', 'code')
   const handleOpenChange = (next: boolean): void => {
     onOpenChange(next)
     if (!next) setSelected(null)

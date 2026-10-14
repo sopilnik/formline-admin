@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { useActionState } from 'react'
+import { useActionState, useEffect } from 'react'
 import { TextField } from '@/components/app/form-fields'
 import { ErrorAlert } from '@/components/app/form-parts'
 import { Button } from '@/components/ui/button'
@@ -15,6 +15,9 @@ export function AcceptInvitationForm({ token }: { token: string }) {
   const t = useTranslations('invite')
   const [state, action, pending] = useActionState(acceptInvitationAction, IDLE)
   const error = state.status === 'error' ? state : null
+  useEffect(() => {
+    if (state.status === 'error' && state.error === 'name_required') document.getElementById('invite-name')?.focus()
+  }, [state])
   return (
     <form action={action} noValidate className="flex flex-col gap-4">
       <input type="hidden" name="token" value={token} />

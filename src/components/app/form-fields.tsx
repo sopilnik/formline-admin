@@ -11,11 +11,12 @@ type Common = { id: string; name: string; label: string; hint?: string; error?: 
 const describedBy = (id: string, hint?: string, error?: string): string | undefined =>
   [hint ? `${id}-hint` : null, error ? `${id}-error` : null].filter(Boolean).join(' ') || undefined
 
+/** The field's hint, and its error as an alert: it is read out when it appears, even when the focus stays where it was. */
 function Messages({ id, hint, error }: { id: string; hint?: string; error?: string }) {
   return (
     <>
       {hint ? <p id={`${id}-hint`} className="text-xs text-muted-foreground">{hint}</p> : null}
-      {error ? <p id={`${id}-error`} className="text-sm text-destructive">{error}</p> : null}
+      {error ? <p id={`${id}-error`} role="alert" className="text-sm text-destructive">{error}</p> : null}
     </>
   )
 }
