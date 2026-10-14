@@ -32,7 +32,7 @@ const breaking = (rule: (sentence: string) => boolean) =>
 
 describe('English copy', () => {
   it('uses US spelling', () => {
-    const british = /recognis|organis|authoris|customis|summaris|colour|behaviour|favourite|\bcentre|catalogue|licence|cancell|any more/i
+    const british = /recognis|organis|authoris|customis|summaris|colour|behaviour|favourite|\bcentre|catalogue|licence|cancell(ed|ing)\b|\bany more(?=[.,;:!?)]|$)/i
     expect(strings(en).filter(([, text]) => british.test(text))).toEqual([])
   })
 
