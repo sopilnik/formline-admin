@@ -34,8 +34,12 @@ export function ProductImageEditor({ productId, name, image }: Props) {
   const [uploading, setUploading] = useState(false)
   const [removing, startRemove] = useTransition()
   const here = useRef(true)
-  useEffect(() => () => {
-    here.current = false
+  useEffect(() => {
+    here.current = true
+
+    return () => {
+      here.current = false
+    }
   }, [])
   const say = (refused: UploadProblem): string => (refused.error === 'rate_limited' ? t('errors.rate_limited', { minutes: refused.minutes }) : t(`errors.${refused.error}`))
 
