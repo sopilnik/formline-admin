@@ -26,7 +26,7 @@ export function InviteForm() {
   const error = state.status === 'error' ? state : null
   return (
     <form ref={form} action={action} noValidate className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_12rem_auto] lg:items-start">
-      <UnreachedAlert unreached={unreached} />
+      <UnreachedAlert unreached={unreached} className="lg:col-span-full" />
       <TextField
         id="invite-email" name="email" type="email" label={t('email')} autoComplete="off" maxLength={EMAIL_MAX} aria-required
         defaultValue={error?.values.email ?? ''} error={error ? t(`errors.${error.error}`) : undefined}

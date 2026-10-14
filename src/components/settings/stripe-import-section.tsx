@@ -38,7 +38,7 @@ export function StripeImportSection({ recent }: { recent: boolean }) {
         </div>
       ) : null}
       {recent ? (
-        <form ref={form} action={action}>
+        <form ref={form} action={action} className="flex flex-col items-start gap-3">
           <UnreachedAlert unreached={unreached} />
           <Button type="submit" variant="outline" disabled={pending}>{pending ? t('importing') : t('import')}</Button>
         </form>

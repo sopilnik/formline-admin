@@ -19,8 +19,9 @@ export function useErrorText<F extends string>(state: FormState<F>): (field: F) 
 }
 
 /** An error that belongs to no field, above the form or the control it is about; a form may move focus to it. */
-export function ErrorAlert({ children }: { children: ReactNode }) {
-  return <p role="alert" tabIndex={-1} className="rounded-md border border-destructive px-3 py-2 text-sm text-destructive">{children}</p>
+export function ErrorAlert({ children, className }: { children: ReactNode; className?: string }) {
+  const base = 'rounded-md border border-destructive px-3 py-2 text-sm text-destructive'
+  return <p role="alert" tabIndex={-1} className={className ? `${base} ${className}` : base}>{children}</p>
 }
 
 /** A form state's error that belongs to no field, above the form. */
@@ -76,8 +77,8 @@ export function useFormAction<S>(
 }
 
 /** Says that a submit got no answer, once for each such submit. */
-export function UnreachedAlert({ unreached }: { unreached: Unreached | null }) {
+export function UnreachedAlert({ unreached, className }: { unreached: Unreached | null; className?: string }) {
   const t = useTranslations('common')
   if (!unreached) return null
-  return <ErrorAlert key={unreached.count}>{t('unreached')}</ErrorAlert>
+  return <ErrorAlert key={unreached.count} className={className}>{t('unreached')}</ErrorAlert>
 }
