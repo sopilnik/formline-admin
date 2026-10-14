@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { useTransition } from 'react'
+import { useReach } from '@/components/app/use-reach'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { revokeOtherSessionsAction, revokeSessionAction } from '@/server/actions/security'
@@ -12,15 +13,18 @@ type SessionView = { id: string; device: string | null; signedIn: string; lastAc
 export function SessionsSection({ sessions }: { sessions: SessionView[] }) {
   const t = useTranslations('settings.security.sessions')
   const toast = useToast()
+  const send = useReach()
   const [pending, startTransition] = useTransition()
   const others = sessions.filter(session => !session.current).length
   const revoke = (id: string): void => startTransition(async () => {
-    const result = await revokeSessionAction({ id })
+    const result = await send(() => revokeSessionAction({ id }))
+    if (!result) return
     if (result.ok) toast.success(t('revoked'))
     else toast.error(t('failed'))
   })
   const revokeOthers = (): void => startTransition(async () => {
-    const result = await revokeOtherSessionsAction()
+    const result = await send(() => revokeOtherSessionsAction())
+    if (!result) return
     if (result.ok) toast.success(t('revokedOthers', { count: result.data.count }))
     else toast.error(t('failed'))
   })

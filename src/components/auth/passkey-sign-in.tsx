@@ -4,15 +4,20 @@ import { browserSupportsWebAuthnAutofill, sendSignal, startAuthentication } from
 import { FingerprintPattern } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
+import { useReach } from '@/components/app/use-reach'
 import { Button } from '@/components/ui/button'
 import type { AuthError } from '@/lib/auth-form'
 import { passkeyChallenge } from '@/lib/passkeys'
 import { signInWithPasskeyAction, type PasskeyOutcome } from '@/server/actions/passkeys'
 
-async function attempt(autofill: boolean): Promise<PasskeyOutcome> {
+/** How a sign-in calls its action: the button's through useReach, so a request without an answer is said in a toast. */
+type Call = (action: () => Promise<PasskeyOutcome>) => Promise<PasskeyOutcome | null>
+
+async function attempt(autofill: boolean, call: Call): Promise<PasskeyOutcome | null> {
   const options = await passkeyChallenge()
-  const outcome = await signInWithPasskeyAction(await startAuthentication({ optionsJSON: options, useBrowserAutofill: autofill }))
-  if (!outcome.ok && outcome.error === 'passkey_unknown' && outcome.credentialId) {
+  const answer = await startAuthentication({ optionsJSON: options, useBrowserAutofill: autofill })
+  const outcome = await call(() => signInWithPasskeyAction(answer))
+  if (outcome && !outcome.ok && outcome.error === 'passkey_unknown' && outcome.credentialId) {
     // Lets the password manager hide a passkey this site no longer knows.
     await sendSignal({ signalName: 'unknownCredential', rpID: options.rpId ?? location.hostname, credentialID: outcome.credentialId }).catch(() => undefined)
   }
@@ -31,11 +36,12 @@ export function PasskeySignIn() {
   const t = useTranslations('auth')
   const [error, setError] = useState<{ code: AuthError; minutes: number } | null>(null)
   const [pending, setPending] = useState(false)
+  const send = useReach()
 
   useEffect(() => {
     let active = true
     browserSupportsWebAuthnAutofill()
-      .then(supported => (supported && active ? attempt(true) : null))
+      .then(supported => (supported && active ? attempt(true, action => action()) : null))
       .then(outcome => {
         if (!outcome || !active) return
         if (outcome.ok) enter()
@@ -52,7 +58,8 @@ export function PasskeySignIn() {
     setPending(true)
     setError(null)
     try {
-      const outcome = await attempt(false)
+      const outcome = await attempt(false, send)
+      if (!outcome) return
       if (outcome.ok) enter()
       else setError({ code: outcome.error, minutes: outcome.retryAfterMinutes ?? 1 })
     } catch {

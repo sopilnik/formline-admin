@@ -3,6 +3,7 @@
 import { EllipsisVertical } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useState, useTransition } from 'react'
+import { useReach } from '@/components/app/use-reach'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -19,6 +20,7 @@ type Props = { userId: string; person: string; role: AssignableRole; active: boo
 export function MemberActions({ userId, person, role, active }: Props) {
   const t = useTranslations('team.actions')
   const toast = useToast()
+  const send = useReach()
   const [confirming, setConfirming] = useState(false)
   const [pending, startTransition] = useTransition()
   const report = (result: { ok: boolean; code?: string }, done: string): void => {
@@ -26,10 +28,12 @@ export function MemberActions({ userId, person, role, active }: Props) {
     else toast.error(result.code === 'forbidden' ? t('notAllowed') : t('failed'))
   }
   const makeRole = (next: AssignableRole): void => startTransition(async () => {
-    report(await changeMemberRoleAction({ userId, role: next }), t(`roleChanged.${next}`, { person }))
+    const result = await send(() => changeMemberRoleAction({ userId, role: next }))
+    if (result) report(result, t(`roleChanged.${next}`, { person }))
   })
   const setActive = (next: boolean): void => startTransition(async () => {
-    const result = await changeMemberActiveAction({ userId, active: next })
+    const result = await send(() => changeMemberActiveAction({ userId, active: next }))
+    if (!result) return
     setConfirming(false)
     report(result, next ? t('reactivated', { person }) : t('deactivated', { person }))
   })

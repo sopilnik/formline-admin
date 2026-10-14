@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { useEffect, useEffectEvent, useRef, useState, useTransition, type ReactNode } from 'react'
 import { FormAlert, UnreachedAlert, useErrorText, useFocusOnError, useFormAction } from '@/components/app/form-parts'
+import { useReach } from '@/components/app/use-reach'
 import { RecoveryCodesView } from '@/components/auth/recovery-codes-view'
 import { TotpEnrolment } from '@/components/auth/totp-enrolment'
 import { Button } from '@/components/ui/button'
@@ -29,6 +30,7 @@ export function AuthenticatorSection({ enabled, recent, canDisable, secret, qr }
   const t = useTranslations('settings.security.authenticator')
   const errors = useTranslations('auth.errors')
   const toast = useToast()
+  const send = useReach()
 
   const [confirming, setConfirming] = useState(false)
   const [pending, startTransition] = useTransition()
@@ -51,7 +53,8 @@ export function AuthenticatorSection({ enabled, recent, canDisable, secret, qr }
   useEffect(() => settle(state), [state])
 
   const disable = (): void => startTransition(async () => {
-    const result = await disableTotpAction()
+    const result = await send(() => disableTotpAction())
+    if (!result) return
     setConfirming(false)
     if (result.ok) {
       setClosed(state)

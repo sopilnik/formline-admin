@@ -4,6 +4,7 @@ import { ChevronDown } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useTransition } from 'react'
 import { ExportButton } from '@/components/app/export-button'
+import { useReach } from '@/components/app/use-reach'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useToast } from '@/components/ui/toast'
@@ -20,11 +21,13 @@ export function BulkActions({ chosen, query, canUpdate, onClear }: Props) {
   const t = useTranslations('orders.bulk')
   const statusLabel = useTranslations('orders.status')
   const toast = useToast()
+  const send = useReach()
   const [pending, startTransition] = useTransition()
   const targets = transitionsForAny(chosen.map(row => row.status))
 
   const apply = (to: OrderStatus): void => startTransition(async () => {
-    const result = await changeStatusesAction({ ids: chosen.map(row => row.id), to })
+    const result = await send(() => changeStatusesAction({ ids: chosen.map(row => row.id), to }))
+    if (!result) return
     if (!result.ok) {
       toast.error(t('failed'))
       return

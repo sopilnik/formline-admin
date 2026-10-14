@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 import { useRef, useState } from 'react'
 import { TextField } from '@/components/app/form-fields'
 import { FormAlert, UnreachedAlert, useErrorText, useFocusOnError, useFormAction } from '@/components/app/form-parts'
+import { useReach } from '@/components/app/use-reach'
 import { Button } from '@/components/ui/button'
 import { IDLE, type AuthError, type FormState } from '@/lib/auth-form'
 import { passkeyChallenge } from '@/lib/passkeys'
@@ -22,13 +23,16 @@ export function ReauthForm({ intro }: { intro?: string } = {}) {
   const [passkeyError, setPasskeyError] = useState<AuthError | null>(null)
   const [passkeyPending, setPasskeyPending] = useState(false)
   const errorFor = useErrorText(state)
+  const send = useReach()
   useFocusOnError(state, 'reauth', 'password')
 
   async function withPasskey() {
     setPasskeyError(null)
     setPasskeyPending(true)
     try {
-      const outcome = await reauthWithPasskeyAction(await startAuthentication({ optionsJSON: await passkeyChallenge() }))
+      const answer = await startAuthentication({ optionsJSON: await passkeyChallenge() })
+      const outcome = await send(() => reauthWithPasskeyAction(answer))
+      if (!outcome) return
       if (outcome.ok) router.refresh()
       else setPasskeyError(outcome.error)
     } catch {

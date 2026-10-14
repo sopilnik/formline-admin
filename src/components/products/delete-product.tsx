@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useState, useTransition } from 'react'
+import { useReach } from '@/components/app/use-reach'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useToast } from '@/components/ui/toast'
@@ -18,11 +19,13 @@ type Props = { productId: string; name: string; variants: number; hasImage: bool
 export function DeleteProduct({ productId, name, variants, hasImage, blocked }: Props) {
   const t = useTranslations('products.delete')
   const toast = useToast()
+  const send = useReach()
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [pending, startTransition] = useTransition()
   const remove = (): void => startTransition(async () => {
-    const result = await deleteProductAction({ productId })
+    const result = await send(() => deleteProductAction({ productId }))
+    if (!result) return
     if (result.ok) {
       setOpen(false)
       toast.success(t('done', { name }))

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useRef, useState, useTransition, type ChangeEvent } from 'react'
 import { ErrorAlert } from '@/components/app/form-parts'
+import { useReach } from '@/components/app/use-reach'
 import { ProductImage, type PosterImage } from '@/components/products/product-image'
 import { sendProductImage, type UploadProblem } from '@/components/products/send-product-image'
 import { Button } from '@/components/ui/button'
@@ -23,6 +24,7 @@ type Props = { productId: string; name: string; image: PosterImage | null }
 export function ProductImageEditor({ productId, name, image }: Props) {
   const t = useTranslations('products.image')
   const toast = useToast()
+  const send = useReach()
   const router = useRouter()
   const picker = useRef<HTMLInputElement>(null)
   const [problem, setProblem] = useState<UploadProblem | null>(null)
@@ -53,7 +55,8 @@ export function ProductImageEditor({ productId, name, image }: Props) {
   }
 
   const remove = (): void => startRemove(async () => {
-    const result = await removeProductImageAction({ productId })
+    const result = await send(() => removeProductImageAction({ productId }))
+    if (!result) return
     setConfirming(false)
     if (result.ok) toast.success(t('removed'))
     else toast.error(t('removeFailed'))

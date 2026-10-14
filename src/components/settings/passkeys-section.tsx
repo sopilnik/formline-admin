@@ -5,6 +5,7 @@ import { FingerprintPattern } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useState, useTransition, type FormEvent } from 'react'
 import { TextField } from '@/components/app/form-fields'
+import { useReach } from '@/components/app/use-reach'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { useToast } from '@/components/ui/toast'
@@ -20,17 +21,21 @@ export function PasskeysSection({ available, recent, passkeys }: Props) {
   const t = useTranslations('settings.security.passkeys')
   const errors = useTranslations('auth.errors')
   const toast = useToast()
+  const send = useReach()
   const [adding, setAdding] = useState(false)
 
   async function add() {
     setAdding(true)
     try {
-      const begun = await beginPasskeyRegistrationAction()
+      const begun = await send(() => beginPasskeyRegistrationAction())
+      if (!begun) return
       if (!begun.ok) {
         toast.error(errors(begun.error, { minutes: 1 }))
         return
       }
-      const finished = await finishPasskeyRegistrationAction(await startRegistration({ optionsJSON: begun.options }))
+      const answer = await startRegistration({ optionsJSON: begun.options })
+      const finished = await send(() => finishPasskeyRegistrationAction(answer))
+      if (!finished) return
       if (finished.ok) toast.success(t('addedToast'))
       else toast.error(errors(finished.error, { minutes: 1 }))
     } catch {
@@ -74,6 +79,7 @@ function PasskeyItem({ passkey, canRemove }: { passkey: PasskeyView; canRemove: 
   const t = useTranslations('settings.security.passkeys')
   const errors = useTranslations('auth.errors')
   const toast = useToast()
+  const send = useReach()
   const [pending, startTransition] = useTransition()
   const [renaming, setRenaming] = useState(false)
   const [removing, setRemoving] = useState(false)
@@ -83,7 +89,8 @@ function PasskeyItem({ passkey, canRemove }: { passkey: PasskeyView; canRemove: 
     event.preventDefault()
     const name = String(new FormData(event.currentTarget).get('name') ?? '')
     startTransition(async () => {
-      const result = await renamePasskeyAction(passkey.id, name)
+      const result = await send(() => renamePasskeyAction(passkey.id, name))
+      if (!result) return
       if (!result.ok) {
         toast.error(errors(result.error, { minutes: 1 }))
         return
@@ -95,7 +102,8 @@ function PasskeyItem({ passkey, canRemove }: { passkey: PasskeyView; canRemove: 
 
   function remove() {
     startTransition(async () => {
-      const result = await removePasskeyAction(passkey.id)
+      const result = await send(() => removePasskeyAction(passkey.id))
+      if (!result) return
       setRemoving(false)
       if (result.ok) toast.success(t('removedToast'))
       else toast.error(errors(result.error, { minutes: 1 }))

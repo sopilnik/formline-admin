@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useEffect, useOptimistic, useRef, useState, useTransition } from 'react'
 import { ROW_LINK } from '@/components/app/row-link'
+import { useReach } from '@/components/app/use-reach'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { collectionHref } from '@/lib/collections/view'
@@ -31,6 +32,7 @@ function moved(rows: CollectionItem[], move: { id: string; direction: Direction 
 export function CollectionsList({ rows, canWrite }: { rows: CollectionItem[]; canWrite: boolean }) {
   const t = useTranslations('collections')
   const toast = useToast()
+  const send = useReach()
   const [, startTransition] = useTransition()
   const [order, move] = useOptimistic(rows, moved)
   const [announcement, setAnnouncement] = useState('')
@@ -50,7 +52,8 @@ export function CollectionsList({ rows, canWrite }: { rows: CollectionItem[]; ca
     setFocus({ id: row.id, direction })
     startTransition(async () => {
       move({ id: row.id, direction })
-      const result = await moveCollectionAction({ id: row.id, direction })
+      const result = await send(() => moveCollectionAction({ id: row.id, direction }))
+      if (!result) return
       if (result.ok) setAnnouncement(t('moved', { name: row.name, position: result.data.position, count: result.data.of }))
       else toast.error(t('moveFailed'))
     })

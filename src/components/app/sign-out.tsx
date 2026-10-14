@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { createContext, use, useState, useTransition, type ReactNode } from 'react'
+import { useReach } from '@/components/app/use-reach'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { signOutAction } from '@/server/actions/session'
@@ -19,7 +20,8 @@ export function SignOutProvider({ kind, children }: { kind: WorkspaceKind; child
   const t = useTranslations('user')
   const [pending, startTransition] = useTransition()
   const [confirm, setConfirm] = useState(false)
-  const signOut = () => startTransition(async () => { await signOutAction() })
+  const send = useReach()
+  const signOut = () => startTransition(async () => { await send(() => signOutAction()) })
   const request = () => (kind === 'sandbox' ? setConfirm(true) : signOut())
   return (
     <SignOutContext value={{ request, pending }}>

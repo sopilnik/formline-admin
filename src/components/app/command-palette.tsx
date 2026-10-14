@@ -10,6 +10,7 @@ import type { NavItem } from '@/components/app/nav'
 import { useShortcuts } from '@/components/app/shortcuts'
 import { useSignOut } from '@/components/app/sign-out'
 import { useIsApple } from '@/components/app/use-is-apple'
+import { useReach } from '@/components/app/use-reach'
 import { Button } from '@/components/ui/button'
 import { LOCALES } from '@/i18n/locale'
 import { customerHref } from '@/lib/customers/view'
@@ -89,6 +90,7 @@ function PaletteSearch({ items, access, close }: { items: NavItem[]; access: Pal
   const signOut = useSignOut()
   const shortcuts = useShortcuts()
   const [, startTransition] = useTransition()
+  const send = useReach()
   const [query, setQuery] = useState('')
   const [found, setFound] = useState<{ term: string; results: SearchResults } | null>(null)
   const [searching, setSearching] = useState(false)
@@ -135,12 +137,12 @@ function PaletteSearch({ items, access, close }: { items: NavItem[]; access: Pal
     ...THEMES.map(theme => ({
       value: `action:theme-${theme}`,
       label: t(`actions.theme.${theme}`),
-      run: () => startTransition(async () => { await setThemeAction(theme) }),
+      run: () => startTransition(async () => { await send(() => setThemeAction(theme)) }),
     })),
     ...LOCALES.filter(other => other !== locale).map(other => ({
       value: `action:language-${other}`,
       label: t(`actions.language.${other}`),
-      run: () => startTransition(async () => { await setLocaleAction(other) }),
+      run: () => startTransition(async () => { await send(() => setLocaleAction(other)) }),
     })),
     { value: 'action:shortcuts', label: t('actions.shortcuts'), run: shortcuts.showHelp },
     { value: 'action:sign-out', label: t('actions.signOut'), run: signOut.request },

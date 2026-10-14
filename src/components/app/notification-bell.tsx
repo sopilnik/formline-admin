@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState, useTransition } from 'react'
+import { useReach } from '@/components/app/use-reach'
 import { NotificationEntry } from '@/components/notifications/notification-entry'
 import { Button } from '@/components/ui/button'
 import type { NotificationItem } from '@/lib/notifications/view'
@@ -24,6 +25,7 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
   const [open, setOpen] = useState(false)
   const [opened, setOpened] = useState(0)
   const [feed, setFeed] = useState<Feed | null>(null)
+  const send = useReach()
   const [failed, setFailed] = useState(false)
   const [, startTransition] = useTransition()
   const unread = feed?.unread ?? initialUnread
@@ -59,9 +61,11 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
   }
 
   const markAll = () => {
+    const before = feed
     setFeed(current => (current ? { ...current, unread: 0, items: current.items.map(i => ({ ...i, read: true })) } : current))
     startTransition(async () => {
-      await markAllNotificationsReadAction()
+      // No answer: nothing was marked, so the bell shows the entries unread again.
+      if ((await send(() => markAllNotificationsReadAction())) === null) setFeed(before)
     })
   }
 
