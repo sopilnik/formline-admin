@@ -112,6 +112,8 @@
     "count": "{total, plural, one {# order} other {# orders}}",
     "countFiltered": "{filtered, number} of {total, plural, one {# order} other {# orders}}",
     "loading": "Loading orders…",
+    "forbidden": "Your role cannot change orders.",
+    "forbidden": "Your role cannot change orders.",
     "itemsCount": "{count, plural, one {# item} other {# items}}",
     "status": {
       "paid": "Paid",

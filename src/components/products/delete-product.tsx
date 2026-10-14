@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useState, useTransition } from 'react'
-import { useReach } from '@/components/app/use-reach'
+import { useReach, useRoleRefusal } from '@/components/app/use-reach'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useToast } from '@/components/ui/toast'
@@ -20,6 +20,8 @@ export function DeleteProduct({ productId, name, variants, hasImage, blocked }: 
   const t = useTranslations('products.delete')
   const toast = useToast()
   const send = useReach()
+  const refused = useRoleRefusal()
+  const failed = useTranslations('products.form.failed')
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [pending, startTransition] = useTransition()
@@ -34,7 +36,8 @@ export function DeleteProduct({ productId, name, variants, hasImage, blocked }: 
       router.refresh()
     } else {
       setOpen(false)
-      toast.error(result.code === 'conflict' ? t('conflict') : t('failed'))
+      if (result.code === 'forbidden') refused(failed('forbidden'))
+      else toast.error(result.code === 'conflict' ? t('conflict') : t('failed'))
     }
   })
   if (blocked) return <p className="text-[13px] text-muted-foreground">{t(`blocked.${blocked}`)}</p>

@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { useEffect, useEffectEvent, useRef } from 'react'
 import { SelectField, TextField } from '@/components/app/form-fields'
-import { UnreachedAlert, useFormAction } from '@/components/app/form-parts'
+import { UnreachedAlert, useFormAction, useLeaveGuard } from '@/components/app/form-parts'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { ASSIGNABLE_ROLES, EMAIL_MAX } from '@/lib/team'
@@ -18,6 +18,7 @@ export function InviteForm() {
   const toast = useToast()
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending, unreached] = useFormAction(inviteMemberAction, IDLE, form)
+  useLeaveGuard(form)
   const settle = useEffectEvent((result: InviteState) => {
     if (result.status === 'done') toast.success(t('sent', { email: result.email }))
     if (result.status === 'error') form.current?.querySelector<HTMLElement>('[name="email"]')?.focus()

@@ -4,7 +4,7 @@ import { ChevronDown } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useId, useTransition } from 'react'
 import { ExportButton } from '@/components/app/export-button'
-import { useReach } from '@/components/app/use-reach'
+import { useReach, useRoleRefusal } from '@/components/app/use-reach'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useToast } from '@/components/ui/toast'
@@ -22,6 +22,8 @@ export function BulkActions({ chosen, query, canUpdate, onClear }: Props) {
   const statusLabel = useTranslations('orders.status')
   const toast = useToast()
   const send = useReach()
+  const refused = useRoleRefusal()
+  const orders = useTranslations('orders')
   const [pending, startTransition] = useTransition()
   const targets = transitionsForAny(chosen.map(row => row.status))
   const hint = useId()
@@ -30,7 +32,8 @@ export function BulkActions({ chosen, query, canUpdate, onClear }: Props) {
     const result = await send(() => changeStatusesAction({ ids: chosen.map(row => row.id), to }))
     if (!result) return
     if (!result.ok) {
-      toast.error(t('failed'))
+      if (result.code === 'forbidden') refused(orders('forbidden'))
+      else toast.error(t('failed'))
       return
     }
     const { changed, skipped } = result.data

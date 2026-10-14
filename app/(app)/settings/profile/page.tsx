@@ -4,8 +4,7 @@ import { getTranslations } from 'next-intl/server'
 import { ProfileForm } from '@/components/settings/profile-form'
 import { requireSession } from '@/server/auth/sessions'
 import { authorize } from '@/server/authz/authorize'
-import { getSelf } from '@/server/dal/users'
-import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
+import { currentSelf } from '@/server/preferences'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('settings.profile')
@@ -15,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function ProfilePage() {
   const session = await requireSession()
   authorize(session, 'self.manage')
-  const self = await withWorkspace(workspaceContext(session), tx => getSelf(tx, session))
+  const self = await currentSelf()
   if (!self) redirect('/sign-in')
   const t = await getTranslations('settings.profile')
   return (

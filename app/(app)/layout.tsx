@@ -11,18 +11,22 @@ import { parseTheme, THEME_COOKIE } from '@/lib/theme'
 import { requireSession } from '@/server/auth/sessions'
 import { countUnread } from '@/server/dal/notifications'
 import { ordersToProcess } from '@/server/dal/orders'
-import { getSelf, listMembers } from '@/server/dal/users'
+import { listMembers } from '@/server/dal/users'
 import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 import { readerOf } from '@/server/notifications/feed'
+import { currentSelf } from '@/server/preferences'
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const session = await requireSession()
-  const { self, members, toProcess, unread } = await withWorkspace(workspaceContext(session), async tx => ({
-    self: await getSelf(tx, session),
-    members: session.workspaceKind === 'sandbox' ? await listMembers(tx, session.workspaceId) : [],
-    toProcess: await ordersToProcess(tx, session.workspaceId),
-    unread: await countUnread(tx, await readerOf(tx, session)),
-  }))
+  // The member's row is read apart (currentSelf, which the page may read too), at the same time as the frame's counts.
+  const [self, { members, toProcess, unread }] = await Promise.all([
+    currentSelf(),
+    withWorkspace(workspaceContext(session), async tx => ({
+      members: session.workspaceKind === 'sandbox' ? await listMembers(tx, session.workspaceId) : [],
+      toProcess: await ordersToProcess(tx, session.workspaceId),
+      unread: await countUnread(tx, await readerOf(tx, session)),
+    })),
+  ])
   if (!self) redirect('/sign-in')
   const store = await cookies()
   return (

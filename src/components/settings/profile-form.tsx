@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { useEffect, useEffectEvent, useRef } from 'react'
 import { SelectField, TextField } from '@/components/app/form-fields'
-import { ErrorAlert, UnreachedAlert, useFormAction } from '@/components/app/form-parts'
+import { ErrorAlert, UnreachedAlert, useFormAction, useLeaveGuard } from '@/components/app/form-parts'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { LOCALES } from '@/i18n/locale'
@@ -22,6 +22,7 @@ export function ProfileForm({ profile }: { profile: Record<ProfileField, string>
   const toast = useToast()
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending, unreached] = useFormAction(saveProfileAction, IDLE, form)
+  useLeaveGuard(form)
   const settle = useEffectEvent((result: ProfileState) => {
     if (result.status === 'done') toast.success(t('saved'))
     if (result.status === 'error') {

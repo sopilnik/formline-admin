@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useEffect, useEffectEvent, useRef, useState, useTransition } from 'react'
-import { ErrorAlert, UnreachedAlert, useFormAction } from '@/components/app/form-parts'
+import { ErrorAlert, UnreachedAlert, useFormAction, useLeaveGuard } from '@/components/app/form-parts'
 import { ProductDetailsFields } from '@/components/products/product-details-fields'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
@@ -44,6 +44,7 @@ function DetailsForm({ productId, slug, version, values, collections, reloading,
   const router = useRouter()
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending, unreached] = useFormAction(updateProductDetailsAction, IDLE, form)
+  useLeaveGuard(form)
   // Once per result, with the latest translations.
   const settle = useEffectEvent((result: DetailsState) => {
     if (result.status === 'done') {

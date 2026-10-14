@@ -3,7 +3,7 @@
 import { ChevronDown } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useOptimistic, useTransition } from 'react'
-import { useReach } from '@/components/app/use-reach'
+import { useReach, useRoleRefusal } from '@/components/app/use-reach'
 import { StatusBadge } from '@/components/orders/status-badge'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -22,6 +22,8 @@ export function OrderStatusControl({ orderId, number, status, canUpdate }: Props
   const statusLabel = useTranslations('orders.status')
   const toast = useToast()
   const send = useReach()
+  const refused = useRoleRefusal()
+  const orders = useTranslations('orders')
   const [pending, startTransition] = useTransition()
   const [shown, setShown] = useOptimistic(status)
   const targets = nextStatuses(shown)
@@ -30,6 +32,7 @@ export function OrderStatusControl({ orderId, number, status, canUpdate }: Props
     const result = await send(() => changeOrderStatusAction({ orderId, to }))
     if (!result) return
     if (result.ok) toast.success(t('changed', { number, status: statusLabel(to) }))
+    else if (result.code === 'forbidden') refused(orders('forbidden'))
     else toast.error(result.code === 'conflict' ? t('conflict') : t('failed'))
   })
   return (

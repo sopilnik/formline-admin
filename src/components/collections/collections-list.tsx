@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useEffect, useOptimistic, useRef, useState, useTransition } from 'react'
 import { ROW_LINK } from '@/components/app/row-link'
-import { useReach } from '@/components/app/use-reach'
+import { useReach, useRoleRefusal } from '@/components/app/use-reach'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { collectionHref } from '@/lib/collections/view'
@@ -33,6 +33,8 @@ export function CollectionsList({ rows, canWrite }: { rows: CollectionItem[]; ca
   const t = useTranslations('collections')
   const toast = useToast()
   const send = useReach()
+  const refused = useRoleRefusal()
+  const failed = useTranslations('collections.form.failed')
   const [, startTransition] = useTransition()
   const [order, move] = useOptimistic(rows, moved)
   const [announcement, setAnnouncement] = useState('')
@@ -55,6 +57,7 @@ export function CollectionsList({ rows, canWrite }: { rows: CollectionItem[]; ca
       const result = await send(() => moveCollectionAction({ id: row.id, direction }))
       if (!result) return
       if (result.ok) setAnnouncement(t('moved', { name: row.name, position: result.data.position, count: result.data.of }))
+      else if (result.code === 'forbidden') refused(failed('forbidden'))
       else toast.error(t('moveFailed'))
     })
   }

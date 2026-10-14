@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useEffect, useEffectEvent, useRef, useState, useTransition } from 'react'
-import { ErrorAlert, UnreachedAlert, useFormAction } from '@/components/app/form-parts'
+import { ErrorAlert, UnreachedAlert, useFormAction, useLeaveGuard } from '@/components/app/form-parts'
 import { StockLevel } from '@/components/products/variants-table'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -33,6 +33,7 @@ export function VariantsForm({ productId, rows }: Props) {
   const router = useRouter()
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending, unreached] = useFormAction(saveVariantsAction, IDLE, form)
+  useLeaveGuard(form)
   const [reloading, startReload] = useTransition()
   // The conflict whose stock was loaded: its alert goes, and its stock fields show the stored stock.
   const [reloadedAfter, setReloadedAfter] = useState<VariantsState | null>(null)

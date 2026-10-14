@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { useEffect, useEffectEvent, useRef } from 'react'
 import { SelectField, TextField } from '@/components/app/form-fields'
-import { ErrorAlert, UnreachedAlert, useFormAction } from '@/components/app/form-parts'
+import { ErrorAlert, UnreachedAlert, useFormAction, useLeaveGuard } from '@/components/app/form-parts'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { LOW_STOCK_MAX, STORE_FIELDS, STORE_NAME_MAX, SUPPORT_EMAIL_MAX, type StoreField } from '@/lib/settings/fields'
@@ -17,6 +17,7 @@ export function StoreSettingsForm({ settings, zones }: { settings: Record<StoreF
   const toast = useToast()
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending, unreached] = useFormAction(saveStoreSettingsAction, IDLE, form)
+  useLeaveGuard(form)
   const settle = useEffectEvent((result: StoreSettingsState) => {
     if (result.status === 'done') toast.success(t('saved'))
     if (result.status === 'error') {

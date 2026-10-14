@@ -3,7 +3,7 @@
 import { ChevronDown } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useOptimistic, useTransition } from 'react'
-import { useReach } from '@/components/app/use-reach'
+import { useReach, useRoleRefusal } from '@/components/app/use-reach'
 import { ProductStatusBadge } from '@/components/products/product-status-badge'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -21,6 +21,8 @@ export function ProductStatusControl({ productId, name, status, canWrite }: Prop
   const t = useTranslations('products.statusControl')
   const toast = useToast()
   const send = useReach()
+  const refused = useRoleRefusal()
+  const failed = useTranslations('products.form.failed')
   const [pending, startTransition] = useTransition()
   const [shown, setShown] = useOptimistic(status)
   const targets = nextProductStatuses(shown)
@@ -29,6 +31,7 @@ export function ProductStatusControl({ productId, name, status, canWrite }: Prop
     const result = await send(() => changeProductStatusAction({ productId, to }))
     if (!result) return
     if (result.ok) toast.success(t(`done.${to}`, { name }))
+    else if (result.code === 'forbidden') refused(failed('forbidden'))
     else toast.error(result.code === 'conflict' ? t('conflict') : t('failed'))
   })
   return (

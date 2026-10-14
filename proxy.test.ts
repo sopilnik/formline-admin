@@ -117,6 +117,12 @@ describe('request decoration', () => {
     expect(proxy(req('/overview', good)).headers.get('x-middleware-request-x-forwarded-host')).toBeNull()
   })
 
+  it('tells the frame which language a ?lang link chose, and drops the mark when a browser sends it', () => {
+    production()
+    expect(proxy(req('/overview?lang=ru', good)).headers.get('x-middleware-request-x-lang-link')).toBe('ru')
+    expect(proxy(req('/overview', { ...good, 'x-lang-link': 'ru' })).headers.get('x-middleware-request-x-lang-link')).toBeNull()
+  })
+
   it('lets the request that carries ?lang render in that language already', () => {
     production()
     const res = proxy(req('/sign-in?lang=ru', { ...good, cookie: 'formline_theme=dark' }))

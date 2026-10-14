@@ -90,3 +90,28 @@ export function UnreachedAlert({ unreached, className }: { unreached: Unreached 
   if (!unreached) return null
   return <ErrorAlert key={unreached.count} className={className}>{t('unreached')}</ErrorAlert>
 }
+
+/** Whether a field of the form holds something other than what the page brought: typed, and not saved yet. */
+function unsaved(form: HTMLFormElement): boolean {
+  for (const field of form.elements) {
+    if (field instanceof HTMLSelectElement && [...field.options].some(option => option.selected !== option.defaultSelected)) return true
+    if (field instanceof HTMLTextAreaElement && field.value !== field.defaultValue) return true
+    if (!(field instanceof HTMLInputElement) || ['hidden', 'file', 'submit', 'button'].includes(field.type)) continue
+    if (field.type === 'checkbox' || field.type === 'radio' ? field.checked !== field.defaultChecked : field.value !== field.defaultValue) return true
+  }
+  return false
+}
+
+/**
+ * Asks the browser's "Leave the page?" on a reload or a closed tab while the form holds unsaved changes (the owner's
+ * decision of 13 October: the panel's own links are not held up).
+ */
+export function useLeaveGuard(form: RefObject<HTMLFormElement | null>): void {
+  useEffect(() => {
+    const warn = (event: BeforeUnloadEvent): void => {
+      if (form.current && unsaved(form.current)) event.preventDefault()
+    }
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [form])
+}

@@ -1,6 +1,6 @@
 import { isIP } from 'node:net'
 import { NextResponse, type NextRequest } from 'next/server'
-import { LOCALE_COOKIE } from '@/i18n/locale'
+import { knownLocale, LANG_LINK_HEADER, LOCALE_COOKIE } from '@/i18n/locale'
 import { maintenancePage } from '@/lib/maintenance'
 import { PREFERENCE_COOKIE_OPTIONS } from '@/lib/preference-cookie'
 import { sameSecret } from '@/server/auth/tokens'
@@ -70,7 +70,7 @@ export function proxy(request: NextRequest): NextResponse {
   const lang = request.nextUrl.searchParams.get('lang')
   // A form sent from a page opened with ?lang keeps that address: the language is a navigation's, not the form's. A
   // cookie set in a Server Action's answer would draw the page again at the address it had (a renamed product's).
-  const locale = (lang === 'en' || lang === 'ru') && request.method === 'GET' ? lang : null
+  const locale = request.method === 'GET' ? knownLocale(lang) : null
   // The request that carries ?lang renders in that language already, not only the next one.
   if (locale) request.cookies.set(LOCALE_COOKIE, locale)
 
@@ -78,6 +78,9 @@ export function proxy(request: NextRequest): NextResponse {
   const csp = buildCsp(nonce, process.env.NODE_ENV === 'development')
   const headers = new Headers(request.headers)
   if (locale) headers.set('cookie', request.cookies.toString())
+  // Only this proxy says that a link chose the language: a header the browser sent itself is dropped.
+  headers.delete(LANG_LINK_HEADER)
+  if (locale) headers.set(LANG_LINK_HEADER, locale)
   headers.set('x-nonce', nonce)
   headers.set('x-request-id', requestId)
   headers.set('Content-Security-Policy', csp)

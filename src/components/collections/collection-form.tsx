@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { TextAreaField, TextField } from '@/components/app/form-fields'
-import { ErrorAlert, UnreachedAlert, useFormAction } from '@/components/app/form-parts'
+import { ErrorAlert, UnreachedAlert, useFormAction, useLeaveGuard } from '@/components/app/form-parts'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { COLLECTION_DESCRIPTION_MAX, COLLECTION_FIELDS, COLLECTION_NAME_MAX, COLLECTION_SLUG_MAX, type CollectionField } from '@/lib/collections/fields'
@@ -25,6 +25,7 @@ export function CollectionForm({ collection }: Props) {
   const form = useRef<HTMLFormElement>(null)
   const [name, setName] = useState(collection?.name ?? '')
   const [state, action, pending, unreached] = useFormAction(saveCollectionAction, IDLE, form)
+  useLeaveGuard(form)
 
   const settle = useEffectEvent((result: CollectionState) => {
     if (result.status === 'done') {

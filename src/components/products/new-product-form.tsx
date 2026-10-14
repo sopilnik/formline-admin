@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { startTransition, useEffect, useEffectEvent, useRef, useState, type FormEvent } from 'react'
-import { ErrorAlert, UnreachedAlert, useFormAction } from '@/components/app/form-parts'
+import { ErrorAlert, UnreachedAlert, useFormAction, useLeaveGuard } from '@/components/app/form-parts'
 import { NewProductImage } from '@/components/products/new-product-image'
 import { ProductDetailsFields } from '@/components/products/product-details-fields'
 import { sendProductImage } from '@/components/products/send-product-image'
@@ -36,6 +36,7 @@ export function NewProductForm({ collections }: Props) {
   const [name, setName] = useState('')
   const [image, setImage] = useState<File | null>(null)
   const [state, action, pending, unreached] = useFormAction(createProductAction, IDLE, form)
+  useLeaveGuard(form)
   // Once the product exists, its image is on the way until the form moves on.
   const uploading = state.status === 'done' && image !== null
   // True once the owner has left the page, so an upload that ends later does not pull them back.

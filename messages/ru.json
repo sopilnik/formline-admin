@@ -112,6 +112,8 @@
     "count": "{total, plural, one {# заказ} few {# заказа} many {# заказов} other {# заказа}}",
     "countFiltered": "{filtered, number} из {total, plural, one {# заказа} few {# заказов} many {# заказов} other {# заказа}}",
     "loading": "Загружаем заказы…",
+    "forbidden": "Ваша роль не позволяет менять заказы.",
+    "forbidden": "Ваша роль не позволяет менять заказы.",
     "itemsCount": "{count, plural, one {# товар} few {# товара} many {# товаров} other {# товара}}",
     "status": {
       "paid": "Оплачен",
