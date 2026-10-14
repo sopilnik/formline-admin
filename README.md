@@ -1,8 +1,16 @@
 # Formline Admin
 
+![CI](https://github.com/sopilnik/formline-admin/actions/workflows/ci.yml/badge.svg)
+
+**Live demo:** [formline-admin.sopilnik.dev](https://formline-admin.sopilnik.dev)
+
 Admin dashboard for the [Formline](https://formline.sopilnik.dev) poster store. Visitors get a private sandbox with demo
 data; the owner's workspace receives the store's Stripe test orders. PostgreSQL row-level security keeps every workspace
 apart.
+
+![Overview](.github/media/overview.png)
+![Orders in the dark theme](.github/media/orders.png)
+![Product page](.github/media/product.png)
 
 ## Development
 

@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "description": "Admin dashboard for the Formline poster store: per-visitor demo sandboxes, PostgreSQL row-level security, Next.js App Router",
+  "repository": { "type": "git", "url": "git+https://github.com/sopilnik/formline-admin.git" },
+  "homepage": "https://formline-admin.sopilnik.dev",
   "author": "Alexandr Sopilnik",
   "license": "MIT",
   "engines": {
