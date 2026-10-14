@@ -15,7 +15,7 @@ const TD = 'border-b px-3 py-2.5 group-last/row:border-b-0'
 
 function Pill({ children, tone = 'plain' }: { children: ReactNode; tone?: 'plain' | 'off' }) {
   return (
-    <span className={cn('inline-flex rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap', tone === 'off' ? 'bg-badge-cancelled text-status-grey' : 'bg-muted text-ink-2')}>
+    <span className={cn('inline-flex rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap', tone === 'off' ? 'bg-badge-cancelled text-status-gray' : 'bg-muted text-ink-2')}>
       {children}
     </span>
   )

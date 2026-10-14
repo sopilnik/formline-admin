@@ -22,7 +22,7 @@ type Props<S extends string> = {
 
 /**
  * A list's status chips with their counts: "all", then one chip per status, any number of them pressed at once. Each chip
- * is a button of its own in the Tab order (the owner's decision of 13 October), not a stop of a group moved with arrows.
+ * is a button of its own in the Tab order, not a stop of a group moved with arrows.
  */
 export function StatusChips<S extends string>({ label, allLabel, statuses, selected, counts, statusLabel, onChange }: Props<S>) {
   const all = statuses.reduce((sum, status) => sum + counts[status], 0)

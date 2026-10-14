@@ -4,7 +4,7 @@ import { checkNewCredentials, sealCredentials } from '@/server/auth/credentials'
 import { authDeps, type AuthDeps } from '@/server/auth/deps'
 import { findOwner, ownerWorkspaceId } from '@/server/auth/owner'
 import { hashToken, TOKEN_PATTERN } from '@/server/auth/tokens'
-import { summariseUserAgent } from '@/server/auth/user-agent'
+import { summarizeUserAgent } from '@/server/auth/user-agent'
 import { logActivity } from '@/server/dal/activity'
 import { withWorkspace } from '@/server/db/with-workspace'
 import { clearSubject, consume } from '@/server/ratelimit/consume'
@@ -44,7 +44,7 @@ export async function recoverOwner(
   const { rows } = await pool.query<{ expires: Date | null }>(
     'select fa.redeem_owner_recovery($1, $2, $3, $4, $5, $6, $7, $8, $9) as expires',
     [hashToken(recoveryCode), owner.id, sealed.passwordHash, sealed.totpSecretEnc, checked.step, sealed.recoveryHashes,
-      sealed.sessionHash, summariseUserAgent(input.userAgent), ipHash])
+      sealed.sessionHash, summarizeUserAgent(input.userAgent), ipHash])
   const expiresAt = rows[0]?.expires
   if (!expiresAt) return { ok: false, error: 'recovery_invalid', field: 'recoveryCode' }
 

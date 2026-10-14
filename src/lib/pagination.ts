@@ -47,7 +47,7 @@ export function pageCount(rows: number, size: number): number {
   return Math.max(1, Math.ceil(rows / size))
 }
 
-/** The page numbers the pager shows: at most five, the current one centred where the ends allow. */
+/** The page numbers the pager shows: at most five, the current one centered where the ends allow. */
 export function pageWindow(page: number, pages: number): number[] {
   const size = Math.min(5, pages)
   const start = Math.min(Math.max(1, page - 2), pages - size + 1)

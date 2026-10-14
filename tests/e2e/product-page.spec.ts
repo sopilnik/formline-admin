@@ -89,7 +89,7 @@ test.describe('product page', () => {
     const alert = details(page).getByRole('alert')
     await expect(alert).toContainText('Someone changed this product while the page was open.')
     await expect(details(page).getByLabel('Name')).toHaveValue('Louder')
-    // The action sits inside the message in nearly its colour: the underline is what marks it as a control.
+    // The action sits inside the message in nearly its color: the underline is what marks it as a control.
     // The pointer still rests where Save was clicked, and the page has moved under it: away first, or a hover decides.
     await page.mouse.move(0, 0)
     await expect(alert.getByRole('button', { name: 'Load the current version' })).toHaveCSS('text-decoration-line', 'underline')

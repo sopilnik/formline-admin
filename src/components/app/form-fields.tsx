@@ -28,7 +28,7 @@ function Messages({ id, hint, error }: { id: string; hint?: string; error?: stri
 }
 
 /**
- * A labelled input with its hint and its error, both announced with the field. With `labelInside`, for a field the text
+ * A labeled input with its hint and its error, both announced with the field. With `labelInside`, for a field the text
  * above already names, the label shows only as the placeholder; screen readers still hear it as the label.
  */
 export function TextField({ id, label, hint, error, labelInside = false, ...input }: Common & ComponentProps<'input'> & { labelInside?: boolean }) {
@@ -57,7 +57,7 @@ function PasswordInput({ id, className, ...input }: ComponentProps<'input'>) {
         aria-controls={id}
         aria-pressed={shown}
         onClick={() => setShown(value => !value)}
-        className="absolute inset-y-1 right-1 flex w-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-ring"
+        className="absolute inset-y-0.5 right-1 flex w-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-ring"
       >
         {shown ? <EyeOff aria-hidden className="size-4" /> : <Eye aria-hidden className="size-4" />}
         <span className="sr-only">{t('showPassword')}</span>

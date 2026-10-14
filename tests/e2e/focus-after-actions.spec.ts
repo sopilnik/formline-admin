@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 import { E2E_ORIGIN_SECRET } from './constants.ts'
-import { enrolAuthenticator } from './db.ts'
+import { enrollAuthenticator } from './db.ts'
 import { openFramed } from './ready.ts'
 import { signInAsSandboxUser } from './sessions.ts'
 import { expect, test } from './test.ts'
@@ -101,7 +101,7 @@ test.describe('focus after an action', () => {
 
   test('"Replace the authenticator" opens with the focus in its code field, and "Cancel" brings it back', async ({ page, context }) => {
     const { workspaceId, userId } = await signInAsSandboxUser(context)
-    await enrolAuthenticator(workspaceId, userId, new Uint8Array(20).fill(5))
+    await enrollAuthenticator(workspaceId, userId, new Uint8Array(20).fill(5))
     await openFramed(page, '/settings/security')
     const start = page.getByRole('button', { name: 'Replace the authenticator…' })
     await start.press('Enter')

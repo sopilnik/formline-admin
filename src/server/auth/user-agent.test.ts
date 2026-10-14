@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { summariseUserAgent } from '@/server/auth/user-agent'
+import { summarizeUserAgent } from '@/server/auth/user-agent'
 
-describe('summariseUserAgent', () => {
+describe('summarizeUserAgent', () => {
   it.each([
     ['Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', 'Chrome, Linux'],
     ['Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36', 'Chrome, Linux'],
@@ -11,10 +11,10 @@ describe('summariseUserAgent', () => {
     ['Mozilla/5.0 (Android 15; Mobile; rv:140.0) Gecko/140.0 Firefox/140.0', 'Firefox, Android'],
     ['curl/8.9.1', 'Browser, unknown system'],
   ])('%s → %s', (ua, expected) => {
-    expect(summariseUserAgent(ua)).toBe(expected)
+    expect(summarizeUserAgent(ua)).toBe(expected)
   })
 
   it('is null without a header', () => {
-    expect(summariseUserAgent(null)).toBeNull()
+    expect(summarizeUserAgent(null)).toBeNull()
   })
 })

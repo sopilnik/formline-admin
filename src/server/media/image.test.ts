@@ -66,7 +66,7 @@ describe('processImage', () => {
   })
 
   it('keeps the first frame of an animation', async () => {
-    const frames = await Promise.all(['#d62828', '#1d3557'].map(colour => solid(10, 20, colour).png().toBuffer()))
+    const frames = await Promise.all(['#d62828', '#1d3557'].map(color => solid(10, 20, color).png().toBuffer()))
     const animated = await sharp(frames, { join: { animated: true } }).webp({ loop: 0 }).toBuffer()
     expect((await sharp(animated).metadata()).pages).toBe(2)
     const out = processed(await processImage(animated))

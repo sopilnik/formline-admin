@@ -74,7 +74,7 @@ describe('Russian copy (the owner’s rules)', () => {
     expect(strings(ru).filter(([, text]) => /войдите ключом доступа/.test(text))).toEqual([])
   })
 
-  it('calls a sign-in «сессия», never «сеанс» (the owner’s word, 13 October)', () => {
+  it('calls a sign-in «сессия», never «сеанс»', () => {
     expect(strings(ru).filter(([, text]) => /сеанс/i.test(text))).toEqual([])
   })
 

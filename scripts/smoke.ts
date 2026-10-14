@@ -12,8 +12,8 @@ import { fetchRawHosts } from './raw-hosts.ts'
  */
 export type Check = { check: string; ok: boolean; detail?: string; kind?: 'cache'; page?: { url: string; snapshot: string } }
 
-/** The image optimiser asked for a public poster: off in the panel, and refused on a raw hostname like every other path. */
-export const OPTIMISER_PATH = '/_next/image?url=%2Fposters%2Fhush.webp&w=64&q=75'
+/** The image optimizer asked for a public poster: off in the panel, and refused on a raw hostname like every other path. */
+export const OPTIMIZER_PATH = '/_next/image?url=%2Fposters%2Fhush.webp&w=64&q=75'
 
 export const SECURITY_HEADERS: Record<string, RegExp> = {
   'strict-transport-security': /max-age=\d+/,
@@ -97,8 +97,8 @@ export async function requestChecks(o: SmokeOptions): Promise<Check[]> {
     const label = `raw hostname ${index + 1} of ${o.rawHosts.length}`
     const raw = await o.fetch(`https://${host}/sign-in`, { redirect: 'manual', signal: AbortSignal.timeout(20_000) }).catch(() => null)
     checks.push({ check: `${label} refuses a request around the panel's address`, ok: raw?.status === 403, detail: raw ? `HTTP ${raw.status}` : 'no answer' })
-    const image = await o.fetch(`https://${host}${OPTIMISER_PATH}`, { redirect: 'manual', signal: AbortSignal.timeout(20_000) }).catch(() => null)
-    checks.push({ check: `${label} refuses the image optimiser`, ok: image?.status === 403, detail: image ? `HTTP ${image.status}` : 'no answer' })
+    const image = await o.fetch(`https://${host}${OPTIMIZER_PATH}`, { redirect: 'manual', signal: AbortSignal.timeout(20_000) }).catch(() => null)
+    checks.push({ check: `${label} refuses the image optimizer`, ok: image?.status === 403, detail: image ? `HTTP ${image.status}` : 'no answer' })
   }
 
   return checks

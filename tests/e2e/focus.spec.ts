@@ -3,7 +3,7 @@ import { frameHydrated } from './ready.ts'
 import { signInAsSandboxUser } from './sessions.ts'
 import { expect, test } from './test.ts'
 
-/** The primary colour of the light theme, which every focus indicator outside the sidebar draws. */
+/** The primary color of the light theme, which every focus indicator outside the sidebar draws. */
 const RING = 'rgb(191, 58, 14)'
 
 /** Focuses the element the way a keyboard reaches it, so `:focus-visible` matches as it does for a visitor. */
@@ -48,7 +48,7 @@ test.describe('keyboard focus', () => {
     ]
     for (const control of controls) {
       await focusByKeyboard(page, control)
-      // A field fades its outline colour in (transition-colors), so the reading waits for the end of it.
+      // A field fades its outline color in (transition-colors), so the reading waits for the end of it.
       await expect.poll(() => outlineOf(control)).toEqual(['solid', '2px', RING])
     }
 

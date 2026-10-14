@@ -44,7 +44,7 @@ describe('origin check', () => {
     expect(proxy(req('/overview')).status).toBe(403)
   })
 
-  it('honours ORIGIN_AUTH_DISABLED in development', () => {
+  it('honors ORIGIN_AUTH_DISABLED in development', () => {
     vi.stubEnv('NODE_ENV', 'development')
     vi.stubEnv('ORIGIN_AUTH_DISABLED', '1')
     expect(proxy(req('/overview')).status).toBe(200)
@@ -161,7 +161,7 @@ describe('the paths the proxy sees', () => {
   })
 })
 
-describe('the image optimiser', () => {
+describe('the image optimizer', () => {
   it('is off: every image is served as it is', () => {
     expect(nextConfig.images?.unoptimized).toBe(true)
   })

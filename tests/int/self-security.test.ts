@@ -53,11 +53,11 @@ describe('changeOwnPassword', () => {
   it('stores the new password, signs the other devices out and logs it', async () => {
     const current = await device(ownerWorkspace, ownerId, 'Chrome, macOS')
     const other = await device(ownerWorkspace, ownerId, 'Safari, iOS')
-    const result = await changeOwnPassword(current, { password: 'lantern-harbour-quiet-9083', ip: '192.0.2.10' }, { pool: app, isBreached: noBreach })
+    const result = await changeOwnPassword(current, { password: 'lantern-harbor-quiet-9083', ip: '192.0.2.10' }, { pool: app, isBreached: noBreach })
     if (!result.ok) throw new Error(result.error)
     // At least the other device; earlier test files may have left more of the owner's sessions.
     expect(result.signedOut).toBeGreaterThanOrEqual(1)
-    expect(await verifyPassword(await passwordHashOf(), 'lantern-harbour-quiet-9083')).toBe(true)
+    expect(await verifyPassword(await passwordHashOf(), 'lantern-harbor-quiet-9083')).toBe(true)
     expect([await exists(current), await exists(other)]).toEqual([true, false])
     expect((await actions(ownerWorkspace, 'auth.password_changed')).at(-1)).toEqual({ signedOut: result.signedOut })
   })
@@ -65,7 +65,7 @@ describe('changeOwnPassword', () => {
   it('is not offered in a sandbox, where members have no password', async () => {
     const { workspaceId, userId } = await createSandbox(app)
     const session = await device(workspaceId, userId, 'Chrome, Linux')
-    expect(await changeOwnPassword(session, { password: 'lantern-harbour-quiet-9083', ip: null }, { pool: app, isBreached: noBreach })).toEqual({ ok: false, error: 'generic' })
+    expect(await changeOwnPassword(session, { password: 'lantern-harbor-quiet-9083', ip: null }, { pool: app, isBreached: noBreach })).toEqual({ ok: false, error: 'generic' })
   })
 })
 

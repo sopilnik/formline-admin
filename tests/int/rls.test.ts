@@ -25,16 +25,19 @@ async function seed(): Promise<Seeded> {
   const ids = await asSchemaOwner(admin, async c => {
     const one = async (q: string, p: unknown[]) => (await c.query<{ id: string }>(q, p)).rows[0]!.id
     const out: Ids = {}
+
     out.collection = await one("insert into fa.collections (workspace_id, slug, name) values ($1, 'primary', 'Primary') returning id", [ws])
     out.emptyCollection = await one("insert into fa.collections (workspace_id, slug, name) values ($1, 'pastel', 'Pastel') returning id", [ws])
     out.image = await one("insert into fa.images (workspace_id, storage_path, source, width, height, bytes) values ($1, 'posters/loud.webp', 'static', 720, 1018, 1000) returning id", [ws])
     out.product = await one("insert into fa.products (workspace_id, slug, name, collection_id, base_price_cents, status) values ($1, 'loud', 'Loud', $2, 2900, 'published') returning id", [ws, out.collection])
     out.variant = await one("insert into fa.product_variants (workspace_id, product_id, sku, size, palette, stock) values ($1, $2, 'loud-a3-signal', 'a3', 'signal', 5) returning id", [ws, out.product])
+
     out.customer = await one("insert into fa.customers (workspace_id, email, name) values ($1, 'maya@example.test', 'Maya') returning id", [ws])
     await c.query('insert into fa.workspace_counters (workspace_id) values ($1)', [ws])
     out.order = await one("insert into fa.orders (workspace_id, number, customer_id, status, source, delivery, subtotal_cents, shipping_cents, total_cents, placed_at) values ($1, 1001, $2, 'paid', 'seed', 'standard', 2900, 900, 3800, now()) returning id", [ws, out.customer])
     out.line = await one("insert into fa.order_lines (workspace_id, order_id, variant_id, sku, name, unit_cents, qty) values ($1, $2, $3, 'loud-a3-signal', 'Loud · A3 · Signal', 2900, 1) returning id", [ws, out.order, out.variant])
     out.event = await one("insert into fa.order_events (workspace_id, order_id, kind, to_status) values ($1, $2, 'status', 'paid') returning id", [ws, out.order])
+
     out.activity = await one("insert into fa.activity_log (workspace_id, action) values ($1, 'seed') returning id", [ws])
     out.notification = await one("insert into fa.notifications (workspace_id, kind) values ($1, 'order.new') returning id", [ws])
     await c.query("insert into fa.notifications (workspace_id, user_id, kind) values ($1, $2, 'order.new')", [ws, users.manager])
@@ -42,11 +45,13 @@ async function seed(): Promise<Seeded> {
     out.outbox = await one("insert into fa.outbox_emails (workspace_id, to_address, template) values ($1, 'x@example.test', 'invite') returning id", [ws])
     await c.query('insert into fa.store_settings (workspace_id) values ($1)', [ws])
     out.invitation = await one("insert into fa.invitations (workspace_id, email, role, token_hash, invited_by, expires_at) values ($1, 'i@example.test', 'viewer', md5(random()::text) || md5(random()::text), $2, now() + interval '1 day') returning id", [ws, users.admin])
+
     for (const role of ['owner', 'admin', 'manager', 'viewer'] as const) {
       await c.query("insert into fa.sessions (workspace_id, id, user_id, expires_at) values ($1, encode(sha256(gen_random_uuid()::text::bytea), 'hex'), $2, now() + interval '1 hour')", [ws, users[role]])
     }
     out.passkey = await one("insert into fa.passkeys (workspace_id, user_id, credential_id, public_key, name) values ($1, $2, replace(gen_random_uuid()::text, '-', ''), 'pk', 'Laptop') returning id", [ws, users.owner])
     out.recovery = await one("insert into fa.recovery_codes (workspace_id, user_id, code_hash) values ($1, $2, encode(sha256(gen_random_uuid()::text::bytea), 'hex')) returning id", [ws, users.owner])
+
     return out
   })
   return { ws, users, ids }

@@ -17,15 +17,15 @@ async function holdPage(page: Page, path: string): Promise<() => void> {
 
 const top = async (target: Locator) => Math.round((await target.boundingBox())!.y)
 
-/** A colour token of the page's theme as the browser resolves it, read through a throwaway element. */
-const tokenColour = (page: Page, token: string) =>
+/** A color token of the page's theme as the browser resolves it, read through a throwaway element. */
+const tokenColor = (page: Page, token: string) =>
   page.evaluate(name => {
     const probe = document.createElement('div')
     probe.style.backgroundColor = `var(${name})`
     document.body.append(probe)
-    const colour = getComputedStyle(probe).backgroundColor
+    const color = getComputedStyle(probe).backgroundColor
     probe.remove()
-    return colour
+    return color
   }, token)
 
 test.describe('overview layout', () => {
@@ -42,7 +42,7 @@ test.describe('overview layout', () => {
     const loading = page.locator('main [role=status]').filter({ hasText: 'Loading the overview…' })
     await expect(loading).toBeVisible()
     const skeletons = loading.locator('[data-slot=skeleton]')
-    expect(await skeletons.first().evaluate(el => getComputedStyle(el).backgroundColor)).toBe(await tokenColour(page, '--border'))
+    expect(await skeletons.first().evaluate(el => getComputedStyle(el).backgroundColor)).toBe(await tokenColor(page, '--border'))
     const kpisWhileLoading = await top(loading.locator('[data-part=kpi]').first())
     const panels = loading.locator('[data-part=panel]')
     expect(await top(panels.nth(1))).toBeGreaterThan(await top(panels.nth(0)))

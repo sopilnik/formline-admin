@@ -9,9 +9,9 @@ test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip'
 
 /** The contrast of an element's text with its own background, both read as the browser paints them. */
 const ownContrast = (target: Locator) => target.evaluate(element => {
-  const channels = (colour: string) => (colour.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number)
-  const luminance = (colour: string) => {
-    const [r, g, b] = channels(colour).map(c => c / 255).map(c => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
+  const channels = (color: string) => (color.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number)
+  const luminance = (color: string) => {
+    const [r, g, b] = channels(color).map(c => c / 255).map(c => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
     return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!
   }
   const style = getComputedStyle(element)
@@ -34,7 +34,7 @@ test.describe('visual details', () => {
     await openFramed(page, '/team')
     const send = page.getByRole('button', { name: 'Send invitation' })
     await send.hover()
-    // The hover colour fades in (transition-all): the reading waits for the end of it.
+    // The hover color fades in (transition-all): the reading waits for the end of it.
     await expect.poll(() => send.evaluate(element => getComputedStyle(element).backgroundColor)).toBe('rgb(163, 49, 12)')
     expect(await ownContrast(send)).toBeGreaterThanOrEqual(4.5)
   })

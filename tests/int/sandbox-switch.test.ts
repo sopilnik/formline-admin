@@ -26,7 +26,7 @@ async function enter(): Promise<{ session: Session; token: string; users: Record
 }
 
 /** Gives a member of a sandbox an authenticator with this key. */
-async function enrol(workspaceId: string, userId: string, secret: Uint8Array): Promise<void> {
+async function enroll(workspaceId: string, userId: string, secret: Uint8Array): Promise<void> {
   const encrypted = encryptTotpSecret(secret, { workspaceId, userId }, authConfig().totpKeys)
   await asSchemaOwner(admin, c => c.query('update fa.users set totp_secret_enc = $3 where workspace_id = $1 and id = $2', [workspaceId, userId, encrypted]))
 }
@@ -97,7 +97,7 @@ describe('switchUser', () => {
 
   it('stores a code\'s step once: a second switch that carries the same step changes nothing', async () => {
     const { session, users } = await enter()
-    await enrol(session.workspaceId, users.admin!, new Uint8Array(20).fill(3))
+    await enroll(session.workspaceId, users.admin!, new Uint8Array(20).fill(3))
     // A second session of the same visitor, as two tabs that switched at once would hold.
     const other = hashToken(generateToken())
     await admin.query(
@@ -120,8 +120,8 @@ describe('switchUser', () => {
     const a = await enter()
     const b = await enter()
     const secret = new Uint8Array(20).fill(7)
-    await enrol(a.session.workspaceId, a.users.admin!, secret)
-    await enrol(b.session.workspaceId, b.users.admin!, secret)
+    await enroll(a.session.workspaceId, a.users.admin!, secret)
+    await enroll(b.session.workspaceId, b.users.admin!, secret)
 
     const wrong = () => switchUser(a.session, { targetUserId: a.users.admin!, code: '000000', ...meta }, { pool: app })
     for (let i = 1; i < LIMITS.secondFactorFail.limit; i++) expect(await wrong()).toMatchObject({ ok: false, error: 'code_invalid' })
@@ -143,7 +143,7 @@ describe('switchUser', () => {
   it('checks at most ten codes of a burst for one member', async () => {
     await roomInWindow(LIMITS.secondFactorFail.windowSeconds, 20)
     const a = await enter()
-    await enrol(a.session.workspaceId, a.users.admin!, new Uint8Array(20).fill(5))
+    await enroll(a.session.workspaceId, a.users.admin!, new Uint8Array(20).fill(5))
 
     const results = await Promise.all(Array.from({ length: 30 }, () =>
       switchUser(a.session, { targetUserId: a.users.admin!, code: '000000', ...meta }, { pool: app })))

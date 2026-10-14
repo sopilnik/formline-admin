@@ -5,7 +5,7 @@ import { verifyPassword } from '@/server/auth/passwords'
 import { attemptSecondFactor } from '@/server/auth/second-factor'
 import { rotateSession, type NewSession, type Session } from '@/server/auth/sessions'
 import { claimPasswordAttempt, passwordAccepted } from '@/server/auth/sign-in'
-import { summariseUserAgent } from '@/server/auth/user-agent'
+import { summarizeUserAgent } from '@/server/auth/user-agent'
 import { logActivity } from '@/server/dal/activity'
 import { isUser } from '@/server/dal/users'
 import { users } from '@/server/db/schema'
@@ -50,7 +50,7 @@ export async function reauthenticate(
   if (!factor.ok) return factor
   const ipHash = hashIp(input.ip, config.ipHashKey)
   const fresh = await withWorkspace(ctx, async tx => {
-    const rotated = await rotateSession(tx, session, { userAgentSummary: summariseUserAgent(input.userAgent), ipHash })
+    const rotated = await rotateSession(tx, session, { userAgentSummary: summarizeUserAgent(input.userAgent), ipHash })
     if (rotated) await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.reauthenticated', details: { method: 'password' }, ipHash })
     return rotated
   }, pool)

@@ -18,7 +18,7 @@ const roomBesideStatus = (table: Locator, status: number) => table.evaluate((ele
     const cell = cells[index]!.getBoundingClientRect()
     // The source is an element with an icon, whose text range misreads; a plain text cell is measured by its text.
     const before = cells[index - 1]!.firstElementChild?.getBoundingClientRect() ?? text(cells[index - 1]!)
-    return { left: chip.left - before.right, right: text(cells[index + 1]!).left - chip.right, offCentre: (chip.left + chip.right) / 2 - (cell.left + cell.right) / 2 }
+    return { left: chip.left - before.right, right: text(cells[index + 1]!).left - chip.right, offCenter: (chip.left + chip.right) / 2 - (cell.left + cell.right) / 2 }
   })
 }, status)
 
@@ -35,7 +35,7 @@ test.describe('order columns', () => {
     for (const room of await roomBesideStatus(table, 5)) expect(Math.abs(room.left - room.right)).toBeLessThanOrEqual(8)
   })
 
-  test('the latest orders: Status, then Total, the chip centred in the spare room', async ({ page, context }) => {
+  test('the latest orders: Status, then Total, the chip centered in the spare room', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/overview')
     const table = page.getByRole('table', { name: 'Latest orders' })
@@ -44,6 +44,6 @@ test.describe('order columns', () => {
 
     const widths = await table.getByRole('columnheader').evaluateAll(headers => headers.map(th => th.getBoundingClientRect().width))
     expect(widths[3]).toBeGreaterThan(widths[2]!)
-    for (const room of await roomBesideStatus(table, 3)) expect(Math.abs(room.offCentre)).toBeLessThanOrEqual(1)
+    for (const room of await roomBesideStatus(table, 3)) expect(Math.abs(room.offCenter)).toBeLessThanOrEqual(1)
   })
 })

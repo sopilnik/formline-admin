@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* The colour tokens. The hex values are pinned: Tailwind's palette steps are OKLCH and may fall
+/* The color tokens. The hex values are pinned: Tailwind's palette steps are OKLCH and may fall
    below the contrast targets. Every themed token is one light-dark() pair, which
    tests/unit/contrast.test.ts reads from this file. */
 
@@ -54,7 +54,7 @@
   --status-bad: light-dark(#B42318, #F2877D);
   --status-info: light-dark(#1D4E89, #8DB4EA);
   --status-violet: light-dark(#5B3FA6, #B9A5EE);
-  --status-grey: light-dark(#5E6167, #A6A9AE);
+  --status-gray: light-dark(#5E6167, #A6A9AE);
   --badge-paid: light-dark(#E8EEF7, #1C2A3C);
   --badge-processing: light-dark(#FBF1DC, #33280F);
   --badge-shipped: light-dark(#EFEAF8, #2A2340);
@@ -138,7 +138,7 @@
   --color-status-bad: var(--status-bad);
   --color-status-info: var(--status-info);
   --color-status-violet: var(--status-violet);
-  --color-status-grey: var(--status-grey);
+  --color-status-gray: var(--status-gray);
   --color-badge-paid: var(--badge-paid);
   --color-badge-processing: var(--badge-processing);
   --color-badge-shipped: var(--badge-shipped);
@@ -193,7 +193,7 @@
   summary {
     cursor: pointer;
   }
-  /* One solid focus indicator everywhere: the primary colour, 2 px, offset 2 px. */
+  /* One solid focus indicator everywhere: the primary color, 2 px, offset 2 px. */
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-ring;
   }

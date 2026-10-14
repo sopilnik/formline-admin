@@ -9,7 +9,7 @@ describe('order status machine', () => {
     expect(isOrderStatus('lost')).toBe(false)
   })
 
-  it('moves forward one step and allows cancelling before shipping and refunding after paying', () => {
+  it('moves forward one step and allows canceling before shipping and refunding after paying', () => {
     expect(nextStatuses('paid')).toEqual(['processing', 'cancelled', 'refunded'])
     expect(nextStatuses('processing')).toEqual(['shipped', 'cancelled', 'refunded'])
     expect(nextStatuses('shipped')).toEqual(['delivered', 'refunded'])
@@ -21,7 +21,7 @@ describe('order status machine', () => {
     expect(canTransition('delivered', 'refunded')).toBe(true)
   })
 
-  it('returns stock only when cancelling or refunding before shipping', () => {
+  it('returns stock only when canceling or refunding before shipping', () => {
     expect(returnsStock('paid', 'cancelled')).toBe(true)
     expect(returnsStock('processing', 'refunded')).toBe(true)
     expect(returnsStock('shipped', 'refunded')).toBe(false)

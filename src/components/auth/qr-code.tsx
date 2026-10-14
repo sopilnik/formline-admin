@@ -2,7 +2,7 @@ import { encode } from 'uqr'
 
 /**
  * The otpauth URI as an SVG QR code: one path of dark modules on a white quiet
- * zone. Scanners need dark on light, so these two colours stay fixed in both themes.
+ * zone. Scanners need dark on light, so these two colors stay fixed in both themes.
  */
 export function QrCode({ value, label }: { value: string; label: string }) {
   const { data, size } = encode(value, { ecc: 'M', border: 2 })

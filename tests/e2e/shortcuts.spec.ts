@@ -30,10 +30,12 @@ test.describe('keyboard shortcuts', () => {
   test('move between pages, find the page\'s search and list themselves, but never while one types', async ({ page, context }) => {
     await signInAsSandboxUser(context, 'viewer')
     await openFramed(page, '/overview')
+
     await focusPage(page)
     await page.keyboard.press('g')
     await page.keyboard.press('o')
     await expect(page).toHaveURL(/\/orders$/)
+
     await focusPage(page)
     await page.keyboard.press('/')
     const search = page.getByRole('searchbox')
@@ -41,10 +43,12 @@ test.describe('keyboard shortcuts', () => {
     await page.keyboard.type('go')
     await expect(search).toHaveValue('go')
     await expect(page).toHaveURL(/\/orders(\?|$)/)
+
     await focusPage(page)
     await page.keyboard.press('g')
     await page.keyboard.press('c')
     await expect(page).toHaveURL(/\/customers$/)
+
     await focusPage(page)
     await page.keyboard.press('Shift+?')
     await expect(help(page)).toBeVisible()
@@ -53,6 +57,7 @@ test.describe('keyboard shortcuts', () => {
       'Open the search and commands', 'Search on this page', 'Go to Overview', 'Go to Orders', 'Go to Products', 'Go to Customers', 'Show this list',
     ])
     await expectNoSeriousA11yViolationsInBothThemes(page, '[role="dialog"]')
+
     // The list has the keys to itself. The products page was not visited yet, so a go would have asked the server for it
     // before the list closes on Escape.
     const toProducts = navigationsTo(page, '/products')

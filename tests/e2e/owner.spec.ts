@@ -135,7 +135,7 @@ test('the owner adds a passkey, signs in with it and removes it', async ({ page 
   await expect(page.getByText('Passkey added. Your other devices are signed out.')).toBeVisible()
   await expect(page.getByRole('list', { name: 'Passkeys' }).getByRole('listitem')).toHaveCount(1)
 
-  // On a phone the row's buttons sit under the name instead of squeezing it (visual walk, 26 September).
+  // On a phone the row's buttons sit under the name instead of squeezing it.
   await page.setViewportSize({ width: 375, height: 812 })
   const name = page.getByRole('list', { name: 'Passkeys' }).getByRole('listitem').getByText('Chrome, Linux')
   const nameBox = (await name.boundingBox())!
@@ -161,7 +161,19 @@ test('a sensitive change asks for the password and a code once ten minutes have 
   await page.getByLabel('6-digit code').fill(await codeFor(totp))
   await page.getByRole('button', { name: 'Verify' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
+
+  // A page opened while the sign-in was fresh, sent once it is not: each refusal is a new alert, so it is read out again.
+  await page.goto('/settings/security')
+  const recovery = page.getByRole('region', { name: 'Recovery codes' })
+  await expect(recovery.getByRole('button', { name: 'Make new codes…' })).toBeVisible()
   await ageOwnerAuthentication()
+  for (let round = 0; round < 2; round++) {
+    await recovery.getByRole('button', { name: 'Make new codes…' }).click()
+    await page.getByRole('dialog', { name: 'Make new recovery codes?' }).getByRole('button', { name: 'Make new codes' }).click()
+    await expect(recovery.locator('[role="alert"]:not([data-heard])')).toHaveText("Confirm it's you first.")
+    await recovery.getByRole('alert').evaluate(alert => alert.setAttribute('data-heard', ''))
+  }
+
   await page.goto('/settings/security')
   await expect(page.getByRole('button', { name: 'Add a passkey' })).toBeDisabled()
   await expect(page.getByRole('button', { name: 'Add a passkey' })).toHaveAccessibleDescription("Confirm it's you above to add a passkey.")
@@ -211,17 +223,20 @@ test('owner recovery replaces the lost factors and lifts the lock', async ({ pag
   })
   const recoveryCode = /Recovery code: ([a-z2-7]{32})/.exec(output)?.[1]
   expect(recoveryCode).toBeDefined()
+
   await page.goto('/recover')
   await expect(page.getByRole('heading', { level: 1, name: 'Recover the owner account' })).toBeVisible()
   await expectNoSeriousA11yViolations(page)
   totp.secret = await readTotpSecret(page)
   totp.lastStep = 0
+
   // A recovery code saved at setup belongs on the sign-in page, and the message says so.
   await page.getByLabel('Recovery code from the command').fill(recoveryCodes[1]!)
   await page.getByLabel('New password').fill('new-plum-kettle-sunrise-5582')
   await page.getByLabel('6-digit code').fill('000000')
   await page.getByRole('button', { name: 'Recover the account' }).click()
   await expect(formAlert(page)).toHaveText('This is not a valid code from pnpm owner:recovery, or it has expired. The recovery codes you saved go on the sign-in page.')
+
   const oldPassword = owner.password
   owner.password = 'new-plum-kettle-sunrise-5582'
   await page.getByLabel('Recovery code from the command').fill(recoveryCode!)
@@ -231,6 +246,7 @@ test('owner recovery replaces the lost factors and lifts the lock', async ({ pag
   await expect(page.getByRole('heading', { name: 'Save your recovery codes' })).toBeVisible()
   await page.getByRole('link', { name: 'Continue to the dashboard' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
+
   await signOut(page)
   await signInWithPassword(page, oldPassword)
   await expect(formAlert(page)).toHaveText('Email or password is incorrect.')
@@ -247,7 +263,7 @@ test('the owner changes the password, and the new one signs in', async ({ page }
   await page.getByRole('button', { name: 'Verify' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
   await page.goto('/settings/security')
-  const next = 'quiet-harbour-lantern-9083'
+  const next = 'quiet-harbor-lantern-9083'
   await page.getByLabel('New password').fill('too-short')
   await page.getByRole('button', { name: 'Change password' }).click()
   await expect(page.getByText('Use at least 12 characters.')).toBeVisible()

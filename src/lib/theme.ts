@@ -6,7 +6,7 @@ export function parseTheme(value: string | undefined): Theme {
   return THEMES.includes(value as Theme) ? (value as Theme) : 'system'
 }
 
-/** The class on <html>: none for System, so the colour-scheme media query decides without a flash. */
+/** The class on <html>: none for System, so the color-scheme media query decides without a flash. */
 export function themeClassName(theme: Theme): string | undefined {
   return theme === 'system' ? undefined : theme
 }

@@ -28,12 +28,12 @@ describe('vendored ui primitives', () => {
     expect(read(name)).not.toMatch(/data-checked:(bg|border)-primary/)
   })
 
-  it('hovers the default button with its own solid colour, never a see-through primary', () => {
+  it('hovers the default button with its own solid color, never a see-through primary', () => {
     expect(read('button.tsx')).toContain('hover:bg-primary-hover')
     expect(read('button.tsx')).not.toMatch(/bg-primary\/\d/)
   })
 
-  it('keeps the checkbox off the primary colour', () => {
+  it('keeps the checkbox off the primary color', () => {
     expect(read('checkbox.tsx')).not.toMatch(/primary/)
   })
 

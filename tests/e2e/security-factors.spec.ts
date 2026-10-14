@@ -17,7 +17,7 @@ test.describe('second factors in a sandbox', () => {
     const authenticator = section(page, 'Authenticator app Off')
     await expect(authenticator).toBeVisible()
 
-    // The card is the box: inside it the enrolment group has no border, and its title is for screen readers only.
+    // The card is the box: inside it the enrollment group has no border, and its title is for screen readers only.
     const group = authenticator.getByRole('group', { name: 'Authenticator app' })
     await expect(group).toHaveCSS('border-top-width', '0px')
     expect((await group.locator('legend').boundingBox())!.width).toBeLessThanOrEqual(1)

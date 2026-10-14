@@ -4,8 +4,8 @@ import { cn } from '@/lib/utils'
 /** One collection as the page formats it; `bar` is its revenue relative to the largest collection. */
 export type CollectionRow = { slug: string; name: string; posters: number; amount: string; share: string; bar: number }
 
-// The store's collection colours; a collection added later falls back to the chart ink.
-const COLOURS: Record<string, string> = {
+// The store's collection colors; a collection added later falls back to the chart ink.
+const COLORS: Record<string, string> = {
   monochrome: 'bg-collection-mono',
   primary: 'bg-collection-primary',
   pastel: 'bg-collection-pastel',
@@ -28,7 +28,7 @@ export function CollectionRevenue({ rows, other, posters, shipping }: Props) {
               <small className="block text-xs text-muted-foreground">{t('posters', { count: row.posters })}</small>
             </span>
             <span aria-hidden className="h-2.5">
-              <span className={cn('block h-full rounded-[3px]', COLOURS[row.slug] ?? 'bg-chart-ink')} style={{ width: `${(row.bar * 100).toFixed(1)}%` }} />
+              <span className={cn('block h-full rounded-[3px]', COLORS[row.slug] ?? 'bg-chart-ink')} style={{ width: `${(row.bar * 100).toFixed(1)}%` }} />
             </span>
             <span className="text-right tabular-nums">
               {row.amount}

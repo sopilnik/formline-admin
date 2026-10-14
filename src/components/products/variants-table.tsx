@@ -8,7 +8,7 @@ const TH = 'h-9 border-b px-3 text-left font-medium whitespace-nowrap text-muted
 const TD = 'border-b px-3 py-2 first:pl-0 last:pr-0 group-last/row:border-b-0'
 
 /**
- * "Sold out", "2 left" or the count, coloured as on the overview's low-stock card. Spelled, the count carries its
+ * "Sold out", "2 left" or the count, colored as on the overview's low-stock card. Spelled, the count carries its
  * word ("31 in stock"): the phone list has no column header to name it.
  */
 export function StockLevel({ stock, threshold, spelled = false }: { stock: number; threshold: number; spelled?: boolean }) {

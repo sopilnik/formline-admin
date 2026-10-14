@@ -14,8 +14,8 @@ describe('password hashing', () => {
   })
 
   it('treats compatibility forms of the same text as the same password (NFKC)', async () => {
-    const hashed = await hashPassword('ﬁrst-light-harbour')
-    expect(await verifyPassword(hashed, 'first-light-harbour')).toBe(true)
+    const hashed = await hashPassword('ﬁrst-light-harbor')
+    expect(await verifyPassword(hashed, 'first-light-harbor')).toBe(true)
   })
 
   it('spends a verification on unknown emails and always says no', async () => {

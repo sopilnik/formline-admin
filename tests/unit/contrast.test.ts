@@ -55,7 +55,7 @@ describe('token contrast (WCAG 2.2 AA)', () => {
     ['primary', 'background'], ['primary', 'card'], ['primary', 'secondary'], ['destructive', 'card'],
     ['destructive', 'background'], ['primary-foreground', 'primary'], ['primary-foreground', 'primary-hover'], ['selected-foreground', 'selected'],
     ['status-info', 'badge-paid'], ['status-warn', 'badge-processing'], ['status-violet', 'badge-shipped'],
-    ['status-ok', 'badge-delivered'], ['status-grey', 'badge-cancelled'], ['status-bad', 'badge-refunded'],
+    ['status-ok', 'badge-delivered'], ['status-gray', 'badge-cancelled'], ['status-bad', 'badge-refunded'],
     ['sidebar-foreground', 'sidebar'], ['sidebar-muted', 'sidebar'], ['sidebar-strong', 'sidebar'],
     ['sidebar-foreground', 'sidebar-accent'], ['sidebar-bar-foreground', 'sidebar-bar'],
   ] as const)('text %s on %s reaches 4.5:1', (fg, bg) => {
@@ -66,7 +66,7 @@ describe('token contrast (WCAG 2.2 AA)', () => {
     ['input', 'background'], ['input', 'card'], ['ring', 'background'], ['ring', 'card'], ['chart-ink', 'card'],
     ['collection-mono', 'card'], ['collection-primary', 'card'], ['collection-pastel', 'card'],
     ['collection-night', 'card'], ['sidebar-bar', 'sidebar'],
-  ] as const)('boundary or data colour %s against %s reaches 3:1', (fg, bg) => {
+  ] as const)('boundary or data color %s against %s reaches 3:1', (fg, bg) => {
     expectContrast(fg, bg, 3)
   })
 })

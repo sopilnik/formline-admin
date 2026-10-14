@@ -27,7 +27,7 @@ type Props = { model: ChartModel; title: string; summary: string; legend: { curr
 
 /**
  * Revenue by day or week: graphite bars, today's bar hatched, the previous
- * period as a dashed line over an under-stroke in the card colour. "Show as table" swaps
+ * period as a dashed line over an under-stroke in the card color. "Show as table" swaps
  * the plot for the same numbers as a table.
  */
 export function RevenueChart({ model, title, summary, legend }: Props) {

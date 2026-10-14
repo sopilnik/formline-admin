@@ -5,7 +5,7 @@ import { useRef, type ReactNode } from 'react'
 import { TextField } from '@/components/app/form-fields'
 import { FormAlert, UnreachedAlert, useErrorText, useFocusOnError, useFormAction } from '@/components/app/form-parts'
 import { RecoveryCodesView } from '@/components/auth/recovery-codes-view'
-import { TotpEnrolment } from '@/components/auth/totp-enrolment'
+import { TotpEnrollment } from '@/components/auth/totp-enrollment'
 import { Button } from '@/components/ui/button'
 import { IDLE, type FormState } from '@/lib/auth-form'
 import { recoverAction } from '@/server/actions/recover'
@@ -24,7 +24,7 @@ export function RecoverForm({ secret, qr }: { secret: string; qr: ReactNode }) {
       <FormAlert state={state} />
       <TextField id="recover-recoveryCode" name="recoveryCode" autoComplete="off" label={t('recover.code')} error={errorFor('recoveryCode')} />
       <TextField id="recover-password" name="password" type="password" autoComplete="new-password" label={t('fields.newPassword')} hint={t('fields.passwordHint')} error={errorFor('password')} />
-      <TotpEnrolment id="recover-code" secret={secret} qr={qr} error={errorFor('code')} />
+      <TotpEnrollment id="recover-code" secret={secret} qr={qr} error={errorFor('code')} />
       <Button type="submit" disabled={pending}>{pending ? t('recover.pending') : t('recover.submit')}</Button>
     </form>
   )

@@ -12,7 +12,7 @@ import { parseTheme, THEME_COOKIE } from '@/lib/theme'
 import { actorOf, requestIpHash } from '@/server/actor'
 import { requireSession, setSessionCookie } from '@/server/auth/sessions'
 import { TOKEN_PATTERN } from '@/server/auth/tokens'
-import { summariseUserAgent } from '@/server/auth/user-agent'
+import { summarizeUserAgent } from '@/server/auth/user-agent'
 import { can } from '@/server/authz/matrix'
 import { acceptInvitation, inviteMember, resendInvitation, revokeMemberInvitation } from '@/server/team/invitations'
 import { changeMemberActive, changeMemberRole } from '@/server/team/members'
@@ -104,7 +104,7 @@ export async function acceptInvitationAction(_previous: AcceptState, form: FormD
   const name = memberName(typed)
   if (!name) return { status: 'error', error: 'name_required', name: typed }
   const preferences = { locale: await getLocale(), theme: parseTheme((await cookies()).get(THEME_COOKIE)?.value) }
-  const result = await acceptInvitation(session, { token, name, userAgentSummary: summariseUserAgent((await headers()).get('user-agent')), ipHash: await requestIpHash(), preferences })
+  const result = await acceptInvitation(session, { token, name, userAgentSummary: summarizeUserAgent((await headers()).get('user-agent')), ipHash: await requestIpHash(), preferences })
   if (!result.ok) return { status: 'error', error: result.reason, name }
   await setSessionCookie(result.token, result.expiresAt, { demo: true })
   redirect('/overview')

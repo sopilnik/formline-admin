@@ -22,7 +22,7 @@ test.describe('app frame', () => {
     await expectNoSeriousA11yViolations(page)
   })
 
-  test('keyboard focus shows the solid outline in the colour of its surface', async ({ page, context }) => {
+  test('keyboard focus shows the solid outline in the color of its surface', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await openFramed(page, '/overview')
     const orders = page.getByRole('link', { name: /^Orders/ })

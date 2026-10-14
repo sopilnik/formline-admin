@@ -26,7 +26,7 @@ export function canTransition(from: OrderStatus, to: OrderStatus): boolean {
   return NEXT[from].includes(to)
 }
 
-/** Cancelling or refunding before the order shipped puts the posters back on the shelf; afterwards it does not. */
+/** Canceling or refunding before the order shipped puts the posters back on the shelf; afterwards it does not. */
 export function returnsStock(from: OrderStatus, to: OrderStatus): boolean {
   return (to === 'cancelled' || to === 'refunded') && (from === 'paid' || from === 'processing')
 }

@@ -24,7 +24,7 @@ const FIELD = {
 }
 
 test.describe('controls', () => {
-  test('outline buttons and fields draw the input border over the card colour, in both themes', async ({ page, context }) => {
+  test('outline buttons and fields draw the input border over the card color, in both themes', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.setViewportSize({ width: 1280, height: 800 })
     for (const theme of ['light', 'dark'] as const) {

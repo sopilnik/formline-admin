@@ -23,7 +23,8 @@ function textFiles(dir = ''): string[] {
 
 /** Pointers into private design notes, dated decisions and tracker labels: nothing in the repository resolves them. */
 const PRIVATE = new RegExp([
-  'spec §', 'his decision', 'amendment \\d', '\\bW\\.\\d', '\\bstage \\d', '\\btask \\d',
+  'spec §', 'his decision', 'the owner[\'’]s (?:decision|word)', 'visual walk', 'amendment \\d', '\\bW\\.\\d', '\\bstage \\d',
+  '\\btask \\d',
   '\\(\\d{1,2} (?:January|February|March|April|May|June|July|August|September|October|November|December)\\)',
 ].join('|'), 'i')
 

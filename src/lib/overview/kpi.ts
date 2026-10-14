@@ -19,7 +19,7 @@ export function change(current: number | null, previous: number | null): number 
 /** Which way a change goes. */
 export type Trend = 'up' | 'down' | 'flat'
 
-/** The direction of a change, for its colour and its words; none without a change. */
+/** The direction of a change, for its color and its words; none without a change. */
 export function trendOf(change: number | null): Trend | null {
   if (change === null) return null
   return change > 0 ? 'up' : change < 0 ? 'down' : 'flat'

@@ -5,7 +5,7 @@ import { useEffect, useEffectEvent, useRef, useState, useTransition, type ReactN
 import { FormAlert, UnreachedAlert, useErrorText, useFocusOnError, useFormAction } from '@/components/app/form-parts'
 import { useReach } from '@/components/app/use-reach'
 import { RecoveryCodesView } from '@/components/auth/recovery-codes-view'
-import { TotpEnrolment } from '@/components/auth/totp-enrolment'
+import { TotpEnrollment } from '@/components/auth/totp-enrollment'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useToast } from '@/components/ui/toast'
@@ -17,7 +17,7 @@ type Props = {
   recent: boolean
   /** Whether turning it off leaves a second factor: in the owner workspace a passkey must remain. */
   canDisable: boolean
-  /** The new key for an enrolment, made on the server for this page view. */
+  /** The new key for an enrollment, made on the server for this page view. */
   secret: string
   qr: ReactNode
 }
@@ -81,7 +81,7 @@ export function AuthenticatorSection({ enabled, recent, canDisable, secret, qr }
         <form ref={form} action={action} noValidate data-focus-key="authenticator" className="flex max-w-xl flex-col gap-4">
           <UnreachedAlert unreached={unreached} />
           <FormAlert state={shown} />
-          <TotpEnrolment id="totp-code" secret={secret} qr={qr} error={errorFor('code')} bare />
+          <TotpEnrollment id="totp-code" secret={secret} qr={qr} error={errorFor('code')} bare />
           <div className="flex flex-wrap gap-2">
             <Button type="submit" disabled={submitting}>{submitting ? t('saving') : enabled ? t('replace') : t('enable')}</Button>
             {enabled ? <Button type="button" variant="outline" onClick={() => setReplacingAfter(null)}>{t('cancel')}</Button> : null}

@@ -1,6 +1,6 @@
 import { generateHOTP } from '../../src/lib/otp.ts'
 import { E2E_ORIGIN_SECRET } from './constants.ts'
-import { asSchemaOwner, enrolAuthenticator } from './db.ts'
+import { asSchemaOwner, enrollAuthenticator } from './db.ts'
 import { signInAsSandboxUser } from './sessions.ts'
 import { expect, test } from './test.ts'
 
@@ -42,7 +42,7 @@ test.describe('switch user', () => {
     const { workspaceId } = await signInAsSandboxUser(context)
     const admin = await asSchemaOwner(async c => (await c.query<{ id: string }>("select id from fa.users where workspace_id = $1 and role = 'admin'", [workspaceId])).rows[0]!)
     const secret = new Uint8Array(20).fill(9)
-    await enrolAuthenticator(workspaceId, admin.id, secret)
+    await enrollAuthenticator(workspaceId, admin.id, secret)
     await page.goto('/overview')
     await page.getByRole('region', { name: 'Demo sandbox' }).getByRole('button', { name: 'Switch user' }).click()
     const dialog = page.getByRole('dialog', { name: 'Switch user' })
@@ -60,7 +60,7 @@ test.describe('switch user', () => {
   test('says a wrong code aloud and keeps the focus in the code field', async ({ page, context }) => {
     const { workspaceId } = await signInAsSandboxUser(context)
     const admin = await asSchemaOwner(async c => (await c.query<{ id: string }>("select id from fa.users where workspace_id = $1 and role = 'admin'", [workspaceId])).rows[0]!)
-    await enrolAuthenticator(workspaceId, admin.id, new Uint8Array(20).fill(7))
+    await enrollAuthenticator(workspaceId, admin.id, new Uint8Array(20).fill(7))
     await page.goto('/overview')
     await page.getByRole('region', { name: 'Demo sandbox' }).getByRole('button', { name: 'Switch user' }).click()
     const dialog = page.getByRole('dialog', { name: 'Switch user' })
@@ -88,7 +88,7 @@ test.describe('switch user', () => {
   test('says the member is told when ten wrong codes lock their authenticator', async ({ page, context }) => {
     const { workspaceId } = await signInAsSandboxUser(context)
     const admin = await asSchemaOwner(async c => (await c.query<{ id: string }>("select id from fa.users where workspace_id = $1 and role = 'admin'", [workspaceId])).rows[0]!)
-    await enrolAuthenticator(workspaceId, admin.id, new Uint8Array(20).fill(3))
+    await enrollAuthenticator(workspaceId, admin.id, new Uint8Array(20).fill(3))
     await page.goto('/overview')
     await page.getByRole('region', { name: 'Demo sandbox' }).getByRole('button', { name: 'Switch user' }).click()
     const dialog = page.getByRole('dialog', { name: 'Switch user' })

@@ -15,7 +15,7 @@ type Props = {
 }
 
 /** A new authenticator: the QR code and the key to type, then its first code (setup, recovery and the security settings). */
-export function TotpEnrolment({ id, secret, qr, error, bare = false }: Props) {
+export function TotpEnrollment({ id, secret, qr, error, bare = false }: Props) {
   const t = useTranslations('auth')
   return (
     <fieldset className={cn('flex flex-col gap-3', !bare && 'rounded-lg border p-4')}>

@@ -8,7 +8,7 @@ Served to the browser through `next/font/local` (`app/layout.tsx`):
 - `SpaceGrotesk-Regular-latin.woff2`, `SpaceGrotesk-Bold-latin.woff2` — the Formline store's Latin subsets of Space
   Grotesk, used for English headings, the Formline name and figures. Space Grotesk has no Cyrillic.
 
-Licences: `Inter-OFL.txt` and `SpaceGrotesk-OFL.txt`, both SIL Open Font License 1.1.
+Licenses: `Inter-OFL.txt` and `SpaceGrotesk-OFL.txt`, both SIL Open Font License 1.1.
 
 Regenerate the Inter subset with `pyftsubset`:
 

@@ -8,7 +8,7 @@ import { securityNotice } from '@/server/auth/notices'
 import { ownerWorkspaceId } from '@/server/auth/owner'
 import { verifyAgainstDummy, verifyPassword } from '@/server/auth/passwords'
 import { createSession, rotateSession, type CreatedSession, type Session } from '@/server/auth/sessions'
-import { summariseUserAgent } from '@/server/auth/user-agent'
+import { summarizeUserAgent } from '@/server/auth/user-agent'
 import { logActivity } from '@/server/dal/activity'
 import { getSelf } from '@/server/dal/users'
 import { users } from '@/server/db/schema'
@@ -99,7 +99,7 @@ export async function signInWithPassword(input: SignInInput, overrides: Partial<
     workspaceId,
     userId: user.id,
     verified: false,
-    userAgentSummary: summariseUserAgent(input.userAgent),
+    userAgentSummary: summarizeUserAgent(input.userAgent),
     ipHash,
   }), pool)
   return { ok: true, token: session.token, expiresAt: session.expiresAt }
@@ -122,7 +122,7 @@ type Finish = {
 export async function finishSignIn(tx: Tx, input: Finish & { pending: Session }): Promise<SignedIn | null>
 export async function finishSignIn(tx: Tx, input: Finish): Promise<SignedIn>
 export async function finishSignIn(tx: Tx, input: Finish & { pending?: Session }): Promise<SignedIn | null> {
-  const meta = { userAgentSummary: summariseUserAgent(input.userAgent), ipHash: input.ipHash }
+  const meta = { userAgentSummary: summarizeUserAgent(input.userAgent), ipHash: input.ipHash }
   const fresh: CreatedSession | null = input.pending
     ? await rotateSession(tx, input.pending, meta)
     : await createSession(tx, { workspaceId: input.workspaceId, userId: input.userId, verified: true, ...meta })

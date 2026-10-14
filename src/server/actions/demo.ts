@@ -10,7 +10,7 @@ import { formText } from '@/lib/form'
 import { parseTheme, THEME_COOKIE } from '@/lib/theme'
 import { requestIpHash } from '@/server/actor'
 import { requireSession, setSessionCookie } from '@/server/auth/sessions'
-import { summariseUserAgent } from '@/server/auth/user-agent'
+import { summarizeUserAgent } from '@/server/auth/user-agent'
 import { cleanupExpiredSandboxes } from '@/server/sandbox/cleanup'
 import { enterSandbox, type VisitorMeta } from '@/server/sandbox/enter'
 import { resetSandbox } from '@/server/sandbox/lifecycle'
@@ -19,7 +19,7 @@ import { switchUser } from '@/server/sandbox/sign-in-as'
 async function visitorMeta(): Promise<VisitorMeta> {
   return {
     ipHash: await requestIpHash(),
-    userAgentSummary: summariseUserAgent((await headers()).get('user-agent')),
+    userAgentSummary: summarizeUserAgent((await headers()).get('user-agent')),
     locale: await getLocale(),
   }
 }

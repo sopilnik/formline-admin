@@ -4,7 +4,7 @@ import { DEFAULT_ORDERS_QUERY, isOrdersFiltered, ordersExportHref, ordersHref, p
 describe('parseOrdersQuery', () => {
   it('falls back to the defaults for missing and unknown values', () => {
     expect(parseOrdersQuery({})).toEqual(DEFAULT_ORDERS_QUERY)
-    expect(parseOrdersQuery({ status: 'lost', placed: 'yesterday', source: 'fax', sort: 'colour', dir: 'up', page: '0', size: '7' })).toEqual(DEFAULT_ORDERS_QUERY)
+    expect(parseOrdersQuery({ status: 'lost', placed: 'yesterday', source: 'fax', sort: 'color', dir: 'up', page: '0', size: '7' })).toEqual(DEFAULT_ORDERS_QUERY)
     expect(parseOrdersQuery(new URLSearchParams('page=abc&size=100'))).toEqual({ ...DEFAULT_ORDERS_QUERY, size: 100 })
   })
 

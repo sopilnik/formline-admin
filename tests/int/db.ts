@@ -13,7 +13,7 @@ function make(connectionString: string, max: number): pg.Pool {
 export const adminPool = (): pg.Pool => make(MIGRATOR_URL, 4)
 /** The application role through PgBouncer in transaction mode, as in production. */
 export const appPool = (): pg.Pool => make(APP_POOLED_URL, 4)
-/** The application role on one direct connection, for session-level behaviour. */
+/** The application role on one direct connection, for session-level behavior. */
 export const appDirectPool = (): pg.Pool => make(APP_DIRECT_URL, 1)
 
 export async function closeAll(): Promise<void> {

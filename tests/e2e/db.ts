@@ -62,10 +62,10 @@ export function createSandboxSession(role: Role = 'owner'): Promise<{ token: str
 }
 
 /**
- * Enrols an authenticator on a sandbox user: the same AES-256-GCM envelope as the server's
+ * Enrolls an authenticator on a sandbox user: the same AES-256-GCM envelope as the server's
  * totp module, which is server-only and cannot be imported here.
  */
-export async function enrolAuthenticator(workspaceId: string, userId: string, secret: Uint8Array): Promise<void> {
+export async function enrollAuthenticator(workspaceId: string, userId: string, secret: Uint8Array): Promise<void> {
   const [keyId = '', encoded = ''] = E2E_AUTH_ENV.TOTP_ENCRYPTION_KEYS.split(',')[0]!.split(':')
   const iv = randomBytes(12)
   const cipher = createCipheriv('aes-256-gcm', Buffer.from(encoded, 'base64'), iv, { authTagLength: 16 })

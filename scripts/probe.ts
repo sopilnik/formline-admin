@@ -3,13 +3,13 @@
 // when what it found contradicts the design.
 //   p1 — usage: the fields of the summary, the statistics and the billing, and how old the newest statistics point is.
 //   p2 — the edge: forged X-Origin-Auth and X-Client-IP are overwritten at the edge, and the pull zone's own hostnames refuse
-//        a request with or without them, and the image optimiser.
+//        a request with or without them, and the image optimizer.
 //   p3 — the endpoint: its type and whether a pull zone carries it.
 //   p4 — the cache: dynamic pages and /media never come from the edge's cache, built files do.
 //   p5 — the database: readiness through the edge (the app role through Neon's pooler) and its time.
 //   p6 — the demo: "Enter the demo" timed twice and ended.
 import { fetchRawHosts } from './raw-hosts.ts'
-import { demoChecks, OPTIMISER_PATH, requestChecks } from './smoke.ts'
+import { demoChecks, OPTIMIZER_PATH, requestChecks } from './smoke.ts'
 
 type Fetch = typeof fetch
 type Log = (event: Record<string, unknown>) => void
@@ -64,7 +64,7 @@ export async function runProbe(o: ProbeOptions): Promise<boolean> {
         o.fetch(`https://${host}${path}`, { headers, redirect: 'manual', signal: AbortSignal.timeout(20_000) }).then(r => r.status, () => null)
       const direct = await Promise.all(hosts.map(host => status(host, '/sign-in', forged)))
       const bare = await Promise.all(hosts.map(host => status(host, '/sign-in')))
-      const image = await Promise.all(hosts.map(host => status(host, OPTIMISER_PATH)))
+      const image = await Promise.all(hosts.map(host => status(host, OPTIMIZER_PATH)))
 
       o.log({ probe: 'p2', viaEdgeWithForgedHeaders: viaEdge.status, rawHosts: hosts.length, rawWithForgedHeaders: direct, rawWithout: bare, rawImage: image })
       return viaEdge.status === 200 && hosts.length > 0 && [...direct, ...bare, ...image].every(code => code === 403)

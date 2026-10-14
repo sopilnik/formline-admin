@@ -86,7 +86,7 @@ export type StatusChange =
 
 /**
  * One status step: the row is locked, the machine is checked, the event is
- * written, and cancelling or refunding before shipping puts the line quantities back
+ * written, and canceling or refunding before shipping puts the line quantities back
  * on their variants. For a viewer, row-level security applies the update policy to the
  * locking read as well, so the order is simply not found (checked on Postgres 18).
  */

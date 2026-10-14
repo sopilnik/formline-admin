@@ -9,7 +9,7 @@ import { checkNewCredentials, sealCredentials } from '@/server/auth/credentials'
 import { authDeps, type AuthDeps } from '@/server/auth/deps'
 import { ownerWorkspaceId } from '@/server/auth/owner'
 import { sameSecret } from '@/server/auth/tokens'
-import { summariseUserAgent } from '@/server/auth/user-agent'
+import { summarizeUserAgent } from '@/server/auth/user-agent'
 import { logActivity } from '@/server/dal/activity'
 import { updateSelfPreferences } from '@/server/dal/users'
 import { isUniqueViolation } from '@/server/db/errors'
@@ -64,7 +64,7 @@ export async function setupOwner(
     const { rows } = await pool.query<{ expires: Date }>(
       'select fa.create_owner($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) as expires',
       [userId, email, name, sealed.passwordHash, sealed.totpSecretEnc, checked.step, sealed.recoveryHashes,
-        sealed.sessionHash, summariseUserAgent(input.userAgent), ipHash])
+        sealed.sessionHash, summarizeUserAgent(input.userAgent), ipHash])
     expiresAt = rows[0]!.expires
   } catch (error) {
     if (isUniqueViolation(error)) return { ok: false, error: 'owner_exists' }

@@ -21,7 +21,7 @@ import { rotateSession, type NewSession, type Session } from '@/server/auth/sess
 import { signValue, verifySignedValue } from '@/server/auth/signed-cookie'
 import { finishSignIn, type SignedIn } from '@/server/auth/sign-in'
 import { hashToken } from '@/server/auth/tokens'
-import { summariseUserAgent } from '@/server/auth/user-agent'
+import { summarizeUserAgent } from '@/server/auth/user-agent'
 import type { AuthConfig } from '@/server/config'
 import { logActivity } from '@/server/dal/activity'
 import { addPasskey, countPasskeys, deletePasskey, findPasskeyByCredential, listPasskeys, recordPasskeyUse, renamePasskey, type Passkey } from '@/server/dal/passkeys'
@@ -167,7 +167,7 @@ export async function reauthenticateWithPasskey(
   const ipHash = hashIp(meta.ip, config.ipHashKey)
   const fresh = await withWorkspace(ctx, async tx => {
     await recordPasskeyUse(tx, session, passkey.id, verified.newCounter)
-    const rotated = await rotateSession(tx, session, { userAgentSummary: summariseUserAgent(meta.userAgent), ipHash })
+    const rotated = await rotateSession(tx, session, { userAgentSummary: summarizeUserAgent(meta.userAgent), ipHash })
     if (rotated) await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.reauthenticated', details: { method: 'passkey' }, ipHash })
     return rotated
   }, pool)
@@ -235,7 +235,7 @@ export async function finishRegistration(
       publicKey: encodeBase64urlNoPadding(credential.publicKey),
       counter: credential.counter,
       transports: credential.transports ?? [],
-      name: (summariseUserAgent(meta.userAgent) ?? 'Passkey').slice(0, PASSKEY_NAME_MAX),
+      name: (summarizeUserAgent(meta.userAgent) ?? 'Passkey').slice(0, PASSKEY_NAME_MAX),
     })
     await deleteOtherOwnSessions(tx, session)
     await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.passkey_added', entityType: 'passkey', entityId: id, ipHash })

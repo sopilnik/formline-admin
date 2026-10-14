@@ -6,7 +6,7 @@ import { useRef, type ReactNode } from 'react'
 import { TextField } from '@/components/app/form-fields'
 import { FormAlert, UnreachedAlert, useErrorText, useFocusOnError, useFormAction } from '@/components/app/form-parts'
 import { RecoveryCodesView } from '@/components/auth/recovery-codes-view'
-import { TotpEnrolment } from '@/components/auth/totp-enrolment'
+import { TotpEnrollment } from '@/components/auth/totp-enrollment'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { IDLE, type FormState } from '@/lib/auth-form'
 import { setupAction } from '@/server/actions/setup'
@@ -36,7 +36,7 @@ export function SetupForm({ completed, secret, qr }: { completed: boolean; secre
       <TextField id="setup-name" name="name" autoComplete="name" label={t('fields.name')} defaultValue={values.name} error={errorFor('name')} />
       <TextField id="setup-email" name="email" type="email" autoComplete="username" label={t('fields.email')} defaultValue={values.email} error={errorFor('email')} />
       <TextField id="setup-password" name="password" type="password" autoComplete="new-password" label={t('fields.password')} hint={t('fields.passwordHint')} error={errorFor('password')} />
-      <TotpEnrolment id="setup-code" secret={secret} qr={qr} error={errorFor('code')} />
+      <TotpEnrollment id="setup-code" secret={secret} qr={qr} error={errorFor('code')} />
       <Button type="submit" disabled={pending}>{pending ? t('setup.pending') : t('setup.submit')}</Button>
     </form>
   )

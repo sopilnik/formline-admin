@@ -5,7 +5,9 @@ const root = new URL('../../', import.meta.url)
 const components = ['src/components', 'app'].flatMap(dir => (readdirSync(new URL(dir, root), { recursive: true }) as string[])
   .filter(name => name.endsWith('.tsx'))
   .map(name => `${dir}/${name}`))
+
 const read = (name: string): string => readFileSync(new URL(name, root), 'utf8')
+
 const except = (...names: string[]): string[] => components.filter(name => !names.includes(name))
 
 describe('interface pieces', () => {

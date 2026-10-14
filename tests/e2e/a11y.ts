@@ -12,7 +12,7 @@ export async function expectNoSeriousA11yViolations(page: Page, scope?: string):
   // A transition in progress is blended with what lies behind it: axe once read the opening drawer's
   // text against the page under it. Finite animations finish first; an infinite one is left running.
   // A transition replaced midway is cancelled and a new one runs in its place — a theme switch does
-  // that to a confirmation dialog's button colour — so the wait goes round until none is running.
+  // that to a confirmation dialog's button color — so the wait goes round until none is running.
   await page.evaluate(async () => {
     for (;;) {
       const running = document.getAnimations()

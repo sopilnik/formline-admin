@@ -33,23 +33,30 @@ export function ErrorAlert({ children, className }: { children: ReactNode; class
   )
 }
 
-/**
- * How many submits of the enclosing form have been answered. An alert keyed on it is put in anew after each answer, so a
- * refusal worded as the last one is read out again: a live region speaks only when something is added or its text changes.
- */
-export function useAnsweredSubmits(): number {
-  const { pending } = useFormStatus()
+/** How many times `pending` has fallen back to false: one for each answered submit. */
+export function useAnswers(pending: boolean): number {
   const [seen, setSeen] = useState({ pending, answers: 0 })
   if (seen.pending !== pending) setSeen({ pending, answers: pending ? seen.answers : seen.answers + 1 })
   return seen.answers
 }
 
-/** A form state's error that belongs to no field, above the form. */
-export function FormAlert({ state }: { state: FormState }) {
+/**
+ * How many submits of the enclosing form have been answered. An alert keyed on it is put in anew after each answer, so a
+ * refusal worded as the last one is read out again: a live region speaks only when something is added or its text changes.
+ */
+export function useAnsweredSubmits(): number {
+  return useAnswers(useFormStatus().pending)
+}
+
+/**
+ * A form state's error that belongs to no field, above the form. An alert outside its form (a form in a dialog) takes the
+ * count of answers from the form's owner, since it cannot read the form's status itself.
+ */
+export function FormAlert({ state, answers }: { state: FormState; answers?: number }) {
   const message = useErrorMessage()
-  const answers = useAnsweredSubmits()
+  const own = useAnsweredSubmits()
   if (state.status !== 'error' || state.field) return null
-  return <ErrorAlert key={answers}>{message(state)}</ErrorAlert>
+  return <ErrorAlert key={answers ?? own}>{message(state)}</ErrorAlert>
 }
 
 /** After a failed submit, focus goes to the field in error, or to the first field. */
@@ -116,9 +123,9 @@ function unsaved(form: HTMLFormElement): boolean {
 }
 
 /**
- * Asks the browser's "Leave the page?" on a reload or a closed tab while the form holds unsaved changes (the owner's
- * decision of 13 October: the panel's own links are not held up). A form the server `refused` holds them too, though its
- * fields now take what was typed as their defaults.
+ * Asks the browser's "Leave the page?" on a reload or a closed tab while the form holds unsaved changes; the panel's own
+ * links are not held up. A form the server `refused` holds them too, though its fields now take what was typed as their
+ * defaults.
  */
 export function useLeaveGuard(form: RefObject<HTMLFormElement | null>, refused: boolean): void {
   useEffect(() => {

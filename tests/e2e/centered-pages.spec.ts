@@ -9,7 +9,7 @@ test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip'
  * How far the page's first framed block — the form, list or letter card, which spans the column — sits from the middle
  * of the content area, in whole pixels. The page's own wrapper is no measure: it may span the whole area.
  */
-const offCentre = (page: Page) => page.locator('main').evaluate(main => {
+const offCenter = (page: Page) => page.locator('main').evaluate(main => {
   const style = getComputedStyle(main)
   const box = main.getBoundingClientRect()
   const middle = (box.left + parseFloat(style.paddingLeft) + box.right - parseFloat(style.paddingRight)) / 2
@@ -25,7 +25,7 @@ test.describe('narrow pages', () => {
     for (const path of ['/products/new', '/collections/new', '/collections', '/notifications', '/settings/profile', '/settings/security', '/settings/store']) {
       await page.goto(path)
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-      expect(await offCentre(page), path).toBe(0)
+      expect(await offCenter(page), path).toBe(0)
     }
   })
 
@@ -38,6 +38,6 @@ test.describe('narrow pages', () => {
     await page.goto('/outbox')
     await page.getByRole('list', { name: 'Outbox' }).getByRole('link').first().click()
     await expect(page.getByRole('article')).toBeVisible()
-    expect(await offCentre(page)).toBe(0)
+    expect(await offCenter(page)).toBe(0)
   })
 })

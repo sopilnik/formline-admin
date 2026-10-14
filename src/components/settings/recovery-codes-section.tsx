@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { useRef, useState } from 'react'
-import { FormAlert, UnreachedAlert, useFormAction } from '@/components/app/form-parts'
+import { FormAlert, UnreachedAlert, useAnswers, useFormAction } from '@/components/app/form-parts'
 import { RecoveryCodesView } from '@/components/auth/recovery-codes-view'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -15,6 +15,7 @@ export function RecoveryCodesSection({ remaining, hasFactor, recent }: { remaini
   const [confirming, setConfirming] = useState(false)
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending, unreached] = useFormAction(regenerateRecoveryCodesAction, IDLE as FormState, form)
+  const answers = useAnswers(pending)
   const [closed, setClosed] = useState<FormState | null>(null)
   const codes = state.status === 'done' && state !== closed ? state.recoveryCodes : undefined
   return (
@@ -31,7 +32,7 @@ export function RecoveryCodesSection({ remaining, hasFactor, recent }: { remaini
         <>
           {/* The dialog closes as the form is sent, so the section says when no answer came. */}
           <UnreachedAlert unreached={unreached} />
-          <FormAlert state={state} />
+          <FormAlert state={state} answers={answers} />
           <Button type="button" variant="outline" className="self-start" disabled={pending} onClick={() => setConfirming(true)}>
             {pending ? t('making') : t('make')}
           </Button>

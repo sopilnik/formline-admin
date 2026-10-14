@@ -28,7 +28,7 @@ export function LatestOrders({ rows }: { rows: OrderRowView[] }) {
               <th scope="col" className={TH}>{columns('order')}</th>
               <th scope="col" className={TH}>{columns('placed')}</th>
               <th scope="col" className={TH}>{columns('customer')}</th>
-              {/* The status column takes the spare width, so its centred chip sits midway between the name and the total. */}
+              {/* The status column takes the spare width, so its centered chip sits midway between the name and the total. */}
               <th scope="col" className={cn(TH, 'w-full text-center')}>{columns('status')}</th>
               <th scope="col" className={cn(TH, 'text-right')}>{columns('total')}</th>
             </tr>

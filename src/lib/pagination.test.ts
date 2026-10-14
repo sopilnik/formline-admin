@@ -32,7 +32,7 @@ describe('pageCount', () => {
 })
 
 describe('pageWindow', () => {
-  it('shows at most five pages, the current one centred where it can be', () => {
+  it('shows at most five pages, the current one centered where it can be', () => {
     expect(pageWindow(1, 1)).toEqual([1])
     expect(pageWindow(1, 3)).toEqual([1, 2, 3])
     expect(pageWindow(1, 28)).toEqual([1, 2, 3, 4, 5])

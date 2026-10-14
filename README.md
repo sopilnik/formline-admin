@@ -1,12 +1,15 @@
 # Formline Admin
 
-![CI](https://github.com/sopilnik/formline-admin/actions/workflows/ci.yml/badge.svg)
+![Checks and deploy](https://github.com/sopilnik/formline-admin/actions/workflows/deploy.yml/badge.svg)
 
 **Live demo:** [formline-admin.sopilnik.dev](https://formline-admin.sopilnik.dev)
 
 Admin dashboard for the [Formline](https://formline.sopilnik.dev) poster store. Visitors get a private sandbox with demo
 data; the owner's workspace receives the store's Stripe test orders. PostgreSQL row-level security keeps every workspace
 apart.
+
+Built with Next.js 16 (App Router), React 19, TypeScript, PostgreSQL 18 with Drizzle ORM, Tailwind CSS 4, Vitest and
+Playwright.
 
 ![Overview](.github/media/overview.png)
 ![Orders in the dark theme](.github/media/orders.png)
@@ -32,7 +35,7 @@ running. The end-to-end tests build first and need a browser once: `pnpm exec pl
 They run on four workers, each against its own production server (ports 4331, 4332, 4333 and 4335; the Stripe stand-in
 takes 4334), database (`formline_e2e_0` to `_3`) and media folder (`test-media/0` to `/3`). CI runs them on one worker.
 
-`src/components/ui/` holds the shadcn primitives the panel uses, changed only where its focus, colour and language rules
+`src/components/ui/` holds the shadcn primitives the panel uses, changed only where its focus, color and language rules
 need it. Each keeps its unused exports, so it still compares line for line with a fresh copy from the generator.
 
 ## Production-like run
@@ -136,12 +139,12 @@ password and second-factor lockouts.
 ## Deployment
 
 The panel runs as one container on bunny Magic Containers behind bunny's edge. The image (`Dockerfile`) holds the
-standalone server and its start, `scripts/start.ts`, bundled with its dependencies by `pnpm build:start`. The start runs
-the migrations with `DATABASE_URL_MIGRATOR`, checks the `app` role and then starts the server without the migrator's
-address. When the database cannot be reached it serves every page but liveness as a 503 maintenance page and keeps
-retrying every 30 seconds, then restarts the server normally; a refused login, a failed migration or a role with too
-many rights stops the container instead. In the container (`FORMLINE_RUNTIME=container`) the media zone and the three
-Stripe variables are required, and the local stand-ins are refused.
+standalone server and its start (`scripts/container.ts`, which runs `scripts/start.ts`), bundled with its dependencies
+by `pnpm build:start`. The start runs the migrations with `DATABASE_URL_MIGRATOR`, checks the `app` role and then starts
+the server without the migrator's address. When the database cannot be reached it serves every page but liveness as a
+503 maintenance page and keeps retrying every 30 seconds, then restarts the server normally; a refused login, a failed
+migration or a role with too many rights stops the container instead. In the container (`FORMLINE_RUNTIME=container`)
+the media zone and the three Stripe variables are required, and the local stand-ins are refused.
 
 The container's variables:
 
@@ -192,3 +195,7 @@ is already stopped is left alone and the run passes. To bring the panel back, fi
 application again in the bunny dashboard (Magic Containers → the application → Deploy); the next run checks it again.
 Every deploy switches the guard back on, because GitHub disables a scheduled workflow after 60 days without activity in
 a public repository.
+
+## License
+
+MIT, see [LICENSE](LICENSE).

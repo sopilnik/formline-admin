@@ -2,7 +2,7 @@ import 'server-only'
 import sharp from 'sharp'
 import { THUMB } from '@/lib/thumbs'
 
-// The container caps itself, so image work is serialised and uncached.
+// The container caps itself, so image work is serialized and uncached.
 sharp.concurrency(1)
 sharp.cache(false)
 

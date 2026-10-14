@@ -33,7 +33,7 @@ export function scaleTop(values: readonly (number | null)[]): number {
 }
 
 /**
- * The labelled buckets: every day on 7 days; weekly, ending on today, on 30 days and
+ * The labeled buckets: every day on 7 days; weekly, ending on today, on 30 days and
  * this month; every week on 90 days. Every other label, counted back from today's, is `alternate`:
  * a narrow chart hides those, so its labels never run into each other and today's always shows.
  */
