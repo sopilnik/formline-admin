@@ -27,6 +27,9 @@ export function ProductImageEditor({ productId, name, image }: Props) {
   const send = useReach()
   const router = useRouter()
   const picker = useRef<HTMLInputElement>(null)
+  // The upload button stays through a removal, so the dialog hands the focus to it once the image is gone.
+  const pick = useRef<HTMLButtonElement>(null)
+  const removed = useRef(false)
   const [problem, setProblem] = useState<UploadProblem | null>(null)
   const [confirming, setConfirming] = useState(false)
   // Not a transition: an async transition would hold every navigation until the upload ended. Its success comes as a
@@ -71,6 +74,7 @@ export function ProductImageEditor({ productId, name, image }: Props) {
   const remove = (): void => startRemove(async () => {
     const result = await send(() => removeProductImageAction({ productId }))
     if (!result) return
+    removed.current = result.ok
     setConfirming(false)
     if (result.ok) {
       setProblem(null)
@@ -84,12 +88,15 @@ export function ProductImageEditor({ productId, name, image }: Props) {
       <input ref={picker} type="file" accept={UPLOAD_ACCEPT} hidden onChange={upload} />
       {/* One button under the other in every language: a long Russian label no longer wraps the second below the first. */}
       <div data-focus-key="product-image" className="flex flex-col items-start gap-2">
-        <Button type="button" variant="outline" size="sm" disabled={uploading} onClick={() => picker.current?.click()}>
+        <Button ref={pick} type="button" variant="outline" size="sm" disabled={uploading} onClick={() => picker.current?.click()}>
           <ImageUp aria-hidden />
           {uploading ? t('uploading') : image ? t('replace') : t('upload')}
         </Button>
         {image ? (
-          <Button type="button" variant="ghost" size="sm" disabled={uploading || removing} onClick={() => setConfirming(true)}>{t('remove')}</Button>
+          <Button type="button" variant="ghost" size="sm" disabled={uploading || removing} onClick={() => {
+            removed.current = false
+            setConfirming(true)
+          }}>{t('remove')}</Button>
         ) : null}
       </div>
       <p className="text-xs text-muted-foreground">{t('hint')}</p>
@@ -97,7 +104,7 @@ export function ProductImageEditor({ productId, name, image }: Props) {
         <ErrorAlert>{say(problem)}</ErrorAlert>
       ) : null}
       <Dialog open={confirming} onOpenChange={setConfirming}>
-        <DialogContent showCloseButton={false}>
+        <DialogContent showCloseButton={false} finalFocus={() => (removed.current ? pick.current : true)}>
           <DialogHeader>
             <DialogTitle>{t('removeTitle', { name })}</DialogTitle>
             <DialogDescription>{t('removeBody')}</DialogDescription>
