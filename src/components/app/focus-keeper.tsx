@@ -97,13 +97,25 @@ export function FocusKeeper() {
       target.focus()
     }
 
+    // A click into nothing leaves the control in place and the focus on the body: the place is given up, so a later redraw
+    // that removes the control does not move the focus on its own. Looked at a moment later, once a removal has shown.
+    const letGo = (event: FocusEvent): void => {
+      if (event.relatedTarget || !held || held.control !== event.target) return
+      const left = held
+      setTimeout(() => {
+        if (held === left && left.control.isConnected && document.activeElement === document.body) held = null
+      })
+    }
+
     // The removal may happen inside the main area or in a dialog or a menu's own layer, so the whole body is watched.
     const observer = new MutationObserver(restore)
     observer.observe(document.body, { childList: true, subtree: true })
     document.addEventListener('focusin', remember)
+    document.addEventListener('focusout', letGo)
     return () => {
       observer.disconnect()
       document.removeEventListener('focusin', remember)
+      document.removeEventListener('focusout', letGo)
       clearTimeout(timer)
     }
   }, [])
