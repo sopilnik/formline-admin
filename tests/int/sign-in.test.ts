@@ -64,8 +64,12 @@ const entries = (action: string) =>
 
 describe('password step', () => {
   it('names an empty field before it counts an attempt', async () => {
+    const counters = () => count('select coalesce(sum(count), 0)::int as n from fa.rate_limits')
+    const before = await counters()
+
     expect(await signInWithPassword(correct({ email: '  ' }), { pool: app })).toEqual({ ok: false, error: 'email_required', field: 'email' })
     expect(await signInWithPassword(correct({ password: '' }), { pool: app })).toEqual({ ok: false, error: 'password_required', field: 'password' })
+    expect(await counters()).toBe(before)
   })
 
   it('refuses a wrong password and an unknown email the same way, and logs both', async () => {
