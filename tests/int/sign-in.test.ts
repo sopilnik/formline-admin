@@ -63,6 +63,11 @@ const entries = (action: string) =>
   count('select count(*)::int as n from fa.activity_log where action = $1 and actor_user_id = $2', [action, ownerId])
 
 describe('password step', () => {
+  it('names an empty field before it counts an attempt', async () => {
+    expect(await signInWithPassword(correct({ email: '  ' }), { pool: app })).toEqual({ ok: false, error: 'email_required', field: 'email' })
+    expect(await signInWithPassword(correct({ password: '' }), { pool: app })).toEqual({ ok: false, error: 'password_required', field: 'password' })
+  })
+
   it('refuses a wrong password and an unknown email the same way, and logs both', async () => {
     const before = await count("select count(*)::int as n from fa.activity_log where action = 'auth.sign_in_failed'")
     expect(await signInWithPassword(correct({ password: 'wrong-password-123' }), { pool: app })).toEqual({ ok: false, error: 'credentials_invalid' })
@@ -243,10 +248,12 @@ describe('re-authentication', () => {
     expect(fresh && isRecentAuth(fresh)).toBe(true)
   })
 
-  it('refuses a wrong password without touching the session', async () => {
+  it('refuses a wrong or an empty password in words about the password, without touching the session', async () => {
     const session = await verifiedSession()
     expect(await reauthenticate(session, { password: 'wrong-password-123', code: '000000', ip: nextIp(), userAgent: null }, { pool: app }))
-      .toEqual({ ok: false, error: 'credentials_invalid', field: 'password' })
+      .toEqual({ ok: false, error: 'password_incorrect', field: 'password' })
+    expect(await reauthenticate(session, { password: '', code: '', ip: nextIp(), userAgent: null }, { pool: app }))
+      .toEqual({ ok: false, error: 'password_required', field: 'password' })
     expect(await sessionExists(session)).toBe(true)
   })
 })

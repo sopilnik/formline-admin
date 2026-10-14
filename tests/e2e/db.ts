@@ -99,6 +99,12 @@ export function createOwnerSession(): Promise<{ token: string; workspaceId: stri
   })
 }
 
+/** Ends the owner's sign-ins that still wait for their second step, as if their ten minutes had passed. */
+export async function expirePendingOwnerSessions(): Promise<void> {
+  await asSchemaOwner(client => client.query(
+    "update fa.sessions s set expires_at = now() - interval '1 second' from fa.users u where u.workspace_id = s.workspace_id and u.id = s.user_id and u.role = 'owner' and not s.second_factor_verified"))
+}
+
 /** Moves the owner's last authentication an hour back, as if the ten minutes had long passed. */
 export async function ageOwnerAuthentication(): Promise<void> {
   await asSchemaOwner(client => client.query(

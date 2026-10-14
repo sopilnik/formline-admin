@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test'
 import { roomInWindow } from '../windows.ts'
 import { expectNoSeriousA11yViolations } from './a11y.ts'
 import { E2E_AUTH_ENV, E2E_MIGRATOR_URL, E2E_SESSION_COOKIE } from './constants.ts'
-import { ageOwnerAuthentication } from './db.ts'
+import { ageOwnerAuthentication, expirePendingOwnerSessions } from './db.ts'
 import { expect, test } from './test.ts'
 import { codeFor, readTotpSecret, type Totp } from './totp.ts'
 
@@ -83,6 +83,19 @@ test('a wrong password and an unknown email get the same message', async ({ page
   await expect(formAlert(page)).toHaveText('Email or password is incorrect.')
 })
 
+test('an empty sign-in names the field to fill', async ({ page }) => {
+  await page.goto('/sign-in')
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+  await expect(formAlert(page)).toHaveText('Enter your email address.')
+  await expect(page.getByLabel('Email')).toBeFocused()
+  await expect(page.getByLabel('Email')).toHaveAttribute('aria-invalid', 'true')
+  await page.getByLabel('Email').fill(owner.email)
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+  await expect(formAlert(page)).toHaveText('Enter your password.')
+  await expect(page.getByLabel('Password')).toBeFocused()
+  await expect(page.getByLabel('Password')).toHaveAttribute('aria-invalid', 'true')
+})
+
 test('a recovery code replaces the authenticator code', async ({ page }) => {
   await signInWithPassword(page)
   await page.getByRole('button', { name: 'Use a recovery code instead' }).click()
@@ -150,6 +163,11 @@ test('a sensitive change asks for the password and a code once ten minutes have 
   await expect(page.getByLabel('New password')).toHaveCount(0)
   const reauth = page.getByRole('region', { name: "Confirm it's you" })
   await expect(reauth).toContainText('Changes on this page need a fresh sign-in')
+  await reauth.getByRole('button', { name: 'Confirm' }).click()
+  await expect(reauth.getByRole('alert')).toHaveText('Enter your password.')
+  await reauth.getByLabel('Password').fill('not-the-password-0000')
+  await reauth.getByRole('button', { name: 'Confirm' }).click()
+  await expect(reauth.getByRole('alert')).toHaveText('The password is not correct.')
   await reauth.getByLabel('Password').fill(owner.password)
   await reauth.getByLabel('6-digit code').fill(await codeFor(totp))
   await reauth.getByRole('button', { name: 'Confirm' }).click()
@@ -192,6 +210,12 @@ test('owner recovery replaces the lost factors and lifts the lock', async ({ pag
   await expectNoSeriousA11yViolations(page)
   totp.secret = await readTotpSecret(page)
   totp.lastStep = 0
+  // A recovery code saved at setup belongs on the sign-in page, and the message says so.
+  await page.getByLabel('Recovery code from the command').fill(recoveryCodes[1]!)
+  await page.getByLabel('New password').fill('new-plum-kettle-sunrise-5582')
+  await page.getByLabel('6-digit code').fill('000000')
+  await page.getByRole('button', { name: 'Recover the account' }).click()
+  await expect(formAlert(page)).toHaveText('This is not a valid code from pnpm owner:recovery, or it has expired. The recovery codes you saved go on the sign-in page.')
   const oldPassword = owner.password
   owner.password = 'new-plum-kettle-sunrise-5582'
   await page.getByLabel('Recovery code from the command').fill(recoveryCode!)
@@ -233,4 +257,23 @@ test('the owner changes the password, and the new one signs in', async ({ page }
   await page.getByLabel('6-digit code').fill(await codeFor(totp))
   await page.getByRole('button', { name: 'Verify' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
+})
+
+test('the verify page starts a new kind of code clean, and a sign-in that took too long says so', async ({ page }) => {
+  await signInWithPassword(page)
+  await page.getByLabel('6-digit code').fill('000000')
+  await page.getByRole('button', { name: 'Verify' }).click()
+  await expect(formAlert(page)).toHaveText('The code is not correct. Check it and try again.')
+  await page.getByRole('button', { name: 'Use a recovery code instead' }).click()
+  await expect(formAlert(page)).toHaveCount(0)
+  await expect(page.getByLabel('Recovery code')).not.toHaveAttribute('aria-invalid')
+  await page.getByRole('button', { name: 'Use the authenticator app instead' }).click()
+  await expect(formAlert(page)).toHaveCount(0)
+  await expect(page.getByLabel('6-digit code')).not.toHaveAttribute('aria-invalid')
+
+  await expirePendingOwnerSessions()
+  await page.getByLabel('6-digit code').fill(await codeFor(totp))
+  await page.getByRole('button', { name: 'Verify' }).click()
+  await expect(page).toHaveURL(/\/sign-in\?expired=1$/)
+  await expect(formAlert(page)).toHaveText('The sign-in took too long. Start again.')
 })

@@ -5,12 +5,12 @@ import { redirect } from 'next/navigation'
 import { failureState, type FormState } from '@/lib/auth-form'
 import { formText } from '@/lib/form'
 import { verifySecondFactor } from '@/server/auth/second-factor'
-import { requireSession, setSessionCookie } from '@/server/auth/sessions'
-import { signInWithPassword } from '@/server/auth/sign-in'
+import { getSession, setSessionCookie } from '@/server/auth/sessions'
+import { signInWithPassword, type SignInField } from '@/server/auth/sign-in'
 import { setPreferenceCookies } from '@/server/preferences'
 import { getClientIp } from '@/server/request'
 
-export async function signInAction(_previous: FormState<'email'>, form: FormData): Promise<FormState<'email'>> {
+export async function signInAction(_previous: FormState<SignInField>, form: FormData): Promise<FormState<SignInField>> {
   const email = formText(form, 'email')
   const result = await signInWithPassword({
     email,
@@ -24,7 +24,9 @@ export async function signInAction(_previous: FormState<'email'>, form: FormData
 }
 
 export async function verifyAction(_previous: FormState<'code'>, form: FormData): Promise<FormState<'code'>> {
-  const session = await requireSession({ pending: true })
+  // A code sent after the ten minutes of the pending session meets no session: the sign-in page says why.
+  const session = await getSession()
+  if (!session) redirect('/sign-in?expired=1')
   if (session.secondFactorVerified) redirect('/overview')
   const result = await verifySecondFactor(session, {
     code: formText(form, 'code'),

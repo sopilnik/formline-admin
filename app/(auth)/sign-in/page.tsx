@@ -15,7 +15,8 @@ export async function generateMetadata(): Promise<Metadata> {
 // Without a session cookie this page does not touch the database.
 export default async function SignInPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   if ((await getSession())?.secondFactorVerified) redirect('/overview')
-  const ended = (await searchParams).ended === '1'
+  const params = await searchParams
+  const ended = params.ended === '1'
   const t = await getTranslations('auth.signIn')
   return (
     <AuthCard title={t('title')} description={t('intro')}>
@@ -28,7 +29,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
           {t('or')}
           <span className="h-px flex-1 bg-border" />
         </div>
-        <SignInForm />
+        <SignInForm expired={params.expired === '1'} />
       </div>
     </AuthCard>
   )

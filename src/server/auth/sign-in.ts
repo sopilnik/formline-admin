@@ -19,6 +19,9 @@ import { accountSubject, hashIp, ipSubject } from '@/server/ratelimit/ip'
 import { GUARDS, LIMITS } from '@/server/ratelimit/limits'
 
 export type SignInInput = { email: string; password: string; ip: string | null; userAgent: string | null }
+
+/** The fields of the owner's sign-in form that an error can name. */
+export type SignInField = 'email' | 'password'
 export type SignedIn = { token: string; expiresAt: Date; locale: Locale; theme: Theme }
 
 type PasswordAttempt = { email: string; ip: string | null }
@@ -55,11 +58,14 @@ export async function passwordAccepted(input: PasswordAttempt, claim: Extract<Pa
 /**
  * Step one of the owner sign-in. Success is a pending session that reaches only
  * the second-factor step. A wrong email and a wrong password fail the
- * same way, after the same hashing work.
+ * same way, after the same hashing work; an empty field is named before any attempt is counted.
  */
-export async function signInWithPassword(input: SignInInput, overrides: Partial<AuthDeps> = {}): Promise<{ ok: true; token: string; expiresAt: Date } | AuthFailure> {
+export async function signInWithPassword(input: SignInInput, overrides: Partial<AuthDeps> = {}): Promise<{ ok: true; token: string; expiresAt: Date } | AuthFailure<SignInField>> {
   const deps = authDeps(overrides)
   const { pool, config } = deps
+  if (!input.email.trim()) return { ok: false, error: 'email_required', field: 'email' }
+  if (!input.password) return { ok: false, error: 'password_required', field: 'password' }
+
   const claim = await claimPasswordAttempt(input, deps)
   if (!claim.ok) return { ok: false, error: 'rate_limited', retryAfterSeconds: claim.retryAfterSeconds }
 

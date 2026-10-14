@@ -13,8 +13,16 @@ export function VerifyForm({ hasTotp }: { hasTotp: boolean }) {
   const t = useTranslations('auth')
   const [recovery, setRecovery] = useState(!hasTotp)
   const [state, action, pending] = useActionState(verifyAction, IDLE as FormState<'code'>)
-  const errorFor = useErrorText(state)
-  useFocusOnError(state, 'verify', 'code')
+  // A switch to the other kind of code starts its empty field clean: the error of the last code stays behind.
+  const [left, setLeft] = useState<FormState<'code'> | null>(null)
+  const shown = state === left ? IDLE : state
+  const errorFor = useErrorText(shown)
+  useFocusOnError(shown, 'verify', 'code')
+  const switchKind = (): void => {
+    setRecovery(!recovery)
+    setLeft(state)
+  }
+
   if (state.status === 'error' && state.error === 'second_factor_locked') {
     return (
       <div className="flex flex-col gap-4">
@@ -27,7 +35,7 @@ export function VerifyForm({ hasTotp }: { hasTotp: boolean }) {
   return (
     <form action={action} noValidate className="flex flex-col gap-4">
       <p className="text-sm text-muted-foreground">{intro}</p>
-      <FormAlert state={state} />
+      <FormAlert state={shown} />
       <TextField
         key={recovery ? 'recovery' : 'totp'}
         id="verify-code"
@@ -39,7 +47,7 @@ export function VerifyForm({ hasTotp }: { hasTotp: boolean }) {
       />
       <Button type="submit" disabled={pending}>{pending ? t('verify.pending') : t('verify.submit')}</Button>
       {hasTotp ? (
-        <button type="button" onClick={() => setRecovery(!recovery)} className="self-start text-sm font-medium text-primary underline-offset-4 hover:underline">
+        <button type="button" onClick={switchKind} className="self-start text-sm font-medium text-primary underline-offset-4 hover:underline">
           {recovery ? t('verify.useTotp') : t('verify.useRecovery')}
         </button>
       ) : null}

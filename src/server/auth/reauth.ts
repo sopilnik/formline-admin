@@ -38,11 +38,12 @@ export async function reauthenticate(
     .select({ email: users.email, passwordHash: users.passwordHash })
     .from(users)
     .where(isUser(session)), pool)
-  if (!self?.passwordHash) return { ok: false, error: 'credentials_invalid', field: 'password' }
+  if (!input.password) return { ok: false, error: 'password_required', field: 'password' }
+  if (!self?.passwordHash) return { ok: false, error: 'password_incorrect', field: 'password' }
   const attempt = { email: self.email, ip: input.ip }
   const claim = await claimPasswordAttempt(attempt, deps)
   if (!claim.ok) return { ok: false, error: 'rate_limited', retryAfterSeconds: claim.retryAfterSeconds }
-  if (!(await verifyPassword(self.passwordHash, input.password))) return { ok: false, error: 'credentials_invalid', field: 'password' }
+  if (!(await verifyPassword(self.passwordHash, input.password))) return { ok: false, error: 'password_incorrect', field: 'password' }
 
   await passwordAccepted(attempt, claim, deps)
   const factor = await attemptSecondFactor(session, input, deps)
