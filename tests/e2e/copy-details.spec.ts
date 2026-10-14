@@ -23,6 +23,13 @@ test.describe('copy details', () => {
     expect(zones).not.toContain('Europe/Kiev')
   })
 
+  test('a zone stored under an old name shows as its current one in the form', async ({ page, context }) => {
+    const { workspaceId } = await signInAsSandboxUser(context)
+    await asSchemaOwner(c => c.query('update fa.store_settings set timezone = $2 where workspace_id = $1', [workspaceId, 'Europe/Kiev']))
+    await openFramed(page, '/settings/store')
+    await expect(page.getByLabel('Time zone')).toHaveValue('Europe/Kyiv')
+  })
+
   test('the activity log names a changed slug "slug", as its field does', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await openFramed(page, '/products/hush')
