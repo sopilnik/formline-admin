@@ -27,7 +27,7 @@ export function currentZoneName(zone: string): string {
   return CURRENT_ZONE_NAMES[zone] ?? zone
 }
 
-/** The time zones the store may pick: UTC first, then the platform's list under today's names, in order. */
+/** The time zones the store may pick: UTC first, then the platform's list under today's names, in order, each once. */
 export function timeZones(): string[] {
-  return ['UTC', ...Intl.supportedValuesOf('timeZone').map(currentZoneName).sort()]
+  return [...new Set(['UTC', ...Intl.supportedValuesOf('timeZone').map(currentZoneName).sort()])]
 }
