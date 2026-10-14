@@ -1,9 +1,9 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { useActionState, useEffect, useEffectEvent } from 'react'
+import { useEffect, useEffectEvent, useRef } from 'react'
 import { TextField } from '@/components/app/form-fields'
-import { FormAlert, useErrorText, useFocusOnError } from '@/components/app/form-parts'
+import { FormAlert, UnreachedAlert, useErrorText, useFocusOnError, useFormAction } from '@/components/app/form-parts'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { IDLE, type FormState } from '@/lib/auth-form'
@@ -17,7 +17,8 @@ export function PasswordSection({ available, recent }: { available: boolean; rec
   const t = useTranslations('settings.security.password')
   const fields = useTranslations('auth.fields')
   const toast = useToast()
-  const [state, action, pending] = useActionState(changePasswordAction, IDLE as FormState<'password'>)
+  const form = useRef<HTMLFormElement>(null)
+  const [state, action, pending, unreached] = useFormAction(changePasswordAction, IDLE as FormState<'password'>, form)
   const errorFor = useErrorText(state)
   useFocusOnError(state, 'new', 'password')
   const settle = useEffectEvent((result: FormState<'password'>) => {
@@ -31,7 +32,8 @@ export function PasswordSection({ available, recent }: { available: boolean; rec
         <p className="mt-1 max-w-prose text-[13px] text-muted-foreground">{available ? (recent ? t('intro') : t('confirmFirst')) : t('sandbox')}</p>
       </div>
       {available && recent ? (
-        <form action={action} noValidate className="flex max-w-md flex-col gap-4">
+        <form ref={form} action={action} noValidate className="flex max-w-md flex-col gap-4">
+          <UnreachedAlert unreached={unreached} />
           <FormAlert state={state} />
           <TextField
             id="new-password" name="password" type="password" autoComplete="new-password" label={fields('newPassword')} hint={fields('passwordHint')}

@@ -1,8 +1,9 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { useActionState, useEffect, useEffectEvent, useRef } from 'react'
+import { useEffect, useEffectEvent, useRef } from 'react'
 import { SelectField, TextField } from '@/components/app/form-fields'
+import { UnreachedAlert, useFormAction } from '@/components/app/form-parts'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { ASSIGNABLE_ROLES, EMAIL_MAX } from '@/lib/team'
@@ -16,7 +17,7 @@ export function InviteForm() {
   const role = useTranslations('user.roles')
   const toast = useToast()
   const form = useRef<HTMLFormElement>(null)
-  const [state, action, pending] = useActionState(inviteMemberAction, IDLE)
+  const [state, action, pending, unreached] = useFormAction(inviteMemberAction, IDLE, form)
   const settle = useEffectEvent((result: InviteState) => {
     if (result.status === 'done') toast.success(t('sent', { email: result.email }))
     if (result.status === 'error') form.current?.querySelector<HTMLElement>('[name="email"]')?.focus()
@@ -25,6 +26,7 @@ export function InviteForm() {
   const error = state.status === 'error' ? state : null
   return (
     <form ref={form} action={action} noValidate className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_12rem_auto] lg:items-start">
+      <UnreachedAlert unreached={unreached} />
       <TextField
         id="invite-email" name="email" type="email" label={t('email')} autoComplete="off" maxLength={EMAIL_MAX} aria-required
         defaultValue={error?.values.email ?? ''} error={error ? t(`errors.${error.error}`) : undefined}

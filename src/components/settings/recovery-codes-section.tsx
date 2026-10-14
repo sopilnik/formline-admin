@@ -1,8 +1,8 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { useActionState, useState } from 'react'
-import { FormAlert } from '@/components/app/form-parts'
+import { useRef, useState } from 'react'
+import { FormAlert, UnreachedAlert, useFormAction } from '@/components/app/form-parts'
 import { RecoveryCodesView } from '@/components/auth/recovery-codes-view'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -13,7 +13,8 @@ import { regenerateRecoveryCodesAction } from '@/server/actions/security'
 export function RecoveryCodesSection({ remaining, hasFactor, recent }: { remaining: number; hasFactor: boolean; recent: boolean }) {
   const t = useTranslations('settings.security.recoveryCodes')
   const [confirming, setConfirming] = useState(false)
-  const [state, action, pending] = useActionState(regenerateRecoveryCodesAction, IDLE as FormState)
+  const form = useRef<HTMLFormElement>(null)
+  const [state, action, pending, unreached] = useFormAction(regenerateRecoveryCodesAction, IDLE as FormState, form)
   const [closed, setClosed] = useState<FormState | null>(null)
   const codes = state.status === 'done' && state !== closed ? state.recoveryCodes : undefined
   return (
@@ -28,6 +29,8 @@ export function RecoveryCodesSection({ remaining, hasFactor, recent }: { remaini
       {codes ? <RecoveryCodesView codes={codes} done={{ label: t('done'), onClick: () => setClosed(state) }} /> : null}
       {hasFactor && recent && !codes ? (
         <>
+          {/* The dialog closes as the form is sent, so the section says when no answer came. */}
+          <UnreachedAlert unreached={unreached} />
           <FormAlert state={state} />
           <Button type="button" variant="outline" className="self-start" disabled={pending} onClick={() => setConfirming(true)}>
             {pending ? t('making') : t('make')}
@@ -38,7 +41,7 @@ export function RecoveryCodesSection({ remaining, hasFactor, recent }: { remaini
                 <DialogTitle>{t('confirmTitle')}</DialogTitle>
                 <DialogDescription>{t('confirmBody')}</DialogDescription>
               </DialogHeader>
-              <form action={action} onSubmit={() => setConfirming(false)}>
+              <form ref={form} action={action} onSubmit={() => setConfirming(false)}>
                 <DialogFooter>
                   <DialogClose render={<Button type="button" variant="outline" />}>{t('cancel')}</DialogClose>
                   <Button type="submit" disabled={pending}>{t('confirm')}</Button>

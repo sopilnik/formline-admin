@@ -2,8 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useActionState, useEffect, useEffectEvent, useRef, useState, useTransition } from 'react'
-import { ErrorAlert } from '@/components/app/form-parts'
+import { useEffect, useEffectEvent, useRef, useState, useTransition } from 'react'
+import { ErrorAlert, UnreachedAlert, useFormAction } from '@/components/app/form-parts'
 import { ProductDetailsFields } from '@/components/products/product-details-fields'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
@@ -43,7 +43,7 @@ function DetailsForm({ productId, slug, version, values, collections, reloading,
   const toast = useToast()
   const router = useRouter()
   const form = useRef<HTMLFormElement>(null)
-  const [state, action, pending] = useActionState(updateProductDetailsAction, IDLE)
+  const [state, action, pending, unreached] = useFormAction(updateProductDetailsAction, IDLE, form)
   // Once per result, with the latest translations.
   const settle = useEffectEvent((result: DetailsState) => {
     if (result.status === 'done') {
@@ -64,6 +64,7 @@ function DetailsForm({ productId, slug, version, values, collections, reloading,
   const failure = state.status === 'error' && state.error !== 'invalid' ? state.error : null
   return (
     <form ref={form} action={action} noValidate className="flex flex-col gap-4">
+      <UnreachedAlert unreached={unreached} />
       <input type="hidden" name="productId" value={productId} />
       <input type="hidden" name="version" value={version} />
       {failure ? (

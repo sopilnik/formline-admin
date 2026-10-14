@@ -2,9 +2,9 @@
 
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { useActionState, type ReactNode } from 'react'
+import { useRef, type ReactNode } from 'react'
 import { TextField } from '@/components/app/form-fields'
-import { FormAlert, useErrorText, useFocusOnError } from '@/components/app/form-parts'
+import { FormAlert, UnreachedAlert, useErrorText, useFocusOnError, useFormAction } from '@/components/app/form-parts'
 import { RecoveryCodesView } from '@/components/auth/recovery-codes-view'
 import { TotpEnrolment } from '@/components/auth/totp-enrolment'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -14,7 +14,8 @@ import type { SetupField } from '@/server/auth/setup'
 
 export function SetupForm({ completed, secret, qr }: { completed: boolean; secret: string; qr: ReactNode }) {
   const t = useTranslations('auth')
-  const [state, action, pending] = useActionState(setupAction, IDLE as FormState<SetupField>)
+  const form = useRef<HTMLFormElement>(null)
+  const [state, action, pending, unreached] = useFormAction(setupAction, IDLE as FormState<SetupField>, form)
   const errorFor = useErrorText(state)
   useFocusOnError(state, 'setup', 'token')
   if (state.status === 'done') return <RecoveryCodesView codes={state.recoveryCodes ?? []} />
@@ -28,7 +29,8 @@ export function SetupForm({ completed, secret, qr }: { completed: boolean; secre
   }
   const values = state.status === 'error' ? state.values ?? {} : {}
   return (
-    <form action={action} noValidate className="flex flex-col gap-4">
+    <form ref={form} action={action} noValidate className="flex flex-col gap-4">
+      <UnreachedAlert unreached={unreached} />
       <FormAlert state={state} />
       <TextField id="setup-token" name="token" type="password" autoComplete="off" label={t('setup.token')} hint={t('setup.tokenHint')} error={errorFor('token')} />
       <TextField id="setup-name" name="name" autoComplete="name" label={t('fields.name')} defaultValue={values.name} error={errorFor('name')} />

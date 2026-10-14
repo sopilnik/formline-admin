@@ -1,8 +1,9 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { useActionState, useEffect, useEffectEvent, useRef } from 'react'
+import { useEffect, useEffectEvent, useRef } from 'react'
 import { TextAreaField } from '@/components/app/form-fields'
+import { UnreachedAlert, useFormAction } from '@/components/app/form-parts'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { CUSTOMER_NOTES_MAX } from '@/lib/customers/notes'
@@ -18,7 +19,8 @@ export function CustomerNotesForm({ customerId, notes }: { customerId: string; n
   const t = useTranslations('customers.detail')
   const toast = useToast()
   const field = useRef<HTMLTextAreaElement>(null)
-  const [state, action, pending] = useActionState(saveCustomerNotesAction, IDLE)
+  const form = useRef<HTMLFormElement>(null)
+  const [state, action, pending, unreached] = useFormAction(saveCustomerNotesAction, IDLE, form)
   // Once per result, with the latest translations.
   const settle = useEffectEvent((result: CustomerNotesState) => {
     if (result.status === 'done') toast.success(t('notesSaved'))
@@ -27,7 +29,8 @@ export function CustomerNotesForm({ customerId, notes }: { customerId: string; n
   useEffect(() => settle(state), [state])
   const error = state.status === 'error' ? t(`notesErrors.${state.error}`) : undefined
   return (
-    <form action={action} className="flex flex-col gap-2">
+    <form ref={form} action={action} className="flex flex-col gap-2">
+      <UnreachedAlert unreached={unreached} />
       <input type="hidden" name="customerId" value={customerId} />
       <TextAreaField
         ref={field}

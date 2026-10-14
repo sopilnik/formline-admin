@@ -2,9 +2,9 @@
 
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { useActionState, useState } from 'react'
+import { useRef, useState } from 'react'
 import { TextField } from '@/components/app/form-fields'
-import { FormAlert, useErrorText, useFocusOnError } from '@/components/app/form-parts'
+import { FormAlert, UnreachedAlert, useErrorText, useFocusOnError, useFormAction } from '@/components/app/form-parts'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { IDLE, type FormState } from '@/lib/auth-form'
 import { verifyAction } from '@/server/actions/sign-in'
@@ -12,7 +12,8 @@ import { verifyAction } from '@/server/actions/sign-in'
 export function VerifyForm({ hasTotp }: { hasTotp: boolean }) {
   const t = useTranslations('auth')
   const [recovery, setRecovery] = useState(!hasTotp)
-  const [state, action, pending] = useActionState(verifyAction, IDLE as FormState<'code'>)
+  const form = useRef<HTMLFormElement>(null)
+  const [state, action, pending, unreached] = useFormAction(verifyAction, IDLE as FormState<'code'>, form)
   // A switch to the other kind of code starts its empty field clean: the error of the last code stays behind.
   const [left, setLeft] = useState<FormState<'code'> | null>(null)
   const shown = state === left ? IDLE : state
@@ -33,7 +34,8 @@ export function VerifyForm({ hasTotp }: { hasTotp: boolean }) {
   }
   const intro = recovery ? (hasTotp ? t('verify.introRecovery') : t('verify.noTotp')) : t('verify.intro')
   return (
-    <form action={action} noValidate className="flex flex-col gap-4">
+    <form ref={form} action={action} noValidate className="flex flex-col gap-4">
+      <UnreachedAlert unreached={unreached} />
       <p className="text-sm text-muted-foreground">{intro}</p>
       <FormAlert state={shown} />
       <TextField

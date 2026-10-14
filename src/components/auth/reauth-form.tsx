@@ -3,9 +3,9 @@
 import { startAuthentication } from '@simplewebauthn/browser'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useActionState, useState } from 'react'
+import { useRef, useState } from 'react'
 import { TextField } from '@/components/app/form-fields'
-import { FormAlert, useErrorText, useFocusOnError } from '@/components/app/form-parts'
+import { FormAlert, UnreachedAlert, useErrorText, useFocusOnError, useFormAction } from '@/components/app/form-parts'
 import { Button } from '@/components/ui/button'
 import { IDLE, type AuthError, type FormState } from '@/lib/auth-form'
 import { passkeyChallenge } from '@/lib/passkeys'
@@ -17,7 +17,8 @@ import type { ReauthField } from '@/server/auth/reauth'
 export function ReauthForm({ intro }: { intro?: string } = {}) {
   const t = useTranslations('auth')
   const router = useRouter()
-  const [state, action, pending] = useActionState(reauthAction, IDLE as FormState<ReauthField>)
+  const form = useRef<HTMLFormElement>(null)
+  const [state, action, pending, unreached] = useFormAction(reauthAction, IDLE as FormState<ReauthField>, form)
   const [passkeyError, setPasskeyError] = useState<AuthError | null>(null)
   const [passkeyPending, setPasskeyPending] = useState(false)
   const errorFor = useErrorText(state)
@@ -41,7 +42,8 @@ export function ReauthForm({ intro }: { intro?: string } = {}) {
     <section aria-labelledby="reauth-title" className="rounded-lg border bg-secondary p-4">
       <h2 id="reauth-title" className="font-sans text-[15px] font-semibold">{t('reauth.title')}</h2>
       <p className="mt-1 text-sm text-muted-foreground">{intro ?? t('reauth.intro')}</p>
-      <form action={action} noValidate className="mt-4 flex flex-col gap-4">
+      <form ref={form} action={action} noValidate className="mt-4 flex flex-col gap-4">
+        <UnreachedAlert unreached={unreached} />
         <FormAlert state={state} />
         <TextField id="reauth-password" name="password" type="password" autoComplete="current-password" label={t('fields.password')} error={errorFor('password')} />
         <TextField id="reauth-code" name="code" inputMode="numeric" autoComplete="one-time-code" label={t('fields.code')} error={errorFor('code')} />

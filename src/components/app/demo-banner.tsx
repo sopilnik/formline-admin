@@ -2,8 +2,8 @@
 
 import { MoreHorizontal } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useActionState, useState } from 'react'
-import { FormAlert } from '@/components/app/form-parts'
+import { useRef, useState } from 'react'
+import { FormAlert, UnreachedAlert, useFormAction } from '@/components/app/form-parts'
 import { SwitchUserDialog, type SwitchTarget } from '@/components/app/switch-user'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -20,7 +20,8 @@ export function DemoBanner({ hours, members }: { hours: number; members: SwitchT
   const t = useTranslations('demo.banner')
   const [resetOpen, setResetOpen] = useState(false)
   const [switchOpen, setSwitchOpen] = useState(false)
-  const [state, action, pending] = useActionState(resetDemoAction, IDLE as FormState)
+  const form = useRef<HTMLFormElement>(null)
+  const [state, action, pending, unreached] = useFormAction(resetDemoAction, IDLE as FormState, form)
   return (
     <div role="region" aria-label={t('label')} className="flex flex-wrap items-center gap-3 border-b border-border bg-card px-4 py-2 text-sm md:px-6">
       {/* A phone gets the rule in one short line; from 640 px the whole sentence, kept at least 20 rem wide (the actions wrap). */}
@@ -47,7 +48,8 @@ export function DemoBanner({ hours, members }: { hours: number; members: SwitchT
             <DialogTitle>{t('resetTitle')}</DialogTitle>
             <DialogDescription>{t('resetBody')}</DialogDescription>
           </DialogHeader>
-          <form action={action} className="flex flex-col gap-4">
+          <form ref={form} action={action} className="flex flex-col gap-4">
+            <UnreachedAlert unreached={unreached} />
             <FormAlert state={state} />
             <DialogFooter>
               <DialogClose render={<Button type="button" variant="outline" />}>{t('cancel')}</DialogClose>

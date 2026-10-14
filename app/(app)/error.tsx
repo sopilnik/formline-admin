@@ -10,7 +10,7 @@ export default function AppError({ retry }: { error: Error & { digest?: string }
   return (
     <div className="flex max-w-md flex-col items-start gap-3">
       <h1 className="text-2xl font-bold tracking-tight">{t('title')}</h1>
-      <p className="text-muted-foreground">{t('body')}</p>
+      <p role="alert" className="text-muted-foreground">{t('body')}</p>
       <Button type="button" onClick={() => retry()}>{t('retry')}</Button>
     </div>
   )

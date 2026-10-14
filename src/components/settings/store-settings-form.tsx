@@ -1,9 +1,9 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { useActionState, useEffect, useEffectEvent, useRef } from 'react'
+import { useEffect, useEffectEvent, useRef } from 'react'
 import { SelectField, TextField } from '@/components/app/form-fields'
-import { ErrorAlert } from '@/components/app/form-parts'
+import { ErrorAlert, UnreachedAlert, useFormAction } from '@/components/app/form-parts'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { LOW_STOCK_MAX, STORE_FIELDS, STORE_NAME_MAX, SUPPORT_EMAIL_MAX, type StoreField } from '@/lib/settings/fields'
@@ -16,7 +16,7 @@ export function StoreSettingsForm({ settings, zones }: { settings: Record<StoreF
   const t = useTranslations('settings.store')
   const toast = useToast()
   const form = useRef<HTMLFormElement>(null)
-  const [state, action, pending] = useActionState(saveStoreSettingsAction, IDLE)
+  const [state, action, pending, unreached] = useFormAction(saveStoreSettingsAction, IDLE, form)
   const settle = useEffectEvent((result: StoreSettingsState) => {
     if (result.status === 'done') toast.success(t('saved'))
     if (result.status === 'error') {
@@ -30,6 +30,7 @@ export function StoreSettingsForm({ settings, zones }: { settings: Record<StoreF
   const message = (field: StoreField): string | undefined => (error?.fieldErrors[field] ? t(`errors.${error.fieldErrors[field]}`) : undefined)
   return (
     <form ref={form} action={action} noValidate className="flex max-w-md flex-col gap-4">
+      <UnreachedAlert unreached={unreached} />
       {error && error.error !== 'invalid' ? (
         <ErrorAlert>{t(`errors.${error.error}`)}</ErrorAlert>
       ) : null}

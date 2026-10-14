@@ -1,8 +1,8 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { useActionState } from 'react'
-import { ErrorAlert } from '@/components/app/form-parts'
+import { useRef } from 'react'
+import { ErrorAlert, UnreachedAlert, useFormAction } from '@/components/app/form-parts'
 import { Button } from '@/components/ui/button'
 import type { ImportState } from '@/lib/stripe/import'
 import { importStripeOrdersAction } from '@/server/actions/stripe'
@@ -12,7 +12,8 @@ const IDLE: ImportState = { status: 'idle' }
 /** Settings → Store → Store orders: the owner imports the paid store orders the webhook missed. */
 export function StripeImportSection({ recent }: { recent: boolean }) {
   const t = useTranslations('settings.store.stripe')
-  const [state, action, pending] = useActionState(importStripeOrdersAction, IDLE)
+  const form = useRef<HTMLFormElement>(null)
+  const [state, action, pending, unreached] = useFormAction(importStripeOrdersAction, IDLE, form)
   return (
     <section aria-labelledby="store-orders" className="flex flex-col gap-4 rounded-lg border bg-card p-5">
       <div>
@@ -37,7 +38,8 @@ export function StripeImportSection({ recent }: { recent: boolean }) {
         </div>
       ) : null}
       {recent ? (
-        <form action={action}>
+        <form ref={form} action={action}>
+          <UnreachedAlert unreached={unreached} />
           <Button type="submit" variant="outline" disabled={pending}>{pending ? t('importing') : t('import')}</Button>
         </form>
       ) : null}

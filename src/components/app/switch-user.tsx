@@ -1,9 +1,9 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { useActionState, useState } from 'react'
+import { useRef, useState } from 'react'
 import { TextField } from '@/components/app/form-fields'
-import { FormAlert, useErrorText, useFocusOnError } from '@/components/app/form-parts'
+import { FormAlert, UnreachedAlert, useErrorText, useFocusOnError, useFormAction } from '@/components/app/form-parts'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { IDLE, type FormState } from '@/lib/auth-form'
@@ -17,7 +17,8 @@ export function SwitchUserDialog({ open, onOpenChange, members }: { open: boolea
   const t = useTranslations('demo.switch')
   const roles = useTranslations('user.roles')
   const [selected, setSelected] = useState<SwitchTarget | null>(null)
-  const [state, action, pending] = useActionState(switchUserAction, IDLE as FormState<'code'>)
+  const form = useRef<HTMLFormElement>(null)
+  const [state, action, pending, unreached] = useFormAction(switchUserAction, IDLE as FormState<'code'>, form)
   const errorText = useErrorText(state)
   useFocusOnError(state, 'switch', 'code')
   const handleOpenChange = (next: boolean): void => {
@@ -31,7 +32,8 @@ export function SwitchUserDialog({ open, onOpenChange, members }: { open: boolea
           <DialogTitle>{t('title')}</DialogTitle>
           <DialogDescription>{t('body')}</DialogDescription>
         </DialogHeader>
-        <form action={action} noValidate className="flex flex-col gap-4">
+        <form ref={form} action={action} noValidate className="flex flex-col gap-4">
+          <UnreachedAlert unreached={unreached} />
           <FormAlert state={state} />
           <fieldset className="flex flex-col gap-2">
             <legend className="sr-only">{t('title')}</legend>

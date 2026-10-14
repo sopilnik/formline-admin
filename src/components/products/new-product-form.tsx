@@ -2,8 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { startTransition, useActionState, useEffect, useEffectEvent, useRef, useState, type FormEvent } from 'react'
-import { ErrorAlert } from '@/components/app/form-parts'
+import { startTransition, useEffect, useEffectEvent, useRef, useState, type FormEvent } from 'react'
+import { ErrorAlert, UnreachedAlert, useFormAction } from '@/components/app/form-parts'
 import { NewProductImage } from '@/components/products/new-product-image'
 import { ProductDetailsFields } from '@/components/products/product-details-fields'
 import { sendProductImage } from '@/components/products/send-product-image'
@@ -35,7 +35,7 @@ export function NewProductForm({ collections }: Props) {
   const form = useRef<HTMLFormElement>(null)
   const [name, setName] = useState('')
   const [image, setImage] = useState<File | null>(null)
-  const [state, action, pending] = useActionState(createProductAction, IDLE)
+  const [state, action, pending, unreached] = useFormAction(createProductAction, IDLE, form)
   // Once the product exists, its image is on the way until the form moves on.
   const uploading = state.status === 'done' && image !== null
   // True once the owner has left the page, so an upload that ends later does not pull them back.
@@ -88,6 +88,7 @@ export function NewProductForm({ collections }: Props) {
 
   return (
     <form ref={form} action={action} onSubmit={submit} noValidate className="flex flex-col gap-5">
+      <UnreachedAlert unreached={unreached} />
       {error && error.error !== 'invalid' ? (
         <ErrorAlert>{t(`failed.${error.error}`)}</ErrorAlert>
       ) : null}

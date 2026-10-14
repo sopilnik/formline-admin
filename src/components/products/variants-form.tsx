@@ -2,8 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useActionState, useEffect, useEffectEvent, useRef, useState, useTransition } from 'react'
-import { ErrorAlert } from '@/components/app/form-parts'
+import { useEffect, useEffectEvent, useRef, useState, useTransition } from 'react'
+import { ErrorAlert, UnreachedAlert, useFormAction } from '@/components/app/form-parts'
 import { StockLevel } from '@/components/products/variants-table'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -32,7 +32,7 @@ export function VariantsForm({ productId, rows }: Props) {
   const toast = useToast()
   const router = useRouter()
   const form = useRef<HTMLFormElement>(null)
-  const [state, action, pending] = useActionState(saveVariantsAction, IDLE)
+  const [state, action, pending, unreached] = useFormAction(saveVariantsAction, IDLE, form)
   const [reloading, startReload] = useTransition()
   // The conflict whose stock was loaded: its alert goes, and its stock fields show the stored stock.
   const [reloadedAfter, setReloadedAfter] = useState<VariantsState | null>(null)
@@ -90,6 +90,7 @@ export function VariantsForm({ productId, rows }: Props) {
   }
   return (
     <form ref={form} action={action} noValidate className="flex flex-col gap-3">
+      <UnreachedAlert unreached={unreached} />
       <input type="hidden" name="productId" value={productId} />
       {error && error.error !== 'invalid' ? (
         <ErrorAlert>

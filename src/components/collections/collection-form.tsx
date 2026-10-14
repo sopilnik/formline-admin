@@ -2,9 +2,9 @@
 
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useActionState, useEffect, useEffectEvent, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { TextAreaField, TextField } from '@/components/app/form-fields'
-import { ErrorAlert } from '@/components/app/form-parts'
+import { ErrorAlert, UnreachedAlert, useFormAction } from '@/components/app/form-parts'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { COLLECTION_DESCRIPTION_MAX, COLLECTION_FIELDS, COLLECTION_NAME_MAX, COLLECTION_SLUG_MAX, type CollectionField } from '@/lib/collections/fields'
@@ -24,7 +24,7 @@ export function CollectionForm({ collection }: Props) {
   const router = useRouter()
   const form = useRef<HTMLFormElement>(null)
   const [name, setName] = useState(collection?.name ?? '')
-  const [state, action, pending] = useActionState(saveCollectionAction, IDLE)
+  const [state, action, pending, unreached] = useFormAction(saveCollectionAction, IDLE, form)
 
   const settle = useEffectEvent((result: CollectionState) => {
     if (result.status === 'done') {
@@ -53,6 +53,7 @@ export function CollectionForm({ collection }: Props) {
 
   return (
     <form ref={form} action={action} noValidate className="flex flex-col gap-4">
+      <UnreachedAlert unreached={unreached} />
       <input type="hidden" name="collectionId" value={collection?.id ?? ''} />
       {error && error.error !== 'invalid' ? (
         <ErrorAlert>{t(`failed.${error.error}`)}</ErrorAlert>

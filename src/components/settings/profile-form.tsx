@@ -1,9 +1,9 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { useActionState, useEffect, useEffectEvent, useRef } from 'react'
+import { useEffect, useEffectEvent, useRef } from 'react'
 import { SelectField, TextField } from '@/components/app/form-fields'
-import { ErrorAlert } from '@/components/app/form-parts'
+import { ErrorAlert, UnreachedAlert, useFormAction } from '@/components/app/form-parts'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { LOCALES } from '@/i18n/locale'
@@ -21,7 +21,7 @@ export function ProfileForm({ profile }: { profile: Record<ProfileField, string>
   const theme = useTranslations('theme')
   const toast = useToast()
   const form = useRef<HTMLFormElement>(null)
-  const [state, action, pending] = useActionState(saveProfileAction, IDLE)
+  const [state, action, pending, unreached] = useFormAction(saveProfileAction, IDLE, form)
   const settle = useEffectEvent((result: ProfileState) => {
     if (result.status === 'done') toast.success(t('saved'))
     if (result.status === 'error') {
@@ -35,6 +35,7 @@ export function ProfileForm({ profile }: { profile: Record<ProfileField, string>
   const message = (field: ProfileField): string | undefined => (error?.fieldErrors[field] ? t(`errors.${error.fieldErrors[field]}`) : undefined)
   return (
     <form ref={form} action={action} noValidate className="flex max-w-md flex-col gap-4">
+      <UnreachedAlert unreached={unreached} />
       {error && error.error !== 'invalid' ? (
         <ErrorAlert>{t(`errors.${error.error}`)}</ErrorAlert>
       ) : null}

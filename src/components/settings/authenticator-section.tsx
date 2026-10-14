@@ -1,8 +1,8 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { useActionState, useEffect, useEffectEvent, useState, useTransition, type ReactNode } from 'react'
-import { FormAlert, useErrorText, useFocusOnError } from '@/components/app/form-parts'
+import { useEffect, useEffectEvent, useRef, useState, useTransition, type ReactNode } from 'react'
+import { FormAlert, UnreachedAlert, useErrorText, useFocusOnError, useFormAction } from '@/components/app/form-parts'
 import { RecoveryCodesView } from '@/components/auth/recovery-codes-view'
 import { TotpEnrolment } from '@/components/auth/totp-enrolment'
 import { Button } from '@/components/ui/button'
@@ -32,7 +32,8 @@ export function AuthenticatorSection({ enabled, recent, canDisable, secret, qr }
 
   const [confirming, setConfirming] = useState(false)
   const [pending, startTransition] = useTransition()
-  const [state, action, submitting] = useActionState(enableTotpAction, IDLE as FormState<'code'>)
+  const form = useRef<HTMLFormElement>(null)
+  const [state, action, submitting, unreached] = useFormAction(enableTotpAction, IDLE as FormState<'code'>, form)
 
   // The results decide what shows, without an effect: "Replace" remembers the result it was opened after and stays open
   // until a new success; the codes of a success show until they are closed.
@@ -74,7 +75,8 @@ export function AuthenticatorSection({ enabled, recent, canDisable, secret, qr }
       </div>
       {codes ? <RecoveryCodesView codes={codes} done={{ label: t('codesDone'), onClick: () => setClosed(state) }} /> : null}
       {recent && !codes && enrolling ? (
-        <form action={action} noValidate data-focus-key="authenticator" className="flex max-w-xl flex-col gap-4">
+        <form ref={form} action={action} noValidate data-focus-key="authenticator" className="flex max-w-xl flex-col gap-4">
+          <UnreachedAlert unreached={unreached} />
           <FormAlert state={shown} />
           <TotpEnrolment id="totp-code" secret={secret} qr={qr} error={errorFor('code')} bare />
           <div className="flex flex-wrap gap-2">

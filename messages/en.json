@@ -3,7 +3,8 @@
     "brandSub": "Admin",
     "dismiss": "Dismiss",
     "skipToContent": "Skip to content",
-    "messages": "Messages"
+    "messages": "Messages",
+    "unreached": "No answer from the server. Check the connection and try again."
   },
   "nav": {
     "label": "Main menu",
