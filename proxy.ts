@@ -68,7 +68,9 @@ export function proxy(request: NextRequest): NextResponse {
   }
 
   const lang = request.nextUrl.searchParams.get('lang')
-  const locale = lang === 'en' || lang === 'ru' ? lang : null
+  // A form sent from a page opened with ?lang keeps that address: the language is a navigation's, not the form's. A
+  // cookie set in a Server Action's answer would draw the page again at the address it had (a renamed product's).
+  const locale = (lang === 'en' || lang === 'ru') && request.method === 'GET' ? lang : null
   // The request that carries ?lang renders in that language already, not only the next one.
   if (locale) request.cookies.set(LOCALE_COOKIE, locale)
 

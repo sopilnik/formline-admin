@@ -726,7 +726,9 @@
       "button": "Delete product",
       "blocked": {
         "has_orders": "This product has orders, so it cannot be deleted. Archive it to take it out of the catalog.",
-        "not_draft": "Only a draft can be deleted. Move the product to drafts first, or archive it."
+        "has_orders_archived": "This product has orders, so it cannot be deleted. It is archived and out of the catalog.",
+        "not_draft": "Only a draft can be deleted. Move the product to drafts first, or archive it.",
+        "not_draft_archived": "Only a draft can be deleted. Move the product to drafts first."
       },
       "confirmTitle": "Delete {name}?",
       "confirmBody": "The product and its {count, plural, one {# variant} other {# variants}} are deleted. This cannot be undone.",
@@ -815,7 +817,7 @@
     "delete": {
       "title": "Delete collection",
       "body": "An empty collection can be deleted. This cannot be undone.",
-      "blocked": "This collection holds {count, plural, one {# product} other {# products}}. Move them to another collection or delete them first.",
+      "blocked": "This collection holds {count, plural, one {# product} other {# products}}. Move {count, plural, =1 {it} other {them}} to another collection or delete {count, plural, =1 {it} other {them}} first.",
       "button": "Delete collection",
       "confirmTitle": "Delete {name}?",
       "confirmBody": "The collection is deleted. This cannot be undone.",

@@ -26,6 +26,10 @@ describe('product status machine', () => {
     expect(deleteBlocker('draft', true)).toBe('has_orders')
     expect(deleteBlocker('published', true)).toBe('has_orders')
     expect(deleteBlocker('published', false)).toBe('not_draft')
-    expect(deleteBlocker('archived', false)).toBe('not_draft')
+  })
+
+  it('gives an archived product its own reasons: the advice to archive it does not fit', () => {
+    expect(deleteBlocker('archived', true)).toBe('has_orders_archived')
+    expect(deleteBlocker('archived', false)).toBe('not_draft_archived')
   })
 })

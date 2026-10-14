@@ -100,6 +100,13 @@ describe('request decoration', () => {
     expect(proxy(req('/?lang=de', good)).cookies.get('NEXT_LOCALE')).toBeUndefined()
   })
 
+  it('leaves the cookie alone for a form sent from a page opened with ?lang', () => {
+    production()
+    // A cookie set in a Server Action's answer makes Next draw the page again at its old address (a renamed product's).
+    const action = new NextRequest('https://formline-admin.test/products/hush?lang=en', { method: 'POST', headers: { ...good, 'next-action': 'abc' } })
+    expect(proxy(action).cookies.get('NEXT_LOCALE')).toBeUndefined()
+  })
+
   it('forwards the panel\'s own host in production, so Server Actions match the browser\'s Origin', () => {
     production()
     vi.stubEnv('SITE_URL', 'https://formline-admin.sopilnik.dev')

@@ -72,8 +72,10 @@ export function ProductImageEditor({ productId, name, image }: Props) {
     const result = await send(() => removeProductImageAction({ productId }))
     if (!result) return
     setConfirming(false)
-    if (result.ok) toast.success(t('removed'))
-    else toast.error(t('removeFailed'))
+    if (result.ok) {
+      setProblem(null)
+      toast.success(t('removed'))
+    } else toast.error(t('removeFailed'))
   })
 
   return (

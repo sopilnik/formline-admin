@@ -39,6 +39,12 @@ describe('English copy', () => {
   it('names the second factor one way', () => {
     expect(strings(en).filter(([, text]) => /two-factor/i.test(text))).toEqual([])
   })
+
+  it('calls the one product of a collection "it"', () => {
+    const t = createTranslator({ locale: 'en', messages: en, namespace: 'collections.delete' })
+    expect(t('blocked', { count: 1 })).toBe('This collection holds 1 product. Move it to another collection or delete it first.')
+    expect(t('blocked', { count: 2 })).toBe('This collection holds 2 products. Move them to another collection or delete them first.')
+  })
 })
 
 describe('Russian copy (the owner’s rules)', () => {
@@ -70,6 +76,12 @@ describe('Russian copy (the owner’s rules)', () => {
 
   it('keeps a dollar amount with its sign', () => {
     expect(strings(ru).filter(([, text]) => /\d \$/.test(text))).toEqual([])
+  })
+
+  it('calls the one product of a collection «его», and 21 of them «их»', () => {
+    const t = createTranslator({ locale: 'ru', messages: ru, namespace: 'collections.delete' })
+    expect(t('blocked', { count: 1 })).toContain('перенесите его')
+    expect(t('blocked', { count: 21 })).toContain('перенесите их')
   })
 
   it('uses the plural for every count of skipped orders above one', () => {

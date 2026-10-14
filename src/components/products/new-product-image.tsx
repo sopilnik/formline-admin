@@ -60,7 +60,14 @@ export function NewProductImage({ file, onChange, disabled = false }: Props) {
           <>
             <Image src={preview} alt="" width={160} height={226} unoptimized className="h-auto max-h-40 w-auto max-w-full rounded-md" />
             <span className="max-w-full truncate text-[13px] text-muted-foreground">{file.name}</span>
-            <Button type="button" variant="ghost" size="sm" disabled={disabled} onClick={() => onChange(null)}>
+            <Button
+              type="button" variant="ghost" size="sm" disabled={disabled}
+              onClick={() => {
+                // Its refusal goes with the image: the field holds no file now.
+                setRefused(null)
+                onChange(null)
+              }}
+            >
               <X aria-hidden />
               {t('imageRemove')}
             </Button>

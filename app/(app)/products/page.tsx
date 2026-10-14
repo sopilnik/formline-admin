@@ -34,6 +34,9 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
   }))
   // A page number past the end (an old link, a narrower filter) lands on the last page, as on the orders.
   if (list.filtered > 0 && query.page > list.pages) redirect(productsHref(query, { page: list.pages }))
+  // A collection renamed or deleted since the link was made no longer filters: the list shows every collection, as its
+  // select says.
+  if (query.collection && !list.collections.some(c => c.slug === query.collection)) redirect(productsHref(query, { collection: '' }))
   const locale = await getLocale()
   const t = await getTranslations('products')
   const filtered = isProductsFiltered(query)
