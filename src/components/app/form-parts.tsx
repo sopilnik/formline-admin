@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl'
 import { useActionState, useEffect, useState, type ReactNode, type RefObject } from 'react'
 import type { FormState } from '@/lib/auth-form'
 import { reach } from '@/lib/reach'
+import { cn } from '@/lib/utils'
 
 type ErrorState = Extract<FormState, { status: 'error' }>
 
@@ -20,8 +21,15 @@ export function useErrorText<F extends string>(state: FormState<F>): (field: F) 
 
 /** An error that belongs to no field, above the form or the control it is about; a form may move focus to it. */
 export function ErrorAlert({ children, className }: { children: ReactNode; className?: string }) {
-  const base = 'rounded-md border border-destructive px-3 py-2 text-sm text-destructive'
-  return <p role="alert" tabIndex={-1} className={className ? `${base} ${className}` : base}>{children}</p>
+  return (
+    <p
+      role="alert"
+      tabIndex={-1}
+      className={cn('rounded-md border border-destructive px-3 py-2 text-sm text-destructive', className)}
+    >
+      {children}
+    </p>
+  )
 }
 
 /** A form state's error that belongs to no field, above the form. */
