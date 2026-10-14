@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { useActionState, useEffect, useState, type ReactNode, type RefObject } from 'react'
+import { useFormStatus } from 'react-dom'
 import type { FormState } from '@/lib/auth-form'
 import { reach } from '@/lib/reach'
 import { cn } from '@/lib/utils'
@@ -32,11 +33,23 @@ export function ErrorAlert({ children, className }: { children: ReactNode; class
   )
 }
 
+/**
+ * How many submits of the enclosing form have been answered. An alert keyed on it is put in anew after each answer, so a
+ * refusal worded as the last one is read out again: a live region speaks only when something is added or its text changes.
+ */
+export function useAnsweredSubmits(): number {
+  const { pending } = useFormStatus()
+  const [seen, setSeen] = useState({ pending, answers: 0 })
+  if (seen.pending !== pending) setSeen({ pending, answers: pending ? seen.answers : seen.answers + 1 })
+  return seen.answers
+}
+
 /** A form state's error that belongs to no field, above the form. */
 export function FormAlert({ state }: { state: FormState }) {
   const message = useErrorMessage()
+  const answers = useAnsweredSubmits()
   if (state.status !== 'error' || state.field) return null
-  return <ErrorAlert>{message(state)}</ErrorAlert>
+  return <ErrorAlert key={answers}>{message(state)}</ErrorAlert>
 }
 
 /** After a failed submit, focus goes to the field in error, or to the first field. */

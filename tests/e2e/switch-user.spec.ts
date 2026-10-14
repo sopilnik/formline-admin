@@ -71,6 +71,13 @@ test.describe('switch user', () => {
     await expect(dialog.getByRole('alert')).toHaveText('The code is not correct. Check it and try again.')
     await expect(code).toBeFocused()
 
+    // The same refusal again is a new alert, not the first one left in place, so it is read out again.
+    await dialog.getByRole('alert').evaluate(alert => alert.setAttribute('data-heard', ''))
+    await code.fill('111111')
+    await code.press('Enter')
+    await expect(dialog.locator('[role="alert"]:not([data-heard])')).toHaveText('The code is not correct. Check it and try again.')
+    await expect(code).toBeFocused()
+
     // Sent from the button, the next wrong code brings the focus back to the field it is about.
     await code.fill('654321')
     await dialog.getByRole('button', { name: 'Switch', exact: true }).press('Enter')
