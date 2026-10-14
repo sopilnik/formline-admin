@@ -1,7 +1,8 @@
 'use client'
 
-import { ChevronDown } from 'lucide-react'
-import type { ComponentProps, ReactNode } from 'react'
+import { ChevronDown, Eye, EyeOff } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { useState, type ComponentProps, type ReactNode } from 'react'
 import { useAnsweredSubmits } from '@/components/app/form-parts'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -31,11 +32,36 @@ function Messages({ id, hint, error }: { id: string; hint?: string; error?: stri
  * above already names, the label shows only as the placeholder; screen readers still hear it as the label.
  */
 export function TextField({ id, label, hint, error, labelInside = false, ...input }: Common & ComponentProps<'input'> & { labelInside?: boolean }) {
+  const field = { id, placeholder: labelInside ? label : undefined, 'aria-invalid': error ? true : undefined, 'aria-describedby': describedBy(id, hint, error), ...input }
   return (
     <div className="flex flex-col gap-1.5">
       <Label htmlFor={id} className={labelInside ? 'sr-only' : undefined}>{label}</Label>
-      <Input id={id} placeholder={labelInside ? label : undefined} aria-invalid={error ? true : undefined} aria-describedby={describedBy(id, hint, error)} {...input} />
+      {input.type === 'password' ? <PasswordInput {...field} /> : <Input {...field} />}
       <Messages id={id} hint={hint} error={error} />
+    </div>
+  )
+}
+
+/**
+ * A password input with a button after it that shows what was typed and hides it again. The button keeps one name, "Show
+ * password"; its pressed state says which way the field is.
+ */
+function PasswordInput({ id, className, ...input }: ComponentProps<'input'>) {
+  const t = useTranslations('common')
+  const [shown, setShown] = useState(false)
+  return (
+    <div className="relative">
+      <Input id={id} {...input} type={shown ? 'text' : 'password'} className={cn('pr-9', className)} />
+      <button
+        type="button"
+        aria-controls={id}
+        aria-pressed={shown}
+        onClick={() => setShown(value => !value)}
+        className="absolute inset-y-1 right-1 flex w-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-ring"
+      >
+        {shown ? <EyeOff aria-hidden className="size-4" /> : <Eye aria-hidden className="size-4" />}
+        <span className="sr-only">{t('showPassword')}</span>
+      </button>
     </div>
   )
 }

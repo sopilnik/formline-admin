@@ -4,7 +4,8 @@
     "dismiss": "Dismiss",
     "skipToContent": "Skip to content",
     "messages": "Messages",
-    "unreached": "No answer from the server. Check the connection and try again."
+    "unreached": "No answer from the server. Check the connection and try again.",
+    "showPassword": "Show password"
   },
   "nav": {
     "label": "Main menu",
