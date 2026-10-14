@@ -29,7 +29,7 @@ export function TotpEnrolment({ id, secret, qr, error, bare = false }: Props) {
         </div>
       </div>
       <input type="hidden" name="totpSecret" value={secret} />
-      <TextField id={id} name="code" inputMode="numeric" autoComplete="one-time-code" label={t('fields.code')} error={error} />
+      <TextField id={id} name="code" inputMode="numeric" autoComplete="one-time-code" label={t('fields.code')} labelInside error={error} />
     </fieldset>
   )
 }

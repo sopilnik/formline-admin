@@ -64,6 +64,9 @@ test('the owner signs in with the password and an authenticator code, and signs 
   await signInWithPassword(page)
   await expect(page.getByRole('heading', { level: 1, name: 'Two-step verification' })).toBeVisible()
   await expectNoSeriousA11yViolations(page)
+  // The intro above names the code, so the field shows its name inside; screen readers still hear it as the label.
+  await expect(page.getByLabel('6-digit code')).toHaveAttribute('placeholder', '6-digit code')
+  await expect(page.locator('label[for="verify-code"]')).toHaveClass(/\bsr-only\b/)
   await page.getByLabel('6-digit code').fill(await codeFor(totp))
   await page.getByRole('button', { name: 'Verify' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()

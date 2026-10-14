@@ -45,6 +45,7 @@ export function VerifyForm({ hasTotp }: { hasTotp: boolean }) {
         inputMode={recovery ? 'text' : 'numeric'}
         autoComplete={recovery ? 'off' : 'one-time-code'}
         label={recovery ? t('fields.recoveryCode') : t('fields.code')}
+        labelInside
         error={errorFor('code')}
       />
       <Button type="submit" disabled={pending}>{pending ? t('verify.pending') : t('verify.submit')}</Button>

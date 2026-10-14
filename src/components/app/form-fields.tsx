@@ -26,12 +26,15 @@ function Messages({ id, hint, error }: { id: string; hint?: string; error?: stri
   )
 }
 
-/** A labelled input with its hint and its error, both announced with the field. */
-export function TextField({ id, label, hint, error, ...input }: Common & ComponentProps<'input'>) {
+/**
+ * A labelled input with its hint and its error, both announced with the field. With `labelInside`, for a field the text
+ * above already names, the label shows only as the placeholder; screen readers still hear it as the label.
+ */
+export function TextField({ id, label, hint, error, labelInside = false, ...input }: Common & ComponentProps<'input'> & { labelInside?: boolean }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id}>{label}</Label>
-      <Input id={id} aria-invalid={error ? true : undefined} aria-describedby={describedBy(id, hint, error)} {...input} />
+      <Label htmlFor={id} className={labelInside ? 'sr-only' : undefined}>{label}</Label>
+      <Input id={id} placeholder={labelInside ? label : undefined} aria-invalid={error ? true : undefined} aria-describedby={describedBy(id, hint, error)} {...input} />
       <Messages id={id} hint={hint} error={error} />
     </div>
   )

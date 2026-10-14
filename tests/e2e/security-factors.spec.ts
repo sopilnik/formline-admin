@@ -25,6 +25,8 @@ test.describe('second factors in a sandbox', () => {
     await expectNoSeriousA11yViolationsInBothThemes(page)
 
     const totp: Totp = { secret: await readTotpSecret(page), lastStep: 0 }
+    await expect(authenticator.getByLabel('6-digit code')).toHaveAttribute('placeholder', '6-digit code')
+    await expect(authenticator.locator('label', { hasText: '6-digit code' })).toHaveClass(/\bsr-only\b/)
     await authenticator.getByLabel('6-digit code').fill('000000')
     await authenticator.getByRole('button', { name: 'Turn on' }).click()
     await expect(authenticator.getByText('The code is not correct. Check it and try again.')).toBeVisible()
