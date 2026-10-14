@@ -1,4 +1,4 @@
-import type { Locator, Page } from '@playwright/test'
+import type { Locator } from '@playwright/test'
 import { E2E_ORIGIN_SECRET } from './constants.ts'
 import { openFramed } from './ready.ts'
 import { signInAsSandboxUser } from './sessions.ts'
@@ -12,7 +12,7 @@ const center = async (target: Locator) => {
 }
 
 /** Whether a point of the page shows the element itself (or something inside it), not a layer over it. */
-const reachable = async (page: Page, target: Locator) => {
+const reachable = async (target: Locator) => {
   const { x, y } = await center(target)
   return target.evaluate((element, [px, py]) => element.contains(document.elementFromPoint(px!, py!)), [x, y])
 }
@@ -38,7 +38,7 @@ test.describe('the orders selection', () => {
     await cards.getByRole('checkbox', { name: /^Select order #/ }).nth(1).check()
     await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
     for (const target of [page.getByRole('link', { name: 'Next page' }), page.locator('#orders-page-size')]) {
-      await expect.poll(() => reachable(page, target)).toBe(true)
+      await expect.poll(() => reachable(target)).toBe(true)
     }
   })
 
