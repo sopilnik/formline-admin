@@ -41,7 +41,8 @@ export function CollectionsList({ rows, canWrite }: { rows: CollectionItem[]; ca
     if (!focus) return
     const button = (direction: Direction) => list.current?.querySelector<HTMLButtonElement>(`[data-move="${focus.id}:${direction}"]`)
     const wanted = button(focus.direction)
-    const target = wanted && !wanted.disabled ? wanted : button(focus.direction === 'up' ? 'down' : 'up')
+    // A move button at the end of the list is disabled but keeps the focus (ui/button.tsx): the other one takes it over.
+    const target = wanted && wanted.getAttribute('aria-disabled') !== 'true' ? wanted : button(focus.direction === 'up' ? 'down' : 'up')
     target?.focus()
   }, [focus, order])
 

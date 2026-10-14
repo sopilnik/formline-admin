@@ -63,7 +63,7 @@ export function ProductImageEditor({ productId, name, image }: Props) {
     <div className="flex flex-col gap-3">
       <ProductImage image={image} />
       <input ref={picker} type="file" accept={UPLOAD_ACCEPT} hidden onChange={upload} />
-      <div className="flex flex-wrap gap-2">
+      <div data-focus-key="product-image" className="flex flex-wrap gap-2">
         <Button type="button" variant="outline" size="sm" disabled={uploading} onClick={() => picker.current?.click()}>
           <ImageUp aria-hidden />
           {uploading ? t('uploading') : image ? t('replace') : t('upload')}

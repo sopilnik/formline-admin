@@ -41,7 +41,7 @@ export function BulkActions({ chosen, query, canUpdate, onClear }: Props) {
       <span className="mr-1.5 font-semibold tabular-nums">{t('selected', { count: chosen.length })}</span>
       {canUpdate ? (
         <DropdownMenu>
-          <DropdownMenuTrigger render={<Button type="button" variant="outline" size="sm" disabled={pending || targets.length === 0} />}>
+          <DropdownMenuTrigger render={<Button type="button" variant="outline" size="sm" disabled={pending || targets.length === 0} data-focus-key="orders-selection" />}>
             {pending ? t('changing') : t('changeStatus')}
             <ChevronDown aria-hidden />
           </DropdownMenuTrigger>
@@ -53,7 +53,7 @@ export function BulkActions({ chosen, query, canUpdate, onClear }: Props) {
         </DropdownMenu>
       ) : null}
       <ExportButton namespace="orders.export" cap={EXPORT_CAP} href={ordersExportHref(query, chosen.map(row => row.id))} label={t('exportSelected')} size="sm" />
-      <button type="button" onClick={onClear} className="ml-auto rounded-sm text-ink-2 underline underline-offset-3 hover:text-foreground">
+      <button type="button" onClick={onClear} data-focus-key="orders-selection" className="ml-auto rounded-sm text-ink-2 underline underline-offset-3 hover:text-foreground">
         {t('clear')}
       </button>
     </div>

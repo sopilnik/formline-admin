@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server'
 import type { ReactNode } from 'react'
+import { FocusKeeper } from '@/components/app/focus-keeper'
 import { FrameReady } from '@/components/app/frame-ready'
 import type { NavItem } from '@/components/app/nav'
 import { ShortcutsProvider } from '@/components/app/shortcuts'
@@ -18,6 +19,7 @@ export async function AppFrame({ items, collapsed, theme, locale, user, unread, 
   const t = await getTranslations('common')
   return (
     <FrameReady>
+      <FocusKeeper />
       <ShortcutsProvider enabled={shortcuts} items={items}>
         <div className="flex min-h-dvh">
           <a

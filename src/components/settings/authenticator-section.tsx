@@ -74,7 +74,7 @@ export function AuthenticatorSection({ enabled, recent, canDisable, secret, qr }
       </div>
       {codes ? <RecoveryCodesView codes={codes} done={{ label: t('codesDone'), onClick: () => setClosed(state) }} /> : null}
       {recent && !codes && enrolling ? (
-        <form action={action} noValidate className="flex max-w-xl flex-col gap-4">
+        <form action={action} noValidate data-focus-key="authenticator" className="flex max-w-xl flex-col gap-4">
           <FormAlert state={shown} />
           <TotpEnrolment id="totp-code" secret={secret} qr={qr} error={errorFor('code')} bare />
           <div className="flex flex-wrap gap-2">
@@ -84,7 +84,7 @@ export function AuthenticatorSection({ enabled, recent, canDisable, secret, qr }
         </form>
       ) : null}
       {recent && enabled && !codes && !enrolling ? (
-        <div className="flex flex-col gap-2">
+        <div data-focus-key="authenticator" className="flex flex-col gap-2">
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="outline" onClick={() => setReplacingAfter(state)}>{t('replaceStart')}</Button>
             <Button type="button" variant="outline" disabled={!canDisable || pending} onClick={() => setConfirming(true)}>{t('disable')}</Button>

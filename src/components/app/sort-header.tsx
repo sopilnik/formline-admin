@@ -33,6 +33,8 @@ export function SortHeader<S extends string>({ query, sort, first, href, label, 
       <Link
         href={href(sort, dir)}
         scroll={false}
+        // A sort draws the list again: the focus finds this header in the new one (FocusKeeper).
+        data-focus-key={`sort-${sort}`}
         className={cn('inline-flex items-center gap-1 rounded-sm text-ink-2 hover:text-foreground', active && 'font-semibold text-foreground')}
       >
         {label}

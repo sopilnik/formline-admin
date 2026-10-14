@@ -36,6 +36,7 @@ export function OrdersTable({ rows, query, canUpdate }: { rows: OrderRowView[]; 
       indeterminate={chosen.length > 0 && !allChosen}
       onCheckedChange={selectAll}
       aria-label={t('selection.all')}
+      data-focus-key="orders-selection"
     />
   )
   const rowBox = (row: OrderRowView) => (

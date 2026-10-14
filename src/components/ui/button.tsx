@@ -49,8 +49,9 @@ function Button({
   return (
     <ButtonPrimitive
       data-slot="button"
-      // A submit button that waits for its form keeps the focus, so the keyboard does not fall back to the page.
-      focusableWhenDisabled={focusableWhenDisabled ?? props.type === "submit"}
+      // A disabled button keeps the focus and its place in the Tab order, so a button that waits for its action does
+      // not drop the keyboard to the page, and one that cannot be used yet still says so to a screen reader.
+      focusableWhenDisabled={focusableWhenDisabled ?? true}
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />

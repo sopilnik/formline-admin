@@ -53,6 +53,7 @@ export function NewProductImage({ file, onChange, disabled = false }: Props) {
         }}
         onDragLeave={() => setOver(false)}
         onDrop={drop}
+        data-focus-key="new-product-image"
         className={cn('flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-input px-4 py-6 text-center', over && 'border-ring bg-secondary')}
       >
         {file && preview ? (
