@@ -33,9 +33,10 @@ export function StatusChips<S extends string>({ label, allLabel, statuses, selec
     <div
       role="group"
       aria-label={label}
-      // On a phone the row scrolls sideways without a bar, and its right edge fades to show there is more. The wider end
-      // padding lets the last chip clear the fade, and the scroll padding keeps a focused chip's ring clear of both edges.
-      className="-mx-4 -mt-1 flex w-auto scroll-pr-10 scroll-pl-4 flex-nowrap items-center gap-2 overflow-x-auto pt-1 pr-10 pb-1 pl-4 [mask-image:linear-gradient(to_right,#000_calc(100%-2.5rem),transparent)] [scrollbar-width:none] md:mx-0 md:mt-0 md:flex-wrap md:overflow-visible md:px-0 md:pt-0 md:pb-0 md:[mask-image:none] [&::-webkit-scrollbar]:hidden"
+      // On a phone the row scrolls sideways without a bar, and its edges fade: the left one over the page's gutter only, so the
+      // first chip stays clear until the row moves, the right one wider, to show there is more. The wider end padding lets the
+      // last chip clear its fade, and the scroll padding keeps a focused chip's ring clear of both.
+      className="-mx-4 -mt-1 flex w-auto scroll-pr-10 scroll-pl-4 flex-nowrap items-center gap-2 overflow-x-auto pt-1 pr-10 pb-1 pl-4 [mask-image:linear-gradient(to_right,transparent,#000_1rem,#000_calc(100%-2.5rem),transparent)] [scrollbar-width:none] md:mx-0 md:mt-0 md:flex-wrap md:overflow-visible md:px-0 md:pt-0 md:pb-0 md:[mask-image:none] [&::-webkit-scrollbar]:hidden"
     >
       <Toggle pressed={pressed.includes(ALL)} onPressedChange={on => press(ALL, on)} aria-label={`${allLabel}, ${all}`} className={CHIP}>
         <Check aria-hidden className="hidden size-3.5 group-data-pressed/toggle:block" strokeWidth={2.5} />
