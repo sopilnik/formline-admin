@@ -36,7 +36,7 @@ export function NewProductForm({ collections }: Props) {
   const [name, setName] = useState('')
   const [image, setImage] = useState<File | null>(null)
   const [state, action, pending, unreached] = useFormAction(createProductAction, IDLE, form)
-  useLeaveGuard(form)
+  useLeaveGuard(form, state.status === 'error')
   // Once the product exists, its image is on the way until the form moves on.
   const uploading = state.status === 'done' && image !== null
   // True once the owner has left the page, so an upload that ends later does not pull them back.

@@ -17,7 +17,7 @@ export function StoreSettingsForm({ settings, zones }: { settings: Record<StoreF
   const toast = useToast()
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending, unreached] = useFormAction(saveStoreSettingsAction, IDLE, form)
-  useLeaveGuard(form)
+  useLeaveGuard(form, state.status === 'error')
   const settle = useEffectEvent((result: StoreSettingsState) => {
     if (result.status === 'done') toast.success(t('saved'))
     if (result.status === 'error') {

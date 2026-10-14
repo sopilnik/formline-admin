@@ -22,7 +22,7 @@ export function ProfileForm({ profile }: { profile: Record<ProfileField, string>
   const toast = useToast()
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending, unreached] = useFormAction(saveProfileAction, IDLE, form)
-  useLeaveGuard(form)
+  useLeaveGuard(form, state.status === 'error')
   const settle = useEffectEvent((result: ProfileState) => {
     if (result.status === 'done') toast.success(t('saved'))
     if (result.status === 'error') {

@@ -18,7 +18,7 @@ export function InviteForm() {
   const toast = useToast()
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending, unreached] = useFormAction(inviteMemberAction, IDLE, form)
-  useLeaveGuard(form)
+  useLeaveGuard(form, state.status === 'error')
   const settle = useEffectEvent((result: InviteState) => {
     if (result.status === 'done') toast.success(t('sent', { email: result.email }))
     if (result.status === 'error') form.current?.querySelector<HTMLElement>('[name="email"]')?.focus()

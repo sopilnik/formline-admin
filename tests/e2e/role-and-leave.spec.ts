@@ -60,4 +60,20 @@ test.describe('roles, languages and unsaved forms', () => {
     await closed
     expect(dialogs).toBe(0)
   })
+
+  test('a form the server refused still asks before the tab closes', async ({ context }) => {
+    await signInAsSandboxUser(context)
+    const refused = await context.newPage()
+    await openFramed(refused, '/products/new')
+    await refused.getByLabel('Name').fill('Half Typed')
+    await refused.getByRole('button', { name: 'Create product' }).click()
+    await expect(refused.getByLabel('Base price, $')).toHaveAttribute('aria-invalid', 'true')
+
+    const asked = new Promise<string>(resolve => refused.once('dialog', dialog => {
+      resolve(dialog.type())
+      void dialog.dismiss()
+    }))
+    await refused.close({ runBeforeUnload: true })
+    expect(await Promise.race([asked, new Promise<string>(resolve => setTimeout(() => resolve('no dialog'), 5000))])).toBe('beforeunload')
+  })
 })

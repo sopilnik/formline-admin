@@ -44,7 +44,7 @@ function DetailsForm({ productId, slug, version, values, collections, reloading,
   const router = useRouter()
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending, unreached] = useFormAction(updateProductDetailsAction, IDLE, form)
-  useLeaveGuard(form)
+  useLeaveGuard(form, state.status === 'error')
   // Once per result, with the latest translations.
   const settle = useEffectEvent((result: DetailsState) => {
     if (result.status === 'done') {

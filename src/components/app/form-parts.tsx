@@ -117,14 +117,15 @@ function unsaved(form: HTMLFormElement): boolean {
 
 /**
  * Asks the browser's "Leave the page?" on a reload or a closed tab while the form holds unsaved changes (the owner's
- * decision of 13 October: the panel's own links are not held up).
+ * decision of 13 October: the panel's own links are not held up). A form the server `refused` holds them too, though its
+ * fields now take what was typed as their defaults.
  */
-export function useLeaveGuard(form: RefObject<HTMLFormElement | null>): void {
+export function useLeaveGuard(form: RefObject<HTMLFormElement | null>, refused: boolean): void {
   useEffect(() => {
     const warn = (event: BeforeUnloadEvent): void => {
-      if (form.current && unsaved(form.current)) event.preventDefault()
+      if (refused || (form.current && unsaved(form.current))) event.preventDefault()
     }
     window.addEventListener('beforeunload', warn)
     return () => window.removeEventListener('beforeunload', warn)
-  }, [form])
+  }, [form, refused])
 }

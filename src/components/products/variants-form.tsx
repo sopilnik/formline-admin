@@ -33,7 +33,7 @@ export function VariantsForm({ productId, rows }: Props) {
   const router = useRouter()
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending, unreached] = useFormAction(saveVariantsAction, IDLE, form)
-  useLeaveGuard(form)
+  useLeaveGuard(form, state.status === 'error')
   const [reloading, startReload] = useTransition()
   // The conflict whose stock was loaded: its alert goes, and its stock fields show the stored stock.
   const [reloadedAfter, setReloadedAfter] = useState<VariantsState | null>(null)

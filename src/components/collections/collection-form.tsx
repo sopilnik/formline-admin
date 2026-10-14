@@ -25,7 +25,7 @@ export function CollectionForm({ collection }: Props) {
   const form = useRef<HTMLFormElement>(null)
   const [name, setName] = useState(collection?.name ?? '')
   const [state, action, pending, unreached] = useFormAction(saveCollectionAction, IDLE, form)
-  useLeaveGuard(form)
+  useLeaveGuard(form, state.status === 'error')
 
   const settle = useEffectEvent((result: CollectionState) => {
     if (result.status === 'done') {
