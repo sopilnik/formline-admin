@@ -21,6 +21,6 @@ test.describe('invitation form', () => {
     const role = await top(page.locator('#invite-role').boundingBox())
     const button = await top(page.getByRole('button', { name: 'Send invitation' }).boundingBox())
     expect(role).toBe(email)
-    expect(Math.abs(button - email)).toBeLessThanOrEqual(2)
+    expect(button).toBe(email)
   })
 })

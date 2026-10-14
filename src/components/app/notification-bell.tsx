@@ -79,7 +79,7 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
         ) : null}
       </Popover.Trigger>
       <Popover.Portal keepMounted>
-        <Popover.Positioner align="end" sideOffset={6} className="isolate z-50 outline-none">
+        <Popover.Positioner align="end" sideOffset={6} collisionPadding={16} className="isolate z-50 outline-none">
           <Popover.Popup data-slot="notifications-popup" className="flex max-h-(--available-height) w-[min(24rem,calc(100vw-2rem))] origin-(--transform-origin) flex-col rounded-lg bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 outline-none">
             <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
               <Popover.Title className="font-sans text-[15px] font-semibold">{t('title')}</Popover.Title>

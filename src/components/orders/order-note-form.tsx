@@ -38,7 +38,7 @@ export function OrderNoteForm({ orderId }: { orderId: string }) {
         defaultValue={state.status === 'error' ? state.note : ''}
       />
       <div>
-        <Button type="submit" size="sm" disabled={pending}>{pending ? t('adding') : t('addNote')}</Button>
+        <Button type="submit" disabled={pending}>{pending ? t('adding') : t('addNote')}</Button>
       </div>
     </form>
   )

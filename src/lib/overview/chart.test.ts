@@ -51,7 +51,7 @@ describe('buildChart', () => {
     const plan = periodPlan('90d', now, berlin)
     const zeros = plan.buckets.map(() => 0)
     const model = buildChart({ plan, current: zeros, previous: zeros, locale: 'en', timeZone: berlin })
-    expect(model.bars.at(-1)!.label).toMatch(/^21[  ]–[  ]27 Sept?$/)
+    expect(model.bars.at(-1)!.label).toMatch(/^21[\u2009 ]–[\u2009 ]27\u00a0Sept?$/)
     expect(model.ticks.at(-1)!.label).toMatch(/^27 Sept?$/)
     expect(model.max).toBe(3000)
   })

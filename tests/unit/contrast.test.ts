@@ -53,7 +53,7 @@ describe('token contrast (WCAG 2.2 AA)', () => {
 
   it.each([
     ['primary', 'background'], ['primary', 'card'], ['primary', 'secondary'], ['destructive', 'card'],
-    ['destructive', 'background'], ['primary-foreground', 'primary'], ['selected-foreground', 'selected'],
+    ['destructive', 'background'], ['primary-foreground', 'primary'], ['primary-foreground', 'primary-hover'], ['selected-foreground', 'selected'],
     ['status-info', 'badge-paid'], ['status-warn', 'badge-processing'], ['status-violet', 'badge-shipped'],
     ['status-ok', 'badge-delivered'], ['status-grey', 'badge-cancelled'], ['status-bad', 'badge-refunded'],
     ['sidebar-foreground', 'sidebar'], ['sidebar-muted', 'sidebar'], ['sidebar-strong', 'sidebar'],

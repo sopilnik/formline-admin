@@ -103,7 +103,11 @@ export default async function CustomerPage({ params }: Params) {
             ) : null}
           </div>
           {customer.recent.length > 0 ? (
-            <ul aria-labelledby="customer-orders-title" className="flex flex-col text-[13px]">
+            <ul
+              aria-labelledby="customer-orders-title"
+              // The rows keep their side padding for the hover fill; the list gives it back, so their text lines up with the card's.
+              className="-mx-1 flex flex-col text-[13px]"
+            >
               {customer.recent.map(order => (
                 <li key={order.id} className="group/row relative flex items-center justify-between gap-3 border-b px-1 py-2.5 last:border-b-0 hover:bg-secondary">
                   <span className="flex min-w-0 flex-col">

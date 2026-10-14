@@ -29,6 +29,9 @@
   --popover-foreground: light-dark(#17181A, #ECECEA);
   --primary: light-dark(#BF3A0E, #F07A4F);
   --primary-foreground: light-dark(#FFFFFF, #1A0D07);
+  /* The default button's hover: a solid shade that keeps its text at 4.5:1 or more, where 80 % of the primary over a card
+     did not (3.92:1 in the light theme). */
+  --primary-hover: light-dark(#A3310C, #D9693F);
   --primary-soft: light-dark(#FBEAE3, #3A2118);
   --secondary: light-dark(#F8F8F7, #202124);
   --secondary-foreground: light-dark(#17181A, #ECECEA);
@@ -112,6 +115,7 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
   --color-primary-soft: var(--primary-soft);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);

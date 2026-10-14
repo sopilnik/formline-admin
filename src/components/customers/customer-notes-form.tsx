@@ -41,7 +41,7 @@ export function CustomerNotesForm({ customerId, notes }: { customerId: string; n
         defaultValue={state.status === 'error' ? state.notes : notes}
       />
       <div>
-        <Button type="submit" size="sm" disabled={pending}>{pending ? t('saving') : t('saveNotes')}</Button>
+        <Button type="submit" disabled={pending}>{pending ? t('saving') : t('saveNotes')}</Button>
       </div>
     </form>
   )

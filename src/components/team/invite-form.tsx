@@ -32,7 +32,7 @@ export function InviteForm() {
       <SelectField id="invite-role" name="role" label={t('role')} defaultValue={error?.values.role ?? 'manager'}>
         {ASSIGNABLE_ROLES.map(option => <option key={option} value={option}>{role(option)}</option>)}
       </SelectField>
-      <Button type="submit" disabled={pending} className="lg:mt-[22px]">{pending ? t('sending') : t('submit')}</Button>
+      <Button type="submit" disabled={pending} className="lg:mt-5">{pending ? t('sending') : t('submit')}</Button>
     </form>
   )
 }

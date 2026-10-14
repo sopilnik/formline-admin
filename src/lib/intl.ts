@@ -44,9 +44,13 @@ export function formatDay(date: Date, locale: Locale, timeZone: string): string 
   return new Intl.DateTimeFormat(INTL_LOCALE[locale], { day: 'numeric', month: 'short', timeZone }).format(date)
 }
 
-/** "26 Aug – 24 Sept": both ends are calendar days of the zone, the end inclusive. */
+/**
+ * "26 Aug – 24 Sept": both ends are calendar days of the zone, the end inclusive. A day keeps its month and its year
+ * (no-break spaces everywhere but around the dash), so a narrow column breaks the range only at the dash.
+ */
 export function formatDayRange(start: Date, endInclusive: Date, locale: Locale, timeZone: string): string {
-  return new Intl.DateTimeFormat(INTL_LOCALE[locale], { day: 'numeric', month: 'short', timeZone }).formatRange(start, endInclusive)
+  const range = new Intl.DateTimeFormat(INTL_LOCALE[locale], { day: 'numeric', month: 'short', timeZone }).formatRange(start, endInclusive)
+  return range.replaceAll(' ', '\u00a0').replace('\u00a0–\u00a0', ' – ')
 }
 
 /** Compares names in the Unicode root order, as Postgres's "unicode" collation sorts them: a list sorted here agrees with one a query sorted. */
