@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 import { E2E_ORIGIN_SECRET } from './constants.ts'
-import { openFramed } from './ready.ts'
+import { hydrated, openFramed } from './ready.ts'
 import { signInAsSandboxUser } from './sessions.ts'
 import { expect, test } from './test.ts'
 
@@ -26,6 +26,7 @@ test.describe('a request that gets no answer', () => {
     await page.getByRole('table', { name: 'Orders' }).getByRole('link', { name: /^#\d+$/ }).first().click()
     const note = page.getByLabel('Internal note')
     const text = 'Courier called: the parcel waits at the depot until Friday, then goes back to us.'
+    await hydrated(note)
     await note.fill(text)
     await context.setOffline(true)
     await page.getByRole('button', { name: 'Add note' }).click()
@@ -42,6 +43,7 @@ test.describe('a request that gets no answer', () => {
     await signInAsSandboxUser(context)
     await openFramed(page, '/products/hush')
     const details = page.getByRole('region', { name: 'Details' })
+    await hydrated(details.getByLabel('Description'))
     await details.getByLabel('Description').fill('Quiet type on black, printed on matte paper.')
     await failNextAction(page, 'error page')
     await details.getByRole('button', { name: 'Save changes' }).click()
@@ -54,6 +56,7 @@ test.describe('a request that gets no answer', () => {
   test('a new collection whose request is cut keeps its name and slug', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await openFramed(page, '/collections/new')
+    await hydrated(page.getByLabel('Name'))
     await page.getByLabel('Name').fill('Deep Sea')
     await page.getByLabel('Slug').fill('deep-sea')
     await failNextAction(page, 'cut')
@@ -80,6 +83,7 @@ test.describe('a request that gets no answer', () => {
     await signInAsSandboxUser(context)
     await openFramed(page, '/products/hush')
     const description = page.getByRole('region', { name: 'Details' }).getByLabel('Description')
+    await hydrated(description)
     await description.fill('A draft not saved yet.')
     await failNextAction(page, 'error page')
     await page.getByRole('banner').getByRole('button', { name: /^Theme/ }).click()

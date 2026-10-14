@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 import { expect } from './test.ts'
 
 /**
@@ -14,4 +14,12 @@ export async function frameHydrated(page: Page): Promise<void> {
 export async function openFramed(page: Page, path: string): Promise<void> {
   await page.goto(path)
   await frameHydrated(page)
+}
+
+/**
+ * Waits until React has hydrated a server-rendered element. A page that streams in parts hydrates them after the frame, and
+ * a field filled before its own part hydrates loses the fill's selection: the typed text lands in front of the old value.
+ */
+export async function hydrated(target: Locator): Promise<void> {
+  await expect.poll(() => target.evaluate(element => Object.keys(element).some(key => key.startsWith('__reactFiber')))).toBe(true)
 }
