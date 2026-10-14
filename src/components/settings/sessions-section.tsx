@@ -47,7 +47,10 @@ export function SessionsSection({ sessions }: { sessions: SessionView[] }) {
                 <p className="text-xs text-muted-foreground tabular-nums">{t('times', { signedIn: session.signedIn, lastActive: session.lastActive })}</p>
               </div>
               {session.current ? null : (
-                <Button type="button" variant="outline" size="sm" disabled={pending} aria-label={t('revokeNamed', { device })} onClick={() => revoke(session.id)}>
+                <Button
+                  type="button" variant="outline" size="sm" disabled={pending} aria-label={t('revokeNamed', { device, signedIn: session.signedIn })}
+                  onClick={() => revoke(session.id)}
+                >
                   {t('revoke')}
                 </Button>
               )}

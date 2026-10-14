@@ -125,7 +125,7 @@ describe('switchUser', () => {
 
     const wrong = () => switchUser(a.session, { targetUserId: a.users.admin!, code: '000000', ...meta }, { pool: app })
     for (let i = 1; i < LIMITS.secondFactorFail.limit; i++) expect(await wrong()).toMatchObject({ ok: false, error: 'code_invalid' })
-    expect(await wrong()).toMatchObject({ ok: false, error: 'second_factor_locked', retryAfterSeconds: SECOND_FACTOR_LOCK_SECONDS })
+    expect(await wrong()).toMatchObject({ ok: false, error: 'member_locked', retryAfterSeconds: SECOND_FACTOR_LOCK_SECONDS })
 
     const log = await admin.query("select actor_user_id from fa.activity_log where workspace_id = $1 and action = 'auth.second_factor_locked'", [a.session.workspaceId])
     expect(log.rows).toEqual([{ actor_user_id: a.users.admin }])
@@ -149,7 +149,7 @@ describe('switchUser', () => {
       switchUser(a.session, { targetUserId: a.users.admin!, code: '000000', ...meta }, { pool: app })))
 
     expect(results.filter(r => !r.ok && r.error === 'code_invalid')).toHaveLength(9)
-    expect(results.filter(r => !r.ok && r.error === 'second_factor_locked')).toHaveLength(21)
+    expect(results.filter(r => !r.ok && r.error === 'member_locked')).toHaveLength(21)
     const locks = await admin.query<{ n: number }>(
       "select count(*)::int as n from fa.activity_log where workspace_id = $1 and action = 'auth.second_factor_locked'", [a.session.workspaceId])
     expect(locks.rows[0]?.n).toBe(1)

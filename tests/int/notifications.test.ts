@@ -142,8 +142,11 @@ describe('a new sign-in', () => {
     expect(elsewhere.rows.find(r => r.kind === 'auth.new_sign_in')).toMatchObject({ read: false, thisDevice: false })
   })
 
-  it('keeps its sign-in through a rotation of the session', async () => {
+  it('keeps its sign-in and its sign-in time through a rotation of the session', async () => {
     const first = await signIn(other)
+    // Signed in an hour ago: a re-authentication now does not make the device's sign-in newer.
+    await admin.query("update fa.sessions set created_at = now() - interval '1 hour' where id = $1", [first.id])
+    const signedIn = (await admin.query<{ created_at: Date }>('select created_at from fa.sessions where id = $1', [first.id])).rows[0]!.created_at
     const session: Session = {
       id: first.id, workspaceId: other.workspaceId, workspaceKind: 'sandbox', userId: other.users.owner, role: 'owner',
       secondFactorVerified: true, reauthAt: new Date(), expiresAt: first.expiresAt,
@@ -153,6 +156,7 @@ describe('a new sign-in', () => {
     expect(rotated.signInId).toBe(first.signInId)
     expect(await withWorkspace(ctx(other, 'owner'), tx => sessionSignInId(tx, rotated.id), app)).toBe(first.signInId)
     expect(await withWorkspace(ctx(other, 'owner'), tx => sessionSignInId(tx, first.id), app)).toBeNull()
+    expect((await admin.query<{ created_at: Date }>('select created_at from fa.sessions where id = $1', [rotated.id])).rows[0]!.created_at).toEqual(signedIn)
   })
 })
 

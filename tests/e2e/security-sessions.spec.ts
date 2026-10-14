@@ -7,10 +7,11 @@ import { expect, test } from './test.ts'
 
 test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip': '203.0.113.47' } })
 
-/** Another signed-in device of the same member, as a second browser would leave it. */
-const otherDevice = (workspaceId: string, userId: string, agent: string) => asSchemaOwner(c => c.query(
-  "insert into fa.sessions (workspace_id, id, user_id, expires_at, second_factor_verified, user_agent_summary) values ($1, $2, $3, now() + interval '1 hour', true, $4)",
-  [workspaceId, createHash('sha256').update(randomBytes(20)).digest('hex'), userId, agent]))
+/** Another signed-in device of the same member, as a second browser would leave it, signed in `ago` before now. */
+const otherDevice = (workspaceId: string, userId: string, agent: string, ago = '0 minutes') => asSchemaOwner(c => c.query(
+  `insert into fa.sessions (workspace_id, id, user_id, expires_at, second_factor_verified, user_agent_summary, created_at)
+   values ($1, $2, $3, now() + interval '1 hour', true, $4, now() - $5::interval)`,
+  [workspaceId, createHash('sha256').update(randomBytes(20)).digest('hex'), userId, agent, ago]))
 
 test.describe('security settings in a sandbox', () => {
   test('explains the password, lists the devices and passes axe', async ({ page, context }) => {
@@ -24,6 +25,18 @@ test.describe('security settings in a sandbox', () => {
     await expect(devices.filter({ hasText: 'This device' })).toHaveCount(1)
     await expect(devices.filter({ hasText: 'This device' }).getByRole('button')).toHaveCount(0)
     await expectNoSeriousA11yViolationsInBothThemes(page)
+  })
+
+  test('names each device\'s Sign out by its sign-in time, so two of the same browser differ', async ({ page, context }) => {
+    const { workspaceId, userId } = await signInAsSandboxUser(context)
+    await otherDevice(workspaceId, userId, 'Chrome, Linux', '2 hours')
+    await otherDevice(workspaceId, userId, 'Chrome, Linux', '5 hours')
+    await page.goto('/settings/security')
+    const names = await page.getByRole('list', { name: 'Signed-in devices' }).getByRole('button', { name: /^Sign out Chrome, Linux/ })
+      .evaluateAll(buttons => buttons.map(button => button.getAttribute('aria-label')))
+    expect(names).toHaveLength(2)
+    expect(new Set(names).size).toBe(2)
+    for (const name of names) expect(name).toMatch(/^Sign out Chrome, Linux, signed in /)
   })
 
   test('signs out one other device, then all the others, and logs both', async ({ page, context }) => {

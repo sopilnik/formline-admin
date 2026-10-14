@@ -30,7 +30,7 @@ test.describe('demo banner', () => {
     await signInAsSandboxUser(context)
     await page.goto('/overview')
     const banner = page.getByRole('region', { name: 'Demo sandbox' })
-    expect(await shownText(banner)).toBe('Demo sandbox. Your changes are private. The sandbox is deleted after 2 hours without activity, or after 23 hours at the latest.')
+    expect(await shownText(banner)).toBe('Demo sandbox. Your changes are private. The sandbox is deleted after 2 hours without activity, or after 24 hours at the latest.')
   })
 
   test('in Russian the overflow menu shows each action on one line', async ({ page, context }) => {

@@ -78,7 +78,11 @@ export async function validateSessionToken(token: string, pool: Pool = getPool()
  */
 export async function createSession(
   tx: Tx,
-  input: { workspaceId: string; userId: string; verified: boolean; userAgentSummary: string | null; ipHash: string | null; signInId?: string },
+  input: {
+    workspaceId: string; userId: string; verified: boolean; userAgentSummary: string | null; ipHash: string | null; signInId?: string
+    /** The sign-in a rotated session carries on: its device and its time stay those of the sign-in. */
+    signedInAt?: Date
+  },
 ): Promise<CreatedSession> {
   const token = generateToken()
   const id = hashToken(token)
@@ -92,6 +96,7 @@ export async function createSession(
     userAgentSummary: input.userAgentSummary,
     ipHash: input.ipHash,
     ...(input.signInId ? { signInId: input.signInId } : {}),
+    ...(input.signedInAt ? { createdAt: input.signedInAt } : {}),
   }).returning({ expiresAt: sessions.expiresAt, signInId: sessions.signInId })
   return { token, id, expiresAt: row!.expiresAt, signInId: row!.signInId }
 }
@@ -99,7 +104,7 @@ export async function createSession(
 /**
  * A fresh token for a full authentication (the second factor, or a re-authentication):
  * the old row is deleted, the new session is verified with a new lifetime.
- * The sign-in id stays, so the device is still the one that signed in. Null when the
+ * The sign-in id and the sign-in time stay, so the device is still the one that signed in, when it did. Null when the
  * old row is already gone: a session that ended meanwhile (a lock, a sign-out elsewhere,
  * its expiry) is never turned into a new one.
  */
@@ -107,10 +112,12 @@ export async function rotateSession(tx: Tx, session: Session, meta: { userAgentS
   const signInId = await sessionSignInId(tx, session.id)
   const deleted = await tx.delete(sessions)
     .where(and(eq(sessions.workspaceId, session.workspaceId), eq(sessions.id, session.id)))
-    .returning({ id: sessions.id })
+    .returning({ createdAt: sessions.createdAt })
   if (deleted.length === 0) return null
 
-  return createSession(tx, { workspaceId: session.workspaceId, userId: session.userId, verified: true, ...meta, ...(signInId ? { signInId } : {}) })
+  return createSession(tx, {
+    workspaceId: session.workspaceId, userId: session.userId, verified: true, ...meta, ...(signInId ? { signInId } : {}), signedInAt: deleted[0]!.createdAt,
+  })
 }
 
 export async function deleteSession(tx: Tx, session: Session): Promise<void> {

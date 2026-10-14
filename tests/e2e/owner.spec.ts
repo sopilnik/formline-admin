@@ -129,7 +129,7 @@ test('the owner adds a passkey, signs in with it and removes it', async ({ page 
   await expectNoSeriousA11yViolations(page)
 
   await page.getByRole('button', { name: 'Add a passkey' }).click()
-  await expect(page.getByText('Passkey added.')).toBeVisible()
+  await expect(page.getByText('Passkey added. Your other devices are signed out.')).toBeVisible()
   await expect(page.getByRole('list', { name: 'Passkeys' }).getByRole('listitem')).toHaveCount(1)
 
   // On a phone the row's buttons sit under the name instead of squeezing it (visual walk, 26 September).
@@ -161,6 +161,7 @@ test('a sensitive change asks for the password and a code once ten minutes have 
   await ageOwnerAuthentication()
   await page.goto('/settings/security')
   await expect(page.getByRole('button', { name: 'Add a passkey' })).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'Add a passkey' })).toHaveAccessibleDescription("Confirm it's you above to add a passkey.")
   // The page asks once, at its top, for every sensitive section; the password section waits for it.
   await expect(page.getByLabel('New password')).toHaveCount(0)
   const reauth = page.getByRole('region', { name: "Confirm it's you" })

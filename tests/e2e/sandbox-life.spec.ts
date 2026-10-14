@@ -14,7 +14,7 @@ test.describe('sandbox life', () => {
     const { workspaceId } = await signInAsSandboxUser(context)
     await page.goto('/overview')
     const banner = page.getByRole('region', { name: 'Demo sandbox' })
-    await expect(banner).toContainText('Demo sandbox. Your changes are private. The sandbox is deleted after 2 hours without activity, or after 23 hours at the latest.')
+    await expect(banner).toContainText('Demo sandbox. Your changes are private. The sandbox is deleted after 2 hours without activity, or after 24 hours at the latest.')
     await banner.getByRole('button', { name: 'Reset data' }).click()
     const dialog = page.getByRole('dialog', { name: 'Reset the sandbox?' })
     await expect(dialog).toContainText('Everything you changed is deleted and a fresh copy is created.')

@@ -59,6 +59,7 @@ export function PasskeysSection({ available, recent, passkeys }: Props) {
       <div>
         <h2 id="passkeys-title" className="font-sans text-[15px] font-semibold">{t('title')}</h2>
         <p className="mt-1 max-w-prose text-[13px] text-muted-foreground">{t('intro')}</p>
+        {recent ? null : <p id="passkeys-confirm-first" className="mt-1 max-w-prose text-[13px] text-muted-foreground">{t('confirmFirst')}</p>}
       </div>
       {passkeys.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t('empty')}</p>
@@ -67,7 +68,7 @@ export function PasskeysSection({ available, recent, passkeys }: Props) {
           {passkeys.map(passkey => <PasskeyItem key={passkey.id} passkey={passkey} canRemove={recent} />)}
         </ul>
       )}
-      <Button type="button" onClick={add} disabled={!recent || adding} className="self-start">
+      <Button type="button" onClick={add} disabled={!recent || adding} aria-describedby={recent ? undefined : 'passkeys-confirm-first'} className="self-start">
         <FingerprintPattern aria-hidden />
         {adding ? t('adding') : t('add')}
       </Button>

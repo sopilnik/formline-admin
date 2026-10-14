@@ -4,7 +4,7 @@ import { retryMinutes } from '@/lib/form'
 export type AuthError =
   | 'unavailable' | 'rate_limited' | 'token_invalid' | 'name_required' | 'email_required' | 'email_invalid'
   | 'password_required' | 'password_incorrect' | 'password_too_short' | 'password_too_long' | 'password_breached'
-  | 'code_invalid' | 'owner_exists' | 'credentials_invalid' | 'second_factor_locked' | 'recovery_invalid'
+  | 'code_invalid' | 'owner_exists' | 'credentials_invalid' | 'second_factor_locked' | 'member_locked' | 'recovery_invalid'
   | 'passkey_failed' | 'passkey_unknown' | 'passkey_cancelled'
   | 'session_expired' | 'last_factor' | 'reauth_required' | 'demo_full' | 'demo_rate_limited' | 'generic'
 

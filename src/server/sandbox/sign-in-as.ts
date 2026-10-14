@@ -49,7 +49,7 @@ export async function switchUser(session: Session, input: SwitchInput, overrides
   let claim: Granted | null = null
   if (target.totpSecretEnc) {
     const claimed = await claimAttempt(GUARDS.secondFactor, subject, deps.pool)
-    if (!claimed.ok) return { ok: false, error: 'second_factor_locked', field: 'code', retryAfterSeconds: claimed.retryAfterSeconds }
+    if (!claimed.ok) return { ok: false, error: 'member_locked', field: 'code', retryAfterSeconds: claimed.retryAfterSeconds }
     claim = claimed
 
     const secret = decryptTotpSecret(target.totpSecretEnc, { workspaceId: session.workspaceId, userId: target.id }, deps.config.totpKeys)
@@ -84,5 +84,6 @@ async function wrongCode(ctx: WorkspaceContext, targetId: string, claim: Granted
     await logActivity(tx, ctx.workspaceId, { actorUserId: targetId, action: 'auth.second_factor_locked', ipHash })
     await securityNotice(tx, ctx.workspaceId, member, 'auth.second_factor_locked', {}, { at: new Date(deps.now()) })
   }, deps.pool)
-  return { ok: false, error: 'second_factor_locked', field: 'code', retryAfterSeconds: SECOND_FACTOR_LOCK_SECONDS }
+  // The member is told, not the owner: the message says so (the owner's own sign-in keeps second_factor_locked).
+  return { ok: false, error: 'member_locked', field: 'code', retryAfterSeconds: SECOND_FACTOR_LOCK_SECONDS }
 }

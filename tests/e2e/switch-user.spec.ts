@@ -78,6 +78,23 @@ test.describe('switch user', () => {
     await expect(dialog.getByRole('alert')).toHaveText('The code is not correct. Check it and try again.')
   })
 
+  test('says the member is told when ten wrong codes lock their authenticator', async ({ page, context }) => {
+    const { workspaceId } = await signInAsSandboxUser(context)
+    const admin = await asSchemaOwner(async c => (await c.query<{ id: string }>("select id from fa.users where workspace_id = $1 and role = 'admin'", [workspaceId])).rows[0]!)
+    await enrolAuthenticator(workspaceId, admin.id, new Uint8Array(20).fill(3))
+    await page.goto('/overview')
+    await page.getByRole('region', { name: 'Demo sandbox' }).getByRole('button', { name: 'Switch user' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Switch user' })
+    await dialog.getByRole('radio', { name: /Noah Becker/ }).check()
+    for (let attempt = 1; attempt <= 10; attempt++) {
+      await dialog.getByLabel('Authenticator code').fill('000000')
+      const answered = page.waitForResponse(r => r.request().method() === 'POST' && r.request().headers()['next-action'] !== undefined)
+      await dialog.getByRole('button', { name: 'Switch', exact: true }).click()
+      await answered
+    }
+    await expect(dialog.getByRole('alert')).toHaveText('Too many wrong codes. Two-step verification is locked for an hour, and the member has been sent a notice.')
+  })
+
   test('hands the visitor’s language to the member they continue as', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/overview?lang=ru')
