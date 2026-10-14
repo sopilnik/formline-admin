@@ -37,6 +37,18 @@ describe('parseProductDetails', () => {
   it('keeps a long name out', () => {
     expect(parseProductDetails({ ...valid, name: 'x'.repeat(121) })).toEqual({ ok: false, fieldErrors: { name: 'name_too_long' } })
   })
+
+  it('refuses a name of invisible characters only, and drops such a tag', () => {
+    expect(parseProductDetails({ ...valid, name: '\u200b\u200b\u200b', slug: 'invisible' })).toEqual({ ok: false, fieldErrors: { name: 'name_required' } })
+    const result = parseProductDetails({ ...valid, tags: 'circles, \u200b' })
+    expect(result.ok && result.data.tags).toEqual(['circles'])
+  })
+
+  it('counts a line break of the description once, as the field does, and keeps it as LF', () => {
+    const lines = Array.from({ length: 20 }, () => 'x'.repeat(198))
+    const result = parseProductDetails({ ...valid, description: `${lines.join('\r\n')}\r\n${'y'.repeat(10)}` })
+    expect(result.ok && result.data.description).toBe(`${lines.join('\n')}\n${'y'.repeat(10)}`)
+  })
 })
 
 describe('parseTags', () => {

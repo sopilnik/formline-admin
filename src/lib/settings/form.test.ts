@@ -14,6 +14,10 @@ describe('parseProfile', () => {
     expect(parseProfile({ name: 'ж'.repeat(121), locale: 'en', theme: 'system', shortcuts: '' })).toEqual({ ok: false, fieldErrors: { name: 'too_long' } })
     expect(parseProfile({ name: 'ж'.repeat(120), locale: 'en', theme: 'system', shortcuts: 'on' }).ok).toBe(true)
   })
+
+  it('refuses a name of invisible characters only', () => {
+    expect(parseProfile({ name: '\u200b\u200b\u200b', locale: 'en', theme: 'system', shortcuts: '' })).toEqual({ ok: false, fieldErrors: { name: 'required' } })
+  })
 })
 
 describe('parseStoreSettings', () => {
@@ -33,5 +37,6 @@ describe('parseStoreSettings', () => {
     // The canonical spelling only: the select offers the platform's list as it is.
     expect(parseStoreSettings({ ...valid, timezone: 'asia/almaty' })).toEqual({ ok: false, fieldErrors: { timezone: 'timezone_invalid' } })
     expect(parseStoreSettings({ ...valid, storeName: 'x'.repeat(81) })).toEqual({ ok: false, fieldErrors: { storeName: 'too_long' } })
+    expect(parseStoreSettings({ ...valid, storeName: '\u200b\ufeff' })).toEqual({ ok: false, fieldErrors: { storeName: 'required' } })
   })
 })

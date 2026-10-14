@@ -8,6 +8,15 @@ describe('parseNote', () => {
     expect(parseNote('ж'.repeat(NOTE_MAX))).toEqual({ ok: true, note: 'ж'.repeat(NOTE_MAX) })
     expect(parseNote('ж'.repeat(NOTE_MAX + 1))).toEqual({ ok: false, error: 'too_long' })
   })
+
+  it('counts a line break once, as the field does, and keeps it as LF', () => {
+    const lines = Array.from({ length: 100 }, (_, i) => `line ${String(i).padStart(4, '0')}`)
+    expect(parseNote(`${lines.join('\r\n')}x`)).toEqual({ ok: true, note: `${lines.join('\n')}x` })
+  })
+
+  it('refuses a note of invisible characters only', () => {
+    expect(parseNote('\u200b\u2060\u200b')).toEqual({ ok: false, error: 'required' })
+  })
 })
 
 describe('fitNote', () => {

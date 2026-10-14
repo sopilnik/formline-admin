@@ -5,6 +5,7 @@ import {
 import { PALETTE_IDS } from '@/lib/catalog'
 import { parsePrice } from '@/lib/products/price'
 import { isSlug, slugify } from '@/lib/slug'
+import { cleanLine, cleanText } from '@/lib/text'
 
 // Server side only: Zod checks whether it may compile code with `new Function`, which the
 // Content Security Policy refuses in the browser. The fields import src/lib/products/fields.ts.
@@ -13,7 +14,7 @@ const TAG = /^[\p{Ll}\p{N}]+(-[\p{Ll}\p{N}]+)*$/u
 
 /** "Bold, Type,  bold" → ['bold', 'type']: lowercase, spaces become hyphens, repeats dropped. Null when a tag is not a word. */
 export function parseTags(text: string): string[] | null {
-  const tags = text.split(',').map(tag => tag.trim().toLocaleLowerCase().replace(/\s+/g, '-')).filter(Boolean)
+  const tags = text.split(',').map(tag => cleanLine(tag).toLocaleLowerCase().replace(/\s+/g, '-')).filter(Boolean)
   const unique = [...new Set(tags)]
   if (unique.length > TAGS_MAX || unique.some(tag => [...tag].length > TAG_MAX || !TAG.test(tag))) return null
   return unique
@@ -23,12 +24,12 @@ const issue = (error: DetailIssue) => ({ error })
 
 // Every field arrives as text; unknown keys are refused.
 const schema = z.strictObject({
-  name: z.string().trim().min(1, issue('name_required')).max(PRODUCT_NAME_MAX, issue('name_too_long')),
+  name: z.string().overwrite(cleanLine).min(1, issue('name_required')).max(PRODUCT_NAME_MAX, issue('name_too_long')),
   slug: z.string().trim().toLowerCase(),
   collection: z.uuid(issue('collection_missing')),
   basePrice: z.string(),
   tags: z.string(),
-  description: z.string().trim().max(DESCRIPTION_MAX, issue('description_too_long')),
+  description: z.string().overwrite(cleanText).max(DESCRIPTION_MAX, issue('description_too_long')),
 })
 
 export type DetailsResult = { ok: true; data: ProductDetails } | { ok: false; fieldErrors: Partial<Record<DetailField, DetailIssue>> }
@@ -47,7 +48,7 @@ export function parseProductDetails(input: Record<DetailField, string>): Details
   if (basePriceCents === null) fieldErrors.basePrice = 'price_invalid'
   const tags = parseTags(input.tags)
   if (tags === null) fieldErrors.tags = 'tags_invalid'
-  const name = parsed.success ? parsed.data.name : input.name.trim()
+  const name = parsed.success ? parsed.data.name : cleanLine(input.name)
   const typed = parsed.success ? parsed.data.slug : input.slug.trim().toLowerCase()
   const slug = typed || slugify(name, PRODUCT_SLUG_MAX)
   if (!fieldErrors.name && !isSlug(slug, PRODUCT_SLUG_MAX)) fieldErrors.slug = slug ? 'slug_invalid' : 'slug_required'

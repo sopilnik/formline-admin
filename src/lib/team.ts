@@ -1,3 +1,5 @@
+import { cleanLine } from '@/lib/text'
+
 /** The roles an owner or an admin can give: never `owner`, which only setup creates. */
 export const ASSIGNABLE_ROLES = ['admin', 'manager', 'viewer'] as const
 export type AssignableRole = (typeof ASSIGNABLE_ROLES)[number]
@@ -10,11 +12,12 @@ export const EMAIL_MAX = 254
 export const MEMBER_NAME_MAX = 120
 
 /**
- * A member's name as a form sends it: trimmed, from one character to MEMBER_NAME_MAX; null when it is empty or longer.
- * The form's maxLength keeps an honest browser within the limit, so only a crafted request meets the second refusal.
+ * A member's name as a form sends it: cleaned (src/lib/text.ts), from one character to MEMBER_NAME_MAX; null when it is
+ * empty or longer. The form's maxLength keeps an honest browser within the limit, so only a crafted request meets the second
+ * refusal.
  */
 export function memberName(raw: string): string | null {
-  const name = raw.trim()
+  const name = cleanLine(raw)
   const length = [...name].length
   return length >= 1 && length <= MEMBER_NAME_MAX ? name : null
 }

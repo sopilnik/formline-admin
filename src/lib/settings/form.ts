@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { LOCALES, type Locale } from '@/i18n/locale'
 import { LOW_STOCK_MAX, STORE_NAME_MAX, SUPPORT_EMAIL_MAX, timeZones, type ProfileField, type ProfileIssue, type StoreField, type StoreIssue } from '@/lib/settings/fields'
 import { MEMBER_NAME_MAX } from '@/lib/team'
+import { cleanLine } from '@/lib/text'
 import { THEMES, type Theme } from '@/lib/theme'
 
 export type Profile = { name: string; locale: Locale; theme: Theme; shortcuts: boolean }
@@ -17,7 +18,7 @@ const length = (value: string): number => [...value].length
  */
 export function parseProfile(values: Record<ProfileField, string>): Parsed<Profile, ProfileField, ProfileIssue> {
   const fieldErrors: Partial<Record<ProfileField, ProfileIssue>> = {}
-  const name = values.name.trim()
+  const name = cleanLine(values.name)
   if (!name) fieldErrors.name = 'required'
   else if (length(name) > MEMBER_NAME_MAX) fieldErrors.name = 'too_long'
   const locale = z.enum(LOCALES).safeParse(values.locale)
@@ -34,7 +35,7 @@ export function parseProfile(values: Record<ProfileField, string>): Parsed<Profi
  */
 export function parseStoreSettings(values: Record<StoreField, string>): Parsed<StoreSettingsInput, StoreField, StoreIssue> {
   const fieldErrors: Partial<Record<StoreField, StoreIssue>> = {}
-  const storeName = values.storeName.trim()
+  const storeName = cleanLine(values.storeName)
   if (!storeName) fieldErrors.storeName = 'required'
   else if (length(storeName) > STORE_NAME_MAX) fieldErrors.storeName = 'too_long'
   const supportEmail = values.supportEmail.trim().toLowerCase()

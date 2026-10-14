@@ -12,4 +12,9 @@ describe('memberName', () => {
     expect(memberName('   ')).toBeNull()
     expect(memberName('a'.repeat(MEMBER_NAME_MAX + 1))).toBeNull()
   })
+
+  it('refuses a name of invisible characters only', () => {
+    expect(memberName('\u200b\u200b')).toBeNull()
+    expect(memberName('\u200b Alex Kim \u200d')).toBe('Alex Kim')
+  })
 })
