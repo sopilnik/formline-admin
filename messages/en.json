@@ -1311,6 +1311,7 @@
     "searching": "Searching…",
     "failed": "The search could not be completed. Try again.",
     "empty": "Nothing found for “{query}”.",
+    "found": "{count, plural, one {# result} other {# results}}",
     "hints": {
       "move": "↑ ↓ to move",
       "open": "Enter to open",

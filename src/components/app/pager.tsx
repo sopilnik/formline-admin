@@ -2,7 +2,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { PageSizeSelect } from '@/components/app/page-size-select'
-import { PAGE_SIZES, pageWindow, type PageSize } from '@/lib/pagination'
+import { PAGE_SIZES, pageRange, pageWindow, type PageSize } from '@/lib/pagination'
 import { cn } from '@/lib/utils'
 
 const PAGE = 'grid h-[30px] min-w-[30px] place-items-center rounded-md px-1 text-ink-2 hover:bg-muted hover:text-foreground'
@@ -26,8 +26,7 @@ type Props = {
 /** The pager under a list: the range shown, up to five page links and the page size. */
 export function Pager({ namespace, sizeId, page, pages, size, filtered, href }: Props) {
   const t = useTranslations(namespace)
-  const from = (page - 1) * size + 1
-  const to = Math.min(page * size, filtered)
+  const { from, to } = pageRange(page, size, filtered)
   return (
     <nav aria-label={t('label')} className="flex flex-wrap items-center gap-3 px-3 pt-3 text-[13px] text-muted-foreground">
       <span className="tabular-nums">{t('range', { from, to, total: filtered })}</span>

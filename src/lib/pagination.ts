@@ -37,6 +37,11 @@ export function pageQueryHref(path: string, query: PageQuery, changes: Partial<P
   return text ? `${path}?${text}` : path
 }
 
+/** The first and the last row a page shows, counted from 1 over the rows the filters keep. */
+export function pageRange(page: number, size: number, filtered: number): { from: number; to: number } {
+  return { from: (page - 1) * size + 1, to: Math.min(page * size, filtered) }
+}
+
 /** How many pages `rows` fill; an empty list still has its one page. */
 export function pageCount(rows: number, size: number): number {
   return Math.max(1, Math.ceil(rows / size))

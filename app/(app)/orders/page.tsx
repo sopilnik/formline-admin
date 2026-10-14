@@ -3,12 +3,14 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { ExportButton } from '@/components/app/export-button'
+import { ListBody, ListRefresh, ListStatus } from '@/components/app/list-status'
 import { Pager } from '@/components/app/pager'
 import { OrdersFilters } from '@/components/orders/orders-filters'
 import { OrdersTable } from '@/components/orders/orders-table'
 import { EXPORT_CAP } from '@/lib/csv'
 import { DEFAULT_ORDERS_QUERY, isOrdersFiltered, ordersExportHref, ordersHref, parseOrdersQuery } from '@/lib/orders/query'
 import { toOrderRowView } from '@/lib/orders/view'
+import { pageRange } from '@/lib/pagination'
 import type { SearchParams } from '@/lib/search-params'
 import { requireSession } from '@/server/auth/sessions'
 import { authorize } from '@/server/authz/authorize'
@@ -36,14 +38,15 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const locale = await getLocale()
   const t = await getTranslations('orders')
   const filtered = isOrdersFiltered(query)
+  const count = filtered ? t('countFiltered', { filtered: page.filtered, total: page.total }) : t('count', { total: page.total })
+  const empty = page.total === 0 ? t('empty.noneTitle') : t('empty.filteredTitle')
+  const results = page.rows.length > 0 ? t('pager.range', { ...pageRange(query.page, query.size, page.filtered), total: page.filtered }) : empty
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-end gap-4">
         <div className="min-w-0 flex-1">
           <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
-          <p className="mt-1 text-[13px] text-muted-foreground tabular-nums">
-            {filtered ? t('countFiltered', { filtered: page.filtered, total: page.total }) : t('count', { total: page.total })}
-          </p>
+          <p className="mt-1 text-[13px] text-muted-foreground tabular-nums">{count}</p>
         </div>
         {page.filtered > 0 && can(session.role, 'csv.export', session.workspaceKind) ? (
           <ExportButton
@@ -54,38 +57,41 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           />
         ) : null}
       </div>
-      <OrdersFilters query={query} statusCounts={page.statusCounts} />
-      <section className="@container rounded-lg border bg-card p-2 pb-3">
-        {page.rows.length > 0 ? (
-          <>
-            <OrdersTable
-              key={ordersHref(query)}
-              rows={page.rows.map(row => toOrderRowView(row, locale, timeZone))}
-              query={query}
-              canUpdate={can(session.role, 'orders.update', session.workspaceKind)}
-            />
-            <Pager
-              namespace="orders.pager"
-              sizeId="orders-page-size"
-              page={query.page}
-              pages={page.pages}
-              size={query.size}
-              filtered={page.filtered}
-              href={changes => ordersHref(query, changes)}
-            />
-          </>
-        ) : (
-          <div className="flex flex-col items-start gap-1.5 px-3 py-8">
-            <h2 className="font-sans text-base font-semibold">{page.total === 0 ? t('empty.noneTitle') : t('empty.filteredTitle')}</h2>
-            <p className="text-[13px] text-muted-foreground">{page.total === 0 ? t('empty.noneBody') : t('empty.filteredBody')}</p>
-            {page.total > 0 ? (
-              <Link href={ordersHref(DEFAULT_ORDERS_QUERY, { sort: query.sort, dir: query.dir, size: query.size })} className="mt-2 text-[13px] font-medium text-primary hover:underline">
-                {t('filters.clear')}
-              </Link>
-            ) : null}
-          </div>
-        )}
-      </section>
+      <ListStatus text={`${count}. ${results}`} />
+      <ListRefresh>
+        <OrdersFilters query={query} statusCounts={page.statusCounts} />
+        <ListBody className="@container rounded-lg border bg-card p-2 pb-3">
+          {page.rows.length > 0 ? (
+            <>
+              <OrdersTable
+                key={ordersHref(query)}
+                rows={page.rows.map(row => toOrderRowView(row, locale, timeZone))}
+                query={query}
+                canUpdate={can(session.role, 'orders.update', session.workspaceKind)}
+              />
+              <Pager
+                namespace="orders.pager"
+                sizeId="orders-page-size"
+                page={query.page}
+                pages={page.pages}
+                size={query.size}
+                filtered={page.filtered}
+                href={changes => ordersHref(query, changes)}
+              />
+            </>
+          ) : (
+            <div className="flex flex-col items-start gap-1.5 px-3 py-8">
+              <h2 className="font-sans text-base font-semibold">{empty}</h2>
+              <p className="text-[13px] text-muted-foreground">{page.total === 0 ? t('empty.noneBody') : t('empty.filteredBody')}</p>
+              {page.total > 0 ? (
+                <Link href={ordersHref(DEFAULT_ORDERS_QUERY, { sort: query.sort, dir: query.dir, size: query.size })} className="mt-2 text-[13px] font-medium text-primary hover:underline">
+                  {t('filters.clear')}
+                </Link>
+              ) : null}
+            </div>
+          )}
+        </ListBody>
+      </ListRefresh>
     </div>
   )
 }

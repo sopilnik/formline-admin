@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_PAGE_QUERY, DEFAULT_PAGE_SIZE, pageCount, pageQueryHref, pageWindow, parsePage, parsePageQuery, parsePageSize } from '@/lib/pagination'
+import { DEFAULT_PAGE_QUERY, DEFAULT_PAGE_SIZE, pageCount, pageQueryHref, pageRange, pageWindow, parsePage, parsePageQuery, parsePageSize } from '@/lib/pagination'
 
 describe('parsePage and parsePageSize', () => {
   it('read a whole page number from 1 and one of the offered sizes', () => {
@@ -12,6 +12,13 @@ describe('parsePage and parsePageSize', () => {
     for (const value of [undefined, '', '0', '-2', '1.5', 'abc']) expect(parsePage(value), String(value)).toBe(1)
     for (const value of [undefined, '', '7', '1000', '25.0x']) expect(parsePageSize(value), String(value)).toBe(DEFAULT_PAGE_SIZE)
     expect(DEFAULT_PAGE_SIZE).toBe(25)
+  })
+})
+
+describe('pageRange', () => {
+  it('gives the first and the last row of a page, the last page cut at the end of the rows', () => {
+    expect(pageRange(1, 25, 47)).toEqual({ from: 1, to: 25 })
+    expect(pageRange(2, 25, 47)).toEqual({ from: 26, to: 47 })
   })
 })
 

@@ -18,6 +18,7 @@ import { orderHref } from '@/lib/orders/view'
 import { productHref } from '@/lib/products/view'
 import { NO_RESULTS, searchTerm, type SearchResults } from '@/lib/search'
 import { THEMES } from '@/lib/theme'
+import { cn } from '@/lib/utils'
 import { setLocaleAction, setThemeAction } from '@/server/actions/preferences'
 
 /** What the palette may offer beyond the pages: the actions the member's role allows. */
@@ -174,7 +175,11 @@ function PaletteSearch({ items, access, close }: { items: NavItem[]; access: Pal
   ]
   const groups = every.filter(group => group.items.length > 0)
 
-  const status = searching ? t('searching') : failed ? t('failed') : null
+  const empty = !searching && !failed && groups.length === 0
+  const shown = searching ? t('searching') : failed ? t('failed') : empty ? t('empty', { query: query.trim() }) : null
+  // The status region says every turn of the search, what it found included, so a screen reader hears it while one types;
+  // the count itself stays unseen.
+  const status = shown ?? (query.trim() ? t('found', { count: groups.reduce((sum, group) => sum + group.items.length, 0) }) : null)
 
   return (
     <Autocomplete.Root open inline items={groups} value={query} onValueChange={change} filter={null} autoHighlight="always" keepHighlight>
@@ -188,10 +193,9 @@ function PaletteSearch({ items, access, close }: { items: NavItem[]; access: Pal
       </div>
       {/* The arrows move the highlight and scroll the list; the list itself takes the focus too, as a scrolling region must. */}
       <div tabIndex={0} className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-1.5 outline-none focus-visible:outline-2 focus-visible:outline-solid focus-visible:-outline-offset-2 focus-visible:outline-ring">
-        <Autocomplete.Status className="px-3 py-2 text-[13px] text-muted-foreground empty:hidden">{status}</Autocomplete.Status>
-        {!searching && groups.length === 0 ? (
-          <p className="px-3 py-6 text-[13px] wrap-anywhere text-muted-foreground">{t('empty', { query: query.trim() })}</p>
-        ) : null}
+        <Autocomplete.Status className={cn('px-3 text-[13px] text-muted-foreground empty:hidden', empty ? 'py-6 wrap-anywhere' : 'py-2', !shown && 'sr-only')}>
+          {status}
+        </Autocomplete.Status>
         <Autocomplete.List>
           {(group: Group) => (
             <Autocomplete.Group key={group.value} items={group.items} className="not-last:mb-1">
@@ -201,6 +205,8 @@ function PaletteSearch({ items, access, close }: { items: NavItem[]; access: Pal
                   <Autocomplete.Item
                     key={entry.value}
                     value={entry}
+                    // The highlighted option is the one Enter opens: it says so as the selected option of the list.
+                    render={(props, state) => <div {...props} aria-selected={state.highlighted} />}
                     onClick={() => {
                       close()
                       entry.run()
