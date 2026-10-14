@@ -28,7 +28,9 @@ export function NavLinks({ items, collapsed = false, onNavigate }: { items: NavI
     <ul className="flex flex-col gap-1">
       {items.map((item, index) => {
         const Icon = ICONS[item.key]
-        const current = pathname === item.href || pathname.startsWith(`${item.href}/`)
+        // An item stands for its whole section: Settings links to /settings/profile and is current on /settings/store too.
+        const section = item.href.split('/').slice(0, 2).join('/')
+        const current = pathname === section || pathname.startsWith(`${section}/`)
         const link = (
           <Link
             href={item.href}

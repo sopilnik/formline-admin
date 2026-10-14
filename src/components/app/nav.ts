@@ -13,7 +13,8 @@ const ITEMS: (NavItem & { action?: Action })[] = [
   { key: 'team', href: '/team', group: 'admin', action: 'team.read' },
   { key: 'activity', href: '/activity', group: 'admin', action: 'activity.read' },
   { key: 'outbox', href: '/outbox', group: 'admin', action: 'outbox.read' },
-  { key: 'settings', href: '/settings', group: 'admin' },
+  // Straight to the first section: /settings only redirects there, a second round trip.
+  { key: 'settings', href: '/settings/profile', group: 'admin' },
 ]
 
 /**

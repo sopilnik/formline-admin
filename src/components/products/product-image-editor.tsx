@@ -3,7 +3,7 @@
 import { ImageUp } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useRef, useState, useTransition, type ChangeEvent } from 'react'
+import { useEffect, useRef, useState, useTransition, type ChangeEvent } from 'react'
 import { ErrorAlert } from '@/components/app/form-parts'
 import { useReach } from '@/components/app/use-reach'
 import { ProductImage, type PosterImage } from '@/components/products/product-image'
@@ -29,8 +29,15 @@ export function ProductImageEditor({ productId, name, image }: Props) {
   const picker = useRef<HTMLInputElement>(null)
   const [problem, setProblem] = useState<UploadProblem | null>(null)
   const [confirming, setConfirming] = useState(false)
-  const [uploading, startUpload] = useTransition()
+  // Not a transition: an async transition would hold every navigation until the upload ended. Its success comes as a
+  // toast, and so does a refusal once the person has left the page.
+  const [uploading, setUploading] = useState(false)
   const [removing, startRemove] = useTransition()
+  const here = useRef(true)
+  useEffect(() => () => {
+    here.current = false
+  }, [])
+  const say = (refused: UploadProblem): string => (refused.error === 'rate_limited' ? t('errors.rate_limited', { minutes: refused.minutes }) : t(`errors.${refused.error}`))
 
   const upload = (event: ChangeEvent<HTMLInputElement>): void => {
     const file = event.target.files?.[0]
@@ -43,12 +50,15 @@ export function ProductImageEditor({ productId, name, image }: Props) {
     }
 
     setProblem(null)
-    startUpload(async () => {
-      const failed = await sendProductImage(productId, file)
+    setUploading(true)
+    void sendProductImage(productId, file).then(failed => {
+      setUploading(false)
       if (failed) {
-        setProblem(failed)
+        if (here.current) setProblem(failed)
+        else toast.error(say(failed))
         return
       }
+
       toast.success(t('uploaded'))
       router.refresh()
     })
@@ -78,9 +88,7 @@ export function ProductImageEditor({ productId, name, image }: Props) {
       </div>
       <p className="text-xs text-muted-foreground">{t('hint')}</p>
       {problem ? (
-        <ErrorAlert>
-          {problem.error === 'rate_limited' ? t('errors.rate_limited', { minutes: problem.minutes }) : t(`errors.${problem.error}`)}
-        </ErrorAlert>
+        <ErrorAlert>{say(problem)}</ErrorAlert>
       ) : null}
       <Dialog open={confirming} onOpenChange={setConfirming}>
         <DialogContent showCloseButton={false}>

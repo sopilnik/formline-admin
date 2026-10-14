@@ -18,6 +18,10 @@ describe('navItems', () => {
     expect(navItems('owner', 'owner').map(i => i.group)).toEqual(['store', 'store', 'store', 'store', 'store', 'admin', 'admin', 'admin', 'admin'])
   })
 
+  it('opens Settings at its first section', () => {
+    expect(navItems('viewer', 'sandbox').find(item => item.key === 'settings')?.href).toBe('/settings/profile')
+  })
+
   it('carries a count only where there is one', () => {
     const items = navItems('manager', 'sandbox', { orders: 18 })
     expect(items.find(item => item.key === 'orders')?.count).toBe(18)

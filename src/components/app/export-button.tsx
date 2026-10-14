@@ -2,7 +2,7 @@
 
 import { Download } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useTransition } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 
@@ -29,13 +29,16 @@ async function fetchFile(href: string): Promise<{ response: Response; file: Blob
 /**
  * Fetches the CSV and hands it to the browser as a download: a fetch rather than a
  * plain link, so a refused export (the rate limit) or a dropped connection becomes a message instead of a failed download.
+ * Not a transition: an async transition would hold every navigation until the file had come.
  */
 export function ExportButton({ href, label, size = 'default', namespace, cap }: Props) {
   const t = useTranslations(namespace)
   const toast = useToast()
-  const [pending, startTransition] = useTransition()
-  const run = (): void => startTransition(async () => {
+  const [pending, setPending] = useState(false)
+  const run = async (): Promise<void> => {
+    setPending(true)
     const fetched = await fetchFile(href)
+    setPending(false)
     if (!fetched) {
       toast.error(t('failed'))
       return
@@ -58,7 +61,7 @@ export function ExportButton({ href, label, size = 'default', namespace, cap }: 
     link.click()
     setTimeout(() => URL.revokeObjectURL(url), 1_000)
     if (response.headers.get('X-Export-Truncated') === 'true') toast.success(t('truncated', { count: cap }))
-  })
+  }
   return (
     <Button type="button" variant="outline" size={size} disabled={pending} onClick={run}>
       <Download aria-hidden />

@@ -215,6 +215,7 @@
     },
     "detail": {
       "title": "Order #{number}",
+      "loading": "Loading the order…",
       "back": "Orders",
       "placed": "Placed {date}",
       "changeStatus": "Change status",
@@ -683,6 +684,7 @@
     },
     "new": {
       "title": "New product",
+      "loading": "Loading the new product form…",
       "intro": "It starts as a draft, with no stock on any variant.",
       "palettes": "Palettes",
       "palettesHint": "Each palette comes in A3, A2 and A1. The SKUs are made from the slug and never change.",
@@ -977,6 +979,7 @@
   },
   "team": {
     "title": "Team",
+    "loading": "Loading the team…",
     "count": "{total, plural, one {# member} other {# members}}",
     "members": "Members",
     "ownerNote": "In your own workspace the team is you alone. Inviting colleagues, changing their roles and deactivating them is part of the demo: enter it to try the team in a sandbox of your own.",
@@ -1073,6 +1076,7 @@
   },
   "activity": {
     "title": "Activity",
+    "loading": "Loading the activity log…",
     "count": "{total, plural, one {# entry} other {# entries}}",
     "countFiltered": "{filtered, number} of {total, plural, one {# entry} other {# entries}}",
     "system": "System",

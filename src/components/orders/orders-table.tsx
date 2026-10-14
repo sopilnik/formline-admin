@@ -1,8 +1,8 @@
 'use client'
 
-import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { IntentLink } from '@/components/app/intent-link'
 import { ROW_LINK } from '@/components/app/row-link'
 import { SortHeader, type SortDir } from '@/components/app/sort-header'
 import { BulkActions } from '@/components/orders/bulk-actions'
@@ -84,7 +84,7 @@ export function OrdersTable({ rows, query, canUpdate }: { rows: OrderRowView[]; 
             <tr key={row.id} className={cn('group/row relative hover:bg-secondary', selected.has(row.id) && 'bg-row-selected hover:bg-row-selected')}>
               <td className={cn(TD, 'relative z-10 w-10')}>{rowBox(row)}</td>
               <td className={cn(TD, 'tabular-nums')}>
-                <Link href={row.href} prefetch={false} className={cn(ROW_LINK, 'font-semibold')}>#{row.number}</Link>
+                <IntentLink href={row.href} className={cn(ROW_LINK, 'font-semibold')}>#{row.number}</IntentLink>
               </td>
               <td className={cn(TD, 'whitespace-nowrap tabular-nums')}>{row.placed}</td>
               <td className={cn(TD, 'py-1.5')}>
@@ -110,7 +110,7 @@ export function OrdersTable({ rows, query, canUpdate }: { rows: OrderRowView[]; 
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <span className="relative z-10 flex">{rowBox(row)}</span>
-                  <Link href={row.href} prefetch={false} className={cn(ROW_LINK, 'text-sm font-semibold tabular-nums')}>#{row.number}</Link>
+                  <IntentLink href={row.href} className={cn(ROW_LINK, 'text-sm font-semibold tabular-nums')}>#{row.number}</IntentLink>
                 </div>
                 <StatusBadge status={row.status} />
               </div>
