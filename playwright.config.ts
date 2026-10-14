@@ -9,7 +9,9 @@ export default defineConfig({
   testDir: 'tests/e2e',
   fullyParallel: false,
   workers: E2E_WORKERS,
-  retries: 0,
+  // The CI runner is slower than a development machine: a test that fails there by timing gets one more run, and the
+  // report lists it as flaky instead of hiding it. Locally a failure stays a failure.
+  retries: process.env.CI ? 1 : 0,
   forbidOnly: !!process.env.CI,
   // CI keeps the HTML report, the traces and the screenshots of a failed run as the e2e-evidence artifact (ci.yml).
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : [['list']],
