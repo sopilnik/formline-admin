@@ -15,7 +15,14 @@ export const SUPPORT_EMAIL_MAX = 254
 /** A threshold above this is no longer a "low" stock for a poster shop. */
 export const LOW_STOCK_MAX = 999
 
-/** The time zones the store may pick: the platform's canonical list, which the form offers as it is. */
+// Node's ICU still lists a few zones under their old names; the store offers today's, which Node and Postgres both know.
+export const CURRENT_ZONE_NAMES: Record<string, string> = {
+  'Africa/Asmera': 'Africa/Asmara', 'America/Godthab': 'America/Nuuk', 'Asia/Calcutta': 'Asia/Kolkata', 'Asia/Katmandu': 'Asia/Kathmandu',
+  'Asia/Rangoon': 'Asia/Yangon', 'Asia/Saigon': 'Asia/Ho_Chi_Minh', 'Atlantic/Faeroe': 'Atlantic/Faroe', 'Europe/Kiev': 'Europe/Kyiv',
+  'Pacific/Enderbury': 'Pacific/Kanton', 'Pacific/Ponape': 'Pacific/Pohnpei', 'Pacific/Truk': 'Pacific/Chuuk',
+}
+
+/** The time zones the store may pick: UTC first, then the platform's list under today's names, in order. */
 export function timeZones(): string[] {
-  return Intl.supportedValuesOf('timeZone')
+  return ['UTC', ...Intl.supportedValuesOf('timeZone').map(zone => CURRENT_ZONE_NAMES[zone] ?? zone).sort()]
 }

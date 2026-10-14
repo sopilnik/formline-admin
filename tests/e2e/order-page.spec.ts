@@ -43,7 +43,7 @@ test.describe('order page', () => {
     const toProcess = await asSchemaOwner(async c => Number((await c.query<{ n: string }>("select count(*) as n from fa.orders where workspace_id = $1 and status = 'paid'", [workspaceId])).rows[0]!.n))
     await page.goto(`/orders/${order.number}`)
     await page.getByRole('button', { name: 'Change status' }).click()
-    await expect(page.getByRole('menuitem')).toHaveText(['Processing', 'Cancelled', 'Refunded'])
+    await expect(page.getByRole('menuitem')).toHaveText(['Processing', 'Canceled', 'Refunded'])
     await page.getByRole('menuitem', { name: 'Processing' }).click()
     await expect(page.getByText(`Order #${order.number} is now Processing.`)).toBeVisible()
     await expect(page.getByRole('main').getByText('Processing', { exact: true }).first()).toBeVisible()
@@ -63,7 +63,7 @@ test.describe('order page', () => {
     await page.getByRole('menuitem', { name: 'Processing' }).click()
     // Base UI announces an error toast through a separate alert and hides the visible copy from the accessibility tree.
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('This order changed while the page was open. It now shows its current status.')).toBeVisible()
-    await expect(page.getByRole('main').getByText('Cancelled', { exact: true }).first()).toBeVisible()
+    await expect(page.getByRole('main').getByText('Canceled', { exact: true }).first()).toBeVisible()
     await expect(page.getByRole('button', { name: 'Change status' })).toHaveCount(0)   // nothing follows "cancelled"
   })
 

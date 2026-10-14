@@ -55,7 +55,7 @@ test.describe('outbox', () => {
     await expect(letter).toContainText('Здравствуйте, Dana Ortiz!')
     await expect(letter).toContainText('с устройства Firefox, Linux')
     await expectNoSeriousA11yViolationsInBothThemes(page)
-    await letter.getByRole('link', { name: 'Проверить сеансы' }).click()
+    await letter.getByRole('link', { name: 'Проверить сессии' }).click()
     await expect(page).toHaveURL(/\/settings\/security$/)
   })
 

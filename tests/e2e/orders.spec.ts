@@ -56,7 +56,7 @@ test.describe('orders list', () => {
     await expect(chips.getByRole('button', { name: /^All/ })).toHaveAttribute('aria-pressed', 'false')
     await expect(chips.getByRole('button', { name: /^Paid/ })).toHaveAttribute('aria-pressed', 'true')
     const table = page.getByRole('table', { name: 'Orders' })
-    for (const other of ['Shipped', 'Delivered', 'Cancelled', 'Refunded']) await expect(table.getByText(other, { exact: true })).toHaveCount(0)
+    for (const other of ['Shipped', 'Delivered', 'Canceled', 'Refunded']) await expect(table.getByText(other, { exact: true })).toHaveCount(0)
     await chips.getByRole('button', { name: /^All/ }).click()
     await expect(page).toHaveURL(/\/orders$/)
     await chips.getByRole('button', { name: /^Shipped/ }).click()

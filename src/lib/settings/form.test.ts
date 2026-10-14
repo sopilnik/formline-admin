@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { timeZones } from '@/lib/settings/fields'
 import { parseProfile, parseStoreSettings } from '@/lib/settings/form'
 
 describe('parseProfile', () => {
@@ -38,5 +39,24 @@ describe('parseStoreSettings', () => {
     expect(parseStoreSettings({ ...valid, timezone: 'asia/almaty' })).toEqual({ ok: false, fieldErrors: { timezone: 'timezone_invalid' } })
     expect(parseStoreSettings({ ...valid, storeName: 'x'.repeat(81) })).toEqual({ ok: false, fieldErrors: { storeName: 'too_long' } })
     expect(parseStoreSettings({ ...valid, storeName: '\u200b\ufeff' })).toEqual({ ok: false, fieldErrors: { storeName: 'required' } })
+  })
+})
+
+describe('timeZones', () => {
+  it('starts with UTC and names every zone by its current name, in order', () => {
+    const zones = timeZones()
+    expect(zones[0]).toBe('UTC')
+    for (const current of ['Europe/Kyiv', 'Asia/Kolkata', 'Asia/Ho_Chi_Minh', 'Asia/Yangon', 'Asia/Kathmandu', 'America/Nuuk', 'Atlantic/Faroe', 'Africa/Asmara', 'Pacific/Chuuk', 'Pacific/Pohnpei', 'Pacific/Kanton']) {
+      expect(zones, current).toContain(current)
+    }
+    for (const old of ['Europe/Kiev', 'Asia/Calcutta', 'Asia/Saigon', 'Pacific/Enderbury']) expect(zones, old).not.toContain(old)
+    expect(zones.slice(1)).toEqual([...zones.slice(1)].sort())
+  })
+
+  it('takes UTC, and a stored old name as its current one', () => {
+    const valid = { storeName: 'Formline', supportEmail: 'help@formline.example', lowStockDefault: '5' }
+    expect(parseStoreSettings({ ...valid, timezone: 'UTC' }).ok).toBe(true)
+    const old = parseStoreSettings({ ...valid, timezone: 'Europe/Kiev' })
+    expect(old.ok && old.data.timezone).toBe('Europe/Kyiv')
   })
 })

@@ -38,7 +38,7 @@ test.describe('selection and bulk status', () => {
     expect([after.x, after.y]).toEqual([before.x, before.y])
 
     await toolbar.getByRole('button', { name: 'Change status' }).click()
-    await expect(page.getByRole('menuitem')).toHaveText(['Processing', 'Cancelled', 'Refunded'])
+    await expect(page.getByRole('menuitem')).toHaveText(['Processing', 'Canceled', 'Refunded'])
     await page.getByRole('menuitem', { name: 'Processing' }).click()
     await expect(page.getByText('2 orders changed to Processing.')).toBeVisible()
     await expect(page.getByText(`Skipped #${newest[2]!.number}: not allowed from its status.`)).toBeVisible()

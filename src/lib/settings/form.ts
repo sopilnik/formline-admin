@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { LOCALES, type Locale } from '@/i18n/locale'
-import { LOW_STOCK_MAX, STORE_NAME_MAX, SUPPORT_EMAIL_MAX, timeZones, type ProfileField, type ProfileIssue, type StoreField, type StoreIssue } from '@/lib/settings/fields'
+import { CURRENT_ZONE_NAMES, LOW_STOCK_MAX, STORE_NAME_MAX, SUPPORT_EMAIL_MAX, timeZones, type ProfileField, type ProfileIssue, type StoreField, type StoreIssue } from '@/lib/settings/fields'
 import { MEMBER_NAME_MAX } from '@/lib/team'
 import { cleanLine } from '@/lib/text'
 import { THEMES, type Theme } from '@/lib/theme'
@@ -40,7 +40,8 @@ export function parseStoreSettings(values: Record<StoreField, string>): Parsed<S
   else if (length(storeName) > STORE_NAME_MAX) fieldErrors.storeName = 'too_long'
   const supportEmail = values.supportEmail.trim().toLowerCase()
   if (!z.email().max(SUPPORT_EMAIL_MAX).safeParse(supportEmail).success) fieldErrors.supportEmail = 'email_invalid'
-  const timezone = values.timezone.trim()
+  // A zone stored under an old name before the list showed today's is taken under its current one.
+  const timezone = CURRENT_ZONE_NAMES[values.timezone.trim()] ?? values.timezone.trim()
   if (!timeZones().includes(timezone)) fieldErrors.timezone = 'timezone_invalid'
   const threshold = values.lowStockDefault.trim()
   const lowStockDefault = /^\d{1,3}$/.test(threshold) ? Number(threshold) : NaN

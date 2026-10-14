@@ -21,8 +21,8 @@ test.describe('focus after an action', () => {
     await signInAsSandboxUser(context)
     await firstPaidOrder(page)
     await page.getByRole('button', { name: 'Change status' }).press('Enter')
-    await page.getByRole('menuitem', { name: 'Cancelled' }).press('Enter')
-    await expect(page.getByRole('region', { name: 'Messages' }).getByText(/is now Cancelled\.$/)).toBeVisible()
+    await page.getByRole('menuitem', { name: 'Canceled' }).press('Enter')
+    await expect(page.getByRole('region', { name: 'Messages' }).getByText(/is now Canceled\.$/)).toBeVisible()
     await expect(page.getByRole('heading', { level: 1, name: /^Order #\d+$/ })).toBeFocused()
   })
 

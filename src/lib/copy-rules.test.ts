@@ -32,12 +32,16 @@ const breaking = (rule: (sentence: string) => boolean) =>
 
 describe('English copy', () => {
   it('uses US spelling', () => {
-    const british = /recognis|organis|authoris|customis|summaris|colour|behaviour|favourite|\bcentre|catalogue|licence/i
+    const british = /recognis|organis|authoris|customis|summaris|colour|behaviour|favourite|\bcentre|catalogue|licence|cancell|any more/i
     expect(strings(en).filter(([, text]) => british.test(text))).toEqual([])
   })
 
   it('names the second factor one way', () => {
     expect(strings(en).filter(([, text]) => /two-factor/i.test(text))).toEqual([])
+  })
+
+  it('calls a sign-in on a device a signed-in device, never a session: Stripe\'s checkout sessions are another thing', () => {
+    expect(strings(en).filter(([key, text]) => /session/i.test(text) && !key.startsWith('settings.store.stripe.'))).toEqual([])
   })
 
   it('calls the one product of a collection "it"', () => {
@@ -68,6 +72,16 @@ describe('Russian copy (the owner’s rules)', () => {
 
   it('never says «войдите ключом доступа» without a preposition', () => {
     expect(strings(ru).filter(([, text]) => /войдите ключом доступа/.test(text))).toEqual([])
+  })
+
+  it('calls a sign-in «сессия», never «сеанс» (the owner’s word, 13 October)', () => {
+    expect(strings(ru).filter(([, text]) => /сеанс/i.test(text))).toEqual([])
+  })
+
+  it('offers the one-order link for exactly one order: 21 orders are «все 21»', () => {
+    const t = createTranslator({ locale: 'ru', messages: ru, namespace: 'customers.detail' })
+    expect(t('inOrders', { count: 1 })).toBe('Показать заказ в «Заказах»')
+    expect(t('inOrders', { count: 21 })).toBe('Показать все 21 в «Заказах»')
   })
 
   it('starts no sentence with «Либо»', () => {

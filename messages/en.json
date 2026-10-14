@@ -118,7 +118,7 @@
       "processing": "Processing",
       "shipped": "Shipped",
       "delivered": "Delivered",
-      "cancelled": "Cancelled",
+      "cancelled": "Canceled",
       "refunded": "Refunded"
     },
     "source": {
@@ -328,7 +328,7 @@
     },
     "recover": {
       "title": "Recover the owner account",
-      "intro": "Run pnpm owner:recovery where the database can be reached, and enter the code it prints. You set a new password, a new authenticator app and new recovery codes; every passkey and every session of the owner is removed.",
+      "intro": "Run pnpm owner:recovery where the database can be reached, and enter the code it prints. You set a new password, a new authenticator app and new recovery codes; every passkey of the owner is removed, and every signed-in device is signed out.",
       "code": "Recovery code from the command",
       "submit": "Recover the account",
       "pending": "Recovering…"
@@ -352,8 +352,8 @@
       "member_locked": "Too many wrong codes. Two-step verification is locked for an hour, and the member has been sent a notice.",
       "recovery_invalid": "This is not a valid code from pnpm owner:recovery, or it has expired. The recovery codes you saved go on the sign-in page.",
       "passkey_failed": "The passkey could not be verified. Try again, or sign in with your password.",
-      "passkey_unknown": "This passkey is not registered here any more.",
-      "passkey_cancelled": "The passkey request was cancelled.",
+      "passkey_unknown": "This passkey is not registered here anymore.",
+      "passkey_cancelled": "The passkey request was canceled.",
       "session_expired": "The sign-in took too long. Start again.",
       "last_factor": "This is your only second factor. Add another one before you remove it.",
       "reauth_required": "Confirm it's you first.",
@@ -757,7 +757,7 @@
       "removed": "Image removed.",
       "removeFailed": "The image could not be removed. Try again.",
       "errors": {
-        "unauthenticated": "Your session has ended. Sign in again.",
+        "unauthenticated": "You are signed out. Sign in again.",
         "forbidden": "Your role cannot change images.",
         "invalid": "The upload could not be read. Try again.",
         "rate_limited": "Too many uploads. Try again in {minutes, plural, one {# minute} other {# minutes}}.",
@@ -955,8 +955,8 @@
       "subject": "New sign-in to your account",
       "body": "There was a new sign-in to your account on {date} from {device}.",
       "bodyNoDevice": "There was a new sign-in to your account on {date}.",
-      "ifNotYou": "If this was you, there is nothing to do. If it was not, change your password and sign out the other sessions.",
-      "action": "Review your sessions"
+      "ifNotYou": "If this was you, there is nothing to do. If it was not, change your password and sign out your other devices.",
+      "action": "Review your signed-in devices"
     },
     "secondFactorLocked": {
       "subject": "Sign-in locked for an hour",
@@ -1202,7 +1202,7 @@
     },
     "fields": {
       "name": "name",
-      "slug": "address",
+      "slug": "slug",
       "collection": "collection",
       "basePrice": "base price",
       "tags": "tags",
