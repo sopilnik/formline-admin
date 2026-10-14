@@ -28,7 +28,7 @@ export function ThemeMenu({ theme }: { theme: Theme }) {
           {THEMES.map(value => {
             const ItemIcon = ICONS[value]
             return (
-              <DropdownMenuRadioItem key={value} value={value}>
+              <DropdownMenuRadioItem key={value} value={value} closeOnClick>
                 <ItemIcon aria-hidden />
                 {t(value)}
               </DropdownMenuRadioItem>

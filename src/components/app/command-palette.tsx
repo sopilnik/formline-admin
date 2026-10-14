@@ -25,7 +25,19 @@ import { setLocaleAction, setThemeAction } from '@/server/actions/preferences'
 /** What the palette may offer beyond the pages: the actions the member's role allows. */
 type PaletteAccess = { newProduct: boolean; invite: boolean }
 
-type Entry = { value: string; label: string; hint?: string; run: () => void }
+/** One choice of the palette; `field` names the first field of a form it opens, which takes the focus once it is there. */
+type Entry = { value: string; label: string; hint?: string; field?: string; run: () => void }
+
+/** Puts the focus in a field once the page that holds it has arrived; gives up after a few seconds. */
+function focusOnArrival(id: string): void {
+  const started = performance.now()
+  const look = (): void => {
+    const field = document.getElementById(id)
+    if (field) field.focus()
+    else if (performance.now() - started < 5000) requestAnimationFrame(look)
+  }
+  requestAnimationFrame(look)
+}
 type Group = { value: 'pages' | 'actions' | 'orders' | 'customers' | 'products'; items: Entry[] }
 
 /** The pause after the last keystroke before the palette asks the server. */
@@ -40,17 +52,26 @@ export function CommandPalette({ items, access }: { items: NavItem[]; access: Pa
   const [open, setOpen] = useState(false)
   const [opened, setOpened] = useState(0)
   const apple = useIsApple()
+  // A choice that opens a form puts the focus in the form's first field: the dialog then does not hand it back to the
+  // search button.
+  const toForm = useRef(false)
 
   const openChange = (next: boolean) => {
     setOpen(next)
-    if (next) setOpened(count => count + 1)
+    if (next) {
+      toForm.current = false
+      setOpened(count => count + 1)
+    }
   }
 
   // ⌘K is no single-character shortcut, so it stays on even when the profile turns shortcuts off (WCAG 2.1.4).
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key.toLowerCase() !== 'k' || event.altKey || event.shiftKey || !(event.metaKey || event.ctrlKey)) return
+      // An open dialog or sheet has the keyboard to itself: the palette would stack on it, and it would stay open behind.
+      if (event.target instanceof Element && event.target.closest('[data-slot="dialog-content"], [data-slot="sheet-content"]')) return
       event.preventDefault()
+      toForm.current = false
       setOpened(count => count + 1)
       setOpen(current => !current)
     }
@@ -71,16 +92,25 @@ export function CommandPalette({ items, access }: { items: NavItem[]; access: Pa
         <Dialog.Backdrop className="fixed inset-0 isolate z-50 bg-black/10 supports-backdrop-filter:backdrop-blur-xs" />
         <Dialog.Popup
           aria-label={t('title')}
+          finalFocus={() => !toForm.current}
           className="fixed top-[10dvh] left-1/2 z-50 flex max-h-[80dvh] w-[min(40rem,calc(100vw-2rem))] -translate-x-1/2 flex-col overflow-hidden rounded-xl bg-popover text-popover-foreground shadow-lg ring-1 ring-foreground/10 outline-none"
         >
-          <PaletteSearch key={opened} items={items} access={access} close={() => setOpen(false)} />
+          <PaletteSearch
+            key={opened}
+            items={items}
+            access={access}
+            close={opensForm => {
+              toForm.current = opensForm
+              setOpen(false)
+            }}
+          />
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>
   )
 }
 
-function PaletteSearch({ items, access, close }: { items: NavItem[]; access: PaletteAccess; close: () => void }) {
+function PaletteSearch({ items, access, close }: { items: NavItem[]; access: PaletteAccess; close: (opensForm: boolean) => void }) {
   const t = useTranslations('palette')
   const nav = useTranslations('nav')
   const orderStatus = useTranslations('orders.status')
@@ -132,8 +162,8 @@ function PaletteSearch({ items, access, close }: { items: NavItem[]; access: Pal
   const go = (href: string) => () => router.push(href)
   const pages: Entry[] = items.map(item => ({ value: `page:${item.key}`, label: nav(item.key), run: go(item.href) }))
   const actions: Entry[] = [
-    ...(access.newProduct ? [{ value: 'action:new-product', label: t('actions.newProduct'), run: go('/products/new') }] : []),
-    ...(access.invite ? [{ value: 'action:invite', label: t('actions.invite'), run: go('/team#team-invite') }] : []),
+    ...(access.newProduct ? [{ value: 'action:new-product', label: t('actions.newProduct'), field: 'product-name', run: go('/products/new') }] : []),
+    ...(access.invite ? [{ value: 'action:invite', label: t('actions.invite'), field: 'invite-email', run: go('/team#team-invite') }] : []),
     ...THEMES.map(theme => ({
       value: `action:theme-${theme}`,
       label: t(`actions.theme.${theme}`),
@@ -210,8 +240,9 @@ function PaletteSearch({ items, access, close }: { items: NavItem[]; access: Pal
                     // The highlighted option is the one Enter opens: it says so as the selected option of the list.
                     render={(props, state) => <div {...props} aria-selected={state.highlighted} />}
                     onClick={() => {
-                      close()
+                      close(entry.field !== undefined)
                       entry.run()
+                      if (entry.field) focusOnArrival(entry.field)
                     }}
                     className="flex min-h-9 flex-col items-start gap-x-3 rounded-md px-3 py-1.5 text-sm outline-none select-none data-highlighted:bg-secondary data-highlighted:outline-2 data-highlighted:-outline-offset-2 data-highlighted:outline-solid data-highlighted:outline-ring sm:flex-row sm:items-center"
                   >

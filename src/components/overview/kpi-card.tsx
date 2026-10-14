@@ -1,6 +1,5 @@
-import { Info } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { MetricHint } from '@/components/overview/metric-hint'
 import type { Trend } from '@/lib/overview/kpi'
 import { cn } from '@/lib/utils'
 
@@ -15,14 +14,7 @@ export function KpiCard({ kpi }: { kpi: KpiView }) {
     <div role="group" aria-labelledby={labelId} className="row-span-3 grid min-w-0 grid-rows-subgrid gap-y-0 rounded-lg border bg-card p-4 sm:p-5">
       <div className="flex items-start gap-1 text-muted-foreground">
         <h2 id={labelId} className="pt-0.5 font-sans text-[13px] font-normal">{kpi.label}</h2>
-        <Tooltip>
-          <TooltipTrigger
-            render={<button type="button" aria-label={t('about', { label: kpi.label.toLowerCase() })} aria-describedby={hintId} className="grid size-6 place-items-center rounded-full hover:text-foreground" />}
-          >
-            <Info aria-hidden className="size-3.5" />
-          </TooltipTrigger>
-          <TooltipContent className="max-w-64">{kpi.hint}</TooltipContent>
-        </Tooltip>
+        <MetricHint label={t('about', { label: kpi.label.toLowerCase() })} hint={kpi.hint} describedBy={hintId} />
         <span id={hintId} className="sr-only">{kpi.hint}</span>
       </div>
       <p className="my-1.5 font-brand text-2xl leading-tight font-bold tracking-tight tabular-nums sm:text-3xl">{kpi.value}</p>

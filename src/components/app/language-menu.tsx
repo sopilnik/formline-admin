@@ -22,7 +22,7 @@ export function LanguageMenu({ locale }: { locale: Locale }) {
       <DropdownMenuContent align="end" className="w-40">
         <DropdownMenuRadioGroup value={locale} onValueChange={value => startTransition(async () => { await send(() => setLocaleAction(String(value))) })}>
           {LOCALES.map(value => (
-            <DropdownMenuRadioItem key={value} value={value} lang={value}>
+            <DropdownMenuRadioItem key={value} value={value} lang={value} closeOnClick>
               {t(value)}
             </DropdownMenuRadioItem>
           ))}
