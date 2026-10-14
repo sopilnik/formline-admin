@@ -38,6 +38,8 @@ test('owner setup creates the owner with an authenticator and shows ten recovery
 
 test('setup is gone once the owner exists', async ({ page }) => {
   expect((await page.goto('/setup'))?.status()).toBe(404)
+  await expect(page).toHaveTitle('Page not found · Formline Admin')
+  await expect(page.locator('main')).toHaveCount(1)
 })
 
 async function signInWithPassword(page: Page, password = owner.password): Promise<void> {

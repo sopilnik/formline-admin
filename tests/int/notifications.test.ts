@@ -157,8 +157,10 @@ describe('a new sign-in', () => {
 })
 
 describe('notificationHref', () => {
+  const reader = (role: Role) => ({ workspaceId: other.workspaceId, role, workspaceKind: 'sandbox' as const })
+
   it('opens the order, the product under its current slug, the team or the security page', async () => {
-    const href = (kind: string, payload: unknown) => withWorkspace(ctx(other, 'owner'), tx => notificationHref(tx, other.workspaceId, kind, payload), app)
+    const href = (kind: string, payload: unknown) => withWorkspace(ctx(other, 'owner'), tx => notificationHref(tx, reader('owner'), kind, payload), app)
     expect(await href('order.created', { number: 1700 })).toBe('/orders/1700')
     const [product] = (await admin.query<{ id: string; slug: string }>('select id, slug from fa.products where workspace_id = $1 order by slug limit 1', [other.workspaceId])).rows
     expect(await href('stock.low', { productId: product!.id })).toBe(`/products/${product!.slug}`)
@@ -168,5 +170,10 @@ describe('notificationHref', () => {
     expect(await href('team.invitation_accepted', {})).toBe('/team')
     expect(await href('auth.second_factor_locked', {})).toBe('/settings/security')
     expect(await href('order.new', {})).toBe('/notifications')
+  })
+
+  it('leaves a reader on the notifications page when the team page is not theirs to see', async () => {
+    const href = await withWorkspace(ctx(other, 'viewer'), tx => notificationHref(tx, reader('viewer'), 'team.invitation_accepted', {}), app)
+    expect(href).toBe('/notifications')
   })
 })

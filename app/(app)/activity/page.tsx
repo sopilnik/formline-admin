@@ -12,13 +12,14 @@ import { formatDateTime } from '@/lib/intl'
 import type { SearchParams } from '@/lib/search-params'
 import { requireSession } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'
+import { titleFor } from '@/server/authz/page-title'
 import { listActivity } from '@/server/dal/activity'
 import { getStoreSettings } from '@/server/dal/settings'
 import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('activity')
-  return { title: t('title') }
+  return { title: await titleFor('activity.read', t('title')) }
 }
 
 /** The activity log: owners and admins; for other roles the address does not exist. */

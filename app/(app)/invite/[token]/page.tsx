@@ -11,6 +11,8 @@ import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 type Params = { params: Promise<{ token: string }> }
 
 export async function generateMetadata(): Promise<Metadata> {
+  // The owner workspace answers the link with "not found": its tab says so too.
+  if ((await requireSession()).workspaceKind !== 'sandbox') return { title: (await getTranslations('notFound'))('title') }
   const t = await getTranslations('invite')
   return { title: t('title') }
 }

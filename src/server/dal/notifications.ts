@@ -4,8 +4,9 @@ import { notificationTarget, type NotificationKind } from '@/lib/notifications/v
 import { orderHref } from '@/lib/orders/view'
 import { pageCount } from '@/lib/pagination'
 import { productHref } from '@/lib/products/view'
+import { can, type Action, type WorkspaceKind } from '@/server/authz/matrix'
 import { notificationReads, notifications, products } from '@/server/db/schema'
-import type { Tx } from '@/server/db/with-workspace'
+import type { Role, Tx } from '@/server/db/with-workspace'
 
 export type { NotificationKind }
 
@@ -89,13 +90,23 @@ export async function markAllNotificationsRead(tx: Tx, reader: NotificationReade
   return result.rowCount ?? 0
 }
 
+// A page a notification opens that not every role may see: a reader who may not stays on the notifications page.
+const PAGE_ACTIONS: Partial<Record<string, Action>> = { '/team': 'team.read' }
+
+/** Who opens a notification: their role decides whether its page answers them. */
+export type NotificationOpener = { workspaceId: string; role: Role; workspaceKind: WorkspaceKind }
+
 /** The page a notification opens: its order, its product (by id, whatever its slug is now), or a settings page. */
-export async function notificationHref(tx: Tx, workspaceId: string, kind: string, payload: unknown): Promise<string> {
+export async function notificationHref(tx: Tx, opener: NotificationOpener, kind: string, payload: unknown): Promise<string> {
   const target = notificationTarget(kind, payload)
   if (!target) return '/notifications'
   if (target.type === 'order') return orderHref(target.number)
-  if (target.type === 'page') return target.href
+  if (target.type === 'page') {
+    const action = PAGE_ACTIONS[target.href]
+    return action && !can(opener.role, action, opener.workspaceKind) ? '/notifications' : target.href
+  }
+
   const [product] = await tx.select({ slug: products.slug }).from(products)
-    .where(and(eq(products.workspaceId, workspaceId), eq(products.id, target.productId)))
+    .where(and(eq(products.workspaceId, opener.workspaceId), eq(products.id, target.productId)))
   return product ? productHref(product.slug) : '/products'
 }

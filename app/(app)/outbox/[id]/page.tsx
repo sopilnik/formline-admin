@@ -9,6 +9,7 @@ import { formatDateTime } from '@/lib/intl'
 import { letterContent } from '@/lib/letters'
 import { requireSession } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'
+import { titleFor } from '@/server/authz/page-title'
 import { getLetter } from '@/server/dal/outbox'
 import { getStoreSettings } from '@/server/dal/settings'
 import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
@@ -36,7 +37,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const t = await getTranslations('outbox.detail')
   const id = parseId((await params).id)
   const found = id === null ? null : await load(id)
-  return { title: found ? await letterSubject(letterContent(found.letter.template, found.letter.payload, found.settings.timezone)) : t('notFoundTitle') }
+  const title = found ? await letterSubject(letterContent(found.letter.template, found.letter.payload, found.settings.timezone)) : t('notFoundTitle')
+  return { title: await titleFor('outbox.read', title) }
 }
 
 /** One letter as its recipient would get it: who it is from and to, when, and what it says. */

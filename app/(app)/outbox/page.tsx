@@ -11,6 +11,7 @@ import type { SearchParams } from '@/lib/search-params'
 import { cn } from '@/lib/utils'
 import { requireSession } from '@/server/auth/sessions'
 import { can } from '@/server/authz/matrix'
+import { titleFor } from '@/server/authz/page-title'
 import { listLetters } from '@/server/dal/outbox'
 import { getStoreSettings } from '@/server/dal/settings'
 import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
@@ -18,7 +19,7 @@ import { letterSubject } from '@/server/mail/subject'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('outbox')
-  return { title: t('title') }
+  return { title: await titleFor('outbox.read', t('title')) }
 }
 
 /** Every letter the panel wrote, newest first; owners and admins only. */
