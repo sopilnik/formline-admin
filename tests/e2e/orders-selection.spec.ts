@@ -62,4 +62,18 @@ test.describe('the orders selection', () => {
     })
     expect(inside).toBe(true)
   })
+
+  test('on a phone the chip row scrolls without a bar, and at its end the last chip clears the faded edge', async ({ page, context }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await signInAsSandboxUser(context)
+    await openFramed(page, '/orders')
+    const row = page.getByRole('group', { name: 'Status' })
+    await expect(row).toHaveCSS('scrollbar-width', 'none')
+    await expect(row).toHaveCSS('mask-image', /linear-gradient/)
+
+    // The fade covers the last 40 px of the row; scrolled to the end, the last chip stops before it.
+    await row.evaluate(el => el.scrollTo({ left: el.scrollWidth }))
+    const clear = await row.getByRole('button').last().evaluate(el => el.parentElement!.getBoundingClientRect().right - el.getBoundingClientRect().right)
+    expect(clear).toBeGreaterThanOrEqual(40)
+  })
 })
