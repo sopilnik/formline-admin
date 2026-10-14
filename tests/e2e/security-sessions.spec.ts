@@ -32,6 +32,7 @@ test.describe('security settings in a sandbox', () => {
     await otherDevice(workspaceId, userId, 'Chrome, Linux', '2 hours')
     await otherDevice(workspaceId, userId, 'Chrome, Linux', '5 hours')
     await page.goto('/settings/security')
+    await expect(page.getByRole('list', { name: 'Signed-in devices' })).toBeVisible()
     const names = await page.getByRole('list', { name: 'Signed-in devices' }).getByRole('button', { name: /^Sign out Chrome, Linux/ })
       .evaluateAll(buttons => buttons.map(button => button.getAttribute('aria-label')))
     expect(names).toHaveLength(2)

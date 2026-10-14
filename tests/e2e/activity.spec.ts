@@ -67,6 +67,7 @@ test.describe('activity log', () => {
     await signInAsSandboxUser(context)
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/activity')
+    await expect(page.getByRole('table', { name: 'Activity' })).toBeVisible()
     const widths = await page.getByRole('table', { name: 'Activity' }).getByRole('columnheader')
       .evaluateAll(cells => cells.map(cell => Math.round(cell.getBoundingClientRect().width)))
     // When 9 rem, Who 11 rem, Details 14 rem; Action and Subject share what is left.
