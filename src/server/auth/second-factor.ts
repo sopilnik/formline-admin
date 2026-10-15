@@ -19,7 +19,7 @@ import { GUARDS } from '@/server/ratelimit/limits'
 type Method = 'totp' | 'recovery_code'
 type Check = { ok: true; method: Method; remaining?: number } | { ok: false }
 
-async function checkCode(tx: Tx, session: Session, code: string, deps: AuthDeps): Promise<Check> {
+async function checkCode(tx: Tx, { session, code }: { session: Session; code: string }, deps: AuthDeps): Promise<Check> {
   const digits = code.replace(/\s+/g, '')
 
   if (isTotpShape(digits)) {
@@ -28,7 +28,7 @@ async function checkCode(tx: Tx, session: Session, code: string, deps: AuthDeps)
     if (!row?.secret) return { ok: false }
 
     const secret = decryptTotpSecret(row.secret, { workspaceId: session.workspaceId, userId: session.userId }, deps.config.totpKeys)
-    const result = verifyTotp(secret, digits, row.lastStep, deps.now())
+    const result = verifyTotp(secret, { code: digits, lastStep: row.lastStep }, deps.now())
 
     if (!result.ok) return { ok: false }
 
@@ -81,13 +81,13 @@ export async function attemptSecondFactor(
   }
 
   const check = await withWorkspace(ctx, async tx => {
-    const result = await checkCode(tx, session, input.code, deps)
+    const result = await checkCode(tx, { session, code: input.code }, deps)
 
     if (result.ok && result.method === 'recovery_code') {
       const self = (await getSelf(tx, session))!
 
       await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.recovery_code_used', details: { remaining: result.remaining }, ipHash })
-      await securityNotice(tx, session.workspaceId, self, 'auth.recovery_code_used', { remaining: result.remaining }, { at: new Date(deps.now()) })
+      await securityNotice(tx, session.workspaceId, { user: self, kind: 'auth.recovery_code_used', details: { remaining: result.remaining }, at: new Date(deps.now()) })
     }
 
     return result
@@ -105,7 +105,7 @@ export async function attemptSecondFactor(
 
       await deleteSession(tx, session)
       await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.second_factor_locked', ipHash })
-      await securityNotice(tx, session.workspaceId, self, 'auth.second_factor_locked', {}, { at: new Date(deps.now()) })
+      await securityNotice(tx, session.workspaceId, { user: self, kind: 'auth.second_factor_locked', details: {}, at: new Date(deps.now()) })
     }, pool)
 
     return { ok: false, error: 'second_factor_locked' }

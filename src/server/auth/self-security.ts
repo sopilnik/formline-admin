@@ -50,7 +50,11 @@ export async function changeOwnPassword(
 }
 
 /** "Sign out" on one of one's other devices, logged as `auth.session_revoked`. */
-export async function revokeOwnSession(session: Session, id: string, meta: Meta, overrides: Partial<AuthDeps> = {}): Promise<boolean> {
+export async function revokeOwnSession(
+  session: Session,
+  { id, meta }: { id: string; meta: Meta },
+  overrides: Partial<AuthDeps> = {},
+): Promise<boolean> {
   const deps = authDeps(overrides)
 
   return withWorkspace(workspaceContext(session), async tx => {

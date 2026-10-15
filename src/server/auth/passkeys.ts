@@ -35,6 +35,10 @@ import { LIMITS } from '@/server/ratelimit/limits'
 type Meta = { ip: string | null; userAgent: string | null }
 type Purpose = 'auth' | 'register'
 type ChallengePayload = { c: string; p: Purpose; s?: string; e: number }
+type ChallengeFields = { challenge: string; purpose: Purpose; sessionId?: string }
+type SignedChallenge = { value: string | undefined; purpose: Purpose; sessionId?: string }
+type AssertionCheck = { response: AuthenticationResponseJSON; challenge: string; passkey: Passkey }
+type PasskeyAnswer<R> = { response: R; cookie: string | undefined; meta: Meta }
 
 export const CHALLENGE_COOKIE = '__Host-formline_passkey'
 export const CHALLENGE_TTL_SECONDS = 300
@@ -61,14 +65,14 @@ export function userIdFromHandle(handle: string | undefined): string | null {
 }
 
 /** The challenge travels in a signed five-minute cookie: no database row until it is used. */
-export function challengeCookie(challenge: string, purpose: Purpose, sessionId: string | undefined, config: AuthConfig, nowMs: number): string {
+export function challengeCookie({ challenge, purpose, sessionId }: ChallengeFields, config: AuthConfig, nowMs: number): string {
   const payload: ChallengePayload = { c: challenge, p: purpose, s: sessionId, e: nowMs + CHALLENGE_TTL_SECONDS * 1000 }
 
   return signValue(payload, config.cookieSigningKey)
 }
 
 /** The challenge of an unexpired cookie for this purpose; a registration challenge belongs to one session. */
-export function readChallenge(value: string | undefined, purpose: Purpose, sessionId: string | undefined, config: AuthConfig, nowMs: number): string | null {
+export function readChallenge({ value, purpose, sessionId }: SignedChallenge, config: AuthConfig, nowMs: number): string | null {
   if (!value) return null
 
   const payload = verifySignedValue(value, config.cookieSigningKey) as Partial<ChallengePayload> | null
@@ -92,7 +96,7 @@ export function authenticationOptions(config: AuthConfig): Promise<PublicKeyCred
 
 // SimpleWebAuthn checks the signature counter only when one of the two counters is
 // non-zero, as the WebAuthn specification asks: synced passkeys always report 0.
-async function verifyAssertion(response: AuthenticationResponseJSON, challenge: string, passkey: Passkey, config: AuthConfig): Promise<{ newCounter: number } | null> {
+async function verifyAssertion({ response, challenge, passkey }: AssertionCheck, config: AuthConfig): Promise<{ newCounter: number } | null> {
   try {
     const result = await verifyAuthenticationResponse({
       response,
@@ -118,9 +122,7 @@ export type PasskeySignInResult = ({ ok: true } & SignedIn) | AuthFailure | { ok
 
 /** Passkey-first sign-in to the owner workspace: a full sign-in, outside the password lockout. */
 export async function signInWithPasskey(
-  response: AuthenticationResponseJSON,
-  cookie: string | undefined,
-  meta: Meta,
+  { response, cookie, meta }: PasskeyAnswer<AuthenticationResponseJSON>,
   overrides: Partial<AuthDeps> = {},
 ): Promise<PasskeySignInResult> {
   const deps = authDeps(overrides)
@@ -136,7 +138,7 @@ export async function signInWithPasskey(
     return { ok: false, error: 'passkey_failed' }
   }
 
-  const challenge = readChallenge(cookie, 'auth', undefined, config, deps.now())
+  const challenge = readChallenge({ value: cookie, purpose: 'auth' }, config, deps.now())
   const userId = userIdFromHandle(response.response.userHandle)
 
   if (!challenge || !userId) return failed()
@@ -153,7 +155,7 @@ export async function signInWithPasskey(
   }
   if (!(await markChallengeUsed(challenge, pool))) return failed()
 
-  const verified = await verifyAssertion(response, challenge, passkey, config)
+  const verified = await verifyAssertion({ response, challenge, passkey }, config)
 
   if (!verified) return failed()
 
@@ -170,14 +172,12 @@ export async function signInWithPasskey(
 /** A passkey as the proof of a re-authentication; it must belong to the session's user. */
 export async function reauthenticateWithPasskey(
   session: Session,
-  response: AuthenticationResponseJSON,
-  cookie: string | undefined,
-  meta: Meta,
+  { response, cookie, meta }: PasskeyAnswer<AuthenticationResponseJSON>,
   overrides: Partial<AuthDeps> = {},
 ): Promise<({ ok: true } & NewSession) | AuthFailure> {
   const deps = authDeps(overrides)
   const { pool, config } = deps
-  const challenge = readChallenge(cookie, 'auth', undefined, config, deps.now())
+  const challenge = readChallenge({ value: cookie, purpose: 'auth' }, config, deps.now())
 
   if (!challenge || userIdFromHandle(response.response.userHandle) !== session.userId) return { ok: false, error: 'passkey_failed' }
 
@@ -186,7 +186,7 @@ export async function reauthenticateWithPasskey(
 
   if (!passkey || !(await markChallengeUsed(challenge, pool))) return { ok: false, error: 'passkey_failed' }
 
-  const verified = await verifyAssertion(response, challenge, passkey, config)
+  const verified = await verifyAssertion({ response, challenge, passkey }, config)
 
   if (!verified) return { ok: false, error: 'passkey_failed' }
 
@@ -232,14 +232,12 @@ export async function beginRegistration(
     timeout: CHALLENGE_TTL_SECONDS * 1000,
   })
 
-  return { ok: true, options, cookie: challengeCookie(options.challenge, 'register', session.id, deps.config, deps.now()) }
+  return { ok: true, options, cookie: challengeCookie({ challenge: options.challenge, purpose: 'register', sessionId: session.id }, deps.config, deps.now()) }
 }
 
 export async function finishRegistration(
   session: Session,
-  response: RegistrationResponseJSON,
-  cookie: string | undefined,
-  meta: Meta,
+  { response, cookie, meta }: PasskeyAnswer<RegistrationResponseJSON>,
   overrides: Partial<AuthDeps> = {},
 ): Promise<{ ok: true } | AuthFailure> {
   const deps = authDeps(overrides)
@@ -248,7 +246,7 @@ export async function finishRegistration(
   if (session.workspaceKind !== 'owner') return { ok: false, error: 'generic' }
   if (!isRecentAuth(session, deps.now())) return { ok: false, error: 'reauth_required' }
 
-  const challenge = readChallenge(cookie, 'register', session.id, config, deps.now())
+  const challenge = readChallenge({ value: cookie, purpose: 'register', sessionId: session.id }, config, deps.now())
 
   if (!challenge || !(await markChallengeUsed(challenge, pool))) return { ok: false, error: 'passkey_failed' }
 
@@ -287,7 +285,11 @@ export async function finishRegistration(
   return { ok: true }
 }
 
-export async function renameOwnPasskey(session: Session, passkeyId: string, name: string, overrides: Partial<AuthDeps> = {}): Promise<{ ok: true } | AuthFailure> {
+export async function renameOwnPasskey(
+  session: Session,
+  { passkeyId, name }: { passkeyId: string; name: string },
+  overrides: Partial<AuthDeps> = {},
+): Promise<{ ok: true } | AuthFailure> {
   const deps = authDeps(overrides)
   const trimmed = name.trim()
 
@@ -299,7 +301,11 @@ export async function renameOwnPasskey(session: Session, passkeyId: string, name
 }
 
 /** Never the last second factor; signs out the owner's other sessions. */
-export async function removeOwnPasskey(session: Session, passkeyId: string, meta: Meta, overrides: Partial<AuthDeps> = {}): Promise<{ ok: true } | AuthFailure> {
+export async function removeOwnPasskey(
+  session: Session,
+  { passkeyId, meta }: { passkeyId: string; meta: Meta },
+  overrides: Partial<AuthDeps> = {},
+): Promise<{ ok: true } | AuthFailure> {
   const deps = authDeps(overrides)
 
   if (session.workspaceKind !== 'owner') return { ok: false, error: 'generic' }

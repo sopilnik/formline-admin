@@ -57,9 +57,9 @@ export async function switchUser(session: Session, input: SwitchInput, overrides
     claim = claimed
 
     const secret = decryptTotpSecret(target.totpSecretEnc, { workspaceId: session.workspaceId, userId: target.id }, deps.config.totpKeys)
-    const verdict = verifyTotp(secret, input.code, target.totpLastStep, deps.now())
+    const verdict = verifyTotp(secret, { code: input.code, lastStep: target.totpLastStep }, deps.now())
 
-    if (!verdict.ok) return wrongCode(ctx, target.id, claim, input.ipHash, deps)
+    if (!verdict.ok) return wrongCode(ctx, { targetId: target.id, claim, ipHash: input.ipHash }, deps)
     step = verdict.step
   }
 
@@ -70,7 +70,7 @@ export async function switchUser(session: Session, input: SwitchInput, overrides
   const expiresAt = result.rows[0]!.expires_at
 
   // Null: a switch that ran alongside this one stored the code's step first, so the code is used.
-  if (expiresAt === null) return wrongCode(ctx, target.id, claim!, input.ipHash, deps)
+  if (expiresAt === null) return wrongCode(ctx, { targetId: target.id, claim: claim!, ipHash: input.ipHash }, deps)
   if (claim) await giveBack(GUARDS.secondFactor, subject, claim, deps.pool)
 
   // Row-level security lets a member write only their own row, so this runs as the member just switched to.
@@ -83,14 +83,18 @@ export async function switchUser(session: Session, input: SwitchInput, overrides
  * A wrong code for a member's authenticator. The one whose claim set the lock tells the member, as the owner hears of
  * theirs: in the log, the bell and a letter.
  */
-async function wrongCode(ctx: WorkspaceContext, targetId: string, claim: Granted, ipHash: string | null, deps: AuthDeps): Promise<AuthFailure<'code'>> {
+async function wrongCode(
+  ctx: WorkspaceContext,
+  { targetId, claim, ipHash }: { targetId: string; claim: Granted; ipHash: string | null },
+  deps: AuthDeps,
+): Promise<AuthFailure<'code'>> {
   if (!claim.lockStart) return { ok: false, error: 'code_invalid', field: 'code' }
 
   await withWorkspace(ctx, async tx => {
     const member = (await getSelf(tx, { workspaceId: ctx.workspaceId, userId: targetId }))!
 
     await logActivity(tx, ctx.workspaceId, { actorUserId: targetId, action: 'auth.second_factor_locked', ipHash })
-    await securityNotice(tx, ctx.workspaceId, member, 'auth.second_factor_locked', {}, { at: new Date(deps.now()) })
+    await securityNotice(tx, ctx.workspaceId, { user: member, kind: 'auth.second_factor_locked', details: {}, at: new Date(deps.now()) })
   }, deps.pool)
 
   // The member is told, not the owner: the message says so (the owner's own sign-in keeps second_factor_locked).

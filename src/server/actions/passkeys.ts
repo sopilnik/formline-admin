@@ -83,7 +83,7 @@ export async function signInWithPasskeyAction(input: unknown): Promise<PasskeyOu
   if (!parsed.success) return { ok: false, error: 'passkey_failed' }
 
   const response: AuthenticationResponseJSON = { ...parsed.data, clientExtensionResults: {} }
-  const result = await signInWithPasskey(response, cookie, await meta())
+  const result = await signInWithPasskey({ response, cookie, meta: await meta() })
 
   if (!result.ok) {
     return { ok: false, error: result.error, credentialId: 'credentialId' in result ? result.credentialId : undefined, retryAfterMinutes: 'retryAfterSeconds' in result ? retryMinutes(result.retryAfterSeconds) : undefined }
@@ -101,7 +101,7 @@ export async function reauthWithPasskeyAction(input: unknown): Promise<PasskeyOu
 
   if (!parsed.success) return { ok: false, error: 'passkey_failed' }
 
-  const result = await reauthenticateWithPasskey(session, { ...parsed.data, clientExtensionResults: {} }, cookie, await meta())
+  const result = await reauthenticateWithPasskey(session, { response: { ...parsed.data, clientExtensionResults: {} }, cookie, meta: await meta() })
 
   if (!result.ok) return { ok: false, error: result.error }
   await setSessionCookie(result.token, result.expiresAt)
@@ -136,7 +136,7 @@ export async function finishPasskeyRegistrationAction(input: unknown): Promise<P
   if (!parsed.success) return { ok: false, error: 'passkey_failed' }
 
   const response: RegistrationResponseJSON = { ...parsed.data, clientExtensionResults: {} }
-  const result = await finishRegistration(session, response, cookie, await meta())
+  const result = await finishRegistration(session, { response, cookie, meta: await meta() })
 
   if (!result.ok) return { ok: false, error: result.error }
   refresh()
@@ -153,7 +153,7 @@ export async function renamePasskeyAction(id: string, name: unknown): Promise<Pa
 
   if (!passkeyId.success || typeof name !== 'string') return { ok: false, error: 'generic' }
 
-  const result = await renameOwnPasskey(session, passkeyId.data, name)
+  const result = await renameOwnPasskey(session, { passkeyId: passkeyId.data, name })
 
   if (!result.ok) return { ok: false, error: result.error }
   refresh()
@@ -170,7 +170,7 @@ export async function removePasskeyAction(id: string): Promise<PasskeyOutcome> {
 
   if (!passkeyId.success) return { ok: false, error: 'generic' }
 
-  const result = await removeOwnPasskey(session, passkeyId.data, await meta())
+  const result = await removeOwnPasskey(session, { passkeyId: passkeyId.data, meta: await meta() })
 
   if (!result.ok) return { ok: false, error: result.error }
   refresh()

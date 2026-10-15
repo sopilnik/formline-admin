@@ -51,7 +51,7 @@ export async function enableOwnTotp(
   if (!isRecentAuth(session, deps.now())) return { ok: false, error: 'reauth_required' }
 
   const secret = parseTotpSecret(input.secret)
-  const totp = secret ? verifyTotp(secret, input.code, null, deps.now()) : null
+  const totp = secret ? verifyTotp(secret, { code: input.code, lastStep: null }, deps.now()) : null
 
   if (!secret || !totp?.ok) return { ok: false, error: 'code_invalid', field: 'code' }
 

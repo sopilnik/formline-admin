@@ -30,23 +30,23 @@ describe('user handles', () => {
 
 describe('challenge cookies', () => {
   it('give the challenge back for their purpose within five minutes', () => {
-    const cookie = challengeCookie('challenge-1', 'auth', undefined, config, NOW)
+    const cookie = challengeCookie({ challenge: 'challenge-1', purpose: 'auth' }, config, NOW)
 
-    expect(readChallenge(cookie, 'auth', undefined, config, NOW + 299_000)).toBe('challenge-1')
-    expect(readChallenge(cookie, 'auth', undefined, config, NOW + 300_000)).toBeNull()
-    expect(readChallenge(cookie, 'register', undefined, config, NOW)).toBeNull()
+    expect(readChallenge({ value: cookie, purpose: 'auth' }, config, NOW + 299_000)).toBe('challenge-1')
+    expect(readChallenge({ value: cookie, purpose: 'auth' }, config, NOW + 300_000)).toBeNull()
+    expect(readChallenge({ value: cookie, purpose: 'register' }, config, NOW)).toBeNull()
   })
 
   it('bind a registration challenge to its session', () => {
-    const cookie = challengeCookie('challenge-2', 'register', 'session-a', config, NOW)
+    const cookie = challengeCookie({ challenge: 'challenge-2', purpose: 'register', sessionId: 'session-a' }, config, NOW)
 
-    expect(readChallenge(cookie, 'register', 'session-a', config, NOW)).toBe('challenge-2')
-    expect(readChallenge(cookie, 'register', 'session-b', config, NOW)).toBeNull()
+    expect(readChallenge({ value: cookie, purpose: 'register', sessionId: 'session-a' }, config, NOW)).toBe('challenge-2')
+    expect(readChallenge({ value: cookie, purpose: 'register', sessionId: 'session-b' }, config, NOW)).toBeNull()
   })
 
   it('refuse a cookie signed with another key', () => {
     const other = { ...config, cookieSigningKey: 'x'.repeat(32) }
 
-    expect(readChallenge(challengeCookie('challenge-3', 'auth', undefined, other, NOW), 'auth', undefined, config, NOW)).toBeNull()
+    expect(readChallenge({ value: challengeCookie({ challenge: 'challenge-3', purpose: 'auth' }, other, NOW), purpose: 'auth' }, config, NOW)).toBeNull()
   })
 })

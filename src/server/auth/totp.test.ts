@@ -40,23 +40,23 @@ describe('TOTP secrets', () => {
 
 describe('verifyTotp', () => {
   it('accepts the RFC 6238 vector and reports its step', () => {
-    expect(verifyTotp(RFC_KEY, '287082', null, 59_000)).toEqual({ ok: true, step: 1 })
-    expect(verifyTotp(RFC_KEY, '287 082', null, 59_000)).toEqual({ ok: true, step: 1 })
+    expect(verifyTotp(RFC_KEY, { code: '287082', lastStep: null }, 59_000)).toEqual({ ok: true, step: 1 })
+    expect(verifyTotp(RFC_KEY, { code: '287 082', lastStep: null }, 59_000)).toEqual({ ok: true, step: 1 })
   })
 
   it('accepts one step either side and no further', () => {
-    expect(verifyTotp(RFC_KEY, '287082', null, 59_000 + 30_000)).toEqual({ ok: true, step: 1 })
-    expect(verifyTotp(RFC_KEY, '287082', null, 59_000 + 60_000)).toEqual({ ok: false })
+    expect(verifyTotp(RFC_KEY, { code: '287082', lastStep: null }, 59_000 + 30_000)).toEqual({ ok: true, step: 1 })
+    expect(verifyTotp(RFC_KEY, { code: '287082', lastStep: null }, 59_000 + 60_000)).toEqual({ ok: false })
   })
 
   it('refuses a step that is not later than the last accepted one', () => {
-    expect(verifyTotp(RFC_KEY, '287082', 1, 59_000)).toEqual({ ok: false })
-    expect(verifyTotp(RFC_KEY, '287082', 0, 59_000)).toEqual({ ok: true, step: 1 })
+    expect(verifyTotp(RFC_KEY, { code: '287082', lastStep: 1 }, 59_000)).toEqual({ ok: false })
+    expect(verifyTotp(RFC_KEY, { code: '287082', lastStep: 0 }, 59_000)).toEqual({ ok: true, step: 1 })
   })
 
   it('refuses anything but six digits', () => {
-    expect(verifyTotp(RFC_KEY, '28708', null, 59_000)).toEqual({ ok: false })
-    expect(verifyTotp(RFC_KEY, 'abcdef', null, 59_000)).toEqual({ ok: false })
+    expect(verifyTotp(RFC_KEY, { code: '28708', lastStep: null }, 59_000)).toEqual({ ok: false })
+    expect(verifyTotp(RFC_KEY, { code: 'abcdef', lastStep: null }, 59_000)).toEqual({ ok: false })
   })
 })
 

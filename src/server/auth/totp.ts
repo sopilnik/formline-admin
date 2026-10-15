@@ -33,7 +33,7 @@ export function parseTotpSecret(value: string): Uint8Array | null {
 }
 
 export function totpUri(secret: Uint8Array, accountName: string): string {
-  return createTOTPKeyURI(APP_NAME, accountName, secret, PERIOD, DIGITS)
+  return createTOTPKeyURI({ issuer: APP_NAME, accountName, key: secret, periodSeconds: PERIOD, digits: DIGITS })
 }
 
 /** Whether a code, its spaces removed, has the shape of an authenticator code rather than of a recovery code. */
@@ -45,7 +45,11 @@ export function isTotpShape(code: string): boolean {
  * Accepts the code of the current 30-second step or of one step either side, and
  * only a step later than the last accepted one, so every code works once.
  */
-export function verifyTotp(secret: Uint8Array, code: string, lastStep: number | null, nowMs: number = Date.now()): { ok: true; step: number } | { ok: false } {
+export function verifyTotp(
+  secret: Uint8Array,
+  { code, lastStep }: { code: string; lastStep: number | null },
+  nowMs: number = Date.now(),
+): { ok: true; step: number } | { ok: false } {
   const otp = code.replace(/\s+/g, '')
 
   if (!isTotpShape(otp)) return { ok: false }
@@ -54,7 +58,7 @@ export function verifyTotp(secret: Uint8Array, code: string, lastStep: number | 
 
   for (const step of [current - 1, current, current + 1]) {
     if (lastStep !== null && step <= lastStep) continue
-    if (verifyHOTP(secret, BigInt(step), DIGITS, otp)) return { ok: true, step }
+    if (verifyHOTP({ key: secret, counter: BigInt(step), digits: DIGITS }, otp)) return { ok: true, step }
   }
 
   return { ok: false }

@@ -26,7 +26,7 @@ export async function checkNewCredentials(
   if (refused) return refused
 
   const secret = parseTotpSecret(input.totpSecret)
-  const totp = secret ? verifyTotp(secret, input.code, null, deps.now()) : null
+  const totp = secret ? verifyTotp(secret, { code: input.code, lastStep: null }, deps.now()) : null
 
   if (!secret || !totp?.ok) return { ok: false, error: 'code_invalid', field: 'code' }
 

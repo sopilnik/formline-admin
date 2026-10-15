@@ -19,21 +19,21 @@ describe('generateHOTP', () => {
 
 describe('verifyHOTP', () => {
   it('accepts the code of its counter only', () => {
-    expect(verifyHOTP(KEY, 1n, 6, '287082')).toBe(true)
-    expect(verifyHOTP(KEY, 2n, 6, '287082')).toBe(false)
-    expect(verifyHOTP(KEY, 1n, 6, '28708')).toBe(false)
-    expect(verifyHOTP(KEY, 1n, 6, '2870820')).toBe(false)
+    expect(verifyHOTP({ key: KEY, counter: 1n, digits: 6 }, '287082')).toBe(true)
+    expect(verifyHOTP({ key: KEY, counter: 2n, digits: 6 }, '287082')).toBe(false)
+    expect(verifyHOTP({ key: KEY, counter: 1n, digits: 6 }, '28708')).toBe(false)
+    expect(verifyHOTP({ key: KEY, counter: 1n, digits: 6 }, '2870820')).toBe(false)
   })
 
   it('refuses six digits of another script instead of throwing', () => {
-    expect(verifyHOTP(KEY, 1n, 6, '٢٨٧٠٨٢')).toBe(false)
+    expect(verifyHOTP({ key: KEY, counter: 1n, digits: 6 }, '٢٨٧٠٨٢')).toBe(false)
   })
 })
 
 describe('createTOTPKeyURI', () => {
   it('writes the address the panel has always shown', () => {
-    expect(createTOTPKeyURI('Formline Admin', 'owner', KEY, 30, 6)).toBe(
+    expect(createTOTPKeyURI({ issuer: 'Formline Admin', accountName: 'owner', key: KEY, periodSeconds: 30, digits: 6 })).toBe(
       'otpauth://totp/Formline%20Admin:owner?issuer=Formline+Admin&algorithm=SHA1&secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&period=30&digits=6')
-    expect(createTOTPKeyURI('Formline Admin', 'a b@x.test', KEY, 30, 6)).toContain('/Formline%20Admin:a%20b%40x.test?')
+    expect(createTOTPKeyURI({ issuer: 'Formline Admin', accountName: 'a b@x.test', key: KEY, periodSeconds: 30, digits: 6 })).toContain('/Formline%20Admin:a%20b%40x.test?')
   })
 })

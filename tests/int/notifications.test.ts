@@ -149,7 +149,7 @@ describe('a new sign-in', () => {
     await withWorkspace(ctx(other, 'owner'), async tx => {
       const self = (await getSelf(tx, { workspaceId: other.workspaceId, userId: other.users.owner }))!
 
-      await securityNotice(tx, other.workspaceId, self, 'auth.new_sign_in', { device: 'Firefox, Linux' }, { at: new Date(), signInId: here.signInId })
+      await securityNotice(tx, other.workspaceId, { user: self, kind: 'auth.new_sign_in', details: { device: 'Firefox, Linux' }, at: new Date(), signInId: here.signInId })
     }, app)
 
     const { rows } = await admin.query<{ payload: Record<string, unknown> }>(

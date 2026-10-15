@@ -63,10 +63,10 @@ describe('challenges', () => {
 
 describe('signInWithPasskey', () => {
   it('reports an unknown credential so the browser can forget it', async () => {
-    const cookie = challengeCookie(`c-${crypto.randomUUID()}`, 'auth', undefined, config(), Date.now())
+    const cookie = challengeCookie({ challenge: `c-${crypto.randomUUID()}`, purpose: 'auth' }, config(), Date.now())
     const credentialId = `unknown${crypto.randomUUID().replace(/-/g, '')}`
 
-    expect(await signInWithPasskey(assertion(credentialId, ownerId), cookie, meta, { pool: app }))
+    expect(await signInWithPasskey({ response: assertion(credentialId, ownerId), cookie: cookie, meta }, { pool: app }))
       .toEqual({ ok: false, error: 'passkey_unknown', credentialId })
   })
 
@@ -74,8 +74,8 @@ describe('signInWithPasskey', () => {
     const credentialId = `known${crypto.randomUUID().replace(/-/g, '')}`
 
     await addPasskeyRow(credentialId)
-    expect(await signInWithPasskey(assertion(credentialId, ownerId), undefined, meta, { pool: app })).toEqual({ ok: false, error: 'passkey_failed' })
-    expect(await signInWithPasskey(assertion(credentialId, ownerId), 'forged.value', meta, { pool: app })).toEqual({ ok: false, error: 'passkey_failed' })
+    expect(await signInWithPasskey({ response: assertion(credentialId, ownerId), cookie: undefined, meta }, { pool: app })).toEqual({ ok: false, error: 'passkey_failed' })
+    expect(await signInWithPasskey({ response: assertion(credentialId, ownerId), cookie: 'forged.value', meta }, { pool: app })).toEqual({ ok: false, error: 'passkey_failed' })
   })
 
   it('refuses a response that does not verify, and burns its challenge', async () => {
@@ -84,9 +84,9 @@ describe('signInWithPasskey', () => {
     await addPasskeyRow(credentialId)
 
     const challenge = `c-${crypto.randomUUID()}`
-    const cookie = challengeCookie(challenge, 'auth', undefined, config(), Date.now())
+    const cookie = challengeCookie({ challenge: challenge, purpose: 'auth' }, config(), Date.now())
 
-    expect(await signInWithPasskey(assertion(credentialId, ownerId), cookie, meta, { pool: app })).toEqual({ ok: false, error: 'passkey_failed' })
+    expect(await signInWithPasskey({ response: assertion(credentialId, ownerId), cookie: cookie, meta }, { pool: app })).toEqual({ ok: false, error: 'passkey_failed' })
     expect(await markChallengeUsed(challenge, app)).toBe(false)
   })
 })
@@ -115,7 +115,7 @@ describe('registration', () => {
     expect(result.options.attestation).toBe('none')
     expect(result.options.authenticatorSelection).toMatchObject({ residentKey: 'required', userVerification: 'required' })
     expect(result.options.excludeCredentials?.map(c => c.id)).toContain(credentialId)
-    expect(readChallenge(result.cookie, 'register', session.id, config(), Date.now())).toBe(result.options.challenge)
+    expect(readChallenge({ value: result.cookie, purpose: 'register', sessionId: session.id }, config(), Date.now())).toBe(result.options.challenge)
   })
 })
 
@@ -130,11 +130,11 @@ describe('removing a passkey', () => {
     // Changes to the owner row go through schema_owner: the users trigger refuses them from anyone else.
     try {
       await asSchemaOwner(admin, c => c.query('update fa.users set totp_secret_enc = null where id = $1', [ownerId]))
-      expect(await removeOwnPasskey(ownerSession(), only, meta, { pool: app })).toEqual({ ok: false, error: 'last_factor' })
+      expect(await removeOwnPasskey(ownerSession(), { passkeyId: only, meta }, { pool: app })).toEqual({ ok: false, error: 'last_factor' })
     } finally {
       await asSchemaOwner(admin, c => c.query('update fa.users set totp_secret_enc = $2 where id = $1', [ownerId, saved]))
     }
-    expect(await removeOwnPasskey(ownerSession(), only, meta, { pool: app })).toEqual({ ok: true })
+    expect(await removeOwnPasskey(ownerSession(), { passkeyId: only, meta }, { pool: app })).toEqual({ ok: true })
   })
 
   it('waits for a running change to the owner\'s factors before it counts them', async () => {
@@ -148,7 +148,7 @@ describe('removing a passkey', () => {
       await holder.query('select 1 from fa.users where id = $1 for no key update', [ownerId])
 
       let settled = false
-      const removing = removeOwnPasskey(ownerSession(), id, meta, { pool: app }).finally(() => { settled = true })
+      const removing = removeOwnPasskey(ownerSession(), { passkeyId: id, meta }, { pool: app }).finally(() => { settled = true })
 
       await new Promise(resolve => setTimeout(resolve, 500))
       expect(settled).toBe(false)
@@ -164,7 +164,7 @@ describe('removing a passkey', () => {
   it('needs a recent authentication', async () => {
     const id = await addPasskeyRow(`stale${crypto.randomUUID().replace(/-/g, '')}`)
 
-    expect(await removeOwnPasskey(ownerSession(new Date(Date.now() - 3_600_000)), id, meta, { pool: app }))
+    expect(await removeOwnPasskey(ownerSession(new Date(Date.now() - 3_600_000)), { passkeyId: id, meta }, { pool: app }))
       .toEqual({ ok: false, error: 'reauth_required' })
   })
 })

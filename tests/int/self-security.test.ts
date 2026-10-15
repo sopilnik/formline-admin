@@ -93,8 +93,8 @@ describe('signed-in devices', () => {
 
     expect(listed.map(s => s.userAgentSummary)).toEqual(['Safari, iOS', 'Chrome, Linux', 'Vitest'])
 
-    expect(await revokeOwnSession(current, current.id, { ip: null }, { pool: app })).toBe(false)
-    expect(await revokeOwnSession(current, phone.id, { ip: null }, { pool: app })).toBe(true)
+    expect(await revokeOwnSession(current, { id: current.id, meta: { ip: null } }, { pool: app })).toBe(false)
+    expect(await revokeOwnSession(current, { id: phone.id, meta: { ip: null } }, { pool: app })).toBe(true)
     expect(await exists(phone)).toBe(false)
     expect(await revokeOtherSessions(current, { ip: null }, { pool: app })).toBe(2)
     expect(await exists(current)).toBe(true)

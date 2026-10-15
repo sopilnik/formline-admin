@@ -19,14 +19,18 @@ export function generateHOTP(key: Uint8Array, counter: bigint, digits: number): 
 }
 
 /** Whether `code` is the code for `counter`, compared in constant time. */
-export function verifyHOTP(key: Uint8Array, counter: bigint, digits: number, code: string): boolean {
+export type HotpParams = { key: Uint8Array; counter: bigint; digits: number }
+
+export function verifyHOTP({ key, counter, digits }: HotpParams, code: string): boolean {
   if (Buffer.byteLength(code) !== digits) return false
 
   return timingSafeEqual(Buffer.from(generateHOTP(key, counter, digits)), Buffer.from(code))
 }
 
 /** `otpauth://totp/<issuer>:<account>?…` with the key in base32 (Google's Key Uri Format). */
-export function createTOTPKeyURI(issuer: string, accountName: string, key: Uint8Array, periodSeconds: number, digits: number): string {
+export type TotpKeyUri = { issuer: string; accountName: string; key: Uint8Array; periodSeconds: number; digits: number }
+
+export function createTOTPKeyURI({ issuer, accountName, key, periodSeconds, digits }: TotpKeyUri): string {
   const label = `${encodeURIComponent(issuer)}:${encodeURIComponent(accountName)}`
   const query = new URLSearchParams({
     issuer,

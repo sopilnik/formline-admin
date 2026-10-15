@@ -10,7 +10,7 @@ export async function GET(): Promise<Response> {
   const options = await authenticationOptions(config)
   const store = await cookies()
 
-  store.set(CHALLENGE_COOKIE, challengeCookie(options.challenge, 'auth', undefined, config, Date.now()), {
+  store.set(CHALLENGE_COOKIE, challengeCookie({ challenge: options.challenge, purpose: 'auth' }, config, Date.now()), {
     ...CHALLENGE_COOKIE_OPTIONS,
     maxAge: CHALLENGE_TTL_SECONDS,
   })

@@ -36,7 +36,7 @@ export async function revokeSessionAction(input: unknown): Promise<ActionResult<
   const parsed = sessionInput.safeParse(input)
 
   if (!parsed.success) return fail('invalid')
-  if (!(await revokeOwnSession(session, parsed.data.id, { ip: await getClientIp() }))) return fail('not_found')
+  if (!(await revokeOwnSession(session, { id: parsed.data.id, meta: { ip: await getClientIp() } }))) return fail('not_found')
   refresh()
 
   return ok(null)
