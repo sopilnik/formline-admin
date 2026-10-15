@@ -65,7 +65,7 @@ describe('locks', () => {
     const s = subject()
 
     expect(await lockRemaining('test.lock', s, app)).toBe(0)
-    await setLock('test.lock', s, 900, app)
+    await setLock('test.lock', { subject: s, seconds: 900 }, app)
 
     const left = await lockRemaining('test.lock', s, app)
 
@@ -76,7 +76,7 @@ describe('locks', () => {
   it('count the lock that ends last', async () => {
     const s = subject()
 
-    await setLock('test.lock', s, 3600, app)
+    await setLock('test.lock', { subject: s, seconds: 3600 }, app)
     await admin.query("insert into fa.rate_limits (purpose, subject, window_start, count) values ('test.lock', $1, now() - interval '1 minute', 900)", [s])
     expect(await lockRemaining('test.lock', s, app)).toBeGreaterThan(3590)
   })
@@ -101,7 +101,7 @@ describe('locks', () => {
   it('clear together with the counters of their subject', async () => {
     const s = subject()
 
-    await setLock('test.lock', s, 3600, app)
+    await setLock('test.lock', { subject: s, seconds: 3600 }, app)
     await consume(LIMIT, s, app)
     await clearSubject(s, app)
     expect(await lockRemaining('test.lock', s, app)).toBe(0)
@@ -144,7 +144,7 @@ describe('claimed attempts', () => {
 
     if (!claim.ok) throw new Error('refused')
     expect(claim.lockStart).toEqual(expect.any(String))
-    await giveBack(GUARD, s, claim, app)
+    await giveBack(GUARD, { subject: s, claim }, app)
 
     expect(await lockRemaining(GUARD.lock, s, app)).toBe(0)
     expect((await peek(LIMIT, s, app)).count).toBe(2)
@@ -154,9 +154,9 @@ describe('claimed attempts', () => {
     const s = subject()
     const counted = await consume(LIMIT, s, app)
 
-    await release(LIMIT, s, new Date(counted.windowStart.getTime() - LIMIT.windowSeconds * 1000), app)
+    await release(LIMIT, { subject: s, windowStart: new Date(counted.windowStart.getTime() - LIMIT.windowSeconds * 1000) }, app)
     expect((await peek(LIMIT, s, app)).count).toBe(1)
-    await release(LIMIT, s, counted.windowStart, app)
+    await release(LIMIT, { subject: s, windowStart: counted.windowStart }, app)
     expect((await peek(LIMIT, s, app)).count).toBe(0)
   })
 })

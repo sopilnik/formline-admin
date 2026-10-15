@@ -32,7 +32,9 @@ export async function generateMetadata(): Promise<Metadata> {
 type Format = (value: number) => string
 
 /** The strings of one card; "—" for a change the previous period cannot give. */
-function kpiView(id: string, label: string, hint: string, kpi: Kpi, format: Format, locale: Locale): KpiView {
+type KpiCard = { id: string; label: string; hint: string; kpi: Kpi; format: Format }
+
+function kpiView({ id, label, hint, kpi, format }: KpiCard, locale: Locale): KpiView {
   return {
     id,
     label,
@@ -71,16 +73,16 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   const { plan, timeZone } = data
   const locale = await getLocale()
   const t = await getTranslations('overview')
-  const range = (r: Range): string => formatDayRange(r.start, lastMoment(r), locale, timeZone)
+  const range = (r: Range): string => formatDayRange({ start: r.start, endInclusive: lastMoment(r) }, locale, timeZone)
   const cards = kpis(data.current, data.previous)
   const whole: Format = cents => formatMoney(cents, locale, 'whole')
   const cents: Format = value => formatMoney(value, locale)
   const number: Format = value => formatNumber(value, locale)
   const figures = [
-    kpiView('revenue', t('kpis.revenue'), t('kpis.revenueHint'), cards.revenue, whole, locale),
-    kpiView('orders', t('kpis.orders'), t('kpis.ordersHint'), cards.orders, number, locale),
-    kpiView('average', t('kpis.averageOrder'), t('kpis.averageOrderHint'), cards.averageOrder, cents, locale),
-    kpiView('customers', t('kpis.newCustomers'), t('kpis.newCustomersHint'), cards.newCustomers, number, locale),
+    kpiView({ id: 'revenue', label: t('kpis.revenue'), hint: t('kpis.revenueHint'), kpi: cards.revenue, format: whole }, locale),
+    kpiView({ id: 'orders', label: t('kpis.orders'), hint: t('kpis.ordersHint'), kpi: cards.orders, format: number }, locale),
+    kpiView({ id: 'average', label: t('kpis.averageOrder'), hint: t('kpis.averageOrderHint'), kpi: cards.averageOrder, format: cents }, locale),
+    kpiView({ id: 'customers', label: t('kpis.newCustomers'), hint: t('kpis.newCustomersHint'), kpi: cards.newCustomers, format: number }, locale),
   ]
 
   const chartTitle = t('chart.title', { step: plan.step })

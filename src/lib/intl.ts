@@ -49,7 +49,7 @@ export function formatDay(date: Date, locale: Locale, timeZone: string): string 
  * "26 Aug – 24 Sept": both ends are calendar days of the zone, the end inclusive. A day keeps its month and its year
  * (no-break spaces everywhere but around the dash), so a narrow column breaks the range only at the dash.
  */
-export function formatDayRange(start: Date, endInclusive: Date, locale: Locale, timeZone: string): string {
+export function formatDayRange({ start, endInclusive }: { start: Date; endInclusive: Date }, locale: Locale, timeZone: string): string {
   const range = new Intl.DateTimeFormat(INTL_LOCALE[locale], { day: 'numeric', month: 'short', timeZone }).formatRange(start, endInclusive)
 
   return range.replaceAll(' ', '\u00a0').replace('\u00a0–\u00a0', ' – ')

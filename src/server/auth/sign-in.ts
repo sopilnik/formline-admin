@@ -44,7 +44,7 @@ export async function claimPasswordAttempt(input: PasswordAttempt, deps: AuthDep
   const account = await claimAttempt(GUARDS.password, accountSubject(input.email, config.ipHashKey), pool)
 
   if (!account.ok) {
-    await release(LIMITS.signInFailIp, addressSubject, address.windowStart, pool)
+    await release(LIMITS.signInFailIp, { subject: addressSubject, windowStart: address.windowStart }, pool)
 
     return account
   }
@@ -56,8 +56,8 @@ export async function claimPasswordAttempt(input: PasswordAttempt, deps: AuthDep
 export async function passwordAccepted(input: PasswordAttempt, claim: Extract<PasswordClaim, { ok: true }>, deps: AuthDeps): Promise<void> {
   const { pool, config } = deps
 
-  await release(LIMITS.signInFailIp, ipSubject(input.ip, config.ipHashKey), claim.address.windowStart, pool)
-  await giveBack(GUARDS.password, accountSubject(input.email, config.ipHashKey), claim.account, pool)
+  await release(LIMITS.signInFailIp, { subject: ipSubject(input.ip, config.ipHashKey), windowStart: claim.address.windowStart }, pool)
+  await giveBack(GUARDS.password, { subject: accountSubject(input.email, config.ipHashKey), claim: claim.account }, pool)
 }
 
 /**

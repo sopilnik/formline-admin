@@ -17,10 +17,10 @@ let B: Seeded
 async function seed(): Promise<Seeded> {
   const ws = await createWorkspace(admin)
   const users = {
-    owner: await createUser(admin, ws, 'owner'),
-    admin: await createUser(admin, ws, 'admin'),
-    manager: await createUser(admin, ws, 'manager'),
-    viewer: await createUser(admin, ws, 'viewer'),
+    owner: await createUser(admin, { workspaceId: ws, role: 'owner' }),
+    admin: await createUser(admin, { workspaceId: ws, role: 'admin' }),
+    manager: await createUser(admin, { workspaceId: ws, role: 'manager' }),
+    viewer: await createUser(admin, { workspaceId: ws, role: 'viewer' }),
   }
   const ids = await asSchemaOwner(admin, async c => {
     const one = async (q: string, p: unknown[]) => (await c.query<{ id: string }>(q, p)).rows[0]!.id
@@ -208,7 +208,9 @@ const business: Record<string, { rights: Rights; insert: (s: Seeded) => ReturnTy
 }
 
 /** An insert either succeeds or fails on row-level security; an update or delete changes one row or none. */
-async function attempt(s: Seeded, actor: Actor, statement: ReturnType<typeof sql>, op: 'insert' | 'update' | 'delete'): Promise<boolean> {
+type Attempt = { actor: Actor; statement: ReturnType<typeof sql>; op: 'insert' | 'update' | 'delete' }
+
+async function attempt(s: Seeded, { actor, statement, op }: Attempt): Promise<boolean> {
   const r = await probe(ctx(s, actor), tx => tx.execute(statement))
 
   if (!r.ok) {
@@ -229,7 +231,7 @@ describe('write rights follow the matrix', () => {
         for (const actor of ACTORS) {
           const statement = op === 'insert' ? spec.insert(A) : op === 'update' ? spec.update(A) : spec.del(A)
 
-          expect([table, op, actor, await attempt(A, actor, statement, op)]).toEqual([table, op, actor, spec.rights[op].includes(actor)])
+          expect([table, op, actor, await attempt(A, { actor, statement, op })]).toEqual([table, op, actor, spec.rights[op].includes(actor)])
         }
       })
     }
@@ -241,20 +243,20 @@ describe('write rights follow the matrix', () => {
 
       expect(r).toMatchObject({ ok: false, message: expect.stringMatching(/permission denied/) })
     }
-    expect(await attempt(A, 'viewer', sql`insert into fa.activity_log (workspace_id, action) values (${A.ws}, 'viewed')`, 'insert')).toBe(true)
-    expect(await attempt(A, 'viewer', sql`insert into fa.order_events (workspace_id, order_id, kind, note) values (${A.ws}, ${A.ids.order}, 'note', 'n')`, 'insert')).toBe(false)
+    expect(await attempt(A, { actor: 'viewer', statement: sql`insert into fa.activity_log (workspace_id, action) values (${A.ws}, 'viewed')`, op: 'insert' })).toBe(true)
+    expect(await attempt(A, { actor: 'viewer', statement: sql`insert into fa.order_events (workspace_id, order_id, kind, note) values (${A.ws}, ${A.ids.order}, 'note', 'n')`, op: 'insert' })).toBe(false)
   })
 
   it('self-service rows belong to their user only', async () => {
     const own = await probe(ctx(A, 'viewer'), tx => tx.execute(sql`select count(*)::int as n from fa.sessions`))
 
     expect((own as { value: { rows: { n: number }[] } }).value.rows[0]?.n).toBe(1)
-    expect(await attempt(A, 'viewer', sql`delete from fa.passkeys where id = ${A.ids.passkey}`, 'delete')).toBe(false)
-    expect(await attempt(A, 'owner', sql`delete from fa.passkeys where id = ${A.ids.passkey}`, 'delete')).toBe(true)
-    expect(await attempt(A, 'admin', sql`delete from fa.sessions where user_id = ${A.users.viewer}`, 'delete')).toBe(false)
-    expect(await attempt(A, 'viewer', sql`delete from fa.sessions where user_id = ${A.users.viewer}`, 'delete')).toBe(true)
-    expect(await attempt(A, 'viewer', sql`update fa.users set name = 'Me' where id = ${A.users.viewer}`, 'update')).toBe(true)
-    expect(await attempt(A, 'viewer', sql`update fa.users set name = 'You' where id = ${A.users.manager}`, 'update')).toBe(false)
+    expect(await attempt(A, { actor: 'viewer', statement: sql`delete from fa.passkeys where id = ${A.ids.passkey}`, op: 'delete' })).toBe(false)
+    expect(await attempt(A, { actor: 'owner', statement: sql`delete from fa.passkeys where id = ${A.ids.passkey}`, op: 'delete' })).toBe(true)
+    expect(await attempt(A, { actor: 'admin', statement: sql`delete from fa.sessions where user_id = ${A.users.viewer}`, op: 'delete' })).toBe(false)
+    expect(await attempt(A, { actor: 'viewer', statement: sql`delete from fa.sessions where user_id = ${A.users.viewer}`, op: 'delete' })).toBe(true)
+    expect(await attempt(A, { actor: 'viewer', statement: sql`update fa.users set name = 'Me' where id = ${A.users.viewer}`, op: 'update' })).toBe(true)
+    expect(await attempt(A, { actor: 'viewer', statement: sql`update fa.users set name = 'You' where id = ${A.users.manager}`, op: 'update' })).toBe(false)
   })
 
   it("deactivating a user revokes that user's sessions and nobody else's", async () => {

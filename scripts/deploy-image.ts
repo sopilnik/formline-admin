@@ -2,7 +2,9 @@
 // It is our own call to bunny's API rather than bunny's container-update action, which sends its update
 // without waiting for the answer and never learns how the rollout ends.
 
-const API = 'https://api.bunny.net/mc'
+import { BUNNY_API, bunnyApi, type BunnyConnection } from './bunny-api.ts'
+
+const MC_API = `${BUNNY_API}/mc`
 
 type Fetch = typeof fetch
 
@@ -25,20 +27,7 @@ export type DeployOptions = {
 
 type Template = { id: string; name: string }
 
-async function api(o: DeployOptions, method: 'GET' | 'PATCH', path: string, body?: unknown): Promise<unknown> {
-  const res = await o.fetch(`${API}${path}`, {
-    method,
-    headers: { AccessKey: o.key, Accept: 'application/json', ...(body ? { 'Content-Type': 'application/json' } : {}) },
-    body: body ? JSON.stringify(body) : undefined,
-    signal: AbortSignal.timeout(20_000),
-  })
-
-  if (!res.ok) throw new Error(`bunny ${method} ${path.replace(/\/apps\/[^/]+/, '/apps/{id}')}: HTTP ${res.status}`)
-
-  const text = await res.text()
-
-  return text ? JSON.parse(text) : null
-}
+const containers = (o: DeployOptions): BunnyConnection => ({ fetch: o.fetch, key: o.key, base: MC_API })
 
 async function liveVersion(o: DeployOptions): Promise<string | null> {
   try {
@@ -58,7 +47,7 @@ async function liveVersion(o: DeployOptions): Promise<string | null> {
 /** The application's status, or null when bunny's API did not answer this time: one failed call never ends the wait. */
 async function appStatus(o: DeployOptions): Promise<string | null> {
   try {
-    const { status } = (await api(o, 'GET', `/apps/${o.appId}`)) as { status?: string }
+    const { status } = (await bunnyApi(containers(o), { method: 'GET', path: `/apps/${o.appId}` })) as { status?: string }
 
     return status ?? null
   } catch (error) {
@@ -69,11 +58,11 @@ async function appStatus(o: DeployOptions): Promise<string | null> {
 }
 
 export async function deployImage(o: DeployOptions): Promise<void> {
-  const app = (await api(o, 'GET', `/apps/${o.appId}`)) as { containerTemplates?: Template[] }
+  const app = (await bunnyApi(containers(o), { method: 'GET', path: `/apps/${o.appId}` })) as { containerTemplates?: Template[] }
   const templates = (app.containerTemplates ?? []).filter(t => t.name === o.container)
 
   if (templates.length !== 1) throw new Error(`expected one container named ${o.container}, found ${templates.length}`)
-  await api(o, 'PATCH', `/apps/${o.appId}/containers/${templates[0]!.id}`, { imageTag: o.tag, imageDigest: o.digest })
+  await bunnyApi(containers(o), { method: 'PATCH', path: `/apps/${o.appId}/containers/${templates[0]!.id}`, body: { imageTag: o.tag, imageDigest: o.digest } })
   o.log({ event: 'deploy.updated', container: o.container, tag: o.tag })
 
   const deadline = o.now() + (o.timeoutMs ?? 15 * 60_000)

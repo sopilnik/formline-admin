@@ -60,7 +60,7 @@ export function buildChart(input: {
   const { plan, locale, timeZone } = input
   const week = plan.step === 'week'
   // A day by its date; a week by its range in the tooltip and the table, by its last day on the axis.
-  const name = (range: Range): string => (week ? formatDayRange(range.start, lastMoment(range), locale, timeZone) : formatDay(range.start, locale, timeZone))
+  const name = (range: Range): string => (week ? formatDayRange({ start: range.start, endInclusive: lastMoment(range) }, locale, timeZone) : formatDay(range.start, locale, timeZone))
   const bars = plan.buckets.map((bucket, i): ChartBar => {
     const value = input.current[i] ?? 0
     const previousBucket = plan.previousBuckets[i] ?? null

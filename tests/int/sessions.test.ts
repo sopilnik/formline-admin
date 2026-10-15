@@ -18,7 +18,7 @@ beforeAll(async () => {
   admin = adminPool()
   app = appPool()
   sandbox = await createWorkspace(admin)
-  member = await createUser(admin, sandbox, 'admin')
+  member = await createUser(admin, { workspaceId: sandbox, role: 'admin' })
 })
 afterAll(closeAll)
 
@@ -73,7 +73,7 @@ describe('auth_session', () => {
   it('ends an owner-workspace session after 12 idle hours', async () => {
     const ownerWorkspace = (await admin.query<{ id: string }>("select id from fa.workspaces where kind = 'owner'")).rows[0]!.id
     // A non-owner row stands in, so that only the setup tests ever create the owner.
-    const user = await createUser(admin, ownerWorkspace, 'admin')
+    const user = await createUser(admin, { workspaceId: ownerWorkspace, role: 'admin' })
 
     try {
       const { token, id } = await newSession(ownerWorkspace, user)
@@ -88,7 +88,7 @@ describe('auth_session', () => {
 
   it('ends a sandbox session when the sandbox expires or has been idle for two hours', async () => {
     const ws = await createWorkspace(admin)
-    const user = await createUser(admin, ws, 'owner')
+    const user = await createUser(admin, { workspaceId: ws, role: 'owner' })
     const { token } = await newSession(ws, user)
 
     await admin.query("update fa.workspaces set last_active_at = now() - interval '2 hours 1 minute' where id = $1", [ws])
@@ -100,7 +100,7 @@ describe('auth_session', () => {
   })
 
   it('ends when the user is deactivated', async () => {
-    const user = await createUser(admin, sandbox, 'manager')
+    const user = await createUser(admin, { workspaceId: sandbox, role: 'manager' })
     const { token } = await newSession(sandbox, user)
 
     await asSchemaOwner(admin, c => c.query('update fa.users set deactivated_at = now() where id = $1', [user]))
@@ -163,7 +163,7 @@ describe('session changes', () => {
   })
 
   it("signing out other sessions keeps the current one and other users' sessions", async () => {
-    const other = await createUser(admin, sandbox, 'viewer')
+    const other = await createUser(admin, { workspaceId: sandbox, role: 'viewer' })
     const a = await newSession(sandbox, member)
     const b = await newSession(sandbox, member)
     const c = await newSession(sandbox, other)

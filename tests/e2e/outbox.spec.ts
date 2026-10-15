@@ -9,14 +9,29 @@ test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip'
 /** Three letters as the panel writes them: the newest a Russian sign-in notice. */
 async function writeLetters(workspaceId: string): Promise<string> {
   return asSchemaOwner(async c => {
-    const insert = (to: string, template: string, payload: object, hoursAgo: number) => c.query<{ id: string }>(
+    const insert = ({ to, template, payload, hoursAgo }: { to: string; template: string; payload: object; hoursAgo: number }) => c.query<{ id: string }>(
       'insert into fa.outbox_emails (workspace_id, to_address, template, payload, created_at) values ($1, $2, $3, $4, now() - make_interval(hours => $5)) returning id',
       [workspaceId, to, template, JSON.stringify(payload), hoursAgo])
 
-    await insert('noah.becker@formline.example', 'auth.recovery_code_used', { at: new Date(Date.now() - 3 * 3_600_000).toISOString(), remaining: 9, name: 'Noah Becker', locale: 'en' }, 3)
-    await insert('dana.ortiz@formline.example', 'auth.second_factor_locked', { at: new Date(Date.now() - 2 * 3_600_000).toISOString(), name: 'Dana Ortiz', locale: 'en' }, 2)
+    await insert({
+      to: 'noah.becker@formline.example',
+      template: 'auth.recovery_code_used',
+      payload: { at: new Date(Date.now() - 3 * 3_600_000).toISOString(), remaining: 9, name: 'Noah Becker', locale: 'en' },
+      hoursAgo: 3,
+    })
+    await insert({
+      to: 'dana.ortiz@formline.example',
+      template: 'auth.second_factor_locked',
+      payload: { at: new Date(Date.now() - 2 * 3_600_000).toISOString(), name: 'Dana Ortiz', locale: 'en' },
+      hoursAgo: 2,
+    })
 
-    const newest = await insert('dana.ortiz@formline.example', 'auth.new_sign_in', { at: new Date().toISOString(), device: 'Firefox, Linux', name: 'Dana Ortiz', locale: 'ru' }, 1)
+    const newest = await insert({
+      to: 'dana.ortiz@formline.example',
+      template: 'auth.new_sign_in',
+      payload: { at: new Date().toISOString(), device: 'Firefox, Linux', name: 'Dana Ortiz', locale: 'ru' },
+      hoursAgo: 1,
+    })
 
     return newest.rows[0]!.id
   })

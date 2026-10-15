@@ -15,15 +15,15 @@ beforeAll(async () => {
   admin = adminPool()
   wsA = await createWorkspace(admin)
   wsB = await createWorkspace(admin)
-  ownerA = await createUser(admin, wsA, 'owner')
-  adminA = await createUser(admin, wsA, 'admin')
-  managerA = await createUser(admin, wsA, 'manager')
-  viewerA = await createUser(admin, wsA, 'viewer')
+  ownerA = await createUser(admin, { workspaceId: wsA, role: 'owner' })
+  adminA = await createUser(admin, { workspaceId: wsA, role: 'admin' })
+  managerA = await createUser(admin, { workspaceId: wsA, role: 'manager' })
+  viewerA = await createUser(admin, { workspaceId: wsA, role: 'viewer' })
 })
 afterAll(closeAll)
 
 /** Sets the request identity the way withWorkspace will, inside the current transaction. */
-async function actAs(c: pg.PoolClient, workspaceId: string, userId: string | null, role: string): Promise<void> {
+async function actAs(c: pg.PoolClient, { workspaceId, userId, role }: { workspaceId: string; userId: string | null; role: string }): Promise<void> {
   await c.query("select set_config('app.workspace_id', $1, true), set_config('app.user_id', $2, true), set_config('app.role', $3, true)", [workspaceId, userId ?? '', role])
 }
 
@@ -86,55 +86,55 @@ describe('users', () => {
 
   it('never lets the application grant the owner role', async () => {
     await inRollback(admin, async c => {
-      await actAs(c, wsB, null, 'system')
+      await actAs(c, { workspaceId: wsB, userId: null, role: 'system' })
       await expect(c.query("insert into fa.users (workspace_id, email, name, role) values ($1, 'x@example.test', 'X', 'owner')", [wsB])).rejects.toThrow(/owner role cannot be granted/)
     })
     await inRollback(admin, async c => {
-      await actAs(c, wsA, ownerA, 'owner')
+      await actAs(c, { workspaceId: wsA, userId: ownerA, role: 'owner' })
       await expect(c.query("update fa.users set role = 'owner' where id = $1", [adminA])).rejects.toThrow(/owner role cannot be granted/)
     })
   })
 
   it('stops anyone changing their own role', async () => {
     await inRollback(admin, async c => {
-      await actAs(c, wsA, adminA, 'admin')
+      await actAs(c, { workspaceId: wsA, userId: adminA, role: 'admin' })
       await expect(c.query("update fa.users set role = 'viewer' where id = $1", [adminA])).rejects.toThrow(/own role/)
     })
   })
 
   it('protects the owner row from everyone else', async () => {
     await inRollback(admin, async c => {
-      await actAs(c, wsA, adminA, 'admin')
+      await actAs(c, { workspaceId: wsA, userId: adminA, role: 'admin' })
       await expect(c.query("update fa.users set name = 'Renamed' where id = $1", [ownerA])).rejects.toThrow(/owner row/)
     })
     await inRollback(admin, async c => {
-      await actAs(c, wsA, ownerA, 'owner')
+      await actAs(c, { workspaceId: wsA, userId: ownerA, role: 'owner' })
       await c.query("update fa.users set name = 'Renamed' where id = $1", [ownerA])
     })
   })
 
   it('lets owners and admins change other roles, and nobody else', async () => {
     await inRollback(admin, async c => {
-      await actAs(c, wsA, adminA, 'admin')
+      await actAs(c, { workspaceId: wsA, userId: adminA, role: 'admin' })
       await c.query("update fa.users set role = 'viewer' where id = $1", [managerA])
     })
     await inRollback(admin, async c => {
-      await actAs(c, wsA, managerA, 'manager')
+      await actAs(c, { workspaceId: wsA, userId: managerA, role: 'manager' })
       await expect(c.query("update fa.users set role = 'manager' where id = $1", [viewerA])).rejects.toThrow(/only owners and admins/)
     })
   })
 
   it('blocks email and identity changes and self-deactivation', async () => {
     await inRollback(admin, async c => {
-      await actAs(c, wsA, viewerA, 'viewer')
+      await actAs(c, { workspaceId: wsA, userId: viewerA, role: 'viewer' })
       await expect(c.query("update fa.users set email = 'new@example.test' where id = $1", [viewerA])).rejects.toThrow(/email/)
     })
     await inRollback(admin, async c => {
-      await actAs(c, wsA, adminA, 'admin')
+      await actAs(c, { workspaceId: wsA, userId: adminA, role: 'admin' })
       await expect(c.query('update fa.users set deactivated_at = now() where id = $1', [adminA])).rejects.toThrow(/deactivates themselves/)
     })
     await inRollback(admin, async c => {
-      await actAs(c, wsA, adminA, 'admin')
+      await actAs(c, { workspaceId: wsA, userId: adminA, role: 'admin' })
       await c.query('update fa.users set deactivated_at = now() where id = $1', [viewerA])
     })
   })

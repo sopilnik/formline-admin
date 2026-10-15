@@ -21,7 +21,7 @@ const now = () => STEP * 30_000 + 1_000
 const codeAt = (secret: Uint8Array, step = STEP) => generateHOTP(secret, BigInt(step), 6)
 
 const device = (workspaceId: string, userId: string, reauthAt: Date | null = new Date()): Promise<Session> =>
-  insertSession(admin, workspaceId, userId, { reauthAt })
+  insertSession(admin, { workspaceId, userId, reauthAt })
 
 const self = async () => (await admin.query<{ totp_secret_enc: string | null; totp_last_step: string | null }>(
   'select totp_secret_enc, totp_last_step from fa.users where workspace_id = $1 and id = $2', [current.workspaceId, current.userId])).rows[0]!

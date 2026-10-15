@@ -94,7 +94,7 @@ export async function attemptSecondFactor(
   }, pool)
 
   if (check.ok) {
-    await giveBack(GUARDS.secondFactor, subject, claim, pool)
+    await giveBack(GUARDS.secondFactor, { subject, claim }, pool)
 
     return { ok: true, method: check.method }
   }

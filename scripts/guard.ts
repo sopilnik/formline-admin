@@ -3,11 +3,11 @@
 // owner — whenever it stops the application, cannot read a figure, finds the balance under $1 or the panel silent.
 // A stopped application is left alone: resuming it is the owner's step (README, "Budget guard").
 
+import { bunnyApi } from './bunny-api.ts'
+
 export const COST_LIMIT_USD = 4
 /** Below the account's automatic top-up ($10 whenever the balance falls under $2), so it fires only when a top-up failed. */
 export const BALANCE_FLOOR_USD = 1
-
-const API = 'https://api.bunny.net'
 
 export type GuardFacts = {
   /** The application's status (bunny's `ApplicationStatus`); `inactive` once undeployed. */
@@ -51,16 +51,6 @@ export function decide(facts: GuardFacts): Verdict {
 
 type Fetch = typeof fetch
 
-async function api(fetchImpl: Fetch, key: string, method: 'GET' | 'POST', path: string): Promise<unknown> {
-  const res = await fetchImpl(`${API}${path}`, { method, headers: { AccessKey: key, Accept: 'application/json' }, signal: AbortSignal.timeout(20_000) })
-
-  if (!res.ok) throw new Error(`bunny ${method} ${path.replace(/\/apps\/[^/]+/, '/apps/{id}')}: HTTP ${res.status}`)
-
-  const text = await res.text()
-
-  return text ? JSON.parse(text) : null
-}
-
 const field = (body: unknown, name: string): unknown => (body && typeof body === 'object' ? (body as Record<string, unknown>)[name] : undefined)
 
 export type GuardOptions = { key: string; appId: string; siteUrl: string; fetch: Fetch; log: (event: Record<string, unknown>) => void }
@@ -68,7 +58,7 @@ export type GuardOptions = { key: string; appId: string; siteUrl: string; fetch:
 /** One run; resolves with the exit code. */
 export async function runGuard(o: GuardOptions): Promise<number> {
   try {
-    const app = await api(o.fetch, o.key, 'GET', `/mc/apps/${o.appId}`)
+    const app = await bunnyApi(o, { method: 'GET', path: `/mc/apps/${o.appId}` })
     const status = String(field(app, 'status') ?? 'unknown')
 
     if (status === 'inactive') {
@@ -78,13 +68,13 @@ export async function runGuard(o: GuardOptions): Promise<number> {
     }
 
     const [summary, billing] = await Promise.all([
-      api(o.fetch, o.key, 'GET', `/mc/apps/${o.appId}/summary`),
-      api(o.fetch, o.key, 'GET', '/billing'),
+      bunnyApi(o, { method: 'GET', path: `/mc/apps/${o.appId}/summary` }),
+      bunnyApi(o, { method: 'GET', path: '/billing' }),
     ])
     const live = await o.fetch(new URL('/api/health', o.siteUrl), { signal: AbortSignal.timeout(20_000) }).then(r => r.ok, () => false)
     const verdict = decide({ status, appCost: field(summary, 'monthlyCost'), billingCost: field(billing, 'MonthlyChargesMagicContainers'), balance: field(billing, 'Balance'), live })
 
-    if (verdict.undeploy) await api(o.fetch, o.key, 'POST', `/mc/apps/${o.appId}/undeploy`)
+    if (verdict.undeploy) await bunnyApi(o, { method: 'POST', path: `/mc/apps/${o.appId}/undeploy` })
     o.log({ event: 'guard.checked', status, cost: verdict.cost, live, undeployed: verdict.undeploy, failures: verdict.failures })
 
     return verdict.failures.length === 0 ? 0 : 1

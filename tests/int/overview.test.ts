@@ -45,15 +45,15 @@ describe('revenueTotals', () => {
     const range = periodPlan('30d', now, tz).current
     const returning = await newCustomer(built.workspaceId, 'returning@hand.test')
     const first = await newCustomer(built.workspaceId, 'first@hand.test')
-    const place = (number: number, customerId: string, status: string, subtotalCents: number, placedAt: Date) =>
-      placeOrder(admin, built.workspaceId, { number, customerId, status, subtotalCents, placedAt })
+    const place = (order: { number: number; customerId: string; status: string; subtotalCents: number; placedAt: Date }) =>
+      placeOrder(admin, built.workspaceId, order)
 
-    await place(90001, returning, 'paid', 2000, new Date(range.start.getTime() - 1))
-    await place(90002, returning, 'paid', 2900, range.start)
-    await place(90003, first, 'delivered', 4100, new Date(range.end.getTime() - 1))
-    await place(90004, first, 'cancelled', 1000, range.start)
-    await place(90005, first, 'refunded', 1000, range.start)
-    await place(90006, first, 'paid', 1000, range.end)
+    await place({ number: 90001, customerId: returning, status: 'paid', subtotalCents: 2000, placedAt: new Date(range.start.getTime() - 1) })
+    await place({ number: 90002, customerId: returning, status: 'paid', subtotalCents: 2900, placedAt: range.start })
+    await place({ number: 90003, customerId: first, status: 'delivered', subtotalCents: 4100, placedAt: new Date(range.end.getTime() - 1) })
+    await place({ number: 90004, customerId: first, status: 'cancelled', subtotalCents: 1000, placedAt: range.start })
+    await place({ number: 90005, customerId: first, status: 'refunded', subtotalCents: 1000, placedAt: range.start })
+    await place({ number: 90006, customerId: first, status: 'paid', subtotalCents: 1000, placedAt: range.end })
 
     expect(await withWorkspace(built, tx => revenueTotals(tx, built.workspaceId, range), app)).toEqual({ revenueCents: 3800 + 5000, orders: 2, newCustomers: 1 })
   })

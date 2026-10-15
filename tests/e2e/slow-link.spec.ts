@@ -10,7 +10,9 @@ test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip'
 const sidebar = (page: Page) => page.getByRole('navigation', { name: 'Main menu' })
 
 /** Holds the requests a matcher picks for a while, as a slow connection would. */
-async function hold(page: Page, url: string | RegExp, ms: number, pick: (headers: Record<string, string>) => boolean = () => true): Promise<void> {
+type Hold = { url: string | RegExp; ms: number; pick?: (headers: Record<string, string>) => boolean }
+
+async function hold(page: Page, { url, ms, pick = () => true }: Hold): Promise<void> {
   await page.route(url, async route => {
     if (pick(route.request().headers())) await new Promise(resolve => setTimeout(resolve, ms))
     await route.fallback()
@@ -21,7 +23,7 @@ test.describe('a slow link', () => {
   test('a navigation during an image upload goes through at once', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await openFramed(page, '/products/hush')
-    await hold(page, '**/api/media?**', 6000)
+    await hold(page, { url: '**/api/media?**', ms: 6000 })
 
     const poster = await sharp({ create: { width: 600, height: 800, channels: 3, background: '#a9cdb2' } }).png().toBuffer()
 
@@ -36,7 +38,7 @@ test.describe('a slow link', () => {
   test('a navigation during a CSV export goes through at once', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await openFramed(page, '/orders')
-    await hold(page, '**/api/orders/export**', 5000)
+    await hold(page, { url: '**/api/orders/export**', ms: 5000 })
     await page.getByRole('button', { name: /^Export [\d,]+ as CSV$/ }).click()
     await sidebar(page).getByRole('link', { name: 'Customers' }).click()
     await expect(page).toHaveURL(/\/customers$/, { timeout: 3000 })
@@ -45,7 +47,11 @@ test.describe('a slow link', () => {
   test('Team, Activity, an order and the new-product form show their own loading state at once', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     // Links prefetch the loading state of their pages (an order's once the pointer reaches it); the pages are held, not that.
-    await hold(page, /\/(team|activity|orders\/\d+|products\/new)(\?|$)/, 1500, headers => headers.rsc === '1' && headers['next-router-prefetch'] === undefined)
+    await hold(page, {
+      url: /\/(team|activity|orders\/\d+|products\/new)(\?|$)/,
+      ms: 1500,
+      pick: headers => headers.rsc === '1' && headers['next-router-prefetch'] === undefined,
+    })
 
     const loading = (text: string) => page.getByRole('status').filter({ hasText: text })
 

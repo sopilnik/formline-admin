@@ -94,7 +94,7 @@ describe('signInWithPasskey', () => {
 describe('registration', () => {
   it('offers passkeys in the owner workspace only, after a recent authentication', async () => {
     const sandbox = await createWorkspace(admin)
-    const member = await createUser(admin, sandbox, 'owner')
+    const member = await createUser(admin, { workspaceId: sandbox, role: 'owner' })
     const sandboxSession: Session = { ...ownerSession(), workspaceId: sandbox, workspaceKind: 'sandbox', userId: member }
 
     expect(await beginRegistration(sandboxSession, { pool: app })).toEqual({ ok: false, error: 'generic' })

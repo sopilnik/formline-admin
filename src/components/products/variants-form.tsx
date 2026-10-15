@@ -72,7 +72,7 @@ export function VariantsForm({ productId, rows }: Props) {
 
     return issue ? t(`errors.${issue}`) : undefined
   }
-  const field = (name: VariantField, row: VariantRow, initial: string, placeholder?: string) => {
+  const field = (row: VariantRow, { name, initial, placeholder }: { name: VariantField; initial: string; placeholder?: string }) => {
     const id = `${name}-${row.id}`
     const message = problem(name, row)
 
@@ -127,9 +127,9 @@ export function VariantsForm({ productId, rows }: Props) {
                 {row.stock <= row.threshold ? <span className="text-xs"><StockLevel stock={row.stock} threshold={row.threshold} /></span> : null}
               </span>
               <div className="grid grid-cols-3 gap-3 @xl:contents">
-                {field('price', row, row.override, row.computedPrice)}
-                {field('stock', row, String(row.stock))}
-                {field('threshold', row, String(row.threshold))}
+                {field(row, { name: 'price', initial: row.override, placeholder: row.computedPrice })}
+                {field(row, { name: 'stock', initial: String(row.stock) })}
+                {field(row, { name: 'threshold', initial: String(row.threshold) })}
               </div>
             </div>
           </li>

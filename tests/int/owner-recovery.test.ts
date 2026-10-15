@@ -73,7 +73,7 @@ describe('owner recovery', () => {
 
     await admin.query("insert into fa.passkeys (workspace_id, user_id, credential_id, public_key, name) values ($1, $2, $3, 'pk', 'Old laptop')",
       [ownerWorkspace, ownerId, `lost${crypto.randomUUID().replace(/-/g, '')}`])
-    await setLock('mfa.lock', userSubject(ownerWorkspace, ownerId), 3600, app)
+    await setLock('mfa.lock', { subject: userSubject(ownerWorkspace, ownerId), seconds: 3600 }, app)
 
     const result = await recover(await issue(), { password: 'brand-new-password-5582' })
 

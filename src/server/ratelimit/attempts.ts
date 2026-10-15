@@ -45,13 +45,17 @@ async function claimInTransaction(client: PoolClient, guard: AttemptGuard, subje
 
   const counted = await consume(guard.limit, subject, client)
   const seconds = guard.lockSeconds(counted.count)
-  const lockStart = seconds > 0 ? await setLock(guard.lock, subject, seconds, client) : null
+  const lockStart = seconds > 0 ? await setLock(guard.lock, { subject, seconds }, client) : null
 
   return { ok: true, count: counted.count, windowStart: counted.windowStart, lockStart }
 }
 
 /** A right answer: the attempt's slot is given back, and the lock its claim set, if any, is lifted. */
-export async function giveBack(guard: AttemptGuard, subject: string, claim: Granted, pool: Pool = getPool()): Promise<void> {
-  await release(guard.limit, subject, claim.windowStart, pool)
-  if (claim.lockStart) await liftLock(guard.lock, subject, claim.lockStart, pool)
+export async function giveBack(
+  guard: AttemptGuard,
+  { subject, claim }: { subject: string; claim: Granted },
+  pool: Pool = getPool(),
+): Promise<void> {
+  await release(guard.limit, { subject, windowStart: claim.windowStart }, pool)
+  if (claim.lockStart) await liftLock(guard.lock, { subject, start: claim.lockStart }, pool)
 }

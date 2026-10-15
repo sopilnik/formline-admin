@@ -43,7 +43,7 @@ export async function buildTemplate(client: pg.ClientBase, options: { version?: 
     await client.query('select 1 from fa.workspace_counters where workspace_id = $1 for update', [template.id])
 
     await writeUsers(client, template.id, data)
-    await writeCatalog(client, template.id, data, 'replace')
+    await writeCatalog(client, template.id, { data, mode: 'replace' })
     await giveOwnerCatalog(client, owner.id, data)
 
     await client.query("delete from fa.orders where workspace_id = $1 and source = 'seed'", [template.id])
@@ -95,10 +95,14 @@ async function giveOwnerCatalog(client: pg.ClientBase, workspaceId: string, data
   const { rowCount } = await client.query('select 1 from fa.collections where workspace_id = $1 limit 1', [workspaceId])
 
   if (rowCount) return
-  await writeCatalog(client, workspaceId, data, 'keep')
+  await writeCatalog(client, workspaceId, { data, mode: 'keep' })
 }
 
-async function writeCatalog(client: pg.ClientBase, workspaceId: string, data: TemplateData, mode: 'replace' | 'keep'): Promise<void> {
+async function writeCatalog(
+  client: pg.ClientBase,
+  workspaceId: string,
+  { data, mode }: { data: TemplateData; mode: 'replace' | 'keep' },
+): Promise<void> {
   const keep = mode === 'keep'
 
   for (const c of data.collections) {

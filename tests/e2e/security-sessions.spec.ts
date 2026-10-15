@@ -8,16 +8,16 @@ import { expect, test } from './test.ts'
 test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip': '203.0.113.47' } })
 
 /** Another signed-in device of the same member, as a second browser would leave it, signed in `ago` before now. */
-const otherDevice = (workspaceId: string, userId: string, agent: string, ago = '0 minutes') => asSchemaOwner(c => c.query(
+const otherDevice = (workspaceId: string, { userId, userAgent, ago = '0 minutes' }: { userId: string; userAgent: string; ago?: string }) => asSchemaOwner(c => c.query(
   `insert into fa.sessions (workspace_id, id, user_id, expires_at, second_factor_verified, user_agent_summary, created_at)
    values ($1, $2, $3, now() + interval '1 hour', true, $4, now() - $5::interval)`,
-  [workspaceId, createHash('sha256').update(randomBytes(20)).digest('hex'), userId, agent, ago]))
+  [workspaceId, createHash('sha256').update(randomBytes(20)).digest('hex'), userId, userAgent, ago]))
 
 test.describe('security settings in a sandbox', () => {
   test('explains the password, lists the devices and passes axe', async ({ page, context }) => {
     const { workspaceId, userId } = await signInAsSandboxUser(context)
 
-    await otherDevice(workspaceId, userId, 'Safari, iOS')
+    await otherDevice(workspaceId, { userId, userAgent: 'Safari, iOS' })
     await page.goto('/settings/security')
     await expect(page.getByText(/Demo members enter through the demo and have no password/)).toBeVisible()
     await expect(page.getByLabel('New password')).toHaveCount(0)
@@ -33,8 +33,8 @@ test.describe('security settings in a sandbox', () => {
   test('names each device\'s Sign out by its sign-in time, so two of the same browser differ', async ({ page, context }) => {
     const { workspaceId, userId } = await signInAsSandboxUser(context)
 
-    await otherDevice(workspaceId, userId, 'Chrome, Linux', '2 hours')
-    await otherDevice(workspaceId, userId, 'Chrome, Linux', '5 hours')
+    await otherDevice(workspaceId, { userId, userAgent: 'Chrome, Linux', ago: '2 hours' })
+    await otherDevice(workspaceId, { userId, userAgent: 'Chrome, Linux', ago: '5 hours' })
     await page.goto('/settings/security')
     await expect(page.getByRole('list', { name: 'Signed-in devices' })).toBeVisible()
 
@@ -49,8 +49,8 @@ test.describe('security settings in a sandbox', () => {
   test('signs out one other device, then all the others, and logs both', async ({ page, context }) => {
     const { workspaceId, userId } = await signInAsSandboxUser(context)
 
-    await otherDevice(workspaceId, userId, 'Safari, iOS')
-    await otherDevice(workspaceId, userId, 'Firefox, Windows')
+    await otherDevice(workspaceId, { userId, userAgent: 'Safari, iOS' })
+    await otherDevice(workspaceId, { userId, userAgent: 'Firefox, Windows' })
     await page.goto('/settings/security')
 
     const devices = page.getByRole('list', { name: 'Signed-in devices' }).getByRole('listitem')

@@ -151,7 +151,7 @@ export type PeriodPlan = {
 
 const ROLLING_DAYS = { '7d': 7, '30d': 30, '90d': 90 } as const
 
-function dayBuckets(start: Date, count: number, now: Date, timeZone: string): Range[] {
+function dayBuckets({ start, count }: { start: Date; count: number }, now: Date, timeZone: string): Range[] {
   return Array.from({ length: count }, (_, i) => ({ start: addDays(start, i, timeZone), end: i === count - 1 ? now : addDays(start, i + 1, timeZone) }))
 }
 
@@ -176,7 +176,7 @@ export function periodPlan(period: Period, now: Date, timeZone: string): PeriodP
   if (period === 'month') {
     const start = startOfMonth(now, timeZone)
     const previous = { start: addMonths(start, -1, timeZone), end: addMonths(now, -1, timeZone) }
-    const buckets = dayBuckets(start, zonedParts(now, timeZone).day, now, timeZone)
+    const buckets = dayBuckets({ start, count: zonedParts(now, timeZone).day }, now, timeZone)
     const month = zonedParts(previous.start, timeZone).month
     const previousBuckets = buckets.map((_, i) => {
       const dayStart = addDays(previous.start, i, timeZone)
@@ -194,7 +194,7 @@ export function periodPlan(period: Period, now: Date, timeZone: string): PeriodP
   const days = ROLLING_DAYS[period]
   const start = addDays(startOfDay(now, timeZone), -(days - 1), timeZone)
   const previous = { start: addDays(start, -days, timeZone), end: addDays(now, -days, timeZone) }
-  const buckets = period === '90d' ? weekBuckets(start, now, timeZone) : dayBuckets(start, days, now, timeZone)
+  const buckets = period === '90d' ? weekBuckets(start, now, timeZone) : dayBuckets({ start, count: days }, now, timeZone)
   const previousBuckets = buckets.map(bucket => ({ start: addDays(bucket.start, -days, timeZone), end: addDays(bucket.end, -days, timeZone) }))
 
   return { period, step: period === '90d' ? 'week' : 'day', current: { start, end: now }, previous, buckets, previousBuckets }

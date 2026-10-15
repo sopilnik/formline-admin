@@ -31,7 +31,11 @@ export async function consume(limit: Limit, subject: string, pool: Queryable = g
 }
 
 /** Gives back an attempt counted in `windowStart`: the window it counted in, even when a new one has begun since. */
-export async function release(limit: Limit, subject: string, windowStart: Date, pool: Queryable = getPool()): Promise<void> {
+export async function release(
+  limit: Limit,
+  { subject, windowStart }: { subject: string; windowStart: Date },
+  pool: Queryable = getPool(),
+): Promise<void> {
   await pool.query(
     'update fa.rate_limits set count = count - 1 where purpose = $1 and subject = $2 and window_start = $3 and count > 0',
     [limit.purpose, subject, windowStart])
@@ -55,7 +59,11 @@ export async function peek(limit: Limit, subject: string, pool: Pool = getPool()
  * in `window_start` and its length in `count`, so it lasts as long as it was set for, whatever the counters do meanwhile.
  * Answers the start as the database wrote it, to the microsecond, which names the lock for liftLock().
  */
-export async function setLock(purpose: string, subject: string, seconds: number, pool: Queryable = getPool()): Promise<string | null> {
+export async function setLock(
+  purpose: string,
+  { subject, seconds }: { subject: string; seconds: number },
+  pool: Queryable = getPool(),
+): Promise<string | null> {
   const { rows } = await pool.query<{ start: string }>(
     `insert into fa.rate_limits (purpose, subject, window_start, count) values ($1, $2, clock_timestamp(), $3)
      on conflict (purpose, subject, window_start) do nothing
@@ -66,7 +74,11 @@ export async function setLock(purpose: string, subject: string, seconds: number,
 }
 
 /** Ends the lock that started at `start` before its time (the attempt that set it turned out right). */
-export async function liftLock(purpose: string, subject: string, start: string, pool: Queryable = getPool()): Promise<void> {
+export async function liftLock(
+  purpose: string,
+  { subject, start }: { subject: string; start: string },
+  pool: Queryable = getPool(),
+): Promise<void> {
   await pool.query(
     'update fa.rate_limits set count = 0 where purpose = $1 and subject = $2 and window_start = $3::timestamptz',
     [purpose, subject, start])

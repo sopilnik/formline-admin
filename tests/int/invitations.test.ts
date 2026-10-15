@@ -24,7 +24,7 @@ async function sandbox(locale = 'en'): Promise<Sandbox> {
 }
 
 /** A verified session of a member, as the cookie of a visitor who switched to them would carry. */
-const sessionOf = (actor: Actor, userId = actor.userId): Promise<Session> => insertSession(admin, actor.workspaceId, userId)
+const sessionOf = (actor: Actor, userId = actor.userId): Promise<Session> => insertSession(admin, { workspaceId: actor.workspaceId, userId })
 
 const tokenOfLetter = async (workspaceId: string, email: string): Promise<string> => (await admin.query<{ token: string }>(
   "select payload->>'token' as token from fa.outbox_emails where workspace_id = $1 and to_address = $2 and template = 'team.invitation' order by created_at desc limit 1",

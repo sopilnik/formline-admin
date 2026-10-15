@@ -71,7 +71,7 @@ export async function switchUser(session: Session, input: SwitchInput, overrides
 
   // Null: a switch that ran alongside this one stored the code's step first, so the code is used.
   if (expiresAt === null) return wrongCode(ctx, { targetId: target.id, claim: claim!, ipHash: input.ipHash }, deps)
-  if (claim) await giveBack(GUARDS.secondFactor, subject, claim, deps.pool)
+  if (claim) await giveBack(GUARDS.secondFactor, { subject, claim }, deps.pool)
 
   // Row-level security lets a member write only their own row, so this runs as the member just switched to.
   await withWorkspace({ ...ctx, userId: target.id, role: target.role }, tx => updateSelfPreferences(tx, { workspaceId: session.workspaceId, userId: target.id }, { ...input.preferences, shortcutsEnabled }), deps.pool)

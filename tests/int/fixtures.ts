@@ -77,7 +77,9 @@ export async function createWorkspace(pool: pg.Pool, kind: 'sandbox' | 'owner' |
   return rows[0]!.id
 }
 
-export async function createUser(pool: pg.Pool, workspaceId: string, role: 'owner' | 'admin' | 'manager' | 'viewer', email = `${role}.${crypto.randomUUID()}@example.test`): Promise<string> {
+export type NewUser = { workspaceId: string; role: 'owner' | 'admin' | 'manager' | 'viewer'; email?: string }
+
+export async function createUser(pool: pg.Pool, { workspaceId, role, email = `${role}.${crypto.randomUUID()}@example.test` }: NewUser): Promise<string> {
   return asSchemaOwner(pool, async c => {
     const { rows } = await c.query<{ id: string }>(
       'insert into fa.users (workspace_id, email, name, role) values ($1, $2, $3, $4) returning id',
@@ -120,10 +122,9 @@ export async function memberIds(admin: pg.Pool, workspaceId: string): Promise<Re
  * A verified session of a member, as the cookie of a signed-in visitor carries it: it ends with its sandbox, or in a day
  * in the owner workspace. Returns the session as the server reads it.
  */
-export async function insertSession(
-  admin: pg.Pool, workspaceId: string, userId: string,
-  { reauthAt = new Date(), userAgent = null }: { reauthAt?: Date | null; userAgent?: string | null } = {},
-): Promise<Session> {
+export type SessionRow = { workspaceId: string; userId: string; reauthAt?: Date | null; userAgent?: string | null }
+
+export async function insertSession(admin: pg.Pool, { workspaceId, userId, reauthAt = new Date(), userAgent = null }: SessionRow): Promise<Session> {
   const id = hashToken(generateToken())
   const { rows } = await admin.query<{ role: Session['role']; kind: Session['workspaceKind']; expires_at: Date }>(
     `insert into fa.sessions (workspace_id, id, user_id, expires_at, second_factor_verified, reauth_at, user_agent_summary)

@@ -32,7 +32,9 @@ async function offer(request: APIRequestContext, fixture: ReturnType<typeof chec
   expect((await request.post(`http://127.0.0.1:${E2E_STRIPE_PORT}/__stub/sessions`, { data: fixture })).status()).toBe(201)
 }
 
-function deliver(request: APIRequestContext, session: object, secret = E2E_STRIPE_ENV.STRIPE_WEBHOOK_SECRET, id = `evt_e2e_${randomUUID().replaceAll('-', '')}`) {
+type Delivery = { session: object; secret?: string; id?: string }
+
+function deliver(request: APIRequestContext, { session, secret = E2E_STRIPE_ENV.STRIPE_WEBHOOK_SECRET, id = `evt_e2e_${randomUUID().replaceAll('-', '')}` }: Delivery) {
   const payload = JSON.stringify({ id, object: 'event', type: 'checkout.session.completed', data: { object: session } })
   const signature = Stripe.webhooks.generateTestHeaderString({ payload, secret })
 
@@ -53,11 +55,11 @@ test('a store order arrives through the webhook: the owner sees it, its stock is
   await setOwnerStock(5)
 
   const event = `evt_e2e_${TAG}_1`
-  const first = await deliver(request, order.session, undefined, event)
+  const first = await deliver(request, { session: order.session, id: event })
 
   expect(first.status()).toBe(200)
   expect(await first.json()).toEqual({ received: true })
-  expect((await deliver(request, order.session, undefined, event)).status()).toBe(200)
+  expect((await deliver(request, { session: order.session, id: event })).status()).toBe(200)
 
   const number = await numberOf(order.session.id)
 
@@ -94,7 +96,7 @@ test('a delivery without Stripe\'s signature, signed with another secret or too 
   const unsigned = await request.post('/api/stripe/webhook', { data: JSON.stringify({ id: 'evt_unsigned', type: 'checkout.session.completed', data: { object: order.session } }) })
 
   expect(unsigned.status()).toBe(400)
-  expect((await deliver(request, order.session, `whsec_${'other'.repeat(8)}`)).status()).toBe(400)
+  expect((await deliver(request, { session: order.session, secret: `whsec_${'other'.repeat(8)}` })).status()).toBe(400)
 
   const large = await request.post('/api/stripe/webhook', { data: 'x'.repeat(70 * 1024), headers: { 'stripe-signature': 't=1,v1=0' } })
 

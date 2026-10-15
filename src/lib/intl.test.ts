@@ -44,13 +44,13 @@ describe('money, numbers and dates', () => {
     expect(formatDay(t, 'en', 'Europe/Berlin')).toMatch(/^24 Sept?$/)
     // English ranges put thin spaces (U+2009) around the dash; Russian ones plain spaces (ICU, checked on Node 26). Every other
     // space is a no-break one, so a narrow column breaks a range only at the dash.
-    expect(formatDayRange(new Date('2026-08-25T22:00:00Z'), new Date('2026-09-24T12:00:00Z'), 'en', 'Europe/Berlin')).toMatch(/^26\u00a0Aug\u2009–\u200924\u00a0Sept?$/)
-    expect(formatDayRange(new Date('2026-08-25T22:00:00Z'), new Date('2026-09-24T12:00:00Z'), 'ru', 'Europe/Berlin')).toBe('26\u00a0авг. – 24\u00a0сент.')
+    expect(formatDayRange({ start: new Date('2026-08-25T22:00:00Z'), endInclusive: new Date('2026-09-24T12:00:00Z') }, 'en', 'Europe/Berlin')).toMatch(/^26\u00a0Aug\u2009–\u200924\u00a0Sept?$/)
+    expect(formatDayRange({ start: new Date('2026-08-25T22:00:00Z'), endInclusive: new Date('2026-09-24T12:00:00Z') }, 'ru', 'Europe/Berlin')).toBe('26\u00a0авг. – 24\u00a0сент.')
     // Inside one month the month is named once, and Russian drops the spaces; across a new year both ends name their year.
-    expect(formatDayRange(new Date('2026-07-31T22:00:00Z'), new Date('2026-08-30T12:00:00Z'), 'en', 'Europe/Berlin')).toBe('1\u2009–\u200930\u00a0Aug')
-    expect(formatDayRange(new Date('2026-07-31T22:00:00Z'), new Date('2026-08-30T12:00:00Z'), 'ru', 'Europe/Berlin')).toBe('1–30\u00a0авг.')
-    expect(formatDayRange(new Date('2026-12-30T23:00:00Z'), new Date('2027-01-29T12:00:00Z'), 'en', 'Europe/Berlin')).toBe('31\u00a0Dec\u00a02026\u2009–\u200929\u00a0Jan\u00a02027')
-    expect(formatDayRange(new Date('2026-12-30T23:00:00Z'), new Date('2027-01-29T12:00:00Z'), 'ru', 'Europe/Berlin')).toBe('31\u00a0дек.\u00a02026\u00a0г. – 29\u00a0янв.\u00a02027\u00a0г.')
+    expect(formatDayRange({ start: new Date('2026-07-31T22:00:00Z'), endInclusive: new Date('2026-08-30T12:00:00Z') }, 'en', 'Europe/Berlin')).toBe('1\u2009–\u200930\u00a0Aug')
+    expect(formatDayRange({ start: new Date('2026-07-31T22:00:00Z'), endInclusive: new Date('2026-08-30T12:00:00Z') }, 'ru', 'Europe/Berlin')).toBe('1–30\u00a0авг.')
+    expect(formatDayRange({ start: new Date('2026-12-30T23:00:00Z'), endInclusive: new Date('2027-01-29T12:00:00Z') }, 'en', 'Europe/Berlin')).toBe('31\u00a0Dec\u00a02026\u2009–\u200929\u00a0Jan\u00a02027')
+    expect(formatDayRange({ start: new Date('2026-12-30T23:00:00Z'), endInclusive: new Date('2027-01-29T12:00:00Z') }, 'ru', 'Europe/Berlin')).toBe('31\u00a0дек.\u00a02026\u00a0г. – 29\u00a0янв.\u00a02027\u00a0г.')
   })
 
   it('formats a share without a sign', () => {

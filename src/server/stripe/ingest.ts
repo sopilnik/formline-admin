@@ -51,7 +51,13 @@ async function templateWorkspaceId(pool: Pool): Promise<string> {
  * The customer with one of the emails, or a new one. An owner-workspace customer the daily job has pseudonymised is
  * found by the pseudonym's email, so a returning customer stays one customer.
  */
-async function customerFor(tx: Tx, workspaceId: string, emails: string[], fresh: { email: string; name: string; city: string | null; country: string | null; pseudonymised: boolean }): Promise<string> {
+type FreshCustomer = { email: string; name: string; city: string | null; country: string | null; pseudonymised: boolean }
+
+async function customerFor(
+  tx: Tx,
+  workspaceId: string,
+  { emails, fresh }: { emails: string[]; fresh: FreshCustomer },
+): Promise<string> {
   const found = () => tx.select({ id: customers.id }).from(customers)
     .where(and(eq(customers.workspaceId, workspaceId), or(...emails.map(email => sql`lower(${customers.email}) = lower(${email})`))))
     .limit(1)
@@ -119,8 +125,12 @@ const matchedSkus = (order: IncomingOrder): string[] => [...new Set(order.lines.
  * lines, amounts, delivery, status and time — no notes, no later events, no Stripe ids, no store reference. Lines link
  * to the template's variants by SKU; the template's stock does not move.
  */
-async function writeCopy(tx: Tx, workspaceId: string, order: IncomingOrder, person: Pseudonym): Promise<void> {
-  const customerId = await customerFor(tx, workspaceId, [person.email], { ...person, pseudonymised: true })
+async function writeCopy(
+  tx: Tx,
+  workspaceId: string,
+  { order, person }: { order: IncomingOrder; person: Pseudonym },
+): Promise<void> {
+  const customerId = await customerFor(tx, workspaceId, { emails: [person.email], fresh: { ...person, pseudonymised: true } })
   const number = await nextOrderNumber(tx, workspaceId)
   const [copy] = await tx.insert(orders).values({
     workspaceId, number, customerId, status: 'paid', source: 'stripe', delivery: order.delivery,
@@ -140,7 +150,11 @@ async function writeCopy(tx: Tx, workspaceId: string, order: IncomingOrder, pers
 }
 
 /** Keeps the event and the session once each: a repeat throws Duplicate before anything is written. */
-async function claim(tx: Tx, owner: string, order: IncomingOrder, eventId: string | null): Promise<void> {
+async function claim(
+  tx: Tx,
+  owner: string,
+  { order, eventId }: { order: IncomingOrder; eventId: string | null },
+): Promise<void> {
   if (eventId) {
     // A second delivery of the same event waits here until the first one commits, then finds its row.
     const recorded = await tx.insert(stripeEvents).values({ eventId, outcome: 'order' }).onConflictDoNothing().returning({ id: stripeEvents.eventId })
@@ -154,9 +168,14 @@ async function claim(tx: Tx, owner: string, order: IncomingOrder, eventId: strin
 }
 
 /** The owner's customer and the order itself, under the next number. */
-async function writeOrder(tx: Tx, owner: string, order: IncomingOrder, person: Pseudonym): Promise<Created> {
-  const customerId = await customerFor(tx, owner, [order.email, person.email], {
-    email: order.email, name: order.name ?? NO_NAME, city: order.city, country: order.country, pseudonymised: false,
+async function writeOrder(
+  tx: Tx,
+  owner: string,
+  { order, person }: { order: IncomingOrder; person: Pseudonym },
+): Promise<Created> {
+  const customerId = await customerFor(tx, owner, {
+    emails: [order.email, person.email],
+    fresh: { email: order.email, name: order.name ?? NO_NAME, city: order.city, country: order.country, pseudonymised: false },
   })
   const number = await nextOrderNumber(tx, owner)
   const [created] = await tx.insert(orders).values({
@@ -172,7 +191,11 @@ async function writeOrder(tx: Tx, owner: string, order: IncomingOrder, person: P
 }
 
 /** The order's lines, matched to the locked variants where their names allow, and its first status. */
-async function writeLines(tx: Tx, owner: string, orderId: string, order: IncomingOrder, variants: Map<string, Variant>): Promise<void> {
+async function writeLines(
+  tx: Tx,
+  owner: string,
+  { orderId, order, variants }: { orderId: string; order: IncomingOrder; variants: Map<string, Variant> },
+): Promise<void> {
   await tx.insert(orderLines).values(order.lines.map(line => {
     const variant = line.variant ? variants.get(line.variant.sku) : undefined
 
@@ -182,7 +205,11 @@ async function writeLines(tx: Tx, owner: string, orderId: string, order: Incomin
 }
 
 /** Takes the stock the matched lines sold, never below zero, says "Low stock" where it should, and returns what was oversold. */
-async function takeStock(tx: Tx, owner: string, order: IncomingOrder, variants: Map<string, Variant>): Promise<Oversold[]> {
+async function takeStock(
+  tx: Tx,
+  owner: string,
+  { order, variants }: { order: IncomingOrder; variants: Map<string, Variant> },
+): Promise<Oversold[]> {
   const sold = new Map<string, number>()
 
   for (const line of order.lines) {
@@ -218,7 +245,11 @@ async function takeStock(tx: Tx, owner: string, order: IncomingOrder, variants: 
  * A note on the order of what was oversold, in the owner's language. An order with more oversold variants than one
  * note holds lists the first of them and counts the rest.
  */
-async function writeOversoldNote(tx: Tx, owner: string, orderId: string, order: IncomingOrder, oversold: Oversold[]): Promise<void> {
+async function writeOversoldNote(
+  tx: Tx,
+  owner: string,
+  { orderId, order, oversold }: { orderId: string; order: IncomingOrder; oversold: Oversold[] },
+): Promise<void> {
   if (oversold.length === 0) return
 
   const locale = await ownerLocale(tx, owner)
@@ -233,7 +264,11 @@ async function writeOversoldNote(tx: Tx, owner: string, orderId: string, order: 
 }
 
 /** "New order" for everybody in the owner workspace. */
-async function notifyOrder(tx: Tx, owner: string, created: Created, totalCents: number): Promise<void> {
+async function notifyOrder(
+  tx: Tx,
+  owner: string,
+  { created, totalCents }: { created: Created; totalCents: number },
+): Promise<void> {
   const [customer] = await tx.select({ name: customers.name }).from(customers).where(and(eq(customers.workspaceId, owner), eq(customers.id, created.customerId)))
 
   await notify(tx, owner, {
@@ -258,19 +293,19 @@ export async function ingestOrder(order: IncomingOrder, options: { eventId: stri
     const result = await withWorkspaces(async enter => {
       const tx = await enter({ workspaceId: owner, userId: null, role: 'system' })
 
-      await claim(tx, owner, order, options.eventId)
+      await claim(tx, owner, { order, eventId: options.eventId })
 
-      const created = await writeOrder(tx, owner, order, person)
+      const created = await writeOrder(tx, owner, { order, person })
       const variants = await lockVariants(tx, owner, matchedSkus(order))
 
-      await writeLines(tx, owner, created.orderId, order, variants)
+      await writeLines(tx, owner, { orderId: created.orderId, order, variants })
 
-      const oversold = await takeStock(tx, owner, order, variants)
+      const oversold = await takeStock(tx, owner, { order, variants })
 
-      await writeOversoldNote(tx, owner, created.orderId, order, oversold)
-      await notifyOrder(tx, owner, created, order.totalCents)
+      await writeOversoldNote(tx, owner, { orderId: created.orderId, order, oversold })
+      await notifyOrder(tx, owner, { created, totalCents: order.totalCents })
 
-      await writeCopy(await enter({ workspaceId: template, userId: null, role: 'system' }), template, order, person)
+      await writeCopy(await enter({ workspaceId: template, userId: null, role: 'system' }), template, { order, person })
 
       return { status: 'created' as const, orderId: created.orderId, number: created.number }
     }, pool)

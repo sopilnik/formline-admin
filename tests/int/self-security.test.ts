@@ -30,8 +30,10 @@ afterAll(async () => {
 })
 
 /** A verified session row of a user, as a signed-in device would have it. */
-const device = (workspaceId: string, userId: string, agent: string, reauthAt: Date | null = new Date()): Promise<Session> =>
-  insertSession(admin, workspaceId, userId, { reauthAt, userAgent: agent })
+type Device = { userId: string; userAgent: string; reauthAt?: Date | null }
+
+const device = (workspaceId: string, { userId, userAgent, reauthAt = new Date() }: Device): Promise<Session> =>
+  insertSession(admin, { workspaceId, userId, reauthAt, userAgent })
 
 const exists = async (session: Session) => (await admin.query('select 1 from fa.sessions where id = $1', [session.id])).rowCount === 1
 
@@ -42,11 +44,11 @@ const passwordHashOf = async () => (await admin.query<{ hash: string }>('select 
 
 describe('changeOwnPassword', () => {
   it('asks for a fresh sign-in and applies the password rules', async () => {
-    const stale = await device(ownerWorkspace, ownerId, 'Firefox, Linux', new Date(Date.now() - 3_600_000))
+    const stale = await device(ownerWorkspace, { userId: ownerId, userAgent: 'Firefox, Linux', reauthAt: new Date(Date.now() - 3_600_000) })
 
     expect(await changeOwnPassword(stale, { password: 'a-long-new-password-1', ip: null }, { pool: app, isBreached: noBreach })).toEqual({ ok: false, error: 'reauth_required' })
 
-    const fresh = await device(ownerWorkspace, ownerId, 'Firefox, Linux')
+    const fresh = await device(ownerWorkspace, { userId: ownerId, userAgent: 'Firefox, Linux' })
 
     expect(await changeOwnPassword(fresh, { password: 'short', ip: null }, { pool: app, isBreached: noBreach })).toEqual({ ok: false, error: 'password_too_short', field: 'password' })
     expect(await changeOwnPassword(fresh, { password: 'a-long-new-password-1', ip: null }, { pool: app, isBreached: async () => true }))
@@ -55,8 +57,8 @@ describe('changeOwnPassword', () => {
   })
 
   it('stores the new password, signs the other devices out and logs it', async () => {
-    const current = await device(ownerWorkspace, ownerId, 'Chrome, macOS')
-    const other = await device(ownerWorkspace, ownerId, 'Safari, iOS')
+    const current = await device(ownerWorkspace, { userId: ownerId, userAgent: 'Chrome, macOS' })
+    const other = await device(ownerWorkspace, { userId: ownerId, userAgent: 'Safari, iOS' })
     const result = await changeOwnPassword(current, { password: 'lantern-harbor-quiet-9083', ip: '192.0.2.10' }, { pool: app, isBreached: noBreach })
 
     if (!result.ok) throw new Error(result.error)
@@ -69,7 +71,7 @@ describe('changeOwnPassword', () => {
 
   it('is not offered in a sandbox, where members have no password', async () => {
     const { workspaceId, userId } = await createSandbox(app)
-    const session = await device(workspaceId, userId, 'Chrome, Linux')
+    const session = await device(workspaceId, { userId: userId, userAgent: 'Chrome, Linux' })
 
     expect(await changeOwnPassword(session, { password: 'lantern-harbor-quiet-9083', ip: null }, { pool: app, isBreached: noBreach })).toEqual({ ok: false, error: 'generic' })
   })
@@ -78,8 +80,8 @@ describe('changeOwnPassword', () => {
 describe('signed-in devices', () => {
   it('lists one’s own verified sessions only, the most recently active first', async () => {
     const { workspaceId: ws, userId: me } = await createSandbox(app)
-    const current = await device(ws, me, 'Chrome, Linux')
-    const phone = await device(ws, me, 'Safari, iOS')
+    const current = await device(ws, { userId: me, userAgent: 'Chrome, Linux' })
+    const phone = await device(ws, { userId: me, userAgent: 'Safari, iOS' })
 
     await admin.query("update fa.sessions set last_seen_at = now() + interval '1 minute' where id = $1", [phone.id])
     await admin.query("insert into fa.sessions (workspace_id, id, user_id, expires_at, second_factor_verified) values ($1, $2, $3, now() + interval '10 minutes', false)",
@@ -87,7 +89,7 @@ describe('signed-in devices', () => {
 
     const admin_ = (await admin.query<{ id: string }>("select id from fa.users where workspace_id = $1 and role = 'admin'", [ws])).rows[0]!.id
 
-    await device(ws, admin_, 'Edge, Windows')
+    await device(ws, { userId: admin_, userAgent: 'Edge, Windows' })
 
     const listed = await withWorkspace({ workspaceId: ws, userId: me, role: 'owner' }, tx => listOwnSessions(tx, me), app)
 
