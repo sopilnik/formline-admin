@@ -33,8 +33,20 @@ export async function checkNewCredentials(
   return { ok: true, secret, step: totp.step }
 }
 
+type SealedCredentials = {
+  recoveryCodes: string[]
+  sessionToken: string
+  passwordHash: string
+  totpSecretEnc: string
+  recoveryHashes: string[]
+  sessionHash: string
+}
+
 /** Everything a create or redeem call stores: hashes, the encrypted secret, and the plain codes and token to hand out once. */
-export async function sealCredentials(input: { password: string; secret: Uint8Array; workspaceId: string; userId: string }, deps: AuthDeps) {
+export async function sealCredentials(
+  input: { password: string; secret: Uint8Array; workspaceId: string; userId: string },
+  deps: AuthDeps,
+): Promise<SealedCredentials> {
   const recoveryCodes = generateRecoveryCodes()
   const sessionToken = generateToken()
 

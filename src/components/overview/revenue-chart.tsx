@@ -28,6 +28,18 @@ function segments(bars: readonly ChartBar[], max: number): string[] {
 
 type Props = { model: ChartModel; title: string; summary: string; legend: { current: string; previous: string } }
 
+// How close to an edge the tooltip may start before it is anchored to that edge, as a fraction of the chart's width.
+const TOOLTIP_EDGE = 0.2
+
+/** Keeps the tooltip inside the chart: anchored left near the left edge, right near the right edge, centered between. */
+function tooltipShift(at: number): string {
+  if (at < TOOLTIP_EDGE) {
+    return 'translate-x-0'
+  }
+
+  return at > 1 - TOOLTIP_EDGE ? '-translate-x-full' : '-translate-x-1/2'
+}
+
 /**
  * Revenue by day or week: graphite bars, today's bar hatched, the previous
  * period as a dashed line over an under-stroke in the card color. "Show as table" swaps
@@ -112,7 +124,7 @@ export function RevenueChart({ model, title, summary, legend }: Props) {
               <div
                 className={cn(
                   'pointer-events-none absolute top-0 z-10 rounded-md bg-foreground px-2.5 py-1.5 text-xs whitespace-nowrap text-background shadow-md',
-                  at < 0.2 ? 'translate-x-0' : at > 0.8 ? '-translate-x-full' : '-translate-x-1/2',
+                  tooltipShift(at),
                 )}
                 style={{ left: pct(at) }}
               >

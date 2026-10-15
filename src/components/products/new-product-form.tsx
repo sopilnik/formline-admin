@@ -19,6 +19,15 @@ const IDLE: CreateState = { status: 'idle' }
 
 type Props = { collections: { id: string; name: string }[] }
 
+/** The submit button's label: creating while the request runs, waiting while the image uploads, else create. */
+function submitKey(pending: boolean, uploading: boolean): 'creating' | 'imageUploading' | 'create' {
+  if (pending) {
+    return 'creating'
+  }
+
+  return uploading ? 'imageUploading' : 'create'
+}
+
 /**
  * The new-product form. The slug field shows the slug the name gives while it is
  * empty; the palettes are plain checkboxes, so a failed save puts back exactly what was ticked.
@@ -133,7 +142,7 @@ export function NewProductForm({ collections }: Props) {
         {palettesError ? <p id="palettes-error" className="text-sm text-destructive">{palettesError}</p> : null}
       </fieldset>
       <div>
-        <Button type="submit" disabled={pending || uploading}>{pending ? t('creating') : uploading ? t('imageUploading') : t('create')}</Button>
+        <Button type="submit" disabled={pending || uploading}>{t(submitKey(pending, uploading))}</Button>
       </div>
     </form>
   )

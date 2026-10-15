@@ -9,6 +9,15 @@ import { Button, buttonVariants } from '@/components/ui/button'
 import { IDLE, type FormState } from '@/lib/auth-form'
 import { verifyAction } from '@/server/actions/sign-in'
 
+/** The intro over the code field: the usual one, the recovery one, or the one for an account without an authenticator. */
+function introKey(recovery: boolean, hasTotp: boolean): 'verify.intro' | 'verify.introRecovery' | 'verify.noTotp' {
+  if (!recovery) {
+    return 'verify.intro'
+  }
+
+  return hasTotp ? 'verify.introRecovery' : 'verify.noTotp'
+}
+
 export function VerifyForm({ hasTotp }: { hasTotp: boolean }) {
   const t = useTranslations('auth')
   const [recovery, setRecovery] = useState(!hasTotp)
@@ -35,7 +44,7 @@ export function VerifyForm({ hasTotp }: { hasTotp: boolean }) {
     )
   }
 
-  const intro = recovery ? (hasTotp ? t('verify.introRecovery') : t('verify.noTotp')) : t('verify.intro')
+  const intro = t(introKey(recovery, hasTotp))
 
   return (
     <form ref={form} action={action} noValidate className="flex flex-col gap-4">

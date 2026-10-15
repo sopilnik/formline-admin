@@ -2,7 +2,7 @@ import 'server-only'
 import { createHash } from 'node:crypto'
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
-import { readEnv, type EnvSource } from '@/server/env'
+import { readEnv, type Env, type EnvSource } from '@/server/env'
 
 /** Where uploaded images live: the bunny media zone, or a local folder in development and tests. */
 export interface MediaStorage {
@@ -105,16 +105,22 @@ export function directoryStorage(dir: string): MediaStorage {
   }
 }
 
+/** The storage the variables name: the bunny zone when its three are set, else the local folder, else none. */
+function storageFrom(env: Env): MediaStorage | null {
+  if (env.BUNNY_STORAGE_ZONE && env.BUNNY_STORAGE_HOST && env.BUNNY_STORAGE_KEY) {
+    return bunnyStorage({ zone: env.BUNNY_STORAGE_ZONE, host: env.BUNNY_STORAGE_HOST, key: env.BUNNY_STORAGE_KEY })
+  }
+
+  return env.MEDIA_STORAGE_DIR ? directoryStorage(env.MEDIA_STORAGE_DIR) : null
+}
+
 let cached: MediaStorage | null | undefined
 
 /** The configured storage: the bunny zone when its variables are set, else the local folder, else null. */
 export function mediaStorage(source?: EnvSource): MediaStorage | null {
   if (!source && cached !== undefined) return cached
 
-  const env = readEnv(source)
-  const storage = env.BUNNY_STORAGE_ZONE && env.BUNNY_STORAGE_HOST && env.BUNNY_STORAGE_KEY
-    ? bunnyStorage({ zone: env.BUNNY_STORAGE_ZONE, host: env.BUNNY_STORAGE_HOST, key: env.BUNNY_STORAGE_KEY })
-    : env.MEDIA_STORAGE_DIR ? directoryStorage(env.MEDIA_STORAGE_DIR) : null
+  const storage = storageFrom(readEnv(source))
 
   if (!source) cached = storage
 

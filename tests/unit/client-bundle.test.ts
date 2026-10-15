@@ -24,9 +24,19 @@ const directive = (source: string): string | undefined => /^\s*['"]use (client|s
 // The path aliases of tsconfig.json, so the walk follows them as the bundler does.
 const ALIASES: [prefix: string, dir: string][] = [['@/', 'src'], ['@seed/', 'db/seed'], ['@messages/', 'messages']]
 
-function resolveImport(from: string, specifier: string): string | null {
+/** Where an import points before an extension is tried: through an alias, relative to the file, or null for a package. */
+function importBase(from: string, specifier: string): string | null {
   const alias = ALIASES.find(([prefix]) => specifier.startsWith(prefix))
-  const base = alias ? join(root, alias[1], specifier.slice(alias[0].length)) : specifier.startsWith('.') ? resolve(dirname(from), specifier) : null
+
+  if (alias) {
+    return join(root, alias[1], specifier.slice(alias[0].length))
+  }
+
+  return specifier.startsWith('.') ? resolve(dirname(from), specifier) : null
+}
+
+function resolveImport(from: string, specifier: string): string | null {
+  const base = importBase(from, specifier)
 
   if (base === null) return null
   for (const candidate of [base, `${base}.ts`, `${base}.tsx`, join(base, 'index.ts'), join(base, 'index.tsx')]) {

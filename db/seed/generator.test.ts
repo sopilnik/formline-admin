@@ -7,6 +7,15 @@ const DAY = 86_400_000
 const data = generateTemplate()
 const epoch = TEMPLATE_EPOCH.getTime()
 
+/** The shipping the generator should charge: express is flat, standard is free from $150. */
+function expectedShipping(delivery: string, subtotal: number): number {
+  if (delivery === 'express') {
+    return 1900
+  }
+
+  return subtotal >= 15_000 ? 0 : 900
+}
+
 describe('generateTemplate', () => {
   it('is deterministic, and a new version draws from the random stream of the first', () => {
     expect(JSON.stringify(generateTemplate())).toBe(JSON.stringify(data))
@@ -63,7 +72,7 @@ describe('generateTemplate', () => {
       const subtotal = lines.reduce((sum, l) => sum + l.unitCents * l.qty, 0)
 
       expect(o.subtotalCents).toBe(subtotal)
-      expect(o.shippingCents).toBe(o.delivery === 'express' ? 1900 : subtotal >= 15_000 ? 0 : 900)
+      expect(o.shippingCents).toBe(expectedShipping(o.delivery, subtotal))
       expect(o.totalCents).toBe(o.subtotalCents + o.shippingCents)
     })
   })

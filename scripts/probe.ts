@@ -28,9 +28,18 @@ export function newestPoint(charts: Record<string, unknown>): string | null {
   return times.at(-1) ?? null
 }
 
+/** The type name of one value, telling null and arrays apart from objects. */
+function typeName(value: unknown): string {
+  if (value === null) {
+    return 'null'
+  }
+
+  return Array.isArray(value) ? 'array' : typeof value
+}
+
 /** The shape of an answer without its values: the field names and the type of each. */
 export function shape(body: Record<string, unknown>): Record<string, string> {
-  return Object.fromEntries(Object.entries(body).map(([key, value]) => [key, value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value]))
+  return Object.fromEntries(Object.entries(body).map(([key, value]) => [key, typeName(value)]))
 }
 
 export type ProbeOptions = { probe: Probe; siteUrl: string; bunny: Bunny; rawHosts: () => Promise<string[]>; fetch: Fetch; log: Log; now: () => number }

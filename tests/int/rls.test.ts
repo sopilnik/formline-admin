@@ -229,7 +229,7 @@ describe('write rights follow the matrix', () => {
     for (const op of ['insert', 'update', 'delete'] as const) {
       it(`${table}: ${op}`, async () => {
         for (const actor of ACTORS) {
-          const statement = op === 'insert' ? spec.insert(A) : op === 'update' ? spec.update(A) : spec.del(A)
+          const statement = (op === 'delete' ? spec.del : spec[op])(A)
 
           expect([table, op, actor, await attempt(A, { actor, statement, op })]).toEqual([table, op, actor, spec.rights[op].includes(actor)])
         }

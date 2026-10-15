@@ -18,17 +18,21 @@ type Props<S extends string> = {
   align?: 'left' | 'right'
 }
 
+const FLIPPED: Record<SortDir, SortDir> = { asc: 'desc', desc: 'asc' }
+const ARIA_SORT = { asc: 'ascending', desc: 'descending' } as const
+const DIRECTION_ICON = { asc: ArrowUp, desc: ArrowDown }
+
 /** A list's sortable column header: a link to the list sorted by the column, and `aria-sort` on the active one. */
 export function SortHeader<S extends string>({ query, sort, first, href, label, align = 'left' }: Props<S>) {
   const active = query.sort === sort
   // A new column starts in its own direction; the active one flips.
-  const dir = active ? (query.dir === 'asc' ? 'desc' : 'asc') : first
-  const Icon = !active ? ArrowUpDown : query.dir === 'desc' ? ArrowDown : ArrowUp
+  const dir = active ? FLIPPED[query.dir] : first
+  const Icon = active ? DIRECTION_ICON[query.dir] : ArrowUpDown
 
   return (
     <th
       scope="col"
-      aria-sort={active ? (query.dir === 'desc' ? 'descending' : 'ascending') : undefined}
+      aria-sort={active ? ARIA_SORT[query.dir] : undefined}
       className={cn('h-10 border-b bg-card px-3 text-left font-medium whitespace-nowrap text-muted-foreground', align === 'right' && 'text-right')}
     >
       <Link

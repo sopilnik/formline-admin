@@ -8,7 +8,9 @@ function files(dir: string, ext: RegExp): string[] {
   return readdirSync(dir).flatMap(name => {
     const path = join(dir, name)
 
-    return statSync(path).isDirectory() ? files(path, ext) : ext.test(name) ? [path] : []
+    if (statSync(path).isDirectory()) return files(path, ext)
+
+    return ext.test(name) ? [path] : []
   })
 }
 

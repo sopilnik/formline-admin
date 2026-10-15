@@ -23,8 +23,10 @@ export type Trend = 'up' | 'down' | 'flat'
 /** The direction of a change, for its color and its words; none without a change. */
 export function trendOf(change: number | null): Trend | null {
   if (change === null) return null
+  if (change > 0) return 'up'
+  if (change < 0) return 'down'
 
-  return change > 0 ? 'up' : change < 0 ? 'down' : 'flat'
+  return 'flat'
 }
 
 const kpi = (value: number | null, previous: number | null): Kpi => ({ value, previous, change: change(value, previous) })

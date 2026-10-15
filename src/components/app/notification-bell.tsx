@@ -14,6 +14,29 @@ import { markAllNotificationsReadAction } from '@/server/actions/notifications'
 
 type Feed = { unread: number; total: number; items: NotificationItem[] }
 
+/** The popover's body: the latest notifications, a line saying there are none, or the loading or failed state. */
+function FeedBody({ feed, failed, onOpen }: { feed: Feed | null; failed: boolean; onOpen: (id: string) => void }) {
+  const t = useTranslations('notifications')
+
+  if (!feed) {
+    return <p role="status" className="px-3 py-6 text-[13px] text-muted-foreground">{failed ? t('failed') : t('loading')}</p>
+  }
+
+  if (feed.items.length === 0) {
+    return <p className="px-3 py-6 text-[13px] text-muted-foreground">{t('empty')}</p>
+  }
+
+  return (
+    <ul aria-label={t('latest')} className="flex flex-col">
+      {feed.items.map(item => (
+        <li key={item.id}>
+          <NotificationEntry item={item} onOpen={onOpen} />
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 /**
  * The bell in the top bar: the unread count, and the latest notifications in a popover. There is no real
  * time: the bell reads its feed again on every navigation, whenever it opens, and when the server renders the frame
@@ -97,21 +120,7 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
               ) : null}
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-1">
-              {feed ? (
-                feed.items.length > 0 ? (
-                  <ul aria-label={t('latest')} className="flex flex-col">
-                    {feed.items.map(item => (
-                      <li key={item.id}>
-                        <NotificationEntry item={item} onOpen={markOpened} />
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="px-3 py-6 text-[13px] text-muted-foreground">{t('empty')}</p>
-                )
-              ) : (
-                <p role="status" className="px-3 py-6 text-[13px] text-muted-foreground">{failed ? t('failed') : t('loading')}</p>
-              )}
+              <FeedBody feed={feed} failed={failed} onOpen={markOpened} />
             </div>
             <div className="border-t px-4 py-2.5">
               <Link href="/notifications" onClick={() => setOpen(false)} className="text-[13px] font-medium text-primary underline-offset-3 hover:underline">

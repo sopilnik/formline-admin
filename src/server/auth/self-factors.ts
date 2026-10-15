@@ -1,5 +1,5 @@
 import 'server-only'
-import { and, count, eq, isNull } from 'drizzle-orm'
+import { and, count, eq, isNull, type SQL } from 'drizzle-orm'
 import type { AuthFailure } from '@/lib/auth-form'
 import { authDeps, type AuthDeps } from '@/server/auth/deps'
 import { isRecentAuth } from '@/server/auth/reauth'
@@ -17,7 +17,7 @@ import { hashIp } from '@/server/ratelimit/ip'
 type Meta = { ip: string | null }
 
 /** One's own recovery codes, by workspace and user. */
-export const ownCodes = (who: Who) => and(eq(recoveryCodes.workspaceId, who.workspaceId), eq(recoveryCodes.userId, who.userId))
+export const ownCodes = (who: Who): SQL | undefined => and(eq(recoveryCodes.workspaceId, who.workspaceId), eq(recoveryCodes.userId, who.userId))
 
 /** How many of one's recovery codes are still unused. */
 export async function countUnusedRecoveryCodes(tx: Tx, who: Who): Promise<number> {

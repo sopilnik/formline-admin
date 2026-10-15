@@ -115,6 +115,19 @@ export function CommandPalette({ items, access }: { items: NavItem[]; access: Pa
   )
 }
 
+/** What the palette says instead of results: still searching, the search failed, nothing found, or nothing. */
+function noticeKey(searching: boolean, failed: boolean, empty: boolean): 'searching' | 'failed' | 'empty' | null {
+  if (searching) {
+    return 'searching'
+  }
+
+  if (failed) {
+    return 'failed'
+  }
+
+  return empty ? 'empty' : null
+}
+
 function PaletteSearch({ items, access, close }: { items: NavItem[]; access: PaletteAccess; close: (opensForm: boolean) => void }) {
   const t = useTranslations('palette')
   const nav = useTranslations('nav')
@@ -216,7 +229,8 @@ function PaletteSearch({ items, access, close }: { items: NavItem[]; access: Pal
   const groups = every.filter(group => group.items.length > 0)
 
   const empty = !searching && !failed && groups.length === 0
-  const shown = searching ? t('searching') : failed ? t('failed') : empty ? t('empty', { query: query.trim() }) : null
+  const notice = noticeKey(searching, failed, empty)
+  const shown = notice === null ? null : t(notice, { query: query.trim() })
   // The status region says every turn of the search, what it found included, so a screen reader hears it while one types;
   // the count itself stays unseen.
   const status = shown ?? (query.trim() ? t('found', { count: groups.reduce((sum, group) => sum + group.items.length, 0) }) : null)

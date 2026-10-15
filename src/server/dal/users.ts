@@ -1,5 +1,5 @@
 import 'server-only'
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq, isNull, type SQL } from 'drizzle-orm'
 import type { Locale } from '@/i18n/locale'
 import { compareNames } from '@/lib/intl'
 import type { Theme } from '@/lib/theme'
@@ -15,7 +15,7 @@ export type Who = { workspaceId: string; userId: string }
  * A user's row by workspace and id. Every sandbox copies the template's user ids, so the workspace is named as in the
  * rest of the data access layer, not left to row-level security alone.
  */
-export const isUser = (who: Who) => and(eq(users.workspaceId, who.workspaceId), eq(users.id, who.userId))
+export const isUser = (who: Who): SQL | undefined => and(eq(users.workspaceId, who.workspaceId), eq(users.id, who.userId))
 
 /** The user's own row. */
 export async function getSelf(tx: Tx, who: Who): Promise<Self | null> {

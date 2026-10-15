@@ -40,7 +40,7 @@ function DetailText({ detail }: { detail: Detail | null }) {
     case 'orderStatus':
     case 'productStatus':
     case 'role': {
-      const translate = detail.kind === 'orderStatus' ? order : detail.kind === 'productStatus' ? product : role
+      const translate = { orderStatus: order, productStatus: product, role }[detail.kind]
       const text = t('transition', { from: known(translate, detail.from), to: known(translate, detail.to) })
 
       return <>{detail.kind === 'orderStatus' && detail.bulk ? t('inBulk', { transition: text }) : text}</>

@@ -22,6 +22,24 @@ type Props = {
   qr: ReactNode
 }
 
+/** The intro: confirm first unless signed in recently, else the words for an authenticator that is on or off. */
+function introKey(recent: boolean, enabled: boolean): 'confirmFirst' | 'introOn' | 'introOff' {
+  if (!recent) {
+    return 'confirmFirst'
+  }
+
+  return enabled ? 'introOn' : 'introOff'
+}
+
+/** The submit button's label: saving while the request runs, else replace an authenticator that is on or enable one. */
+function submitKey(submitting: boolean, enabled: boolean): 'saving' | 'replace' | 'enable' {
+  if (submitting) {
+    return 'saving'
+  }
+
+  return enabled ? 'replace' : 'enable'
+}
+
 /**
  * The authenticator app: turn it on with the key and the first code, replace it the same way, or turn it
  * off while another factor remains. A first authenticator comes with ten recovery codes, shown once.
@@ -77,7 +95,7 @@ export function AuthenticatorSection({ enabled, recent, canDisable, secret, qr }
           {t('title')}
           <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-ink-2">{enabled ? t('on') : t('off')}</span>
         </h2>
-        <p className="mt-1 max-w-prose text-[13px] text-muted-foreground">{recent ? (enabled ? t('introOn') : t('introOff')) : t('confirmFirst')}</p>
+        <p className="mt-1 max-w-prose text-[13px] text-muted-foreground">{t(introKey(recent, enabled))}</p>
       </div>
       {codes ? <RecoveryCodesView codes={codes} done={{ label: t('codesDone'), onClick: () => setClosed(state) }} /> : null}
       {recent && !codes && enrolling ? (
@@ -86,7 +104,7 @@ export function AuthenticatorSection({ enabled, recent, canDisable, secret, qr }
           <FormAlert state={shown} />
           <TotpEnrollment id="totp-code" secret={secret} qr={qr} error={errorFor('code')} bare />
           <div className="flex flex-wrap gap-2">
-            <Button type="submit" disabled={submitting}>{submitting ? t('saving') : enabled ? t('replace') : t('enable')}</Button>
+            <Button type="submit" disabled={submitting}>{t(submitKey(submitting, enabled))}</Button>
             {enabled ? <Button type="button" variant="outline" onClick={() => setReplacingAfter(null)}>{t('cancel')}</Button> : null}
           </div>
         </form>

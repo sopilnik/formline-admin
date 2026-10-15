@@ -9,6 +9,15 @@ import { useToast } from '@/components/ui/toast'
 import { IDLE, type FormState } from '@/lib/auth-form'
 import { changePasswordAction } from '@/server/actions/security'
 
+/** The intro: the sandbox has no password, else confirm first unless signed in recently. */
+function introKey(available: boolean, recent: boolean): 'sandbox' | 'intro' | 'confirmFirst' {
+  if (!available) {
+    return 'sandbox'
+  }
+
+  return recent ? 'intro' : 'confirmFirst'
+}
+
 /**
  * The owner's password. Demo members have none, so a sandbox gets a note; the form shows once the
  * owner has confirmed it is them, and the new password signs the other devices out.
@@ -33,7 +42,7 @@ export function PasswordSection({ available, recent }: { available: boolean; rec
     <section aria-labelledby="password-title" className="flex flex-col gap-4 rounded-lg border bg-card p-5">
       <div>
         <h2 id="password-title" className="font-sans text-[15px] font-semibold">{t('title')}</h2>
-        <p className="mt-1 max-w-prose text-[13px] text-muted-foreground">{available ? (recent ? t('intro') : t('confirmFirst')) : t('sandbox')}</p>
+        <p className="mt-1 max-w-prose text-[13px] text-muted-foreground">{t(introKey(available, recent))}</p>
       </div>
       {available && recent ? (
         <form ref={form} action={action} noValidate className="flex max-w-md flex-col gap-4">

@@ -10,7 +10,9 @@ export function all(params: SearchParams | URLSearchParams, key: string): string
 
   const value = params[key]
 
-  return value === undefined ? [] : Array.isArray(value) ? value : [value]
+  if (value === undefined) return []
+
+  return Array.isArray(value) ? value : [value]
 }
 
 /** The first value of a key. */

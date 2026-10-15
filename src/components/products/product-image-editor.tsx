@@ -16,6 +16,15 @@ import { removeProductImageAction } from '@/server/actions/products'
 
 type Props = { productId: string; name: string; image: PosterImage | null }
 
+/** The upload button's label: uploading while it runs, else replace when there is an image and upload when there is none. */
+function uploadKey(uploading: boolean, hasImage: boolean): 'uploading' | 'replace' | 'upload' {
+  if (uploading) {
+    return 'uploading'
+  }
+
+  return hasImage ? 'replace' : 'upload'
+}
+
 /**
  * The image of the product page for a role that may change it. The file goes to
  * `POST /api/media` as the request body; the picker refuses what could never pass, the server
@@ -98,7 +107,7 @@ export function ProductImageEditor({ productId, name, image }: Props) {
       <div data-focus-key="product-image" className="flex flex-col items-start gap-2">
         <Button ref={pick} type="button" variant="outline" size="sm" disabled={uploading} onClick={() => picker.current?.click()}>
           <ImageUp aria-hidden />
-          {uploading ? t('uploading') : image ? t('replace') : t('upload')}
+          {t(uploadKey(uploading, Boolean(image)))}
         </Button>
         {image ? (
           <Button type="button" variant="ghost" size="sm" disabled={uploading || removing} onClick={() => {

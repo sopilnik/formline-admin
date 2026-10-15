@@ -17,6 +17,15 @@ const EMPTY: Record<CollectionField, string> = { name: '', slug: '', description
 
 type Props = { collection?: { id: string; slug: string; name: string; description: string } }
 
+/** The submit button's label: saving while the request runs, else save for an edit and create for a new one. */
+function submitKey(pending: boolean, editing: boolean): 'saving' | 'save' | 'create' {
+  if (pending) {
+    return 'saving'
+  }
+
+  return editing ? 'save' : 'create'
+}
+
 /** A new collection, or the fields of an existing one. The slug field shows the slug the name gives while it is empty. */
 export function CollectionForm({ collection }: Props) {
   const t = useTranslations('collections.form')
@@ -75,7 +84,7 @@ export function CollectionForm({ collection }: Props) {
         maxLength={COLLECTION_DESCRIPTION_MAX} error={message('description')}
       />
       <div>
-        <Button type="submit" disabled={pending}>{pending ? t('saving') : collection ? t('save') : t('create')}</Button>
+        <Button type="submit" disabled={pending}>{t(submitKey(pending, Boolean(collection)))}</Button>
       </div>
     </form>
   )
