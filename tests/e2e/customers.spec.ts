@@ -37,7 +37,7 @@ test.describe('customers list', () => {
     await page.goto('/customers')
     const table = page.getByRole('table', { name: 'Customers' })
     await page.getByRole('searchbox', { name: 'Search customers' }).fill(email.toUpperCase())
-    await expect(page).toHaveURL(new RegExp(`/customers\\?q=${encodeURIComponent(email.toUpperCase()).replace(/\./g, '\\.')}$`))
+    await expect(page).toHaveURL(new RegExp(`/customers\\?q=${RegExp.escape(encodeURIComponent(email.toUpperCase()))}$`))
     await expect(table.getByRole('row')).toHaveCount(2)
     await expect(table.getByRole('link', { name })).toBeVisible()
     await expect(page.getByText(/^1 of \d+ customers$/)).toBeVisible()

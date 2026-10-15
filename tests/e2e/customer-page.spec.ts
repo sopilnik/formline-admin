@@ -30,7 +30,7 @@ test.describe('customer page', () => {
     await expect(page.getByRole('region', { name: 'Summary' })).toContainText(`Orders${customer.orders}`)
     await expectNoSeriousA11yViolationsInBothThemes(page)
     await page.getByRole('link', { name: `Show all ${customer.orders} in Orders` }).click()
-    await expect(page).toHaveURL(new RegExp(`/orders\\?q=${encodeURIComponent(customer.email).replace(/\./g, '\\.')}$`))
+    await expect(page).toHaveURL(new RegExp(`/orders\\?q=${RegExp.escape(encodeURIComponent(customer.email))}$`))
     await expect(page.getByText(new RegExp(`^${customer.orders} of [\\d,]+ orders$`))).toBeVisible()
   })
 

@@ -64,7 +64,7 @@ describe('runGuard', () => {
     const { calls, fetchImpl } = bunny(healthy)
     const events: Record<string, unknown>[] = []
     expect(await run(fetchImpl, events)).toBe(0)
-    expect(calls.filter(c => c.url.startsWith('https://api.bunny.net')).every(c => c.key === 'test-account-key')).toBe(true)
+    expect(calls.filter(c => new URL(c.url).origin === 'https://api.bunny.net').every(c => c.key === 'test-account-key')).toBe(true)
     expect(calls.some(c => c.method === 'POST')).toBe(false)
     expect(events).toEqual([{ event: 'guard.checked', status: 'active', cost: 1.2, live: true, undeployed: false, failures: [] }])
   })
