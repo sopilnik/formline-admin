@@ -1,26 +1,20 @@
-import { readdirSync, readFileSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
 const root = fileURLToPath(new URL('../../', import.meta.url))
-// Generated, local and static folders and files, and the applied migrations, which stay as they ran.
-const SKIP = new Set([
-  '.git', '.media', '.next', 'blob-report', 'coverage', 'dist', 'docs', 'next-env.d.ts', 'node_modules', 'playwright-report',
-  'public', 'test-media', 'test-results',
-])
-const FROZEN = 'src/server/db/migrations'
-const TEXT = /\.(css|json|md|mjs|sql|ts|tsx|yml)$|^(Dockerfile|\.env\.example)$/
+// Static files, and the applied migrations, which stay as they ran.
+const SKIP_PREFIXES = ['public/', 'src/server/db/migrations/']
+const TEXT = /\.(css|json|md|mjs|sql|ts|tsx|yml)$|(^|\/)(Dockerfile|\.env\.example)$/
 const SELF = 'tests/unit/reference-rules.test.ts'
 
-function textFiles(dir = ''): string[] {
-  return readdirSync(join(root, dir), { withFileTypes: true }).flatMap(entry => {
-    const name = dir ? `${dir}/${entry.name}` : entry.name
+// The tracked files only: what git ignores is not part of the repository.
+function textFiles(): string[] {
+  const tracked = execFileSync('git', ['ls-files'], { cwd: root, encoding: 'utf8' }).split('\n')
 
-    if (entry.isDirectory()) return SKIP.has(entry.name) || name === FROZEN ? [] : textFiles(name)
-
-    return TEXT.test(entry.name) && !SKIP.has(entry.name) && name !== SELF ? [name] : []
-  })
+  return tracked.filter(name => TEXT.test(name) && name !== SELF && !SKIP_PREFIXES.some(prefix => name.startsWith(prefix)))
 }
 
 /** Pointers into private design notes, dated decisions and tracker labels: nothing in the repository resolves them. */
