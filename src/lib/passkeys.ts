@@ -7,7 +7,9 @@ export const PASSKEY_NAME_MAX = 60
 export async function passkeyChallenge(): Promise<PublicKeyCredentialRequestOptionsJSON> {
   const response = await fetch('/api/auth/passkey-challenge', { cache: 'no-store' })
 
-  if (!response.ok) throw new Error(`passkey challenge: ${response.status}`)
+  if (!response.ok) {
+    throw new Error(`passkey challenge: ${response.status}`)
+  }
 
   return (await response.json()) as PublicKeyCredentialRequestOptionsJSON
 }

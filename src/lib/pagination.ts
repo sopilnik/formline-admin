@@ -34,8 +34,12 @@ export function pageQueryHref(path: string, query: PageQuery, changes: Partial<P
   const size = changes.size ?? query.size
   const params = new URLSearchParams()
 
-  if (page !== DEFAULT_PAGE_QUERY.page) params.set('page', String(page))
-  if (size !== DEFAULT_PAGE_QUERY.size) params.set('size', String(size))
+  if (page !== DEFAULT_PAGE_QUERY.page) {
+    params.set('page', String(page))
+  }
+  if (size !== DEFAULT_PAGE_QUERY.size) {
+    params.set('size', String(size))
+  }
 
   const text = params.toString()
 

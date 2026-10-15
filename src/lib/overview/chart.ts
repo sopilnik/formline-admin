@@ -21,7 +21,9 @@ const STEPS = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]
 
 /** The smallest round step — 1, 1.5, 2, 2.5, 3, 4, 5, 6 or 8 × 10^k cents, at least $10 — that reaches `value`. */
 export function niceStep(value: number): number {
-  if (value <= 1000) return 1000
+  if (value <= 1000) {
+    return 1000
+  }
 
   const magnitude = 10 ** Math.floor(Math.log10(value))
 
@@ -45,7 +47,9 @@ export function tickIndexes(plan: Pick<PeriodPlan, 'period' | 'buckets'>): { ind
   const everyBucket = plan.period === '7d' || plan.period === '90d'
   const indexes: number[] = []
 
-  for (let index = last; index >= 0; index -= everyBucket ? 1 : 7) indexes.unshift(index)
+  for (let index = last; index >= 0; index -= everyBucket ? 1 : 7) {
+    indexes.unshift(index)
+  }
 
   return indexes.map((index, k) => ({ index, alternate: (indexes.length - 1 - k) % 2 === 1 }))
 }

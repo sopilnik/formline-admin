@@ -12,7 +12,9 @@ export function averageOrderCents(totals: Totals): number | null {
 
 /** (current − previous) ÷ previous; none when either is missing or the previous period was empty ("—"). */
 export function change(current: number | null, previous: number | null): number | null {
-  if (current === null || previous === null || previous === 0) return null
+  if (current === null || previous === null || previous === 0) {
+    return null
+  }
 
   return (current - previous) / previous
 }
@@ -22,9 +24,15 @@ export type Trend = 'up' | 'down' | 'flat'
 
 /** The direction of a change, for its color and its words; none without a change. */
 export function trendOf(change: number | null): Trend | null {
-  if (change === null) return null
-  if (change > 0) return 'up'
-  if (change < 0) return 'down'
+  if (change === null) {
+    return null
+  }
+  if (change > 0) {
+    return 'up'
+  }
+  if (change < 0) {
+    return 'down'
+  }
 
   return 'flat'
 }
@@ -45,11 +53,17 @@ export type RevenuePoint = { at: Date; cents: number }
 /** Sum per bucket: a point counts in the bucket whose half-open range holds it; a missing bucket stays null. */
 export function bucketSums(points: readonly RevenuePoint[], buckets: readonly (Range | null)[]): (number | null)[] {
   return buckets.map(bucket => {
-    if (!bucket) return null
+    if (!bucket) {
+      return null
+    }
 
     let sum = 0
 
-    for (const point of points) if (point.at >= bucket.start && point.at < bucket.end) sum += point.cents
+    for (const point of points) {
+      if (point.at >= bucket.start && point.at < bucket.end) {
+        sum += point.cents
+      }
+    }
 
     return sum
   })

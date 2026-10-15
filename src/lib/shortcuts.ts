@@ -15,7 +15,9 @@ export type KeyInput = { key: string; code: string; ctrlKey: boolean; metaKey: b
 
 /** Whether a key lands in something the user types into; shortcuts then stay out of the way. */
 export function isTypingTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof Element)) return false
+  if (!(target instanceof Element)) {
+    return false
+  }
 
   return target.closest('input, textarea, select, [contenteditable=""], [contenteditable="true"], [role="combobox"], [role="textbox"]') !== null
 }
@@ -25,8 +27,12 @@ export function isTypingTarget(target: EventTarget | null): boolean {
  * read by its place on the keyboard; the letters then work in either layout.
  */
 function letterOf(input: KeyInput): string | null {
-  if (/^[a-z]$/.test(input.key)) return input.key
-  if (/^[A-Za-z]$/.test(input.key)) return null
+  if (/^[a-z]$/.test(input.key)) {
+    return input.key
+  }
+  if (/^[A-Za-z]$/.test(input.key)) {
+    return null
+  }
 
   const place = /^Key([A-Z])$/.exec(input.code)
 
@@ -44,18 +50,27 @@ export function createShortcutReader(): (input: KeyInput) => Shortcut | null {
     const pending = pendingSince !== null && input.time - pendingSince <= SEQUENCE_MS
 
     pendingSince = null
-    if (input.typing || input.ctrlKey || input.metaKey || input.altKey) return null
+
+    if (input.typing || input.ctrlKey || input.metaKey || input.altKey) {
+      return null
+    }
 
     const letter = letterOf(input)
 
-    if (pending && letter !== null && letter in GO_KEYS) return { type: 'go', page: GO_KEYS[letter as keyof typeof GO_KEYS] }
+    if (pending && letter !== null && letter in GO_KEYS) {
+      return { type: 'go', page: GO_KEYS[letter as keyof typeof GO_KEYS] }
+    }
     if (letter === 'g') {
       pendingSince = input.time
 
       return null
     }
-    if (input.key === '/') return { type: 'search' }
-    if (input.key === '?') return { type: 'help' }
+    if (input.key === '/') {
+      return { type: 'search' }
+    }
+    if (input.key === '?') {
+      return { type: 'help' }
+    }
 
     return null
   }

@@ -35,7 +35,11 @@ export function returnsStock(from: OrderStatus, to: OrderStatus): boolean {
 export function transitionsForAny(statuses: Iterable<OrderStatus>): OrderStatus[] {
   const allowed = new Set<OrderStatus>()
 
-  for (const status of statuses) for (const next of NEXT[status]) allowed.add(next)
+  for (const status of statuses) {
+    for (const next of NEXT[status]) {
+      allowed.add(next)
+    }
+  }
 
   return ORDER_STATUSES.filter(status => allowed.has(status))
 }

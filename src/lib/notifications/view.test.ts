@@ -42,6 +42,7 @@ describe('notificationTarget', () => {
     expect(notificationTarget('order.created', { number: 1700 })).toEqual({ type: 'order', number: 1700 })
     expect(notificationTarget('stock.low', { productId: PRODUCT })).toEqual({ type: 'product', productId: PRODUCT })
     expect(notificationTarget('team.invitation_accepted', {})).toEqual({ type: 'page', href: '/team' })
+
     for (const kind of ['auth.new_sign_in', 'auth.second_factor_locked', 'auth.recovery_code_used']) {
       expect(notificationTarget(kind, {})).toEqual({ type: 'page', href: '/settings/security' })
     }

@@ -29,8 +29,11 @@ describe('isSlug', () => {
   it('accepts what slugify makes and refuses everything else', () => {
     expect(isSlug('nine-by-twelve', 80)).toBe(true)
     expect(isSlug('a1', 80)).toBe(true)
+
     // The last one ends in a Cyrillic "е" that looks like the Latin one.
-    for (const bad of ['', 'Nine', 'nine--twelve', '-nine', 'nine-', 'nine twelve', 'ninе']) expect(isSlug(bad, 80), bad).toBe(false)
+    for (const bad of ['', 'Nine', 'nine--twelve', '-nine', 'nine-', 'nine twelve', 'ninе']) {
+      expect(isSlug(bad, 80), bad).toBe(false)
+    }
   })
 
   it('keeps to the length and the reserved addresses', () => {

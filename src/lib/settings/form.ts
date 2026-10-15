@@ -20,17 +20,27 @@ export function parseProfile(values: Record<ProfileField, string>): Parsed<Profi
   const fieldErrors: Partial<Record<ProfileField, ProfileIssue>> = {}
   const name = cleanLine(values.name)
 
-  if (!name) fieldErrors.name = 'required'
-  else if (length(name) > MEMBER_NAME_MAX) fieldErrors.name = 'too_long'
+  if (!name) {
+    fieldErrors.name = 'required'
+  } else if (length(name) > MEMBER_NAME_MAX) {
+    fieldErrors.name = 'too_long'
+  }
 
   const locale = z.enum(LOCALES).safeParse(values.locale)
 
-  if (!locale.success) fieldErrors.locale = 'invalid'
+  if (!locale.success) {
+    fieldErrors.locale = 'invalid'
+  }
 
   const theme = z.enum(THEMES).safeParse(values.theme)
 
-  if (!theme.success) fieldErrors.theme = 'invalid'
-  if (Object.keys(fieldErrors).length > 0 || !locale.success || !theme.success) return { ok: false, fieldErrors }
+  if (!theme.success) {
+    fieldErrors.theme = 'invalid'
+  }
+
+  if (Object.keys(fieldErrors).length > 0 || !locale.success || !theme.success) {
+    return { ok: false, fieldErrors }
+  }
 
   return { ok: true, data: { name, locale: locale.data, theme: theme.data, shortcuts: values.shortcuts === 'on' } }
 }
@@ -43,23 +53,35 @@ export function parseStoreSettings(values: Record<StoreField, string>): Parsed<S
   const fieldErrors: Partial<Record<StoreField, StoreIssue>> = {}
   const storeName = cleanLine(values.storeName)
 
-  if (!storeName) fieldErrors.storeName = 'required'
-  else if (length(storeName) > STORE_NAME_MAX) fieldErrors.storeName = 'too_long'
+  if (!storeName) {
+    fieldErrors.storeName = 'required'
+  } else if (length(storeName) > STORE_NAME_MAX) {
+    fieldErrors.storeName = 'too_long'
+  }
 
   const supportEmail = values.supportEmail.trim().toLowerCase()
 
-  if (!z.email().max(SUPPORT_EMAIL_MAX).safeParse(supportEmail).success) fieldErrors.supportEmail = 'email_invalid'
+  if (!z.email().max(SUPPORT_EMAIL_MAX).safeParse(supportEmail).success) {
+    fieldErrors.supportEmail = 'email_invalid'
+  }
 
   // A zone stored under an old name before the list showed today's is taken under its current one.
   const timezone = currentZoneName(values.timezone.trim())
 
-  if (!timeZones().includes(timezone)) fieldErrors.timezone = 'timezone_invalid'
+  if (!timeZones().includes(timezone)) {
+    fieldErrors.timezone = 'timezone_invalid'
+  }
 
   const threshold = values.lowStockDefault.trim()
   const lowStockDefault = /^\d{1,3}$/.test(threshold) ? Number(threshold) : NaN
 
-  if (!(lowStockDefault >= 0 && lowStockDefault <= LOW_STOCK_MAX)) fieldErrors.lowStockDefault = 'number_invalid'
-  if (Object.keys(fieldErrors).length > 0) return { ok: false, fieldErrors }
+  if (!(lowStockDefault >= 0 && lowStockDefault <= LOW_STOCK_MAX)) {
+    fieldErrors.lowStockDefault = 'number_invalid'
+  }
+
+  if (Object.keys(fieldErrors).length > 0) {
+    return { ok: false, fieldErrors }
+  }
 
   return { ok: true, data: { storeName, supportEmail, timezone, lowStockDefault } }
 }

@@ -47,7 +47,9 @@ function subjectOf(entry: EntryInput, details: Payload, lookups: Lookups): Subje
     case 'product': {
       const product = id ? lookups.products.get(id) : undefined
 
-      if (product) return { text: product.name, href: productHref(product.slug) }
+      if (product) {
+        return { text: product.name, href: productHref(product.slug) }
+      }
 
       const name = text(details, 'name') ?? text(details, 'slug')
 
@@ -57,7 +59,9 @@ function subjectOf(entry: EntryInput, details: Payload, lookups: Lookups): Subje
     case 'collection': {
       const collection = id ? lookups.collections.get(id) : undefined
 
-      if (collection) return { text: collection.name, href: collectionHref(collection.slug) }
+      if (collection) {
+        return { text: collection.name, href: collectionHref(collection.slug) }
+      }
 
       const name = text(details, 'name') ?? text(details, 'slug')
 

@@ -13,7 +13,9 @@ describe('product status machine', () => {
   })
 
   it('never moves a status onto itself', () => {
-    for (const status of PRODUCT_STATUSES) expect(canTransitionProduct(status, status)).toBe(false)
+    for (const status of PRODUCT_STATUSES) {
+      expect(canTransitionProduct(status, status)).toBe(false)
+    }
   })
 
   it('knows its statuses', () => {

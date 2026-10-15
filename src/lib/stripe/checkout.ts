@@ -59,12 +59,16 @@ function readLine(item: LineItemLike): IncomingLine | null {
   const name = cut(item.description, 200)
   const qty = item.quantity
 
-  if (!name || typeof qty !== 'number' || !Number.isInteger(qty) || qty <= 0) return null
+  if (!name || typeof qty !== 'number' || !Number.isInteger(qty) || qty <= 0) {
+    return null
+  }
 
   const subtotal = cents(item.amount_subtotal)
   const unitCents = cents(item.price?.unit_amount) ?? (subtotal !== null && subtotal % qty === 0 ? subtotal / qty : null)
 
-  if (unitCents === null) return null
+  if (unitCents === null) {
+    return null
+  }
 
   return { name, qty, unitCents, variant: parseLineName(name) }
 }
@@ -75,27 +79,39 @@ function readLine(item: LineItemLike): IncomingLine | null {
  * total — since the orders table holds that sum as a rule.
  */
 export function readCheckout(session: CheckoutSessionLike, items: readonly LineItemLike[]): CheckoutReading {
-  if (session.payment_status !== 'paid') return { ok: false, problem: 'not_paid' }
-  if (session.currency !== 'usd') return { ok: false, problem: 'currency' }
+  if (session.payment_status !== 'paid') {
+    return { ok: false, problem: 'not_paid' }
+  }
+  if (session.currency !== 'usd') {
+    return { ok: false, problem: 'currency' }
+  }
 
   const email = cut(session.customer_details?.email, 254)
 
-  if (!email || email.length < 3 || !email.includes('@')) return { ok: false, problem: 'email' }
+  if (!email || email.length < 3 || !email.includes('@')) {
+    return { ok: false, problem: 'email' }
+  }
 
   const lines = items.map(readLine)
 
-  if (lines.length === 0 || lines.some(line => line === null)) return { ok: false, problem: 'lines' }
+  if (lines.length === 0 || lines.some(line => line === null)) {
+    return { ok: false, problem: 'lines' }
+  }
 
   const read = lines as IncomingLine[]
   const subtotalCents = cents(session.amount_subtotal)
   const shippingCents = cents(session.total_details?.amount_shipping ?? 0)
   const totalCents = cents(session.amount_total)
 
-  if (subtotalCents === null || shippingCents === null || totalCents === null) return { ok: false, problem: 'amounts' }
+  if (subtotalCents === null || shippingCents === null || totalCents === null) {
+    return { ok: false, problem: 'amounts' }
+  }
 
   const linesCents = read.reduce((sum, line) => sum + line.qty * line.unitCents, 0)
 
-  if (linesCents !== subtotalCents || subtotalCents + shippingCents !== totalCents) return { ok: false, problem: 'amounts' }
+  if (linesCents !== subtotalCents || subtotalCents + shippingCents !== totalCents) {
+    return { ok: false, problem: 'amounts' }
+  }
 
   const country = session.customer_details?.address?.country?.trim().toUpperCase() ?? ''
 

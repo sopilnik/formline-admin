@@ -41,11 +41,21 @@ export function activityHref(query: ActivityQuery, changes: Partial<ActivityQuer
   const next: ActivityQuery = { ...query, ...changes, page: changes.page ?? (resetsPage ? 1 : query.page) }
   const params = new URLSearchParams()
 
-  if (next.actor) params.set('actor', next.actor)
-  if (next.action) params.set('action', next.action)
-  if (next.when !== DEFAULT_ACTIVITY_QUERY.when) params.set('when', next.when)
-  if (next.page !== DEFAULT_ACTIVITY_QUERY.page) params.set('page', String(next.page))
-  if (next.size !== DEFAULT_ACTIVITY_QUERY.size) params.set('size', String(next.size))
+  if (next.actor) {
+    params.set('actor', next.actor)
+  }
+  if (next.action) {
+    params.set('action', next.action)
+  }
+  if (next.when !== DEFAULT_ACTIVITY_QUERY.when) {
+    params.set('when', next.when)
+  }
+  if (next.page !== DEFAULT_ACTIVITY_QUERY.page) {
+    params.set('page', String(next.page))
+  }
+  if (next.size !== DEFAULT_ACTIVITY_QUERY.size) {
+    params.set('size', String(next.size))
+  }
 
   const text = params.toString()
 

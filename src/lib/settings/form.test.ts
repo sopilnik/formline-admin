@@ -34,7 +34,11 @@ describe('parseStoreSettings', () => {
     expect(parseStoreSettings({ storeName: '', supportEmail: 'help', timezone: 'Mars/Olympus', lowStockDefault: '1000' })).toEqual({
       ok: false, fieldErrors: { storeName: 'required', supportEmail: 'email_invalid', timezone: 'timezone_invalid', lowStockDefault: 'number_invalid' },
     })
-    for (const lowStockDefault of ['-1', '2.5', 'three', '']) expect(parseStoreSettings({ ...valid, lowStockDefault }).ok, lowStockDefault).toBe(false)
+
+    for (const lowStockDefault of ['-1', '2.5', 'three', '']) {
+      expect(parseStoreSettings({ ...valid, lowStockDefault }).ok, lowStockDefault).toBe(false)
+    }
+
     // The canonical spelling only: the select offers the platform's list as it is.
     expect(parseStoreSettings({ ...valid, timezone: 'asia/almaty' })).toEqual({ ok: false, fieldErrors: { timezone: 'timezone_invalid' } })
     expect(parseStoreSettings({ ...valid, storeName: 'x'.repeat(81) })).toEqual({ ok: false, fieldErrors: { storeName: 'too_long' } })
@@ -47,10 +51,14 @@ describe('timeZones', () => {
     const zones = timeZones()
 
     expect(zones[0]).toBe('UTC')
+
     for (const current of ['Europe/Kyiv', 'Asia/Kolkata', 'Asia/Ho_Chi_Minh', 'Asia/Yangon', 'Asia/Kathmandu', 'America/Nuuk', 'Atlantic/Faroe', 'Africa/Asmara', 'Pacific/Chuuk', 'Pacific/Pohnpei', 'Pacific/Kanton']) {
       expect(zones, current).toContain(current)
     }
-    for (const old of ['Europe/Kiev', 'Asia/Calcutta', 'Asia/Saigon', 'Pacific/Enderbury']) expect(zones, old).not.toContain(old)
+    for (const old of ['Europe/Kiev', 'Asia/Calcutta', 'Asia/Saigon', 'Pacific/Enderbury']) {
+      expect(zones, old).not.toContain(old)
+    }
+
     expect(zones.slice(1)).toEqual([...zones.slice(1)].sort())
   })
 

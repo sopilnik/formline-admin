@@ -22,7 +22,9 @@ export function generateHOTP(key: Uint8Array, counter: bigint, digits: number): 
 export type HotpParams = { key: Uint8Array; counter: bigint; digits: number }
 
 export function verifyHOTP({ key, counter, digits }: HotpParams, code: string): boolean {
-  if (Buffer.byteLength(code) !== digits) return false
+  if (Buffer.byteLength(code) !== digits) {
+    return false
+  }
 
   return timingSafeEqual(Buffer.from(generateHOTP(key, counter, digits)), Buffer.from(code))
 }

@@ -9,8 +9,13 @@ describe('parsePage and parsePageSize', () => {
   })
 
   it('fall back to the first page and the default size', () => {
-    for (const value of [undefined, '', '0', '-2', '1.5', 'abc']) expect(parsePage(value), String(value)).toBe(1)
-    for (const value of [undefined, '', '7', '1000', '25.0x']) expect(parsePageSize(value), String(value)).toBe(DEFAULT_PAGE_SIZE)
+    for (const value of [undefined, '', '0', '-2', '1.5', 'abc']) {
+      expect(parsePage(value), String(value)).toBe(1)
+    }
+    for (const value of [undefined, '', '7', '1000', '25.0x']) {
+      expect(parsePageSize(value), String(value)).toBe(DEFAULT_PAGE_SIZE)
+    }
+
     expect(DEFAULT_PAGE_SIZE).toBe(25)
   })
 })

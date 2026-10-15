@@ -11,14 +11,18 @@ const PALETTE_BY_NAME = new Map(Object.entries(PALETTES).map(([id, name]) => [na
 export function parseLineName(name: string): LineVariant | null {
   const parts = name.split(SEPARATOR)
 
-  if (parts.length !== 3) return null
+  if (parts.length !== 3) {
+    return null
+  }
 
   const [productName, sizeLabel, paletteName] = parts as [string, string, string]
   const product = PRODUCTS.find(p => p.name === productName)
   const size = SIZES.find(s => s.label === sizeLabel)
   const palette = PALETTE_BY_NAME.get(paletteName)
 
-  if (!product || !size || !palette || !product.palettes.includes(palette)) return null
+  if (!product || !size || !palette || !product.palettes.includes(palette)) {
+    return null
+  }
 
   return { sku: skuOf(product.slug, size.id, palette), size: size.id, palette }
 }

@@ -15,6 +15,7 @@ describe('the template posters’ small copies', () => {
     const posters = readdirSync('public/posters').filter(name => name.endsWith('.webp'))
 
     expect(posters).toHaveLength(16)
+
     for (const name of posters) {
       const meta = await sharp(`public/posters/thumb/${name}`).metadata()
 

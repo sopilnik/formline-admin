@@ -55,14 +55,30 @@ export function productsHref(query: ProductsQuery, changes: Partial<ProductsQuer
   const next: ProductsQuery = { ...query, ...changes, page: changes.page ?? (resetsPage ? 1 : query.page) }
   const params = new URLSearchParams()
 
-  if (next.status.length > 0) params.set('status', PRODUCT_STATUSES.filter(s => next.status.includes(s)).join(','))
-  if (next.q) params.set('q', next.q)
-  if (next.collection) params.set('collection', next.collection)
-  if (next.stock !== DEFAULT_PRODUCTS_QUERY.stock) params.set('stock', next.stock)
-  if (next.sort !== DEFAULT_PRODUCTS_QUERY.sort) params.set('sort', next.sort)
-  if (next.dir !== FIRST_DIR[next.sort]) params.set('dir', next.dir)
-  if (next.page !== DEFAULT_PRODUCTS_QUERY.page) params.set('page', String(next.page))
-  if (next.size !== DEFAULT_PRODUCTS_QUERY.size) params.set('size', String(next.size))
+  if (next.status.length > 0) {
+    params.set('status', PRODUCT_STATUSES.filter(s => next.status.includes(s)).join(','))
+  }
+  if (next.q) {
+    params.set('q', next.q)
+  }
+  if (next.collection) {
+    params.set('collection', next.collection)
+  }
+  if (next.stock !== DEFAULT_PRODUCTS_QUERY.stock) {
+    params.set('stock', next.stock)
+  }
+  if (next.sort !== DEFAULT_PRODUCTS_QUERY.sort) {
+    params.set('sort', next.sort)
+  }
+  if (next.dir !== FIRST_DIR[next.sort]) {
+    params.set('dir', next.dir)
+  }
+  if (next.page !== DEFAULT_PRODUCTS_QUERY.page) {
+    params.set('page', String(next.page))
+  }
+  if (next.size !== DEFAULT_PRODUCTS_QUERY.size) {
+    params.set('size', String(next.size))
+  }
 
   const text = params.toString().replace(/%2C/g, ',')
 

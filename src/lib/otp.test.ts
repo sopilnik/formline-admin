@@ -13,7 +13,9 @@ describe('generateHOTP', () => {
   it('gives the RFC 6238 appendix B SHA-1 codes at their times', () => {
     const vectors: [number, string][] = [[59, '94287082'], [1111111109, '07081804'], [1111111111, '14050471'], [1234567890, '89005924'], [2000000000, '69279037'], [20000000000, '65353130']]
 
-    for (const [seconds, code] of vectors) expect(generateHOTP(KEY, BigInt(Math.floor(seconds / 30)), 8)).toBe(code)
+    for (const [seconds, code] of vectors) {
+      expect(generateHOTP(KEY, BigInt(Math.floor(seconds / 30)), 8)).toBe(code)
+    }
   })
 })
 

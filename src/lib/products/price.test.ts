@@ -6,7 +6,10 @@ import { SIZES } from '@seed/catalog'
 describe('variant prices', () => {
   it('uses the store surcharges', () => {
     expect(SIZE_IDS).toEqual(SIZES.map(s => s.id))
-    for (const size of SIZES) expect(SIZE_SURCHARGE_CENTS[size.id]).toBe(size.surchargeCents)
+
+    for (const size of SIZES) {
+      expect(SIZE_SURCHARGE_CENTS[size.id]).toBe(size.surchargeCents)
+    }
   })
 
   it('adds the surcharge to the base price unless an override is set', () => {
@@ -26,7 +29,9 @@ describe('price fields', () => {
   })
 
   it('refuses anything else', () => {
-    for (const bad of ['', '0', '0.00', '10000', '29.999', '-5', '1,234.00', '$29', '29 00', 'abc']) expect(parsePrice(bad), bad).toBeNull()
+    for (const bad of ['', '0', '0.00', '10000', '29.999', '-5', '1,234.00', '$29', '29 00', 'abc']) {
+      expect(parsePrice(bad), bad).toBeNull()
+    }
   })
 
   it('takes a base price only as high as keeps its largest size within $9,999.99', () => {

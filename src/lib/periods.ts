@@ -23,7 +23,10 @@ function formatter(timeZone: string): Intl.DateTimeFormat {
 
 /** The zone itself when Intl knows it, else the default — settings rows are trusted, but a typo must not break every page. */
 export function validTimeZone(value: string | null | undefined): string {
-  if (!value) return TIME_ZONE
+  if (!value) {
+    return TIME_ZONE
+  }
+
   try {
     formatter(value)
 
@@ -53,7 +56,9 @@ export function zonedToDate(parts: Partial<ZonedParts> & Pick<ZonedParts, 'year'
   const wanted = civilUtc(parts)
   let guess = wanted
 
-  for (let pass = 0; pass < 2; pass++) guess += wanted - civilUtc(zonedParts(new Date(guess), timeZone))
+  for (let pass = 0; pass < 2; pass++) {
+    guess += wanted - civilUtc(zonedParts(new Date(guess), timeZone))
+  }
 
   return new Date(guess)
 }
@@ -113,13 +118,21 @@ export function addMonths(date: Date, months: number, timeZone: string): Date {
 
 /** The date filter of the orders list: whole calendar days of the zone, today included. */
 export function presetRange(preset: DatePreset, now: Date, timeZone: string): Range | null {
-  if (preset === 'any') return null
+  if (preset === 'any') {
+    return null
+  }
 
   const end = addDays(startOfDay(now, timeZone), 1, timeZone)
 
-  if (preset === 'today') return { start: startOfDay(now, timeZone), end }
-  if (preset === '7d') return { start: addDays(startOfDay(now, timeZone), -6, timeZone), end }
-  if (preset === '30d') return { start: addDays(startOfDay(now, timeZone), -29, timeZone), end }
+  if (preset === 'today') {
+    return { start: startOfDay(now, timeZone), end }
+  }
+  if (preset === '7d') {
+    return { start: addDays(startOfDay(now, timeZone), -6, timeZone), end }
+  }
+  if (preset === '30d') {
+    return { start: addDays(startOfDay(now, timeZone), -29, timeZone), end }
+  }
 
   return { start: startOfMonth(now, timeZone), end }
 }
@@ -181,7 +194,9 @@ export function periodPlan(period: Period, now: Date, timeZone: string): PeriodP
     const previousBuckets = buckets.map((_, i) => {
       const dayStart = addDays(previous.start, i, timeZone)
 
-      if (zonedParts(dayStart, timeZone).month !== month || dayStart >= previous.end) return null
+      if (zonedParts(dayStart, timeZone).month !== month || dayStart >= previous.end) {
+        return null
+      }
 
       const dayEnd = addDays(dayStart, 1, timeZone)
 

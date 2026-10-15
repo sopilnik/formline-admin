@@ -49,14 +49,30 @@ export function ordersHref(query: OrdersQuery, changes: Partial<OrdersQuery> = {
   const next: OrdersQuery = { ...query, ...changes, page: changes.page ?? (resetsPage ? 1 : query.page) }
   const params = new URLSearchParams()
 
-  if (next.status.length > 0) params.set('status', ORDER_STATUSES.filter(s => next.status.includes(s)).join(','))
-  if (next.q) params.set('q', next.q)
-  if (next.placed !== DEFAULT_ORDERS_QUERY.placed) params.set('placed', next.placed)
-  if (next.source !== DEFAULT_ORDERS_QUERY.source) params.set('source', next.source)
-  if (next.sort !== DEFAULT_ORDERS_QUERY.sort) params.set('sort', next.sort)
-  if (next.dir !== DEFAULT_ORDERS_QUERY.dir) params.set('dir', next.dir)
-  if (next.page !== DEFAULT_ORDERS_QUERY.page) params.set('page', String(next.page))
-  if (next.size !== DEFAULT_ORDERS_QUERY.size) params.set('size', String(next.size))
+  if (next.status.length > 0) {
+    params.set('status', ORDER_STATUSES.filter(s => next.status.includes(s)).join(','))
+  }
+  if (next.q) {
+    params.set('q', next.q)
+  }
+  if (next.placed !== DEFAULT_ORDERS_QUERY.placed) {
+    params.set('placed', next.placed)
+  }
+  if (next.source !== DEFAULT_ORDERS_QUERY.source) {
+    params.set('source', next.source)
+  }
+  if (next.sort !== DEFAULT_ORDERS_QUERY.sort) {
+    params.set('sort', next.sort)
+  }
+  if (next.dir !== DEFAULT_ORDERS_QUERY.dir) {
+    params.set('dir', next.dir)
+  }
+  if (next.page !== DEFAULT_ORDERS_QUERY.page) {
+    params.set('page', String(next.page))
+  }
+  if (next.size !== DEFAULT_ORDERS_QUERY.size) {
+    params.set('size', String(next.size))
+  }
 
   const text = params.toString().replace(/%2C/g, ',')
 
@@ -75,7 +91,10 @@ export function ordersExportHref(query: OrdersQuery, ids?: readonly string[]): s
   const params = new URLSearchParams(at === -1 ? '' : href.slice(at + 1))
 
   if (ids && ids.length > 0) {
-    for (const key of ['status', 'q', 'placed', 'source']) params.delete(key)
+    for (const key of ['status', 'q', 'placed', 'source']) {
+      params.delete(key)
+    }
+
     params.set('ids', ids.join(','))
   }
 

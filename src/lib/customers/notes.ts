@@ -10,7 +10,9 @@ export type CustomerNotesError = 'too_long'
 export function parseCustomerNotes(value: string): { ok: true; notes: string } | { ok: false; error: CustomerNotesError } {
   const notes = cleanText(value)
 
-  if ([...notes].length > CUSTOMER_NOTES_MAX) return { ok: false, error: 'too_long' }
+  if ([...notes].length > CUSTOMER_NOTES_MAX) {
+    return { ok: false, error: 'too_long' }
+  }
 
   return { ok: true, notes }
 }

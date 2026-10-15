@@ -5,7 +5,9 @@ export const ALL = 'all'
 
 /** "All" is on only while no status is; pressing it clears them, releasing the last status turns it back on. */
 export function statusesFrom<S extends string>(statuses: readonly S[], next: readonly string[], previous: readonly S[]): S[] {
-  if (next.includes(ALL) && previous.length > 0) return []
+  if (next.includes(ALL) && previous.length > 0) {
+    return []
+  }
 
   return statuses.filter(status => next.includes(status))
 }

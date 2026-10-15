@@ -24,7 +24,9 @@ export function variantPriceCents(baseCents: number, size: SizeId, overrideCents
 export function parsePrice(text: string): number | null {
   const match = /^(\d{1,4})(?:[.,](\d{1,2}))?$/.exec(text.trim())
 
-  if (!match) return null
+  if (!match) {
+    return null
+  }
 
   const cents = Number(match[1]) * 100 + Number((match[2] ?? '').padEnd(2, '0'))
 

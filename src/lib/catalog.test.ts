@@ -5,7 +5,12 @@ import { PALETTES, SIZES } from '@seed/catalog'
 
 describe('catalog labels', () => {
   it('names every size and palette of the store the way the catalog does', () => {
-    for (const size of SIZES) for (const [palette, name] of Object.entries(PALETTES)) expect(variantLabel(size.id, palette)).toBe(`${size.label} · ${name}`)
+    for (const size of SIZES) {
+      for (const [palette, name] of Object.entries(PALETTES)) {
+        expect(variantLabel(size.id, palette)).toBe(`${size.label} · ${name}`)
+      }
+    }
+
     expect(variantLabel('a0', 'teal')).toBe('A0 · teal')
   })
 

@@ -38,11 +38,21 @@ function customersParams(query: CustomersQuery, changes: Partial<CustomersQuery>
   const next: CustomersQuery = { ...query, ...changes, page: changes.page ?? (resetsPage ? 1 : query.page) }
   const params = new URLSearchParams()
 
-  if (next.q) params.set('q', next.q)
-  if (next.sort !== DEFAULT_CUSTOMERS_QUERY.sort) params.set('sort', next.sort)
-  if (next.dir !== FIRST_DIR[next.sort]) params.set('dir', next.dir)
-  if (next.page !== DEFAULT_CUSTOMERS_QUERY.page) params.set('page', String(next.page))
-  if (next.size !== DEFAULT_CUSTOMERS_QUERY.size) params.set('size', String(next.size))
+  if (next.q) {
+    params.set('q', next.q)
+  }
+  if (next.sort !== DEFAULT_CUSTOMERS_QUERY.sort) {
+    params.set('sort', next.sort)
+  }
+  if (next.dir !== FIRST_DIR[next.sort]) {
+    params.set('dir', next.dir)
+  }
+  if (next.page !== DEFAULT_CUSTOMERS_QUERY.page) {
+    params.set('page', String(next.page))
+  }
+  if (next.size !== DEFAULT_CUSTOMERS_QUERY.size) {
+    params.set('size', String(next.size))
+  }
 
   return params
 }
