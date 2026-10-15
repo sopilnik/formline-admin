@@ -48,7 +48,10 @@ async function purgeHousekeeping(pool: Pool): Promise<DailyReport['purged']> {
 }
 
 /** Runs one step; a failure is logged with the step's name and noted in `failed`, and the job goes on with `fallback`. */
-async function step<T>(name: DailyStep, failed: DailyStep[], fallback: T, run: () => Promise<T>): Promise<T> {
+async function step<T>(
+  { name, failed, fallback }: { name: DailyStep; failed: DailyStep[]; fallback: T },
+  run: () => Promise<T>,
+): Promise<T> {
   try {
     return await run()
   } catch (error) {
@@ -67,10 +70,10 @@ export async function runDailyJob(deps: { pool?: Pool; storage?: MediaStorage; p
   const pool = deps.pool ?? getPool()
   const failed: DailyStep[] = []
 
-  const sandboxes = await step('sandboxes', failed, 0, () => cleanupExpiredSandboxes(pool))
-  const purged = await step('purge', failed, NOTHING_PURGED, () => purgeHousekeeping(pool))
-  const media = await step('media', failed, { deleted: 0, retried: 0 }, () => drainPendingDeletions(deps.storage ?? mediaStorage() ?? unavailableStorage, pool))
-  const customers = await step('customers', failed, 0, async () => {
+  const sandboxes = await step({ name: 'sandboxes', failed, fallback: 0 }, () => cleanupExpiredSandboxes(pool))
+  const purged = await step({ name: 'purge', failed, fallback: NOTHING_PURGED }, () => purgeHousekeeping(pool))
+  const media = await step({ name: 'media', failed, fallback: { deleted: 0, retried: 0 } }, () => drainPendingDeletions(deps.storage ?? mediaStorage() ?? unavailableStorage, pool))
+  const customers = await step({ name: 'customers', failed, fallback: 0 }, async () => {
     const pseudonymKey = deps.pseudonymKey === undefined ? stripeConfig()?.pseudonymKey ?? null : deps.pseudonymKey
 
     return pseudonymKey ? pseudonymiseOldCustomers(pseudonymKey, pool) : 0

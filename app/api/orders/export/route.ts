@@ -48,5 +48,5 @@ export async function GET(request: Request): Promise<Response> {
 
   await logExport(session, 'orders.exported', { rows: plan.ids.length, truncated: plan.truncated, selection: ids !== null })
 
-  return csvResponse('orders', exportStream(ctx, plan.ids, await labels(), settings.timezone), plan, settings.timezone, now)
+  return csvResponse({ name: 'orders', stream: exportStream(ctx, { ids: plan.ids, labels: await labels(), timeZone: settings.timezone }), plan }, settings.timezone, now)
 }

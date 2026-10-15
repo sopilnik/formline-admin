@@ -41,7 +41,7 @@ beforeAll(async () => {
 afterAll(closeAll)
 
 const list = (query: Partial<ActivityQuery>, ctx = owner) =>
-  withWorkspace(ctx, tx => listActivity(tx, ctx.workspaceId, { ...DEFAULT_ACTIVITY_QUERY, ...query }, now, tz), app)
+  withWorkspace(ctx, tx => listActivity(tx, ctx.workspaceId, { query: { ...DEFAULT_ACTIVITY_QUERY, ...query }, now, timeZone: tz }), app)
 
 describe('listActivity', () => {
   it('lists the workspace’s entries newest first, with the names the page needs', async () => {

@@ -26,5 +26,5 @@ export async function GET(request: Request): Promise<Response> {
   const t = await getTranslations('customers.csv')
   const header = [t('customer'), t('email'), t('city'), t('country'), t('orders'), t('spent'), t('first'), t('last'), t('since')]
 
-  return csvResponse('customers', customerExportStream(ctx, plan.ids, { header }, settings.timezone), plan, settings.timezone)
+  return csvResponse({ name: 'customers', stream: customerExportStream(ctx, { ids: plan.ids, labels: { header }, timeZone: settings.timezone }), plan }, settings.timezone)
 }

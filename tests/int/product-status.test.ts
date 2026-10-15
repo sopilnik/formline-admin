@@ -48,9 +48,9 @@ describe('changeProductStatusWithLog', () => {
     const id = await idOf('after-dark')
     const version = (await read('after-dark'))!.version
 
-    expect(await changeProductStatusWithLog(owner, id, 'archived', app)).toEqual({ ok: true, slug: 'after-dark', from: 'published', to: 'archived' })
-    expect(await changeProductStatusWithLog(owner, id, 'published', app)).toEqual({ ok: false, reason: 'invalid_transition', from: 'archived' })
-    expect(await changeProductStatusWithLog(owner, id, 'draft', app)).toMatchObject({ ok: true, to: 'draft' })
+    expect(await changeProductStatusWithLog(owner, { productId: id, to: 'archived' }, app)).toEqual({ ok: true, slug: 'after-dark', from: 'published', to: 'archived' })
+    expect(await changeProductStatusWithLog(owner, { productId: id, to: 'published' }, app)).toEqual({ ok: false, reason: 'invalid_transition', from: 'archived' })
+    expect(await changeProductStatusWithLog(owner, { productId: id, to: 'draft' }, app)).toMatchObject({ ok: true, to: 'draft' })
 
     const after = (await read('after-dark'))!
 
@@ -65,7 +65,7 @@ describe('changeProductStatusWithLog', () => {
   it('finds nothing to change for a viewer', async () => {
     const viewerId = (await admin.query<{ id: string }>("select id from fa.users where workspace_id = $1 and role = 'viewer'", [owner.workspaceId])).rows[0]!.id
 
-    expect(await changeProductStatusWithLog({ ...owner, userId: viewerId, role: 'viewer' }, await idOf('hush'), 'archived', app)).toEqual({ ok: false, reason: 'not_found' })
+    expect(await changeProductStatusWithLog({ ...owner, userId: viewerId, role: 'viewer' }, { productId: await idOf('hush'), to: 'archived' }, app)).toEqual({ ok: false, reason: 'not_found' })
   })
 })
 
@@ -76,7 +76,7 @@ describe('deleteProductWithLog', () => {
 
     const published = await newDraft('never-sold')
 
-    await changeProductStatusWithLog(owner, published, 'published', app)
+    await changeProductStatusWithLog(owner, { productId: published, to: 'published' }, app)
     expect(await deleteProductWithLog(owner, published, app)).toEqual({ ok: false, reason: 'not_draft' })
     expect(await read('after-dark')).not.toBeNull()
     expect(await read('never-sold')).not.toBeNull()

@@ -26,7 +26,7 @@ export async function changeStatusesAction(input: unknown): Promise<ActionResult
 
   if (!parsed.success) return fail('invalid')
 
-  const outcome = await changeStatuses(await actorOf(session), parsed.data.ids, parsed.data.to)
+  const outcome = await changeStatuses(await actorOf(session), { orderIds: parsed.data.ids, to: parsed.data.to })
 
   // The list, its chip counts and the sidebar count all change: the router re-renders the page.
   refresh()
@@ -44,7 +44,7 @@ export async function changeOrderStatusAction(input: unknown): Promise<ActionRes
 
   if (!parsed.success) return fail('invalid')
 
-  const outcome = await changeStatuses(await actorOf(session), [parsed.data.orderId], parsed.data.to)
+  const outcome = await changeStatuses(await actorOf(session), { orderIds: [parsed.data.orderId], to: parsed.data.to })
 
   refresh()
   if (outcome.changed.length === 1) return ok({ number: outcome.changed[0]!, to: parsed.data.to })
@@ -72,7 +72,7 @@ export async function addOrderNoteAction(previous: NoteState, form: FormData): P
 
   if (!parsed.ok) return { status: 'error', error: parsed.error, note: text }
 
-  const number = await addNote(await actorOf(session), orderId.data, parsed.note)
+  const number = await addNote(await actorOf(session), { orderId: orderId.data, note: parsed.note })
 
   if (number === null) return { status: 'error', error: 'not_found', note: text }
   refresh()

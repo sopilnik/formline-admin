@@ -93,7 +93,7 @@ describe('saveCustomerNotes', () => {
   it('saves the notes and logs the change with the customer’s name', async () => {
     const { id, name } = await busiest(owner.workspaceId)
 
-    expect(await saveCustomerNotes(manager, id, 'Prefers express.\nCall before delivery.', app)).toBe('saved')
+    expect(await saveCustomerNotes(manager, { customerId: id, notes: 'Prefers express.\nCall before delivery.' }, app)).toBe('saved')
     expect(await notesOf(id)).toBe('Prefers express.\nCall before delivery.')
     expect(await logged(id)).toEqual([{ action: 'customer.notes_updated', actor: manager.userId, details: { name }, ip_hash: 'ip-hash-of-the-test' }])
   })
@@ -102,8 +102,8 @@ describe('saveCustomerNotes', () => {
     const { id } = await busiest(owner.workspaceId)
     const before = (await logged(id)).length
 
-    await saveCustomerNotes(owner, id, 'Same text', app)
-    expect(await saveCustomerNotes(owner, id, 'Same text', app)).toBe('unchanged')
+    await saveCustomerNotes(owner, { customerId: id, notes: 'Same text' }, app)
+    expect(await saveCustomerNotes(owner, { customerId: id, notes: 'Same text' }, app)).toBe('unchanged')
     expect((await logged(id)).length).toBe(before + 1)
   })
 
@@ -112,7 +112,7 @@ describe('saveCustomerNotes', () => {
     const before = await notesOf(id)
     const entries = (await logged(id)).length
 
-    expect(await saveCustomerNotes(viewer, id, 'Viewer was here', app)).toBe('not_found')
+    expect(await saveCustomerNotes(viewer, { customerId: id, notes: 'Viewer was here' }, app)).toBe('not_found')
     expect(await notesOf(id)).toBe(before)
     expect((await logged(id)).length).toBe(entries)
   })
@@ -122,14 +122,14 @@ describe('saveCustomerNotes', () => {
     const { id } = await busiest(owner.workspaceId)
     const before = await notesOf(id)
 
-    expect(await saveCustomerNotes(other, id, 'Another sandbox', app)).toBe('saved')
+    expect(await saveCustomerNotes(other, { customerId: id, notes: 'Another sandbox' }, app)).toBe('saved')
     expect(await notesOf(id, other.workspaceId)).toBe('Another sandbox')
     expect(await notesOf(id)).toBe(before)
 
     const { rows } = await admin.query<{ id: string }>(
       "insert into fa.customers (workspace_id, email, name) values ($1, 'only.here@example.test', 'Only Here') returning id", [owner.workspaceId])
 
-    expect(await saveCustomerNotes(other, rows[0]!.id, 'Not theirs', app)).toBe('not_found')
+    expect(await saveCustomerNotes(other, { customerId: rows[0]!.id, notes: 'Not theirs' }, app)).toBe('not_found')
     expect(await notesOf(rows[0]!.id)).toBe('')
   })
 })

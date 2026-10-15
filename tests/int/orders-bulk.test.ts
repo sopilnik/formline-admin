@@ -33,7 +33,7 @@ describe('changeStatuses', () => {
     const { workspaceId, users } = await sandbox()
     const paid = await ordersWith(workspaceId, 'paid', 2)
     const [delivered] = await ordersWith(workspaceId, 'delivered', 1)
-    const outcome = await changeStatuses(actor(workspaceId, users.manager!, 'manager'), [...paid.map(o => o.id), delivered!.id, delivered!.id], 'processing', app)
+    const outcome = await changeStatuses(actor(workspaceId, users.manager!, 'manager'), { orderIds: [...paid.map(o => o.id), delivered!.id, delivered!.id], to: 'processing' }, app)
 
     expect(outcome).toEqual({ changed: paid.map(o => o.number).sort(newestFirst), skipped: [delivered!.number] })
 
@@ -57,7 +57,7 @@ describe('changeStatuses', () => {
     const theirs = await sandbox()
     const [order] = await ordersWith(theirs.workspaceId, 'paid', 1)
     // Sandboxes copy the template with its ids: the same id names one order in each workspace.
-    const outcome = await changeStatuses(actor(mine.workspaceId, mine.users.owner!, 'owner'), [order!.id, randomUUID()], 'processing', app)
+    const outcome = await changeStatuses(actor(mine.workspaceId, mine.users.owner!, 'owner'), { orderIds: [order!.id, randomUUID()], to: 'processing' }, app)
 
     expect(outcome).toEqual({ changed: [order!.number], skipped: [] })
 
@@ -71,7 +71,7 @@ describe('changeStatuses', () => {
     const { workspaceId, users } = await sandbox()
     const [order] = await ordersWith(workspaceId, 'paid', 1)
 
-    expect(await changeStatuses(actor(workspaceId, users.viewer!, 'viewer'), [order!.id], 'processing', app)).toEqual({ changed: [], skipped: [] })
+    expect(await changeStatuses(actor(workspaceId, users.viewer!, 'viewer'), { orderIds: [order!.id], to: 'processing' }, app)).toEqual({ changed: [], skipped: [] })
 
     const row = await admin.query<{ status: string }>('select status from fa.orders where workspace_id = $1 and id = $2', [workspaceId, order!.id])
 

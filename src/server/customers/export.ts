@@ -56,7 +56,11 @@ function cells(row: ExportRow, timeZone: string): string[] {
 }
 
 /** The file in the planned order, batch by batch (the shared CSV stream, as the orders export). */
-export function customerExportStream(ctx: WorkspaceContext, ids: readonly string[], labels: CustomerExportLabels, timeZone: string, pool: Pool = getPool()): ReadableStream<Uint8Array> {
+export function customerExportStream(
+  ctx: WorkspaceContext,
+  { ids, labels, timeZone }: { ids: readonly string[]; labels: CustomerExportLabels; timeZone: string },
+  pool: Pool = getPool(),
+): ReadableStream<Uint8Array> {
   const rows: ExportRows<ExportRow> = {
     read: (tx, slice) => tx
       .select({
@@ -70,5 +74,5 @@ export function customerExportStream(ctx: WorkspaceContext, ids: readonly string
     cells: row => cells(row, timeZone),
   }
 
-  return batchedCsvStream(ctx, ids, labels.header, rows, pool)
+  return batchedCsvStream(ctx, { ids, header: labels.header, rows }, pool)
 }

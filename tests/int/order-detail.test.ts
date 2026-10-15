@@ -67,7 +67,7 @@ describe('addNote', () => {
   it('adds a note with its author to the history and logs it', async () => {
     const [row] = (await admin.query<{ id: string; number: number }>("select id, number from fa.orders where workspace_id = $1 and status = 'paid' order by number limit 1", [workspaceId])).rows
 
-    expect(await addNote(actor('manager'), row!.id, 'Customer asked for a gift wrap.', app)).toBe(row!.number)
+    expect(await addNote(actor('manager'), { orderId: row!.id, note: 'Customer asked for a gift wrap.' }, app)).toBe(row!.number)
 
     const order = (await read(tx => getOrder(tx, workspaceId, row!.number)))!
 
@@ -77,12 +77,12 @@ describe('addNote', () => {
       "select actor_user_id, details from fa.activity_log where workspace_id = $1 and action = 'order.note_added' and entity_id = $2", [workspaceId, row!.id])
 
     expect(log.rows).toEqual([{ actor_user_id: users.manager, details: { number: row!.number } }])
-    expect(await addNote(actor('manager'), randomUUID(), 'Nobody reads this.', app)).toBeNull()
+    expect(await addNote(actor('manager'), { orderId: randomUUID(), note: 'Nobody reads this.' }, app)).toBeNull()
   })
 
   it('is refused for a viewer by row-level security', async () => {
     const [row] = (await admin.query<{ id: string }>('select id from fa.orders where workspace_id = $1 order by number limit 1', [workspaceId])).rows
-    const refusal = await addNote(actor('viewer'), row!.id, 'Not allowed.', app).then(() => '', errorText)
+    const refusal = await addNote(actor('viewer'), { orderId: row!.id, note: 'Not allowed.' }, app).then(() => '', errorText)
 
     expect(refusal).toMatch(/row-level security policy for table "order_events"/)
   })

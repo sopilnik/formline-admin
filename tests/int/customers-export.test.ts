@@ -55,7 +55,7 @@ describe('planCustomerExport', () => {
 describe('customerExportStream', () => {
   it('writes the byte-order mark, the header and one line per customer with the list figures', async () => {
     const plan = await planCustomerExport(ctx, { query: DEFAULT_CUSTOMERS_QUERY }, app)
-    const { bom, lines } = await read(customerExportStream(ctx, plan.ids, { header }, tz, app))
+    const { bom, lines } = await read(customerExportStream(ctx, { ids: plan.ids, labels: { header }, timeZone: tz }, app))
 
     expect(bom).toBe(true)
     expect(lines[0]).toBe('Customer,Email,City,Country,Orders,Total spent,First order,Last order,Customer since')
@@ -75,7 +75,7 @@ describe('customerExportStream', () => {
 
   it('defuses formulas, quotes commas and keeps Cyrillic names', async () => {
     const plan = await planCustomerExport(ctx, { query: { ...DEFAULT_CUSTOMERS_QUERY, sort: 'name', dir: 'asc' } }, app)
-    const { lines } = await read(customerExportStream(ctx, plan.ids, { header }, tz, app))
+    const { lines } = await read(customerExportStream(ctx, { ids: plan.ids, labels: { header }, timeZone: tz }, app))
     const formula = lines.find(line => line.includes('formula@example.test'))!
 
     expect(formula.startsWith('"\'=HYPERLINK(""x"")",formula@example.test,"Zürich, Altstadt",,0,0.00,,,')).toBe(true)

@@ -25,7 +25,9 @@ export type ExportRows<R extends { id: string }> = { read: (tx: Tx, ids: string[
  * transaction when the client asks for more, so no connection waits on a slow reader.
  */
 export function batchedCsvStream<R extends { id: string }>(
-  ctx: WorkspaceContext, ids: readonly string[], header: readonly string[], rows: ExportRows<R>, pool: Pool = getPool(),
+  ctx: WorkspaceContext,
+  { ids, header, rows }: { ids: readonly string[]; header: readonly string[]; rows: ExportRows<R> },
+  pool: Pool = getPool(),
 ): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder()
   let next = 0
@@ -60,7 +62,11 @@ export function batchedCsvStream<R extends { id: string }>(
 }
 
 /** The download: the file named after the list and the store's date, never cached, and marked when the list was cut. */
-export function csvResponse(name: string, stream: ReadableStream<Uint8Array>, plan: ExportPlan, timeZone: string, now: Date = new Date()): Response {
+export function csvResponse(
+  { name, stream, plan }: { name: string; stream: ReadableStream<Uint8Array>; plan: ExportPlan },
+  timeZone: string,
+  now: Date = new Date(),
+): Response {
   return new Response(stream, {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',

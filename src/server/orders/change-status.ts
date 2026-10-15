@@ -18,7 +18,11 @@ const newestFirst = (a: number, b: number): number => b - a
  * are walked in sorted order in one transaction, so two overlapping changes lock their
  * rows in the same order. An id the workspace does not hold is neither changed nor reported.
  */
-export async function changeStatuses(actor: Actor, orderIds: readonly string[], to: OrderStatus, pool: Pool = getPool()): Promise<StatusOutcome> {
+export async function changeStatuses(
+  actor: Actor,
+  { orderIds, to }: { orderIds: readonly string[]; to: OrderStatus },
+  pool: Pool = getPool(),
+): Promise<StatusOutcome> {
   const ids = [...new Set(orderIds)].sort()
 
   return withWorkspace(workspaceContext(actor), async tx => {

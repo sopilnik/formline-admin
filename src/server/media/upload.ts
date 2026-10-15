@@ -18,7 +18,11 @@ export const MEDIA_CAP = { images: 30, bytes: 20 * 1024 * 1024 } as const
 export type ImageUpload = { ok: true; imageId: string; width: number; height: number } | { ok: false; reason: 'not_found' | 'cap' }
 
 /** Whether one more upload of `bytes` fits beside the workspace's others; the product's own image does not count, it is replaced. */
-async function fits(tx: Tx, workspaceId: string, productImageId: string | null, bytes: number): Promise<boolean> {
+async function fits(
+  tx: Tx,
+  workspaceId: string,
+  { productImageId, bytes }: { productImageId: string | null; bytes: number },
+): Promise<boolean> {
   const [used] = await tx.select({ n: count(), bytes: sql<number>`coalesce(sum(${images.bytes}), 0)::int` }).from(images)
     .where(and(eq(images.workspaceId, workspaceId), eq(images.source, 'upload'), productImageId ? ne(images.id, productImageId) : undefined))
 
@@ -31,7 +35,11 @@ async function fits(tx: Tx, workspaceId: string, productImageId: string | null, 
  * old one commit together. When the database step refuses or fails, the stored files are removed
  * again, or queued for the daily job if storage refuses that too (the queue takes the copy along).
  */
-export async function storeProductImage(actor: Actor, productId: string, image: Processed, storage: MediaStorage, pool: Pool = getPool()): Promise<ImageUpload> {
+export async function storeProductImage(
+  actor: Actor,
+  { productId, image, storage }: { productId: string; image: Processed; storage: MediaStorage },
+  pool: Pool = getPool(),
+): Promise<ImageUpload> {
   const ctx = workspaceContext(actor)
   const before = await withWorkspace(ctx, async tx => {
     const [product] = await tx.select({ imageId: products.imageId }).from(products)
@@ -39,7 +47,7 @@ export async function storeProductImage(actor: Actor, productId: string, image: 
 
     if (!product) return 'not_found' as const
 
-    return (await fits(tx, actor.workspaceId, product.imageId, image.bytes.length)) ? 'fits' as const : 'cap' as const
+    return (await fits(tx, actor.workspaceId, { productImageId: product.imageId, bytes: image.bytes.length })) ? 'fits' as const : 'cap' as const
   }, pool)
 
   if (before !== 'fits') return { ok: false, reason: before }
@@ -69,7 +77,7 @@ export async function storeProductImage(actor: Actor, productId: string, image: 
         .where(and(eq(products.workspaceId, actor.workspaceId), eq(products.id, productId))).for('update')
 
       if (!product) return { ok: false, reason: 'not_found' }
-      if (!(await fits(tx, actor.workspaceId, product.imageId, image.bytes.length))) return { ok: false, reason: 'cap' }
+      if (!(await fits(tx, actor.workspaceId, { productImageId: product.imageId, bytes: image.bytes.length }))) return { ok: false, reason: 'cap' }
 
       await tx.insert(images).values({
         workspaceId: actor.workspaceId, id: imageId, storagePath: path, source: 'upload', width: image.width, height: image.height, bytes: image.bytes.length,

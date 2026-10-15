@@ -29,7 +29,7 @@ beforeAll(async () => {
 })
 afterAll(closeAll)
 
-const list = (query: Partial<OrdersQuery>, ctx = owner) => withWorkspace(ctx, tx => listOrders(tx, ctx.workspaceId, { ...DEFAULT_ORDERS_QUERY, ...query }, now, tz), app)
+const list = (query: Partial<OrdersQuery>, ctx = owner) => withWorkspace(ctx, tx => listOrders(tx, ctx.workspaceId, { query: { ...DEFAULT_ORDERS_QUERY, ...query }, now, timeZone: tz }), app)
 
 const countWhere = async (where: string, params: unknown[] = []) =>
   Number((await admin.query<{ n: string }>(`select count(*) as n from fa.orders o join fa.customers c on c.workspace_id = o.workspace_id and c.id = o.customer_id where o.workspace_id = $1 and (${where})`, [owner.workspaceId, ...params])).rows[0]!.n)

@@ -56,7 +56,11 @@ async function target(tx: Tx, workspaceId: string, userId: string): Promise<Targ
  * A new role for another active non-owner member. The owner row and one's own row are
  * refused here as the users trigger refuses them in the database.
  */
-export async function setMemberRole(tx: Tx, workspaceId: string, actorId: string, userId: string, role: AssignableRole): Promise<MemberChange> {
+export async function setMemberRole(
+  tx: Tx,
+  workspaceId: string,
+  { actorId, userId, role }: { actorId: string; userId: string; role: AssignableRole },
+): Promise<MemberChange> {
   const member = await target(tx, workspaceId, userId)
 
   if (!member) return { ok: false, reason: 'not_found' }
@@ -73,7 +77,11 @@ export async function setMemberRole(tx: Tx, workspaceId: string, actorId: string
  * Deactivates or reactivates another non-owner member. Deactivating ends every session of theirs at
  * once — the definer trigger `users_revoke_sessions` does it in the same statement.
  */
-export async function setMemberActive(tx: Tx, workspaceId: string, actorId: string, userId: string, active: boolean): Promise<MemberChange> {
+export async function setMemberActive(
+  tx: Tx,
+  workspaceId: string,
+  { actorId, userId, active }: { actorId: string; userId: string; active: boolean },
+): Promise<MemberChange> {
   const member = await target(tx, workspaceId, userId)
 
   if (!member) return { ok: false, reason: 'not_found' }

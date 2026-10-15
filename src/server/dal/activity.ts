@@ -47,7 +47,9 @@ export type ActivityPage = {
   lookups: Lookups
 }
 
-function activityFilters(workspaceId: string, query: ActivityQuery, now: Date, timeZone: string): SQL {
+export type ActivityRequest = { query: ActivityQuery; now: Date; timeZone: string }
+
+function activityFilters(workspaceId: string, { query, now, timeZone }: ActivityRequest): SQL {
   const parts: SQL[] = [eq(activityLog.workspaceId, workspaceId)]
 
   if (query.actor === SYSTEM_ACTOR) parts.push(isNull(activityLog.actorUserId))
@@ -70,8 +72,9 @@ const idsOf = (rows: ActivityRow[], type: string): string[] =>
  * The page reads the log alone; the names of its people and entities come from one query per table.
  * Row-level security shows the log to owners and admins only.
  */
-export async function listActivity(tx: Tx, workspaceId: string, query: ActivityQuery, now: Date, timeZone: string): Promise<ActivityPage> {
-  const where = activityFilters(workspaceId, query, now, timeZone)
+export async function listActivity(tx: Tx, workspaceId: string, request: ActivityRequest): Promise<ActivityPage> {
+  const { query } = request
+  const where = activityFilters(workspaceId, request)
   const [totalRow] = await tx.select({ n: count() }).from(activityLog).where(eq(activityLog.workspaceId, workspaceId))
   const [filteredRow] = await tx.select({ n: count() }).from(activityLog).where(where)
   const rows = await tx.select({

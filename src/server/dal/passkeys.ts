@@ -45,8 +45,7 @@ export async function findPasskeyByCredential(tx: Tx, workspaceId: string, crede
 
 export async function addPasskey(
   tx: Tx,
-  workspaceId: string,
-  userId: string,
+  { workspaceId, userId }: Who,
   passkey: { credentialId: string; publicKey: string; counter: number; transports: string[]; name: string },
 ): Promise<string> {
   const [row] = await tx.insert(passkeys).values({ workspaceId, userId, ...passkey }).returning({ id: passkeys.id })
@@ -54,11 +53,11 @@ export async function addPasskey(
   return row!.id
 }
 
-export async function recordPasskeyUse(tx: Tx, who: Who, id: string, counter: number): Promise<void> {
+export async function recordPasskeyUse(tx: Tx, who: Who, { id, counter }: { id: string; counter: number }): Promise<void> {
   await tx.update(passkeys).set({ counter, lastUsedAt: sql`now()` }).where(and(own(who), eq(passkeys.id, id)))
 }
 
-export async function renamePasskey(tx: Tx, who: Who, id: string, name: string): Promise<boolean> {
+export async function renamePasskey(tx: Tx, who: Who, { id, name }: { id: string; name: string }): Promise<boolean> {
   return (await tx.update(passkeys).set({ name }).where(and(own(who), eq(passkeys.id, id))).returning({ id: passkeys.id })).length === 1
 }
 

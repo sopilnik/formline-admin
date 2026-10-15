@@ -35,7 +35,7 @@ export async function planExport(
   return withWorkspace(ctx, async tx => {
     const where = input.ids
       ? and(eq(orders.workspaceId, ctx.workspaceId), inArray(orders.id, [...input.ids]))!
-      : orderFilters(ctx.workspaceId, input.query, input.now, input.timeZone)
+      : orderFilters(ctx.workspaceId, input)
     const rows = await tx.select({ id: orders.id }).from(orders).innerJoin(customers, orderCustomer)
       .where(where).orderBy(...orderSort(input.query)).limit(cap + 1)
 
@@ -65,7 +65,11 @@ function cells(row: ExportRow, labels: ExportLabels, timeZone: string): string[]
 }
 
 /** The file in the planned order, batch by batch (the shared CSV stream). */
-export function exportStream(ctx: WorkspaceContext, ids: readonly string[], labels: ExportLabels, timeZone: string, pool: Pool = getPool()): ReadableStream<Uint8Array> {
+export function exportStream(
+  ctx: WorkspaceContext,
+  { ids, labels, timeZone }: { ids: readonly string[]; labels: ExportLabels; timeZone: string },
+  pool: Pool = getPool(),
+): ReadableStream<Uint8Array> {
   const rows: ExportRows<ExportRow> = {
     read: (tx, slice) => tx
       .select({
@@ -78,5 +82,5 @@ export function exportStream(ctx: WorkspaceContext, ids: readonly string[], labe
     cells: row => cells(row, labels, timeZone),
   }
 
-  return batchedCsvStream(ctx, ids, labels.header, rows, pool)
+  return batchedCsvStream(ctx, { ids, header: labels.header, rows }, pool)
 }

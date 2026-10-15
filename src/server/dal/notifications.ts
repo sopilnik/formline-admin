@@ -102,7 +102,11 @@ const PAGE_ACTIONS: Partial<Record<string, Action>> = { '/team': 'team.read' }
 export type NotificationOpener = { workspaceId: string; role: Role; workspaceKind: WorkspaceKind }
 
 /** The page a notification opens: its order, its product (by id, whatever its slug is now), or a settings page. */
-export async function notificationHref(tx: Tx, opener: NotificationOpener, kind: string, payload: unknown): Promise<string> {
+export async function notificationHref(
+  tx: Tx,
+  opener: NotificationOpener,
+  { kind, payload }: { kind: string; payload: unknown },
+): Promise<string> {
   const target = notificationTarget(kind, payload)
 
   if (!target) return '/notifications'

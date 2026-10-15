@@ -132,7 +132,7 @@ export async function saveVariantsAction(previous: VariantsState, form: FormData
   if (!productId.success || parsed === null) return fail('not_found')
   if (!parsed.ok) return fail('invalid', parsed.errors)
 
-  const result = await saveVariantsWithLog(await actorOf(session), productId.data, parsed.rows)
+  const result = await saveVariantsWithLog(await actorOf(session), { productId: productId.data, rows: parsed.rows })
 
   if (!result.ok) return result.reason === 'stock_conflict' ? fail('stock_conflict', {}, result.skus) : fail('not_found')
   refresh()
@@ -152,7 +152,7 @@ export async function changeProductStatusAction(input: unknown): Promise<ActionR
 
   if (!parsed.success) return refused('invalid')
 
-  const result = await changeProductStatusWithLog(await actorOf(session), parsed.data.productId, parsed.data.to)
+  const result = await changeProductStatusWithLog(await actorOf(session), { productId: parsed.data.productId, to: parsed.data.to })
 
   refresh()
   if (result.ok) return ok({ to: result.to })

@@ -7,9 +7,13 @@ import { getPool } from '@/server/db/pool'
 import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 /** Saves the variant form and logs every changed variant with its before and after (`product.variants_updated`). */
-export async function saveVariantsWithLog(actor: Actor, productId: string, rows: readonly VariantRowInput[], pool: Pool = getPool()): Promise<VariantsSave> {
+export async function saveVariantsWithLog(
+  actor: Actor,
+  { productId, rows }: { productId: string; rows: readonly VariantRowInput[] },
+  pool: Pool = getPool(),
+): Promise<VariantsSave> {
   return withWorkspace(workspaceContext(actor), async tx => {
-    const result = await saveVariants(tx, actor.workspaceId, productId, rows)
+    const result = await saveVariants(tx, actor.workspaceId, { productId, rows })
 
     if (result.ok && result.changes.length > 0) {
       await logActivity(tx, actor.workspaceId, {

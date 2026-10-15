@@ -161,7 +161,7 @@ export async function signInWithPasskey(
 
   const ipHash = hashIp(meta.ip, config.ipHashKey)
   const signedIn = await withWorkspace(ctx, async tx => {
-    await recordPasskeyUse(tx, ctx, passkey.id, verified.newCounter)
+    await recordPasskeyUse(tx, ctx, { id: passkey.id, counter: verified.newCounter })
 
     return finishSignIn(tx, { workspaceId, userId, method: 'passkey', userAgent: meta.userAgent, ipHash, at: new Date(deps.now()) })
   }, pool)
@@ -192,7 +192,7 @@ export async function reauthenticateWithPasskey(
 
   const ipHash = hashIp(meta.ip, config.ipHashKey)
   const fresh = await withWorkspace(ctx, async tx => {
-    await recordPasskeyUse(tx, session, passkey.id, verified.newCounter)
+    await recordPasskeyUse(tx, session, { id: passkey.id, counter: verified.newCounter })
 
     const rotated = await rotateSession(tx, session, { userAgentSummary: summarizeUserAgent(meta.userAgent), ipHash })
 
@@ -270,7 +270,7 @@ export async function finishRegistration(
   const ipHash = hashIp(meta.ip, config.ipHashKey)
 
   await withWorkspace(workspaceContext(session), async tx => {
-    const id = await addPasskey(tx, session.workspaceId, session.userId, {
+    const id = await addPasskey(tx, session, {
       credentialId: credential.id,
       publicKey: encodeBase64urlNoPadding(credential.publicKey),
       counter: credential.counter,
@@ -295,7 +295,7 @@ export async function renameOwnPasskey(
 
   if (trimmed.length < 1 || trimmed.length > PASSKEY_NAME_MAX) return { ok: false, error: 'generic' }
 
-  const renamed = await withWorkspace(workspaceContext(session), tx => renamePasskey(tx, session, passkeyId, trimmed), deps.pool)
+  const renamed = await withWorkspace(workspaceContext(session), tx => renamePasskey(tx, session, { id: passkeyId, name: trimmed }), deps.pool)
 
   return renamed ? { ok: true } : { ok: false, error: 'generic' }
 }

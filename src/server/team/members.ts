@@ -8,9 +8,13 @@ import { getPool } from '@/server/db/pool'
 import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 /** A role change on the team page, logged as `team.role_changed`. */
-export async function changeMemberRole(actor: Actor, userId: string, role: AssignableRole, pool: Pool = getPool()): Promise<MemberChange> {
+export async function changeMemberRole(
+  actor: Actor,
+  { userId, role }: { userId: string; role: AssignableRole },
+  pool: Pool = getPool(),
+): Promise<MemberChange> {
   return withWorkspace(workspaceContext(actor), async tx => {
-    const result = await setMemberRole(tx, actor.workspaceId, actor.userId, userId, role)
+    const result = await setMemberRole(tx, actor.workspaceId, { actorId: actor.userId, userId, role })
 
     if (result.ok && result.changed) {
       await logActivity(tx, actor.workspaceId, {
@@ -24,9 +28,13 @@ export async function changeMemberRole(actor: Actor, userId: string, role: Assig
 }
 
 /** Deactivating (which signs the member out everywhere) or reactivating, logged as `team.deactivated` or `team.reactivated`. */
-export async function changeMemberActive(actor: Actor, userId: string, active: boolean, pool: Pool = getPool()): Promise<MemberChange> {
+export async function changeMemberActive(
+  actor: Actor,
+  { userId, active }: { userId: string; active: boolean },
+  pool: Pool = getPool(),
+): Promise<MemberChange> {
   return withWorkspace(workspaceContext(actor), async tx => {
-    const result = await setMemberActive(tx, actor.workspaceId, actor.userId, userId, active)
+    const result = await setMemberActive(tx, actor.workspaceId, { actorId: actor.userId, userId, active })
 
     if (result.ok && result.changed) {
       await logActivity(tx, actor.workspaceId, {

@@ -52,7 +52,7 @@ const stockSql = sql<number>`coalesce(sum(${productVariants.stock}), 0)::int`
 const nameSql = unicodeName(products.name)
 
 /** Every filter on the product's own columns; `withStatus: false` leaves the status out (the chip counts). */
-function productFilters(workspaceId: string, query: ProductsQuery, collectionId: string | null, withStatus = true): SQL {
+function productFilters(workspaceId: string, { query, collectionId }: { query: ProductsQuery; collectionId: string | null }, withStatus = true): SQL {
   const parts: SQL[] = [eq(products.workspaceId, workspaceId)]
 
   if (withStatus && query.status.length > 0) parts.push(inArray(products.status, query.status))
@@ -102,7 +102,7 @@ export async function listProducts(tx: Tx, workspaceId: string, query: ProductsQ
   const having = stockFilter(query)
 
   const kept = tx.select({ status: products.status }).from(products).leftJoin(productVariants, variantJoin)
-    .where(productFilters(workspaceId, query, collectionId, false))
+    .where(productFilters(workspaceId, { query, collectionId }, false))
     .groupBy(products.workspaceId, products.id).having(having).as('kept')
   const byStatus = await tx.select({ status: sql<ProductStatus>`${kept.status}`, n: count() }).from(kept).groupBy(kept.status)
   const statusCounts = Object.fromEntries(PRODUCT_STATUSES.map(s => [s, 0])) as Record<ProductStatus, number>
@@ -119,7 +119,7 @@ export async function listProducts(tx: Tx, workspaceId: string, query: ProductsQ
     priceFromCents: priceFromSql, stock: stockSql, variants: sql<number>`count(${productVariants.id})::int`,
     soldOut: soldOutSql, low: lowSql,
   }).from(products).leftJoin(productVariants, variantJoin)
-    .where(productFilters(workspaceId, query, collectionId))
+    .where(productFilters(workspaceId, { query, collectionId }))
     .groupBy(products.workspaceId, products.id).having(having)
     .orderBy(...productSort(query)).limit(query.size).offset((query.page - 1) * query.size)
 
@@ -313,7 +313,11 @@ export type VariantsSave =
  * and nothing is written; a stock the person left alone is not written at all, so a sale made
  * meanwhile stays counted.
  */
-export async function saveVariants(tx: Tx, workspaceId: string, productId: string, rows: readonly VariantRowInput[]): Promise<VariantsSave> {
+export async function saveVariants(
+  tx: Tx,
+  workspaceId: string,
+  { productId, rows }: { productId: string; rows: readonly VariantRowInput[] },
+): Promise<VariantsSave> {
   const [product] = await tx.select({ slug: products.slug }).from(products)
     .where(and(eq(products.workspaceId, workspaceId), eq(products.id, productId))).for('update')
 

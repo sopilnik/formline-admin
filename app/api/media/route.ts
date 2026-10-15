@@ -56,7 +56,7 @@ export async function POST(request: Request): Promise<Response> {
 
   if (typeof image === 'string') return refuse(image === 'type' ? 415 : 422, image)
 
-  const result = await storeProductImage(await actorOf(session), productId.data, image, storage)
+  const result = await storeProductImage(await actorOf(session), { productId: productId.data, image, storage })
 
   if (!result.ok) return result.reason === 'cap' ? refuse(409, 'cap') : refuse(404, 'not_found')
 

@@ -111,7 +111,11 @@ export async function getCustomer(tx: Tx, workspaceId: string, id: string): Prom
 }
 
 /** Replaces the notes; last save wins. Null when the workspace holds no such customer. */
-export async function updateCustomerNotes(tx: Tx, workspaceId: string, id: string, notes: string): Promise<{ name: string; changed: boolean } | null> {
+export async function updateCustomerNotes(
+  tx: Tx,
+  workspaceId: string,
+  { id, notes }: { id: string; notes: string },
+): Promise<{ name: string; changed: boolean } | null> {
   const [current] = await tx.select({ name: customers.name, notes: customers.notes }).from(customers)
     .where(and(eq(customers.workspaceId, workspaceId), eq(customers.id, id)))
 

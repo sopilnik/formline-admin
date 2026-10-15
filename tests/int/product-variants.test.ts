@@ -42,7 +42,7 @@ describe('saveVariantsWithLog', () => {
       'far-orbit-a3-ocean': { stock: 40 },
     })
     const before = product.variants.find(v => v.sku === 'far-orbit-a3-ocean')!.stock
-    const result = await saveVariantsWithLog(owner, product.id, rows, app)
+    const result = await saveVariantsWithLog(owner, { productId: product.id, rows }, app)
 
     expect(result).toEqual({
       ok: true, slug: 'far-orbit',
@@ -66,7 +66,7 @@ describe('saveVariantsWithLog', () => {
   it('goes back to the computed price when the own price is emptied', async () => {
     const { product, rows } = await formFor('far-orbit', { 'far-orbit-a1-ink': { priceOverrideCents: null } })
 
-    expect(await saveVariantsWithLog(owner, product.id, rows, app)).toMatchObject({ ok: true, changes: [{ sku: 'far-orbit-a1-ink', price: [6500, null] }] })
+    expect(await saveVariantsWithLog(owner, { productId: product.id, rows }, app)).toMatchObject({ ok: true, changes: [{ sku: 'far-orbit-a1-ink', price: [6500, null] }] })
     expect((await read('far-orbit')).variants.find(v => v.sku === 'far-orbit-a1-ink')?.priceCents).toBe(7100)
   })
 
@@ -75,7 +75,7 @@ describe('saveVariantsWithLog', () => {
 
     await setStock('hush-a2-ink', 1)
 
-    const result = await saveVariantsWithLog(owner, product.id, rows, app)
+    const result = await saveVariantsWithLog(owner, { productId: product.id, rows }, app)
 
     expect(result).toEqual({ ok: true, slug: 'hush', changes: [{ sku: 'hush-a3-ink', threshold: [3, 2] }] })
     expect((await read('hush')).variants.find(v => v.sku === 'hush-a2-ink')?.stock).toBe(1)
@@ -85,7 +85,7 @@ describe('saveVariantsWithLog', () => {
     const { product, rows } = await formFor('loud', { 'loud-a3-signal': { stock: 30 }, 'loud-a1-ocean': { lowStockThreshold: 9 } })
 
     await setStock('loud-a3-signal', 7)
-    expect(await saveVariantsWithLog(owner, product.id, rows, app)).toEqual({ ok: false, reason: 'stock_conflict', skus: ['loud-a3-signal'] })
+    expect(await saveVariantsWithLog(owner, { productId: product.id, rows }, app)).toEqual({ ok: false, reason: 'stock_conflict', skus: ['loud-a3-signal'] })
 
     const after = await read('loud')
 
@@ -97,11 +97,11 @@ describe('saveVariantsWithLog', () => {
     const { product, rows } = await formFor('slow')
     const stranger = (await read('sparse')).variants[0]!
 
-    expect(await saveVariantsWithLog(owner, product.id, [...rows, { id: stranger.id, priceOverrideCents: null, stock: 1, stockWas: stranger.stock, lowStockThreshold: 3 }], app))
+    expect(await saveVariantsWithLog(owner, { productId: product.id, rows: [...rows, { id: stranger.id, priceOverrideCents: null, stock: 1, stockWas: stranger.stock, lowStockThreshold: 3 }] }, app))
       .toEqual({ ok: false, reason: 'not_found' })
 
     const viewerId = (await admin.query<{ id: string }>("select id from fa.users where workspace_id = $1 and role = 'viewer'", [owner.workspaceId])).rows[0]!.id
 
-    expect(await saveVariantsWithLog({ ...owner, userId: viewerId, role: 'viewer' }, product.id, rows, app)).toEqual({ ok: false, reason: 'not_found' })
+    expect(await saveVariantsWithLog({ ...owner, userId: viewerId, role: 'viewer' }, { productId: product.id, rows }, app)).toEqual({ ok: false, reason: 'not_found' })
   })
 })

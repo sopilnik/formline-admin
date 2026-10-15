@@ -30,7 +30,7 @@ export async function changeMemberRoleAction(input: unknown): Promise<ActionResu
 
   if (!parsed.success) return fail('invalid')
 
-  const result = await changeMemberRole(await actorOf(session), parsed.data.userId, parsed.data.role)
+  const result = await changeMemberRole(await actorOf(session), { userId: parsed.data.userId, role: parsed.data.role })
 
   if (!result.ok) return fail(result.reason === 'not_found' ? 'not_found' : 'forbidden')
   // The table and the demo banner's list of users both change.
@@ -49,7 +49,7 @@ export async function changeMemberActiveAction(input: unknown): Promise<ActionRe
 
   if (!parsed.success) return fail('invalid')
 
-  const result = await changeMemberActive(await actorOf(session), parsed.data.userId, parsed.data.active)
+  const result = await changeMemberActive(await actorOf(session), { userId: parsed.data.userId, active: parsed.data.active })
 
   if (!result.ok) return fail(result.reason === 'not_found' ? 'not_found' : 'forbidden')
   refresh()

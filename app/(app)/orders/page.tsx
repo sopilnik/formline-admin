@@ -35,7 +35,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const { timeZone, page } = await withWorkspace(workspaceContext(session), async tx => {
     const settings = await getStoreSettings(tx, session.workspaceId)
 
-    return { timeZone: settings.timezone, page: await listOrders(tx, session.workspaceId, query, now, settings.timezone) }
+    return { timeZone: settings.timezone, page: await listOrders(tx, session.workspaceId, { query, now, timeZone: settings.timezone }) }
   })
 
   // A page number past the end (an old link, a narrower filter) lands on the last page.

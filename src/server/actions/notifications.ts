@@ -22,7 +22,7 @@ export async function openNotificationAction(form: FormData): Promise<void> {
   const href = await withWorkspace(workspaceContext(session), async tx => {
     const opened = await markNotificationRead(tx, await readerOf(tx, session), id.data)
 
-    return opened ? notificationHref(tx, session, opened.kind, opened.payload) : '/notifications'
+    return opened ? notificationHref(tx, session, { kind: opened.kind, payload: opened.payload }) : '/notifications'
   })
 
   // The page of notifications shows the mark; this also clears the pages the browser keeps for a minute.

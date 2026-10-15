@@ -35,8 +35,10 @@ function searchCondition(term: string): SQL {
   return or(byNumber, ilike(customers.name, pattern), ilike(customers.email, pattern))!
 }
 
+export type OrdersRequest = { query: OrdersQuery; now: Date; timeZone: string }
+
 /** Every filter of the query as one condition; `withStatus: false` leaves the status out (the chip counts). */
-export function orderFilters(workspaceId: string, query: OrdersQuery, now: Date, timeZone: string, withStatus = true): SQL {
+export function orderFilters(workspaceId: string, { query, now, timeZone }: OrdersRequest, withStatus = true): SQL {
   const parts: SQL[] = [eq(orders.workspaceId, workspaceId)]
 
   if (withStatus && query.status.length > 0) parts.push(inArray(orders.status, query.status))
@@ -66,8 +68,9 @@ export const ROW_FIELDS = {
   items: itemsSql, totalCents: orders.totalCents, status: orders.status, source: orders.source,
 }
 
-export async function listOrders(tx: Tx, workspaceId: string, query: OrdersQuery, now: Date, timeZone: string): Promise<OrdersPage> {
-  const where = orderFilters(workspaceId, query, now, timeZone)
+export async function listOrders(tx: Tx, workspaceId: string, request: OrdersRequest): Promise<OrdersPage> {
+  const { query } = request
+  const where = orderFilters(workspaceId, request)
   const rows = await tx
     .select(ROW_FIELDS)
     .from(orders).innerJoin(customers, orderCustomer).where(where)
@@ -75,7 +78,7 @@ export async function listOrders(tx: Tx, workspaceId: string, query: OrdersQuery
   const [filteredRow] = await tx.select({ n: count() }).from(orders).innerJoin(customers, orderCustomer).where(where)
   const [totalRow] = await tx.select({ n: count() }).from(orders).where(eq(orders.workspaceId, workspaceId))
   const byStatus = await tx.select({ status: orders.status, n: count() }).from(orders).innerJoin(customers, orderCustomer)
-    .where(orderFilters(workspaceId, query, now, timeZone, false)).groupBy(orders.status)
+    .where(orderFilters(workspaceId, request, false)).groupBy(orders.status)
   const statusCounts = Object.fromEntries(ORDER_STATUSES.map(status => [status, 0])) as Record<OrderStatus, number>
 
   for (const row of byStatus) statusCounts[row.status] = row.n

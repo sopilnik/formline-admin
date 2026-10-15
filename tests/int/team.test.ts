@@ -52,22 +52,22 @@ describe('listTeam', () => {
 
 describe('changeMemberRole', () => {
   it('gives another member a new role and logs the change', async () => {
-    const result = await changeMemberRole(owner, ids.manager, 'viewer', app)
+    const result = await changeMemberRole(owner, { userId: ids.manager, role: 'viewer' }, app)
 
     expect(result).toEqual({ ok: true, name: 'Priya Nair', from: 'manager', changed: true })
     expect((await roleOf(ids.manager)).role).toBe('viewer')
     expect(await logged(ids.manager)).toEqual([{ action: 'team.role_changed', actor: owner.userId, details: { name: 'Priya Nair', from: 'manager', to: 'viewer' } }])
-    expect(await changeMemberRole(as('admin'), ids.manager, 'viewer', app)).toMatchObject({ ok: true, changed: false })
+    expect(await changeMemberRole(as('admin'), { userId: ids.manager, role: 'viewer' }, app)).toMatchObject({ ok: true, changed: false })
     expect(await logged(ids.manager)).toHaveLength(1)
-    await changeMemberRole(as('admin'), ids.manager, 'manager', app)
+    await changeMemberRole(as('admin'), { userId: ids.manager, role: 'manager' }, app)
     expect((await roleOf(ids.manager)).role).toBe('manager')
   })
 
   it('refuses the owner row, one’s own row and a role that may not manage the team', async () => {
-    expect(await changeMemberRole(as('admin'), ids.owner, 'viewer', app)).toEqual({ ok: false, reason: 'not_allowed' })
-    expect(await changeMemberRole(as('admin'), ids.admin, 'viewer', app)).toEqual({ ok: false, reason: 'not_allowed' })
-    expect(await changeMemberRole(as('manager'), ids.viewer, 'admin', app)).toEqual({ ok: false, reason: 'not_allowed' })
-    expect(await changeMemberRole(owner, randomUUID(), 'viewer', app)).toEqual({ ok: false, reason: 'not_found' })
+    expect(await changeMemberRole(as('admin'), { userId: ids.owner, role: 'viewer' }, app)).toEqual({ ok: false, reason: 'not_allowed' })
+    expect(await changeMemberRole(as('admin'), { userId: ids.admin, role: 'viewer' }, app)).toEqual({ ok: false, reason: 'not_allowed' })
+    expect(await changeMemberRole(as('manager'), { userId: ids.viewer, role: 'admin' }, app)).toEqual({ ok: false, reason: 'not_allowed' })
+    expect(await changeMemberRole(owner, { userId: randomUUID(), role: 'viewer' }, app)).toEqual({ ok: false, reason: 'not_found' })
     expect([(await roleOf(ids.owner)).role, (await roleOf(ids.admin)).role, (await roleOf(ids.viewer)).role]).toEqual(['owner', 'admin', 'viewer'])
   })
 })
@@ -77,21 +77,21 @@ describe('changeMemberActive', () => {
     await admin.query(
       "insert into fa.sessions (workspace_id, id, user_id, expires_at, second_factor_verified) values ($1, $2, $3, now() + interval '1 hour', true)",
       [owner.workspaceId, hashToken(generateToken()), ids.admin])
-    expect(await changeMemberActive(owner, ids.admin, false, app)).toEqual({ ok: true, name: 'Noah Becker', from: 'admin', changed: true })
+    expect(await changeMemberActive(owner, { userId: ids.admin, active: false }, app)).toEqual({ ok: true, name: 'Noah Becker', from: 'admin', changed: true })
     expect((await roleOf(ids.admin)).deactivated).toBe(true)
 
     const sessions = await admin.query<{ n: number }>('select count(*)::int as n from fa.sessions where workspace_id = $1 and user_id = $2', [owner.workspaceId, ids.admin])
 
     expect(sessions.rows[0]!.n).toBe(0)
-    expect(await changeMemberActive(owner, ids.admin, true, app)).toMatchObject({ ok: true, changed: true })
+    expect(await changeMemberActive(owner, { userId: ids.admin, active: true }, app)).toMatchObject({ ok: true, changed: true })
     expect((await roleOf(ids.admin)).deactivated).toBe(false)
     expect((await logged(ids.admin)).map(e => e.action)).toEqual(['team.deactivated', 'team.reactivated'])
   })
 
   it('refuses the owner, oneself and a manager', async () => {
-    expect(await changeMemberActive(as('admin'), ids.owner, false, app)).toEqual({ ok: false, reason: 'not_allowed' })
-    expect(await changeMemberActive(owner, ids.owner, false, app)).toEqual({ ok: false, reason: 'not_allowed' })
-    expect(await changeMemberActive(as('manager'), ids.viewer, false, app)).toEqual({ ok: false, reason: 'not_allowed' })
+    expect(await changeMemberActive(as('admin'), { userId: ids.owner, active: false }, app)).toEqual({ ok: false, reason: 'not_allowed' })
+    expect(await changeMemberActive(owner, { userId: ids.owner, active: false }, app)).toEqual({ ok: false, reason: 'not_allowed' })
+    expect(await changeMemberActive(as('manager'), { userId: ids.viewer, active: false }, app)).toEqual({ ok: false, reason: 'not_allowed' })
     expect((await roleOf(ids.viewer)).deactivated).toBe(false)
   })
 })

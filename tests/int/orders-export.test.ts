@@ -65,7 +65,7 @@ describe('planExport', () => {
 describe('exportStream', () => {
   it('writes the byte-order mark, the header and one record per order in the planned order', async () => {
     const ids = (await idsWhere('true', 'number desc')).slice(0, 620)
-    const { bom, lines } = await read(exportStream(ctx, ids, labels, tz, app))
+    const { bom, lines } = await read(exportStream(ctx, { ids, labels, timeZone: tz }, app))
 
     expect(bom).toBe(true)
     expect(lines[0]).toBe('Order,Placed,Customer,Email,Items,Subtotal,Shipping,Total,Status,Source,Delivery')
@@ -95,7 +95,7 @@ describe('exportStream', () => {
       'update fa.customers c set name = $3 from fa.orders o where o.workspace_id = $1 and o.id = $2 and c.workspace_id = o.workspace_id and c.id = o.customer_id',
       [ctx.workspaceId, id, '=HYPERLINK("http://x.test","hi")'])
 
-    const { lines } = await read(exportStream(ctx, [id!], labels, tz, app))
+    const { lines } = await read(exportStream(ctx, { ids: [id!], labels, timeZone: tz }, app))
 
     expect(lines[1]).toContain(',"\'=HYPERLINK(""http://x.test"",""hi"")",')
   })

@@ -33,7 +33,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
   const { log, timeZone } = await withWorkspace(workspaceContext(session), async tx => {
     const zone = (await getStoreSettings(tx, session.workspaceId)).timezone
 
-    return { log: await listActivity(tx, session.workspaceId, query, new Date(), zone), timeZone: zone }
+    return { log: await listActivity(tx, session.workspaceId, { query, now: new Date(), timeZone: zone }), timeZone: zone }
   })
 
   if (log.filtered > 0 && query.page > log.pages) redirect(activityHref(query, { page: log.pages }))

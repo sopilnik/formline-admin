@@ -47,7 +47,7 @@ describe('storeProductImage', () => {
     const storage = memoryStorage()
     const product = await productOf(owner, 'hush')
     const poster = await imageRow(owner, product.image_id!)
-    const result = await storeProductImage(owner, product.id, webp(), storage, app)
+    const result = await storeProductImage(owner, { productId: product.id, image: webp(), storage }, app)
 
     expect(result).toMatchObject({ ok: true, width: 720, height: 1018 })
     if (!result.ok) return
@@ -70,8 +70,8 @@ describe('storeProductImage', () => {
     const owner = await sandbox()
     const storage = memoryStorage()
     const product = await productOf(owner, 'loud')
-    const first = await storeProductImage(owner, product.id, webp(), storage, app)
-    const second = await storeProductImage(owner, product.id, webp(), storage, app)
+    const first = await storeProductImage(owner, { productId: product.id, image: webp(), storage }, app)
+    const second = await storeProductImage(owner, { productId: product.id, image: webp(), storage }, app)
 
     if (!first.ok || !second.ok) throw new Error('upload refused')
     expect(await queued(mediaPath(owner.workspaceId, first.imageId))).toBe(1)
@@ -90,7 +90,7 @@ describe('storeProductImage', () => {
       [other.workspaceId])).rows[0]!
     const storage = memoryStorage()
 
-    expect(await storeProductImage(owner, theirs.id, webp(), storage, app)).toEqual({ ok: false, reason: 'not_found' })
+    expect(await storeProductImage(owner, { productId: theirs.id, image: webp(), storage }, app)).toEqual({ ok: false, reason: 'not_found' })
     expect(storage.files.size).toBe(0)
   })
 
@@ -104,7 +104,7 @@ describe('storeProductImage', () => {
       if (path.endsWith('.thumb.webp')) throw new Error(`refused: ${path}`)
       await put(path, bytes)
     }
-    await expect(storeProductImage(owner, product.id, webp(), storage, app)).rejects.toThrow('refused')
+    await expect(storeProductImage(owner, { productId: product.id, image: webp(), storage }, app)).rejects.toThrow('refused')
     expect(storage.files.size).toBe(0)
 
     // Storage refuses the cleanup as well, and the database refuses to queue it: the error is still the small copy's.
@@ -123,7 +123,7 @@ describe('storeProductImage', () => {
     const error = vi.spyOn(log, 'error')
 
     try {
-      await expect(storeProductImage(owner, product.id, webp(), storage, refusing)).rejects.toThrow(/refused: .*\.thumb\.webp/)
+      await expect(storeProductImage(owner, { productId: product.id, image: webp(), storage }, refusing)).rejects.toThrow(/refused: .*\.thumb\.webp/)
       expect(warn).toHaveBeenCalledWith(expect.objectContaining({ event: 'media.discard_failed' }))
       expect(error).toHaveBeenCalledWith(expect.objectContaining({ event: 'media.discard_unqueued' }))
     } finally {
@@ -142,23 +142,23 @@ describe('storeProductImage', () => {
        select $1::uuid, gen_random_uuid(), 'ws/' || $1::text || '/' || gen_random_uuid() || '.webp', 'upload', 10, 10, 1000 from generate_series(1, $2::int)`,
       [owner.workspaceId, MEDIA_CAP.images - 1])
 
-    const last = await storeProductImage(owner, products[0]!.id, webp(), storage, app)
+    const last = await storeProductImage(owner, { productId: products[0]!.id, image: webp(), storage }, app)
 
     expect(last.ok).toBe(true)
-    expect(await storeProductImage(owner, products[1]!.id, webp(), storage, app)).toEqual({ ok: false, reason: 'cap' })
-    expect(await storeProductImage(owner, products[0]!.id, webp(), storage, app)).toMatchObject({ ok: true })
+    expect(await storeProductImage(owner, { productId: products[1]!.id, image: webp(), storage }, app)).toEqual({ ok: false, reason: 'cap' })
+    expect(await storeProductImage(owner, { productId: products[0]!.id, image: webp(), storage }, app)).toMatchObject({ ok: true })
 
     const heavy = await sandbox()
     const big = (await productOf(heavy, 'hush')).id
 
-    expect(await storeProductImage(heavy, big, webp(MEDIA_CAP.bytes + 1), storage, app)).toEqual({ ok: false, reason: 'cap' })
+    expect(await storeProductImage(heavy, { productId: big, image: webp(MEDIA_CAP.bytes + 1), storage }, app)).toEqual({ ok: false, reason: 'cap' })
     // The cap holds the sum: 500 bytes short of it, a 1000-byte upload crosses it and a 400-byte one fits.
     await admin.query(
       `insert into fa.images (workspace_id, id, storage_path, source, width, height, bytes)
        values ($1::uuid, gen_random_uuid(), 'ws/' || $1::text || '/' || gen_random_uuid() || '.webp', 'upload', 10, 10, $2)`,
       [heavy.workspaceId, MEDIA_CAP.bytes - 500])
-    expect(await storeProductImage(heavy, big, webp(1000), storage, app)).toEqual({ ok: false, reason: 'cap' })
-    expect(await storeProductImage(heavy, big, webp(400), storage, app)).toMatchObject({ ok: true })
+    expect(await storeProductImage(heavy, { productId: big, image: webp(1000), storage }, app)).toEqual({ ok: false, reason: 'cap' })
+    expect(await storeProductImage(heavy, { productId: big, image: webp(400), storage }, app)).toMatchObject({ ok: true })
     // Three uploads went through, each with its small copy.
     expect(storage.files.size).toBe(6)
   })
@@ -169,7 +169,7 @@ describe('storeProductImage', () => {
     const storage = memoryStorage()
     const product = await productOf(owner, 'hush')
 
-    await expect(storeProductImage({ ...owner, userId: viewerId, role: 'viewer' }, product.id, webp(), storage, app)).resolves.toEqual({ ok: false, reason: 'not_found' })
+    await expect(storeProductImage({ ...owner, userId: viewerId, role: 'viewer' }, { productId: product.id, image: webp(), storage }, app)).resolves.toEqual({ ok: false, reason: 'not_found' })
     expect(storage.files.size).toBe(0)
   })
 })

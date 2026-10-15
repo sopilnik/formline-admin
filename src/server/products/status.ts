@@ -8,7 +8,11 @@ import { getPool } from '@/server/db/pool'
 import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 /** A status step with its activity entry (`product.status_changed`). */
-export async function changeProductStatusWithLog(actor: Actor, productId: string, to: ProductStatus, pool: Pool = getPool()): Promise<ProductStatusChange> {
+export async function changeProductStatusWithLog(
+  actor: Actor,
+  { productId, to }: { productId: string; to: ProductStatus },
+  pool: Pool = getPool(),
+): Promise<ProductStatusChange> {
   return withWorkspace(workspaceContext(actor), async tx => {
     const result = await changeProductStatus(tx, actor.workspaceId, { productId, to })
 

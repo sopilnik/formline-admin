@@ -30,7 +30,7 @@ export async function saveCustomerNotesAction(previous: CustomerNotesState, form
 
   if (!parsed.ok) return { status: 'error', error: parsed.error, notes: text }
 
-  const outcome = await saveCustomerNotes(await actorOf(session), customerId.data, parsed.notes)
+  const outcome = await saveCustomerNotes(await actorOf(session), { customerId: customerId.data, notes: parsed.notes })
 
   if (outcome === 'not_found') return { status: 'error', error: 'not_found', notes: text }
   refresh()
