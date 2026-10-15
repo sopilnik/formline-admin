@@ -33,14 +33,17 @@ const NOTHING_PURGED: DailyReport['purged'] = { rateLimits: 0, challenges: 0, se
 /** Milliseconds from `nowMs` to the next run. */
 export function msUntilNextRun(nowMs: number, at: { hour: number; minute: number } = DAILY_RUN_UTC): number {
   const next = new Date(nowMs)
+
   next.setUTCHours(at.hour, at.minute, 0, 0)
   if (next.getTime() <= nowMs) next.setTime(next.getTime() + DAY_MS)
+
   return next.getTime() - nowMs
 }
 
 async function purgeHousekeeping(pool: Pool): Promise<DailyReport['purged']> {
   const { rows } = await pool.query<PurgeRow>('select * from fa.purge_housekeeping()')
   const purged = rows[0]!
+
   return { rateLimits: purged.purged_rate_limits, challenges: purged.purged_challenges, sessions: purged.purged_sessions, failedSignIns: purged.purged_failed_sign_ins }
 }
 
@@ -51,6 +54,7 @@ async function step<T>(name: DailyStep, failed: DailyStep[], fallback: T, run: (
   } catch (error) {
     log.error({ event: 'daily.step_failed', step: name, err: error })
     failed.push(name)
+
     return fallback
   }
 }
@@ -68,11 +72,14 @@ export async function runDailyJob(deps: { pool?: Pool; storage?: MediaStorage; p
   const media = await step('media', failed, { deleted: 0, retried: 0 }, () => drainPendingDeletions(deps.storage ?? mediaStorage() ?? unavailableStorage, pool))
   const customers = await step('customers', failed, 0, async () => {
     const pseudonymKey = deps.pseudonymKey === undefined ? stripeConfig()?.pseudonymKey ?? null : deps.pseudonymKey
+
     return pseudonymKey ? pseudonymiseOldCustomers(pseudonymKey, pool) : 0
   })
 
   const report: DailyReport = { sandboxes, purged, media, customers, failed }
+
   log.info({ event: 'daily.done', ...report })
+
   return report
 }
 
@@ -82,7 +89,9 @@ export type Timer = { after(ms: number, fn: () => void): () => void }
 export const nodeTimer: Timer = {
   after(ms, fn) {
     const handle = setTimeout(fn, ms)
+
     handle.unref()
+
     return () => clearTimeout(handle)
   },
 }
@@ -98,7 +107,9 @@ export function scheduleDailyJob(run: () => Promise<unknown> = runDailyJob, nowM
       arm(DAY_MS)
     })
   }
+
   arm(msUntilNextRun(nowMs))
+
   return () => {
     stopped = true
     cancel()

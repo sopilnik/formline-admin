@@ -27,6 +27,7 @@ type Props = {
 export function Pager({ namespace, sizeId, page, pages, size, filtered, href }: Props) {
   const t = useTranslations(namespace)
   const { from, to } = pageRange(page, size, filtered)
+
   return (
     <nav aria-label={t('label')} className="flex flex-wrap items-center gap-3 px-3 pt-3 text-[13px] text-muted-foreground">
       <span className="tabular-nums">{t('range', { from, to, total: filtered })}</span>

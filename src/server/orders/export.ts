@@ -31,12 +31,14 @@ export async function planExport(
   pool: Pool = getPool(),
 ): Promise<ExportPlan> {
   const cap = input.cap ?? EXPORT_CAP
+
   return withWorkspace(ctx, async tx => {
     const where = input.ids
       ? and(eq(orders.workspaceId, ctx.workspaceId), inArray(orders.id, [...input.ids]))!
       : orderFilters(ctx.workspaceId, input.query, input.now, input.timeZone)
     const rows = await tx.select({ id: orders.id }).from(orders).innerJoin(customers, orderCustomer)
       .where(where).orderBy(...orderSort(input.query)).limit(cap + 1)
+
     return { ids: rows.slice(0, cap).map(row => row.id), truncated: rows.length > cap }
   }, pool)
 }
@@ -75,5 +77,6 @@ export function exportStream(ctx: WorkspaceContext, ids: readonly string[], labe
       .where(and(eq(orders.workspaceId, ctx.workspaceId), inArray(orders.id, slice))),
     cells: row => cells(row, labels, timeZone),
   }
+
   return batchedCsvStream(ctx, ids, labels.header, rows, pool)
 }

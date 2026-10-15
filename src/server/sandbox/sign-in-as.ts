@@ -35,6 +35,7 @@ export type SwitchInput = {
  */
 export async function switchUser(session: Session, input: SwitchInput, overrides: Partial<AuthDeps> = {}): Promise<({ ok: true } & NewSession) | AuthFailure<'code'>> {
   const deps = authDeps(overrides)
+
   if (session.workspaceKind !== 'sandbox') return { ok: false, error: 'generic' }
 
   const ctx = workspaceContext(session)
@@ -42,18 +43,22 @@ export async function switchUser(session: Session, input: SwitchInput, overrides
     target: await getMemberFactor(tx, { workspaceId: session.workspaceId, userId: input.targetUserId }),
     shortcutsEnabled: (await getSelf(tx, session))?.shortcutsEnabled ?? true,
   }), deps.pool)
+
   if (!target || target.deactivatedAt || target.id === session.userId) return { ok: false, error: 'generic' }
 
   const subject = userSubject(session.workspaceId, target.id)
   let step: number | null = null
   let claim: Granted | null = null
+
   if (target.totpSecretEnc) {
     const claimed = await claimAttempt(GUARDS.secondFactor, subject, deps.pool)
+
     if (!claimed.ok) return { ok: false, error: 'member_locked', field: 'code', retryAfterSeconds: claimed.retryAfterSeconds }
     claim = claimed
 
     const secret = decryptTotpSecret(target.totpSecretEnc, { workspaceId: session.workspaceId, userId: target.id }, deps.config.totpKeys)
     const verdict = verifyTotp(secret, input.code, target.totpLastStep, deps.now())
+
     if (!verdict.ok) return wrongCode(ctx, target.id, claim, input.ipHash, deps)
     step = verdict.step
   }
@@ -63,12 +68,14 @@ export async function switchUser(session: Session, input: SwitchInput, overrides
   const result = await withWorkspace(ctx, tx => tx.execute<{ expires_at: string | null }>(
     sql`select fa.sandbox_sign_in_as(${target.id}, ${session.id}, ${id}, ${step}, ${input.userAgentSummary}, ${input.ipHash}) as expires_at`), deps.pool)
   const expiresAt = result.rows[0]!.expires_at
+
   // Null: a switch that ran alongside this one stored the code's step first, so the code is used.
   if (expiresAt === null) return wrongCode(ctx, target.id, claim!, input.ipHash, deps)
   if (claim) await giveBack(GUARDS.secondFactor, subject, claim, deps.pool)
 
   // Row-level security lets a member write only their own row, so this runs as the member just switched to.
   await withWorkspace({ ...ctx, userId: target.id, role: target.role }, tx => updateSelfPreferences(tx, { workspaceId: session.workspaceId, userId: target.id }, { ...input.preferences, shortcutsEnabled }), deps.pool)
+
   return { ok: true, token, id, expiresAt: asDate(expiresAt) }
 }
 
@@ -81,9 +88,11 @@ async function wrongCode(ctx: WorkspaceContext, targetId: string, claim: Granted
 
   await withWorkspace(ctx, async tx => {
     const member = (await getSelf(tx, { workspaceId: ctx.workspaceId, userId: targetId }))!
+
     await logActivity(tx, ctx.workspaceId, { actorUserId: targetId, action: 'auth.second_factor_locked', ipHash })
     await securityNotice(tx, ctx.workspaceId, member, 'auth.second_factor_locked', {}, { at: new Date(deps.now()) })
   }, deps.pool)
+
   // The member is told, not the owner: the message says so (the owner's own sign-in keeps second_factor_locked).
   return { ok: false, error: 'member_locked', field: 'code', retryAfterSeconds: SECOND_FACTOR_LOCK_SECONDS }
 }

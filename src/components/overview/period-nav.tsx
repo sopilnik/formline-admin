@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 /** The period selector: links, so it works with Back and without scripts. */
 export function PeriodNav({ period }: { period: Period }) {
   const t = useTranslations('overview.periods')
+
   return (
     <nav aria-label={t('label')} className="max-w-full overflow-x-auto">
       <ul className="inline-flex gap-0.5 rounded-lg border border-input bg-card p-[3px]">

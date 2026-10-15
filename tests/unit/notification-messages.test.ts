@@ -27,8 +27,10 @@ describe('notification messages', () => {
   it('only take keys both dictionaries have', () => {
     const keys = new Set(VIEWS.flatMap(view => {
       const message = notificationMessage(view, 'en', role => role)
+
       return [message.title.key, message.detail.key]
     }))
+
     expect(keys.size).toBe(20)
     for (const key of keys) {
       expect(typeof lookup(en, `notifications.kinds.${key}`), key).toBe('string')

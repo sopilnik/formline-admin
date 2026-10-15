@@ -5,5 +5,6 @@ import { DetailNotFound } from '@/components/app/detail-page'
 export async function PageNotFound() {
   const t = await getTranslations('notFound')
   const nav = await getTranslations('nav')
+
   return <DetailNotFound title={t('title')} body={t('description')} href="/overview" link={nav('overview')} />
 }

@@ -17,7 +17,9 @@ const REVENUE = "('paid', 'processing', 'shipped', 'delivered')"
 beforeAll(async () => {
   admin = adminPool()
   app = appPool()
+
   const { workspaceId, userId } = await createSandbox(app)
+
   ctx = { workspaceId, userId, role: 'viewer' }
 })
 afterAll(closeAll)
@@ -28,7 +30,9 @@ const one = async (text: string, params: unknown[]) => Number((await admin.query
 /** A sandbox of its own whose seed orders all lie two years back, delivered: a test adds the rows it counts. */
 async function cleared(): Promise<WorkspaceContext> {
   const { workspaceId, userId } = await createSandbox(app)
+
   await admin.query("update fa.orders set placed_at = placed_at - interval '2 years', status = 'delivered' where workspace_id = $1", [workspaceId])
+
   return { workspaceId, userId, role: 'viewer' }
 }
 
@@ -63,6 +67,7 @@ describe('revenuePoints in the plan buckets', () => {
     const current = await read(tx => revenueTotals(tx, ctx.workspaceId, plan.current))
     const previous = await read(tx => revenueTotals(tx, ctx.workspaceId, plan.previous))
     const sum = (values: (number | null)[]) => values.reduce<number>((total, v) => total + (v ?? 0), 0)
+
     expect(sum(bucketSums(points, plan.buckets))).toBe(current.revenueCents)
     expect(sum(bucketSums(points, plan.previousBuckets))).toBe(previous.revenueCents)
   })
@@ -73,12 +78,15 @@ describe('collectionRevenue', () => {
     const range = periodPlan('90d', now, tz).current
     const result = await read(tx => collectionRevenue(tx, ctx.workspaceId, range))
     const totals = await read(tx => revenueTotals(tx, ctx.workspaceId, range))
+
     expect(result.postersCents + result.shippingCents).toBe(totals.revenueCents)
     expect(result.rows.map(r => r.slug).sort()).toEqual(['monochrome', 'night', 'pastel', 'primary'])
     expect(result.rows.reduce((total, r) => total + r.cents, 0)).toBe(result.postersCents)   // every seed line is matched
+
     const lines = await one(
       `select coalesce(sum(l.qty), 0) as n from fa.orders o join fa.order_lines l on l.workspace_id = o.workspace_id and l.order_id = o.id
         where o.workspace_id = $1 and o.status in ${REVENUE} and o.placed_at >= $2 and o.placed_at < $3`, [ctx.workspaceId, range.start, range.end])
+
     expect(result.rows.reduce((total, r) => total + r.posters, 0)).toBe(lines)
   })
 })
@@ -87,6 +95,7 @@ describe('attentionCounts', () => {
   it('counts the orders to process and in processing, and the sold-out variants of the products still sold', async () => {
     const built = await cleared()
     const ws = built.workspaceId
+
     await admin.query("update fa.orders set status = 'paid' where workspace_id = $1 and number in (select number from fa.orders where workspace_id = $1 order by number limit 2)", [ws])
     await admin.query("update fa.orders set status = 'processing' where workspace_id = $1 and number = (select max(number) from fa.orders where workspace_id = $1)", [ws])
     await admin.query('update fa.product_variants set stock = 5 where workspace_id = $1', [ws])
@@ -104,7 +113,9 @@ describe('lowStock', () => {
     // Every variant out of stock, and one poster named in lower case: the byte order would put it after every capital.
     await admin.query('update fa.product_variants set stock = 0 where workspace_id = $1', [ctx.workspaceId])
     await admin.query("update fa.products set name = 'aardvark' where workspace_id = $1 and slug = 'hush'", [ctx.workspaceId])
+
     const { rows } = await read(tx => lowStock(tx, ctx.workspaceId))
+
     expect(rows[0]!.productName).toBe('aardvark')
   })
 })

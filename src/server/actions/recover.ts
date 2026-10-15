@@ -16,7 +16,9 @@ export async function recoverAction(_previous: FormState<RecoverField>, form: Fo
     ip: await getClientIp(),
     userAgent: (await headers()).get('user-agent'),
   })
+
   if (!result.ok) return failureState(result)
   await setSessionCookie(result.token, result.expiresAt)
+
   return { status: 'done', recoveryCodes: result.recoveryCodes }
 }

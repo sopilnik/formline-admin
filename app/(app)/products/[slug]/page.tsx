@@ -31,6 +31,7 @@ const parseSlug = (value: string): string | null => (SLUG_PATTERN.test(value) ? 
 // The title and the page read the same product: one set of queries per request.
 const load = cache(async (slug: string) => {
   const session = await requireSession()
+
   return withWorkspace(workspaceContext(session), async tx => ({
     product: await getProduct(tx, session.workspaceId, slug),
     collections: await listCollectionOptions(tx, session.workspaceId),
@@ -42,16 +43,23 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const t = await getTranslations('products.detail')
   const slug = parseSlug((await params).slug)
   const product = slug === null ? null : (await load(slug)).product
+
   return { title: product ? product.name : t('notFoundTitle') }
 }
 
 export default async function ProductPage({ params }: Params) {
   const session = await requireSession()
+
   authorize(session, 'data.read')
+
   const slug = parseSlug((await params).slug)
+
   if (slug === null) notFound()
+
   const { product, collections, timeZone } = await load(slug)
+
   if (!product) notFound()
+
   const locale = await getLocale()
   const t = await getTranslations('products')
   const canWrite = can(session.role, 'catalog.write', session.workspaceKind)
@@ -60,6 +68,7 @@ export default async function ProductPage({ params }: Params) {
     custom: v.priceOverrideCents !== null, stock: v.stock, lowStockThreshold: v.lowStockThreshold,
   }))
   const image = product.image ? { src: imageSrc(product.image), width: product.image.width, height: product.image.height } : null
+
   return (
     <div className="flex flex-col gap-5">
       <BackLink href="/products">{t('detail.back')}</BackLink>

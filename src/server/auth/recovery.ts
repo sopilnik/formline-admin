@@ -30,12 +30,19 @@ export async function recoverOwner(
   const deps = authDeps(overrides)
   const { pool, config } = deps
   const attempt = await consume(LIMITS.recoverIp, ipSubject(input.ip, config.ipHashKey), pool)
+
   if (!attempt.allowed) return { ok: false, error: 'rate_limited', retryAfterSeconds: attempt.retryAfterSeconds }
+
   const recoveryCode = input.recoveryCode.trim().toLowerCase()
+
   if (!TOKEN_PATTERN.test(recoveryCode)) return { ok: false, error: 'recovery_invalid', field: 'recoveryCode' }
+
   const checked = await checkNewCredentials(input, deps)
+
   if (!checked.ok) return checked
+
   const owner = await findOwner(pool)
+
   if (!owner) return { ok: false, error: 'recovery_invalid', field: 'recoveryCode' }
 
   const workspaceId = await ownerWorkspaceId(pool)
@@ -46,6 +53,7 @@ export async function recoverOwner(
     [hashToken(recoveryCode), owner.id, sealed.passwordHash, sealed.totpSecretEnc, checked.step, sealed.recoveryHashes,
       sealed.sessionHash, summarizeUserAgent(input.userAgent), ipHash])
   const expiresAt = rows[0]?.expires
+
   if (!expiresAt) return { ok: false, error: 'recovery_invalid', field: 'recoveryCode' }
 
   // Whoever holds the lost factors may have locked the account: recovery lifts both locks.
@@ -58,5 +66,6 @@ export async function recoverOwner(
     entityId: owner.id,
     ipHash,
   }), pool)
+
   return { ok: true, token: sealed.sessionToken, expiresAt, recoveryCodes: sealed.recoveryCodes }
 }

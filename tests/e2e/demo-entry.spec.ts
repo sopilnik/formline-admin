@@ -19,7 +19,9 @@ test.describe('Enter the demo', () => {
     await expect(page).toHaveURL(/\/overview$/)
     await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Account menu: Dana Ortiz, Owner' })).toBeVisible()
+
     const cookies = await context.cookies()
+
     expect(cookies.find(c => c.name === E2E_SESSION_COOKIE)).toMatchObject({ httpOnly: true, secure: true, sameSite: 'Lax' })
     expect(cookies.find(c => c.name === E2E_DEMO_COOKIE)).toMatchObject({ httpOnly: true, secure: true, sameSite: 'Lax' })
     // A returning visitor with a live cookie continues in the same sandbox.

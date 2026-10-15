@@ -13,6 +13,7 @@ const binding = { workspaceId: '9b2f1c7e-5d3a-4c1b-8e2f-0a1b2c3d4e5f', userId: '
 describe('TOTP secrets', () => {
   it('are 20 random bytes, shown as base32 in groups of four', () => {
     const secret = generateTotpSecret()
+
     expect(secret).toHaveLength(20)
     expect(formatTotpSecret(secret)).toMatch(/^([A-Z2-7]{4} ){7}[A-Z2-7]{4}$/)
     expect(generateTotpSecret()).not.toEqual(secret)
@@ -20,6 +21,7 @@ describe('TOTP secrets', () => {
 
   it('read back from a form ignoring spaces and case, and only at 20 bytes', () => {
     const secret = generateTotpSecret()
+
     expect(parseTotpSecret(formatTotpSecret(secret).toLowerCase())).toEqual(secret)
     expect(parseTotpSecret('ABCD')).toBeNull()
     expect(parseTotpSecret('!!!!')).toBeNull()
@@ -27,6 +29,7 @@ describe('TOTP secrets', () => {
 
   it('go into an otpauth URI with the issuer, the account and the code parameters', () => {
     const uri = new URL(totpUri(RFC_KEY, 'owner'))
+
     expect(uri.protocol).toBe('otpauth:')
     expect(uri.searchParams.get('issuer')).toBe('Formline Admin')
     expect(uri.searchParams.get('algorithm')).toBe('SHA1')
@@ -61,6 +64,7 @@ describe('TOTP secret encryption', () => {
   it('round-trips, prefixed with the key id', () => {
     const secret = generateTotpSecret()
     const sealed = encryptTotpSecret(secret, binding, ring(`k1:${K1}`))
+
     expect(sealed.split('.')).toHaveLength(4)
     expect(sealed.startsWith('k1.')).toBe(true)
     expect(decryptTotpSecret(sealed, binding, ring(`k1:${K1}`))).toEqual(secret)
@@ -70,17 +74,21 @@ describe('TOTP secret encryption', () => {
   it('decrypts with an older key after a rotation', () => {
     const secret = generateTotpSecret()
     const sealed = encryptTotpSecret(secret, binding, ring(`k1:${K1}`))
+
     expect(decryptTotpSecret(sealed, binding, ring(`k2:${K2},k1:${K1}`))).toEqual(secret)
   })
 
   it('cannot be moved to another user row or tampered with', () => {
     const sealed = encryptTotpSecret(generateTotpSecret(), binding, ring(`k1:${K1}`))
     const keys = ring(`k1:${K1}`)
+
     // AES-GCM refuses both: the user row is part of the authenticated data, and the tag covers the ciphertext.
     expect(() => decryptTotpSecret(sealed, { ...binding, userId: binding.workspaceId }, keys)).toThrow('unable to authenticate data')
+
     const [id, iv, data, tag] = sealed.split('.')
     // The first character: all its six bits are the ciphertext's, while the last may hold unused ones the decoder refuses first.
     const flipped = `${data!.startsWith('A') ? 'B' : 'A'}${data!.slice(1)}`
+
     expect(() => decryptTotpSecret([id, iv, flipped, tag].join('.'), binding, keys)).toThrow('unable to authenticate data')
     expect(() => decryptTotpSecret(sealed, binding, ring(`k2:${K2}`))).toThrow('unknown TOTP key id')
   })

@@ -22,11 +22,14 @@ export async function pseudonymiseOldCustomers(pseudonymKey: string, pool: Pool 
     .from(customers)
     .where(and(eq(customers.workspaceId, workspaceId), isNull(customers.pseudonymisedAt), lte(customers.createdAt, sql`now() - make_interval(days => ${PSEUDONYMISE_AFTER_DAYS})`))), pool)
   let changed = 0
+
   for (const customer of due) {
     const person = pseudonymFor(customer.email, pseudonymKey)
     const { rows } = await pool.query<{ done: boolean }>(
       'select fa.pseudonymise_customer($1, $2, $3, $4, $5) as done', [customer.id, person.email, person.name, person.city, person.country])
+
     if (rows[0]?.done) changed += 1
   }
+
   return changed
 }

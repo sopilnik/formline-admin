@@ -21,6 +21,7 @@ export type ImageUpload = { ok: true; imageId: string; width: number; height: nu
 async function fits(tx: Tx, workspaceId: string, productImageId: string | null, bytes: number): Promise<boolean> {
   const [used] = await tx.select({ n: count(), bytes: sql<number>`coalesce(sum(${images.bytes}), 0)::int` }).from(images)
     .where(and(eq(images.workspaceId, workspaceId), eq(images.source, 'upload'), productImageId ? ne(images.id, productImageId) : undefined))
+
   return (used?.n ?? 0) + 1 <= MEDIA_CAP.images && (used?.bytes ?? 0) + bytes <= MEDIA_CAP.bytes
 }
 
@@ -35,13 +36,17 @@ export async function storeProductImage(actor: Actor, productId: string, image: 
   const before = await withWorkspace(ctx, async tx => {
     const [product] = await tx.select({ imageId: products.imageId }).from(products)
       .where(and(eq(products.workspaceId, actor.workspaceId), eq(products.id, productId)))
+
     if (!product) return 'not_found' as const
+
     return (await fits(tx, actor.workspaceId, product.imageId, image.bytes.length)) ? 'fits' as const : 'cap' as const
   }, pool)
+
   if (before !== 'fits') return { ok: false, reason: before }
 
   const imageId = randomUUID()
   const path = mediaPath(actor.workspaceId, imageId)
+
   await storage.put(path, image.bytes)
 
   // The copies of a save that did not happen. A storage failure is logged and queued for the daily job, a failed queue
@@ -58,9 +63,11 @@ export async function storeProductImage(actor: Actor, productId: string, image: 
 
   try {
     await storage.put(thumbPath(path), image.thumb)
+
     const result = await withWorkspace(ctx, async (tx): Promise<ImageUpload> => {
       const [product] = await tx.select({ slug: products.slug, imageId: products.imageId }).from(products)
         .where(and(eq(products.workspaceId, actor.workspaceId), eq(products.id, productId))).for('update')
+
       if (!product) return { ok: false, reason: 'not_found' }
       if (!(await fits(tx, actor.workspaceId, product.imageId, image.bytes.length))) return { ok: false, reason: 'cap' }
 
@@ -74,10 +81,12 @@ export async function storeProductImage(actor: Actor, productId: string, image: 
         actorUserId: actor.userId, action: 'product.image_changed', entityType: 'product', entityId: productId,
         details: { slug: product.slug, width: image.width, height: image.height, bytes: image.bytes.length }, ipHash: actor.ipHash,
       })
+
       return { ok: true, imageId, width: image.width, height: image.height }
     }, pool)
 
     if (!result.ok) await discard()
+
     return result
   } catch (error) {
     await discard()
@@ -90,6 +99,7 @@ export async function removeProductImage(actor: Actor, productId: string, pool: 
   return withWorkspace(workspaceContext(actor), async tx => {
     const [product] = await tx.select({ slug: products.slug, imageId: products.imageId }).from(products)
       .where(and(eq(products.workspaceId, actor.workspaceId), eq(products.id, productId))).for('update')
+
     if (!product) return { ok: false, reason: 'not_found' }
     if (!product.imageId) return { ok: true }
     await tx.update(products).set({ imageId: null, updatedAt: sql`now()` }).where(and(eq(products.workspaceId, actor.workspaceId), eq(products.id, productId)))
@@ -97,6 +107,7 @@ export async function removeProductImage(actor: Actor, productId: string, pool: 
     await logActivity(tx, actor.workspaceId, {
       actorUserId: actor.userId, action: 'product.image_removed', entityType: 'product', entityId: productId, details: { slug: product.slug }, ipHash: actor.ipHash,
     })
+
     return { ok: true }
   }, pool)
 }

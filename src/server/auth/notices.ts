@@ -19,6 +19,7 @@ export async function securityNotice(
   options: { at: Date; signInId?: string },
 ): Promise<void> {
   const payload = { ...details, at: options.at.toISOString() }
+
   await notify(tx, workspaceId, { userId: user.id, kind, payload: options.signInId ? { ...payload, signIn: options.signInId } : payload })
   await mail.send(tx, workspaceId, { to: user.email, template: kind, locale: user.locale, payload: { ...payload, name: user.name } })
 }

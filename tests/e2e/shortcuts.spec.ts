@@ -18,7 +18,9 @@ async function focusPage(page: Page): Promise<void> {
 
 async function turnShortcutsOff(page: Page): Promise<void> {
   await page.goto('/settings/profile')
+
   const box = page.getByRole('checkbox', { name: 'Single-key shortcuts' })
+
   await expect(box).toBeChecked()
   await box.uncheck()
   await page.getByRole('button', { name: 'Save profile' }).click()
@@ -38,7 +40,9 @@ test.describe('keyboard shortcuts', () => {
 
     await focusPage(page)
     await page.keyboard.press('/')
+
     const search = page.getByRole('searchbox')
+
     await expect(search).toBeFocused()
     await page.keyboard.type('go')
     await expect(search).toHaveValue('go')
@@ -61,6 +65,7 @@ test.describe('keyboard shortcuts', () => {
     // The list has the keys to itself. The products page was not visited yet, so a go would have asked the server for it
     // before the list closes on Escape.
     const toProducts = navigationsTo(page, '/products')
+
     await page.keyboard.press('g')
     await page.keyboard.press('p')
     await page.keyboard.press('Escape')
@@ -74,7 +79,9 @@ test.describe('keyboard shortcuts', () => {
     await turnShortcutsOff(page)
     await openFramed(page, '/overview')
     await focusPage(page)
+
     const toOrders = navigationsTo(page, '/orders')
+
     await page.keyboard.press('g')
     await page.keyboard.press('o')
     await page.keyboard.press('Shift+?')
@@ -94,12 +101,16 @@ test.describe('keyboard shortcuts', () => {
     await signInAsSandboxUser(context)
     await turnShortcutsOff(page)
     await page.getByRole('region', { name: 'Demo sandbox' }).getByRole('button', { name: 'Switch user' }).click()
+
     const dialog = page.getByRole('dialog', { name: 'Switch user' })
+
     await dialog.getByRole('radio', { name: /Priya Nair/ }).check()
     await dialog.getByRole('button', { name: 'Switch', exact: true }).click()
     await expect(page.getByRole('button', { name: 'Account menu: Priya Nair, Manager' })).toBeVisible()
     await focusPage(page)
+
     const toOrders = navigationsTo(page, '/orders')
+
     await page.keyboard.press('g')
     await page.keyboard.press('o')
     await page.keyboard.press('Control+k')

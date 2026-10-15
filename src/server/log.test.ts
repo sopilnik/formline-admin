@@ -7,8 +7,11 @@ describe('log', () => {
   it('redacts secrets wherever they appear', () => {
     const lines: string[] = []
     const sink = new Writable({ write(chunk, _enc, done) { lines.push(String(chunk)); done() } })
+
     createLogger(sink).info({ password: 'p', token: 't', user: { secret: 's' }, input: { code: '123456' }, headers: { cookie: 'c', authorization: 'a' } }, 'x')
+
     const line = lines.join('')
+
     for (const value of ['"p"', '"t"', '"s"', '"123456"', '"c"', '"a"']) expect(line).not.toContain(value)
     expect(line).toContain('[redacted]')
   })
@@ -17,8 +20,11 @@ describe('log', () => {
     const lines: string[] = []
     const sink = new Writable({ write(chunk, _enc, done) { lines.push(String(chunk)); done() } })
     const refused = Object.assign(new Error('duplicate key value', { cause: new Error('the slug is taken') }), { code: '23505' })
+
     createLogger(sink).error({ event: 'test.failed', err: refused })
+
     const entry = JSON.parse(lines.join('')) as { err: { message: string; code: string; stack: string } }
+
     expect(entry.err.code).toBe('23505')
     expect(entry.err.message).toContain('the slug is taken')
     expect(entry.err.stack).toContain('duplicate key value')
@@ -31,10 +37,15 @@ describe('log', () => {
       code: '23514', detail: 'Failing row contains (mia.novak@store.test, Mia Novak, Berlin).',
     })
     const failed = new DrizzleQueryError('insert into "fa"."customers" ("email", "name") values ($1, $2)', ['mia.novak@store.test', 'Mia Novak'], refused)
+
     createLogger(sink).error({ event: 'stripe.failed', err: failed })
+
     const line = lines.join('')
+
     for (const value of ['mia.novak', 'Mia Novak', 'Berlin']) expect(line).not.toContain(value)
+
     const entry = JSON.parse(line) as { err: { message: string; stack: string } }
+
     expect(entry.err.message).toContain('insert into "fa"."customers"')
     expect(entry.err.message).toContain('violates check constraint')
     expect(entry.err.stack).toContain('Failed query')

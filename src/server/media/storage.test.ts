@@ -16,9 +16,12 @@ function fakeFetch(respond: (call: Call) => Response): { fetch: typeof fetch; ca
   const calls: Call[] = []
   const impl = (async (input: string | URL | Request, init?: RequestInit) => {
     const call: Call = { url: String(input), method: init?.method ?? 'GET', headers: init?.headers as Record<string, string>, body: init?.body as Uint8Array | undefined }
+
     calls.push(call)
+
     return respond(call)
   }) as typeof fetch
+
   return { fetch: impl, calls }
 }
 
@@ -40,6 +43,7 @@ describe('bunnyStorage', () => {
   it('puts the bytes with the access key and their SHA-256 checksum', async () => {
     const { fetch, calls } = fakeFetch(() => new Response(null, { status: 201 }))
     const bytes = Buffer.from('webp bytes')
+
     await bunnyStorage(zone, fetch).put(PATH, bytes)
     expect(calls).toHaveLength(1)
     expect(calls[0]!.url).toBe(`https://storage.bunnycdn.com/formline-admin-media/${PATH}`)
@@ -51,6 +55,7 @@ describe('bunnyStorage', () => {
   it('reads the bytes, and null for a file that is not there', async () => {
     const { fetch } = fakeFetch(call => (call.url.endsWith(PATH) ? new Response('stored') : new Response(null, { status: 404 })))
     const storage = bunnyStorage(zone, fetch)
+
     expect((await storage.get(PATH))?.toString()).toBe('stored')
     expect(await storage.get(mediaPath(WS, WS))).toBeNull()
   })
@@ -63,6 +68,7 @@ describe('bunnyStorage', () => {
 
   it('never touches a path outside the uploads', async () => {
     const { fetch, calls } = fakeFetch(() => new Response(null))
+
     await expect(bunnyStorage(zone, fetch).delete('posters/hush.webp')).rejects.toThrow(/not a media path/)
     expect(calls).toHaveLength(0)
   })
@@ -70,12 +76,16 @@ describe('bunnyStorage', () => {
 
 describe('directoryStorage', () => {
   const dirs: string[] = []
+
   afterAll(async () => Promise.all(dirs.map(dir => rm(dir, { recursive: true, force: true }))))
 
   it('keeps the zone layout in a folder', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'formline-media-'))
+
     dirs.push(dir)
+
     const storage = directoryStorage(dir)
+
     await storage.put(PATH, Buffer.from('bytes'))
     expect(await readdir(join(dir, 'ws', WS))).toEqual([`${IMAGE}.webp`])
     expect((await storage.get(PATH))?.toString()).toBe('bytes')

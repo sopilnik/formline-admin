@@ -61,7 +61,9 @@ describe('composite keys', () => {
     await inRollback(admin, async c => {
       await c.query("insert into fa.sessions (workspace_id, id, user_id, expires_at) values ($1, repeat('b', 64), $2, now() + interval '1 hour')", [wsA, viewerA])
       await c.query('delete from fa.workspaces where id = $1', [wsA])
+
       const { rows } = await c.query('select (select count(*)::int from fa.users where workspace_id = $1) as users, (select count(*)::int from fa.sessions where workspace_id = $1) as sessions', [wsA])
+
       expect(rows[0]).toEqual({ users: 0, sessions: 0 })
     })
   })

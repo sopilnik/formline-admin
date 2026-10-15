@@ -29,8 +29,11 @@ function newSession(workspaceId: string, userId: string, verified = true) {
 describe('the owner workspace', () => {
   it('exists once after the migrations and is what owner_workspace_id() returns', async () => {
     const { rows } = await admin.query<{ id: string }>("select id from fa.workspaces where kind = 'owner'")
+
     expect(rows).toHaveLength(1)
+
     const found = await app.query<{ id: string }>('select fa.owner_workspace_id() as id')
+
     expect(found.rows[0]?.id).toBe(rows[0]!.id)
   })
 })
@@ -39,6 +42,7 @@ describe('auth_session', () => {
   it('resolves a verified session with the live role of its user', async () => {
     const { token } = await newSession(sandbox, member)
     const session = await validateSessionToken(token, app)
+
     expect(session).toMatchObject({ workspaceId: sandbox, workspaceKind: 'sandbox', userId: member, role: 'admin', secondFactorVerified: true })
     expect(session?.reauthAt).toBeInstanceOf(Date)
     await asSchemaOwner(admin, c => c.query("update fa.users set role = 'viewer' where id = $1", [member]))
@@ -49,15 +53,19 @@ describe('auth_session', () => {
   it('gives a pending session ten minutes and no verified factor', async () => {
     const { token } = await newSession(sandbox, member, false)
     const session = await validateSessionToken(token, app)
+
     expect(session?.secondFactorVerified).toBe(false)
     expect(session?.reauthAt).toBeNull()
+
     const minutes = (session!.expiresAt.getTime() - Date.now()) / 60_000
+
     expect(minutes).toBeGreaterThan(9)
     expect(minutes).toBeLessThanOrEqual(10)
   })
 
   it('ends at the absolute expiry', async () => {
     const { token, id } = await newSession(sandbox, member)
+
     await admin.query("update fa.sessions set expires_at = now() - interval '1 second' where id = $1", [id])
     expect(await validateSessionToken(token, app)).toBeNull()
   })
@@ -66,8 +74,10 @@ describe('auth_session', () => {
     const ownerWorkspace = (await admin.query<{ id: string }>("select id from fa.workspaces where kind = 'owner'")).rows[0]!.id
     // A non-owner row stands in, so that only the setup tests ever create the owner.
     const user = await createUser(admin, ownerWorkspace, 'admin')
+
     try {
       const { token, id } = await newSession(ownerWorkspace, user)
+
       expect(await validateSessionToken(token, app)).not.toBeNull()
       await admin.query("update fa.sessions set last_seen_at = now() - interval '12 hours 1 minute' where id = $1", [id])
       expect(await validateSessionToken(token, app)).toBeNull()
@@ -80,6 +90,7 @@ describe('auth_session', () => {
     const ws = await createWorkspace(admin)
     const user = await createUser(admin, ws, 'owner')
     const { token } = await newSession(ws, user)
+
     await admin.query("update fa.workspaces set last_active_at = now() - interval '2 hours 1 minute' where id = $1", [ws])
     expect(await validateSessionToken(token, app)).toBeNull()
     await admin.query("update fa.workspaces set last_active_at = now(), expires_at = now() - interval '1 second' where id = $1", [ws])
@@ -91,6 +102,7 @@ describe('auth_session', () => {
   it('ends when the user is deactivated', async () => {
     const user = await createUser(admin, sandbox, 'manager')
     const { token } = await newSession(sandbox, user)
+
     await asSchemaOwner(admin, c => c.query('update fa.users set deactivated_at = now() where id = $1', [user]))
     expect(await validateSessionToken(token, app)).toBeNull()
   })
@@ -99,10 +111,13 @@ describe('auth_session', () => {
     const { token, id } = await newSession(sandbox, member)
     const seen = async () => (await admin.query<{ s: Date; w: Date }>(
       'select s.last_seen_at as s, w.last_active_at as w from fa.sessions s join fa.workspaces w on w.id = s.workspace_id where s.id = $1', [id])).rows[0]!
+
     await admin.query("update fa.sessions set last_seen_at = now() - interval '2 minutes' where id = $1", [id])
     await admin.query("update fa.workspaces set last_active_at = now() - interval '2 minutes' where id = $1", [sandbox])
     await validateSessionToken(token, app)
+
     const first = await seen()
+
     expect(Date.now() - first.s.getTime()).toBeLessThan(10_000)
     expect(Date.now() - first.w.getTime()).toBeLessThan(10_000)
     await validateSessionToken(token, app)
@@ -120,9 +135,12 @@ describe('session changes', () => {
     const pending = await newSession(sandbox, member, false)
     const session = (await validateSessionToken(pending.token, app))!
     const fresh = (await withWorkspace({ workspaceId: sandbox, userId: member, role: 'admin' }, tx => rotateSession(tx, session, meta), app))!
+
     expect(fresh.token).not.toBe(pending.token)
     expect(await validateSessionToken(pending.token, app)).toBeNull()
+
     const rotated = await validateSessionToken(fresh.token, app)
+
     expect(rotated?.secondFactorVerified).toBe(true)
     expect(rotated?.reauthAt).toBeInstanceOf(Date)
   })
@@ -130,13 +148,17 @@ describe('session changes', () => {
   it('rotation of a session that ended meanwhile gives nothing and writes nothing', async () => {
     const pending = await newSession(sandbox, member, false)
     const session = (await validateSessionToken(pending.token, app))!
+
     await admin.query('delete from fa.sessions where id = $1', [session.id])
+
     const before = await admin.query<{ n: number }>('select count(*)::int as n from fa.sessions where workspace_id = $1 and user_id = $2', [sandbox, member])
 
     const fresh = await withWorkspace({ workspaceId: sandbox, userId: member, role: 'admin' }, tx => rotateSession(tx, session, meta), app)
 
     expect(fresh).toBeNull()
+
     const after = await admin.query<{ n: number }>('select count(*)::int as n from fa.sessions where workspace_id = $1 and user_id = $2', [sandbox, member])
+
     expect(after.rows[0]!.n).toBe(before.rows[0]!.n)
   })
 
@@ -146,6 +168,7 @@ describe('session changes', () => {
     const b = await newSession(sandbox, member)
     const c = await newSession(sandbox, other)
     const current = (await validateSessionToken(a.token, app))!
+
     await withWorkspace({ workspaceId: sandbox, userId: member, role: 'admin' }, tx => deleteOtherOwnSessions(tx, current), app)
     expect(await validateSessionToken(a.token, app)).not.toBeNull()
     expect(await validateSessionToken(b.token, app)).toBeNull()

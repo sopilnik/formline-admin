@@ -18,8 +18,10 @@ export function normalizePassword(password: string): string {
 /** Length only, counted in characters; no composition rules. */
 export function checkPasswordShape(password: string): PasswordShape {
   const length = [...normalizePassword(password)].length
+
   if (length < PASSWORD_MIN) return 'too_short'
   if (length > PASSWORD_MAX) return 'too_long'
+
   return 'ok'
 }
 
@@ -44,5 +46,6 @@ let dummy: Promise<string> | undefined
 export async function verifyAgainstDummy(password: string): Promise<false> {
   dummy ??= hash('formline-admin-dummy-password', OPTIONS)
   await verifyPassword(await dummy, password)
+
   return false
 }

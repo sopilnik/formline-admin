@@ -33,7 +33,9 @@ export function VariantsForm({ productId, rows }: Props) {
   const router = useRouter()
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending, unreached] = useFormAction(saveVariantsAction, IDLE, form)
+
   useLeaveGuard(form, state.status === 'error')
+
   const [reloading, startReload] = useTransition()
   // The conflict whose stock was loaded: its alert goes, and its stock fields show the stored stock.
   const [reloadedAfter, setReloadedAfter] = useState<VariantsState | null>(null)
@@ -41,14 +43,17 @@ export function VariantsForm({ productId, rows }: Props) {
     if (result.status === 'done') toast.success(t('saved'))
     if (result.status === 'error') form.current?.querySelector<HTMLElement>('[aria-invalid="true"], [role="alert"]')?.focus()
   })
+
   useEffect(() => settle(state), [state])
 
   // A stock field typed in after the conflict keeps its text when its default changes: the stored stock is written in.
   const loaded = reloadedAfter !== null && state === reloadedAfter && !reloading
+
   useEffect(() => {
     if (!loaded) return
     for (const row of rows) {
       const input = form.current?.elements.namedItem(variantFieldName('stock', row.id))
+
       if (input instanceof HTMLInputElement) input.value = String(row.stock)
     }
   }, [loaded, rows])
@@ -64,11 +69,13 @@ export function VariantsForm({ productId, rows }: Props) {
     (field === 'stock' && loaded ? null : typed?.[variantFieldName(field, row.id)]) ?? initial
   const problem = (field: VariantField, row: VariantRow): string | undefined => {
     const issue = error?.errors[row.id]?.[field]
+
     return issue ? t(`errors.${issue}`) : undefined
   }
   const field = (name: VariantField, row: VariantRow, initial: string, placeholder?: string) => {
     const id = `${name}-${row.id}`
     const message = problem(name, row)
+
     return (
       <div className="flex min-w-0 flex-col gap-1">
         <label htmlFor={id} className="text-xs text-muted-foreground @xl:sr-only">{t(`fields.${name}`)}</label>
@@ -89,6 +96,7 @@ export function VariantsForm({ productId, rows }: Props) {
       </div>
     )
   }
+
   return (
     <form ref={form} action={action} noValidate className="flex flex-col gap-3">
       <UnreachedAlert unreached={unreached} />

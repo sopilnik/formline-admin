@@ -30,6 +30,7 @@ export async function listTeam(tx: Tx, workspaceId: string): Promise<TeamMember[
     .where(and(eq(activityLog.workspaceId, workspaceId), isNotNull(activityLog.actorUserId))).groupBy(activityLog.actorUserId)
   const keysOf = new Map(keys.map(k => [k.userId, k.n]))
   const seenOf = new Map(seen.map(s => [s.userId, s.at]))
+
   return rows
     .map(({ totpSecretEnc, ...row }) => ({
       ...row,
@@ -47,6 +48,7 @@ type Target = { id: string; name: string; role: Role; deactivatedAt: Date | null
 async function target(tx: Tx, workspaceId: string, userId: string): Promise<Target | null> {
   const [row] = await tx.select({ id: users.id, name: users.name, role: users.role, deactivatedAt: users.deactivatedAt }).from(users)
     .where(and(eq(users.workspaceId, workspaceId), eq(users.id, userId)))
+
   return row ?? null
 }
 
@@ -56,10 +58,13 @@ async function target(tx: Tx, workspaceId: string, userId: string): Promise<Targ
  */
 export async function setMemberRole(tx: Tx, workspaceId: string, actorId: string, userId: string, role: AssignableRole): Promise<MemberChange> {
   const member = await target(tx, workspaceId, userId)
+
   if (!member) return { ok: false, reason: 'not_found' }
   if (member.role === 'owner' || member.id === actorId || member.deactivatedAt !== null) return { ok: false, reason: 'not_allowed' }
   if (member.role === role) return { ok: true, name: member.name, from: member.role, changed: false }
+
   const updated = await tx.update(users).set({ role }).where(and(eq(users.workspaceId, workspaceId), eq(users.id, userId))).returning({ id: users.id })
+
   // A role that may not change other members updates nothing under row-level security.
   return updated.length === 1 ? { ok: true, name: member.name, from: member.role, changed: true } : { ok: false, reason: 'not_allowed' }
 }
@@ -70,10 +75,13 @@ export async function setMemberRole(tx: Tx, workspaceId: string, actorId: string
  */
 export async function setMemberActive(tx: Tx, workspaceId: string, actorId: string, userId: string, active: boolean): Promise<MemberChange> {
   const member = await target(tx, workspaceId, userId)
+
   if (!member) return { ok: false, reason: 'not_found' }
   if (member.role === 'owner' || member.id === actorId) return { ok: false, reason: 'not_allowed' }
   if ((member.deactivatedAt === null) === active) return { ok: true, name: member.name, from: member.role, changed: false }
+
   const updated = await tx.update(users).set({ deactivatedAt: active ? null : sql`now()` })
     .where(and(eq(users.workspaceId, workspaceId), eq(users.id, userId))).returning({ id: users.id })
+
   return updated.length === 1 ? { ok: true, name: member.name, from: member.role, changed: true } : { ok: false, reason: 'not_allowed' }
 }

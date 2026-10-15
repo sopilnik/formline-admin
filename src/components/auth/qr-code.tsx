@@ -7,9 +7,11 @@ import { encode } from 'uqr'
 export function QrCode({ value, label }: { value: string; label: string }) {
   const { data, size } = encode(value, { ecc: 'M', border: 2 })
   let path = ''
+
   data.forEach((row, y) => row.forEach((dark, x) => {
     if (dark) path += `M${x} ${y}h1v1h-1z`
   }))
+
   return (
     <svg role="img" aria-label={label} viewBox={`0 0 ${size} ${size}`} shapeRendering="crispEdges" className="size-44 shrink-0 rounded-md">
       <rect width={size} height={size} fill="#FFFFFF" />

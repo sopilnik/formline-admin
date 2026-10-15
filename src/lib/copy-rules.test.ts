@@ -15,10 +15,12 @@ function strings(tree: Tree, prefix = ''): [string, string][] {
 /** A plural or select block as one token, so the words of its branches are not counted once per branch. */
 function flatten(text: string): string {
   let out = text
+
   for (let before = ''; before !== out;) {
     before = out
     out = out.replace(/\{[^{}]*,\s*(plural|select|selectordinal),[^{}]*(\{[^{}]*\}[^{}]*)*\}/g, '#')
   }
+
   return out
 }
 
@@ -33,6 +35,7 @@ const breaking = (rule: (sentence: string) => boolean) =>
 describe('English copy', () => {
   it('uses US spelling', () => {
     const british = /recognis|organis|authoris|customis|summaris|colour|behaviour|favourite|\bcentre|catalogue|licence|cancell(ed|ing)\b|\bany more(?=[.,;:!?)]|$)/i
+
     expect(strings(en).filter(([, text]) => british.test(text))).toEqual([])
   })
 
@@ -46,6 +49,7 @@ describe('English copy', () => {
 
   it('calls the one product of a collection "it"', () => {
     const t = createTranslator({ locale: 'en', messages: en, namespace: 'collections.delete' })
+
     expect(t('blocked', { count: 1 })).toBe('This collection holds 1 product. Move it to another collection or delete it first.')
     expect(t('blocked', { count: 2 })).toBe('This collection holds 2 products. Move them to another collection or delete them first.')
   })
@@ -54,6 +58,7 @@ describe('English copy', () => {
 describe('Russian copy (the owner’s rules)', () => {
   it('has at most one «и», «или» or «либо» in a sentence', () => {
     const conjunctions = (sentence: string) => sentence.match(/(?<![\p{L}-])(и|или|либо)(?![\p{L}-])/giu)?.length ?? 0
+
     expect(breaking(sentence => conjunctions(sentence) > 1)).toEqual([])
   })
 
@@ -80,6 +85,7 @@ describe('Russian copy (the owner’s rules)', () => {
 
   it('offers the one-order link for exactly one order: 21 orders are «все 21»', () => {
     const t = createTranslator({ locale: 'ru', messages: ru, namespace: 'customers.detail' })
+
     expect(t('inOrders', { count: 1 })).toBe('Показать заказ в «Заказах»')
     expect(t('inOrders', { count: 21 })).toBe('Показать все 21 в «Заказах»')
   })
@@ -94,12 +100,14 @@ describe('Russian copy (the owner’s rules)', () => {
 
   it('calls the one product of a collection «его», and 21 of them «их»', () => {
     const t = createTranslator({ locale: 'ru', messages: ru, namespace: 'collections.delete' })
+
     expect(t('blocked', { count: 1 })).toContain('перенесите его')
     expect(t('blocked', { count: 21 })).toContain('перенесите их')
   })
 
   it('uses the plural for every count of skipped orders above one', () => {
     const t = createTranslator({ locale: 'ru', messages: ru, namespace: 'orders.bulk' })
+
     expect(t('skipped', { count: 21, numbers: '#1408' })).toMatch(/^Пропущены /)
     expect(t('skipped', { count: 1, numbers: '#1408' })).toMatch(/^Пропущен /)
   })

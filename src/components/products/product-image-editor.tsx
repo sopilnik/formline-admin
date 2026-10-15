@@ -37,6 +37,7 @@ export function ProductImageEditor({ productId, name, image }: Props) {
   const [uploading, setUploading] = useState(false)
   const [removing, startRemove] = useTransition()
   const here = useRef(true)
+
   useEffect(() => {
     here.current = true
 
@@ -44,15 +45,20 @@ export function ProductImageEditor({ productId, name, image }: Props) {
       here.current = false
     }
   }, [])
+
   const say = (refused: UploadProblem): string => (refused.error === 'rate_limited' ? t('errors.rate_limited', { minutes: refused.minutes }) : t(`errors.${refused.error}`))
 
   const upload = (event: ChangeEvent<HTMLInputElement>): void => {
     const file = event.target.files?.[0]
+
     event.target.value = ''
     if (!file) return
+
     const refused = precheckUpload(file)
+
     if (refused) {
       setProblem({ error: refused })
+
       return
     }
 
@@ -63,6 +69,7 @@ export function ProductImageEditor({ productId, name, image }: Props) {
       if (failed) {
         if (here.current) setProblem(failed)
         else toast.error(say(failed))
+
         return
       }
 
@@ -73,6 +80,7 @@ export function ProductImageEditor({ productId, name, image }: Props) {
 
   const remove = (): void => startRemove(async () => {
     const result = await send(() => removeProductImageAction({ productId }))
+
     if (!result) return
     removed.current = result.ok
     setConfirming(false)

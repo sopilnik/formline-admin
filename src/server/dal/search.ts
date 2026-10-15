@@ -28,5 +28,6 @@ export async function searchWorkspace(tx: Tx, workspaceId: string, term: string)
     .from(products)
     .where(and(eq(products.workspaceId, workspaceId), or(ilike(products.name, pattern), ilike(products.slug, pattern))))
     .orderBy(asc(unicodeName(products.name)), asc(products.id)).limit(SEARCH_LIMIT)
+
   return { orders: orderRows, customers: customerRows, products: productRows }
 }

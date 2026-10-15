@@ -18,7 +18,9 @@ export function VerifyForm({ hasTotp }: { hasTotp: boolean }) {
   const [left, setLeft] = useState<FormState<'code'> | null>(null)
   const shown = state === left ? IDLE : state
   const errorFor = useErrorText(shown)
+
   useFocusOnError(shown, 'verify', 'code')
+
   const switchKind = (): void => {
     setRecovery(!recovery)
     setLeft(state)
@@ -32,7 +34,9 @@ export function VerifyForm({ hasTotp }: { hasTotp: boolean }) {
       </div>
     )
   }
+
   const intro = recovery ? (hasTotp ? t('verify.introRecovery') : t('verify.noTotp')) : t('verify.intro')
+
   return (
     <form ref={form} action={action} noValidate className="flex flex-col gap-4">
       <UnreachedAlert unreached={unreached} />

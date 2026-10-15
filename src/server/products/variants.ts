@@ -10,12 +10,14 @@ import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 export async function saveVariantsWithLog(actor: Actor, productId: string, rows: readonly VariantRowInput[], pool: Pool = getPool()): Promise<VariantsSave> {
   return withWorkspace(workspaceContext(actor), async tx => {
     const result = await saveVariants(tx, actor.workspaceId, productId, rows)
+
     if (result.ok && result.changes.length > 0) {
       await logActivity(tx, actor.workspaceId, {
         actorUserId: actor.userId, action: 'product.variants_updated', entityType: 'product', entityId: productId,
         details: { slug: result.slug, variants: result.changes }, ipHash: actor.ipHash,
       })
     }
+
     return result
   }, pool)
 }

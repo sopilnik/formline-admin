@@ -32,8 +32,10 @@ export function OrdersTable({ rows, query, canUpdate, pager }: Props) {
   const clear = (): void => setSelected(new Set())
   const toggle = (id: string, on: boolean): void => setSelected(current => {
     const next = new Set(current)
+
     if (on) next.add(id)
     else next.delete(id)
+
     return next
   })
   const selectAll = (on: boolean): void => setSelected(on ? new Set(rows.map(row => row.id)) : new Set())

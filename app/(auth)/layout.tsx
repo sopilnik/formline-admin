@@ -9,6 +9,7 @@ import { parseTheme, THEME_COOKIE } from '@/lib/theme'
 // the sign-in page never wakes the database.
 export default async function AuthLayout({ children }: { children: ReactNode }) {
   const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value)
+
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="flex items-center justify-end gap-1 px-4 py-3">

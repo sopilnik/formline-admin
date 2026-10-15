@@ -45,6 +45,7 @@ describe('parseStoreSettings', () => {
 describe('timeZones', () => {
   it('starts with UTC and names every zone by its current name, in order', () => {
     const zones = timeZones()
+
     expect(zones[0]).toBe('UTC')
     for (const current of ['Europe/Kyiv', 'Asia/Kolkata', 'Asia/Ho_Chi_Minh', 'Asia/Yangon', 'Asia/Kathmandu', 'America/Nuuk', 'Atlantic/Faroe', 'Africa/Asmara', 'Pacific/Chuuk', 'Pacific/Pohnpei', 'Pacific/Kanton']) {
       expect(zones, current).toContain(current)
@@ -55,8 +56,11 @@ describe('timeZones', () => {
 
   it('takes UTC, and a stored old name as its current one', () => {
     const valid = { storeName: 'Formline', supportEmail: 'help@formline.example', lowStockDefault: '5' }
+
     expect(parseStoreSettings({ ...valid, timezone: 'UTC' }).ok).toBe(true)
+
     const old = parseStoreSettings({ ...valid, timezone: 'Europe/Kiev' })
+
     expect(old.ok && old.data.timezone).toBe('Europe/Kyiv')
   })
 })

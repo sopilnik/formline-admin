@@ -4,6 +4,7 @@ import type { MediaStorage } from '@/server/media/storage'
 export function memoryStorage(initial: Iterable<string> = []): MediaStorage & { paths: Set<string>; files: Map<string, Buffer>; failing: Set<string> } {
   const files = new Map<string, Buffer>([...initial].map(path => [path, Buffer.alloc(0)]))
   const failing = new Set<string>()
+
   return {
     files,
     failing,

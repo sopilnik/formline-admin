@@ -9,7 +9,9 @@ export function isUniqueViolation(error: unknown): boolean {
 export function uniqueConstraintOf(error: unknown): string | undefined {
   for (let e: unknown = error; e instanceof Error; e = e.cause) {
     const { code, constraint } = e as { code?: unknown; constraint?: unknown }
+
     if (code === UNIQUE_VIOLATION && typeof constraint === 'string') return constraint
   }
+
   return undefined
 }

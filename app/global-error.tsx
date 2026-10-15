@@ -15,5 +15,6 @@ const subscribe = () => () => {}
 export default function GlobalError({ retry }: { error: Error & { digest?: string }; retry: () => void }) {
   const locale = useSyncExternalStore(subscribe, () => globalErrorLocale(document.cookie), () => 'en' as const)
   const theme = useSyncExternalStore(subscribe, () => globalErrorTheme(document.cookie), () => 'system' as const)
+
   return <ErrorDocument locale={locale} className={cn(inter.variable, spaceGrotesk.variable, themeClassName(theme))} onRetry={() => retry()} />
 }

@@ -7,9 +7,11 @@ export type PosterImage = { src: string; width: number; height: number }
 /** The product's poster at its own proportions, or a note that it has none. The name is the page's heading, so the image is decorative. */
 export function ProductImage({ image }: { image: PosterImage | null }) {
   const t = useTranslations('products.detail')
+
   if (!image) {
     return <div className="grid aspect-[5/7] w-full max-w-60 place-items-center rounded-md bg-muted text-[13px] text-muted-foreground">{t('noImage')}</div>
   }
+
   return (
     <Image
       src={image.src}

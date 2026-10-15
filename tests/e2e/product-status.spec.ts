@@ -9,8 +9,11 @@ test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip'
 test.describe('product status and deletion', () => {
   test('archives a product with orders instead of deleting it, and brings it back as a draft', async ({ page, context }) => {
     const { workspaceId } = await signInAsSandboxUser(context)
+
     await page.goto('/products/far-orbit')
+
     const remove = page.getByRole('region', { name: 'Delete product' })
+
     await expect(remove).toContainText('This product has orders, so it cannot be deleted.')
     await expect(remove.getByRole('button')).toHaveCount(0)
     await page.getByRole('button', { name: 'Change status' }).click()
@@ -22,8 +25,10 @@ test.describe('product status and deletion', () => {
     await page.keyboard.press('Escape')
     await page.goto('/products?status=archived')
     await expect(page.getByRole('table', { name: 'Products' }).getByRole('link', { name: 'Far Orbit' })).toBeVisible()
+
     const logged = await asSchemaOwner(async c => (await c.query<{ details: { from: string; to: string } }>(
       "select details from fa.activity_log where workspace_id = $1 and action = 'product.status_changed'", [workspaceId])).rows)
+
     expect(logged.map(l => [l.details.from, l.details.to])).toEqual([['published', 'archived']])
   })
 
@@ -37,7 +42,9 @@ test.describe('product status and deletion', () => {
     await expect(page).toHaveURL(/\/products\/short-lived$/)
     await expect(page).toHaveTitle('Short Lived · Formline Admin')
     await page.getByRole('region', { name: 'Delete product' }).getByRole('button', { name: 'Delete product' }).click()
+
     const dialog = page.getByRole('dialog', { name: 'Delete Short Lived?' })
+
     await expect(dialog).toContainText('The product and its 3 variants are deleted.')
     await expectNoSeriousA11yViolationsInBothThemes(page)
     await dialog.getByRole('button', { name: 'Cancel' }).click()
@@ -52,6 +59,7 @@ test.describe('product status and deletion', () => {
 
   test('publishes a draft', async ({ page, context }) => {
     const { workspaceId } = await signInAsSandboxUser(context, 'manager')
+
     await asSchemaOwner(c => c.query("update fa.products set status = 'draft' where workspace_id = $1 and slug = 'hush'", [workspaceId]))
     await page.goto('/products/hush')
     await expect(page.getByRole('region', { name: 'Delete product' })).toContainText('This product has orders')

@@ -13,6 +13,7 @@ export function averageOrderCents(totals: Totals): number | null {
 /** (current − previous) ÷ previous; none when either is missing or the previous period was empty ("—"). */
 export function change(current: number | null, previous: number | null): number | null {
   if (current === null || previous === null || previous === 0) return null
+
   return (current - previous) / previous
 }
 
@@ -22,6 +23,7 @@ export type Trend = 'up' | 'down' | 'flat'
 /** The direction of a change, for its color and its words; none without a change. */
 export function trendOf(change: number | null): Trend | null {
   if (change === null) return null
+
   return change > 0 ? 'up' : change < 0 ? 'down' : 'flat'
 }
 
@@ -42,8 +44,11 @@ export type RevenuePoint = { at: Date; cents: number }
 export function bucketSums(points: readonly RevenuePoint[], buckets: readonly (Range | null)[]): (number | null)[] {
   return buckets.map(bucket => {
     if (!bucket) return null
+
     let sum = 0
+
     for (const point of points) if (point.at >= bucket.start && point.at < bucket.end) sum += point.cents
+
     return sum
   })
 }
@@ -58,5 +63,6 @@ export function collectionShares(rows: readonly CollectionRevenue[], postersCent
     .sort((a, b) => b.cents - a.cents)
     .map(row => ({ ...row, share: postersCents > 0 ? row.cents / postersCents : 0, bar: largest > 0 ? row.cents / largest : 0 }))
   const held = rows.reduce((total, row) => total + row.cents, 0)
+
   return { rows: shares, otherCents: Math.max(0, postersCents - held) }
 }

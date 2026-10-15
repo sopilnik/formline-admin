@@ -14,6 +14,7 @@ const LOOK: Record<ProductStatus, { icon: LucideIcon; className: string }> = {
 export function ProductStatusBadge({ status }: { status: ProductStatus }) {
   const t = useTranslations('products.status')
   const { icon: Icon, className } = LOOK[status]
+
   return (
     <span className={cn('inline-flex items-center gap-1.5 rounded-full py-0.5 pr-2.5 pl-2 text-xs font-medium whitespace-nowrap', className)}>
       <Icon aria-hidden className="size-3.5" strokeWidth={2} />

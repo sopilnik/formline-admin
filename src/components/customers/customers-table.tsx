@@ -16,6 +16,7 @@ const TD = 'border-b px-3 py-2 group-last/row:border-b-0'
 export function CustomersTable({ rows, query }: { rows: CustomerRowView[]; query: CustomersQuery }) {
   const t = useTranslations('customers')
   const sortHref = (sort: CustomerSort, dir: SortDir): string => customersHref(query, { sort, dir })
+
   return (
     <>
       <table aria-label={t('title')} className="hidden w-full table-fixed border-separate border-spacing-0 text-[13px] @4xl:table">

@@ -22,7 +22,9 @@ test.describe('a slow link', () => {
     await signInAsSandboxUser(context)
     await openFramed(page, '/products/hush')
     await hold(page, '**/api/media?**', 6000)
+
     const poster = await sharp({ create: { width: 600, height: 800, channels: 3, background: '#a9cdb2' } }).png().toBuffer()
+
     await page.getByRole('region', { name: 'Image' }).locator('input[type="file"]').setInputFiles({ name: 'poster.png', mimeType: 'image/png', buffer: poster })
     await expect(page.getByRole('button', { name: 'Uploading…' })).toBeVisible()
     await sidebar(page).getByRole('link', { name: /^Orders/ }).click()
@@ -44,9 +46,13 @@ test.describe('a slow link', () => {
     await signInAsSandboxUser(context)
     // Links prefetch the loading state of their pages (an order's once the pointer reaches it); the pages are held, not that.
     await hold(page, /\/(team|activity|orders\/\d+|products\/new)(\?|$)/, 1500, headers => headers.rsc === '1' && headers['next-router-prefetch'] === undefined)
+
     const loading = (text: string) => page.getByRole('status').filter({ hasText: text })
+
     await openFramed(page, '/orders')
+
     const order = page.getByRole('table', { name: 'Orders' }).getByRole('link', { name: /^#\d+$/ }).first()
+
     await order.hover()
     await page.waitForLoadState('networkidle')
     await order.click()
@@ -68,7 +74,9 @@ test.describe('a slow link', () => {
   test('Settings opens its first section in one step and stays current on every section', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await openFramed(page, '/overview')
+
     const settings = sidebar(page).getByRole('link', { name: 'Settings' })
+
     await expect(settings).toHaveAttribute('href', '/settings/profile')
     await openFramed(page, '/settings/store')
     await expect(sidebar(page).getByRole('link', { name: 'Settings' })).toHaveAttribute('aria-current', 'page')

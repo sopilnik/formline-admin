@@ -18,6 +18,7 @@ export function RecoveryCodesSection({ remaining, hasFactor, recent }: { remaini
   const answers = useAnswers(pending)
   const [closed, setClosed] = useState<FormState | null>(null)
   const codes = state.status === 'done' && state !== closed ? state.recoveryCodes : undefined
+
   return (
     <section aria-labelledby="recovery-title" className="flex flex-col gap-4 rounded-lg border bg-card p-5">
       <div>

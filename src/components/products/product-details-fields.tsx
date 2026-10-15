@@ -20,6 +20,7 @@ type Props = {
 export function ProductDetailsFields({ values, errors, collections, slugPlaceholder, onNameInput }: Props) {
   const t = useTranslations('products.form')
   const error = (field: DetailField): string | undefined => (errors[field] ? t(`errors.${errors[field]}`) : undefined)
+
   return (
     <div className="flex flex-col gap-4">
       <TextField

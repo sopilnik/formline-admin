@@ -12,9 +12,11 @@ import { Button, buttonVariants } from '@/components/ui/button'
 export function RecoveryCodesView({ codes, done }: { codes: string[]; done?: { label: string; onClick: () => void } }) {
   const t = useTranslations('auth.recoveryCodes')
   const heading = useRef<HTMLHeadingElement>(null)
+
   useEffect(() => {
     heading.current?.focus()
   }, [])
+
   return (
     <div className="flex flex-col gap-4">
       <h2 ref={heading} tabIndex={-1} className="text-lg font-bold outline-none">{t('title')}</h2>

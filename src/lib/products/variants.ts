@@ -23,22 +23,29 @@ const ids = z.array(z.uuid()).min(1).max(VARIANTS_MAX)
 /** The variant form: every listed variant's own price (empty for none), stock and threshold. Null ids mean a form that was tampered with. */
 export function parseVariants(variantIds: readonly string[], text: (name: string) => string): VariantsResult | null {
   const parsedIds = ids.safeParse([...new Set(variantIds)])
+
   if (!parsedIds.success) return null
+
   const rows: VariantInput[] = []
   const errors: VariantErrors = {}
+
   for (const id of parsedIds.data) {
     const price = text(variantFieldName('price', id)).trim()
     const override = price === '' ? null : parsePrice(price)
     const stock = count(STOCK_MAX).safeParse(text(variantFieldName('stock', id)))
     const threshold = count(THRESHOLD_MAX).safeParse(text(variantFieldName('threshold', id)))
     const stockWas = count(STOCK_MAX).safeParse(text(variantFieldName('stockWas', id)))
+
     if (!stockWas.success) return null
+
     const problems: Partial<Record<VariantField, VariantIssue>> = {}
+
     if (price !== '' && override === null) problems.price = 'price_invalid'
     if (!stock.success) problems.stock = 'stock_invalid'
     if (!threshold.success) problems.threshold = 'threshold_invalid'
     if (Object.keys(problems).length > 0) errors[id] = problems
     else rows.push({ id, priceOverrideCents: override, stock: stock.data!, stockWas: stockWas.data, lowStockThreshold: threshold.data! })
   }
+
   return Object.keys(errors).length > 0 ? { ok: false, errors } : { ok: true, rows }
 }

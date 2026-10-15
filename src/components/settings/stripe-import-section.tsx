@@ -14,6 +14,7 @@ export function StripeImportSection({ recent }: { recent: boolean }) {
   const t = useTranslations('settings.store.stripe')
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending, unreached] = useFormAction(importStripeOrdersAction, IDLE, form)
+
   return (
     <section aria-labelledby="store-orders" className="flex flex-col gap-4 rounded-lg border bg-card p-5">
       <div>

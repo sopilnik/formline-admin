@@ -12,6 +12,7 @@ import { can } from '@/server/authz/matrix'
 
 export function TopBar({ items, theme, locale, user, unread }: { items: NavItem[]; theme: Theme; locale: Locale; user: FrameUser; unread: number }) {
   const access = { newProduct: can(user.role, 'catalog.write', user.kind), invite: can(user.role, 'team.manage', user.kind) }
+
   return (
     <header className="flex items-center gap-2 border-b border-border bg-card px-4 py-3 md:px-6">
       <SignOutProvider kind={user.kind}>

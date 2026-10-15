@@ -29,6 +29,7 @@ export function customerHref(id: string): string {
 /** The city and the country's name in the interface language ("Berlin, Germany", "Берлин, Германия"). */
 export function locationOf(city: string | null, country: string | null, locale: Locale): string | null {
   const parts = [city, country ? countryName(country, locale) : null].filter((part): part is string => Boolean(part))
+
   return parts.length > 0 ? parts.join(', ') : null
 }
 

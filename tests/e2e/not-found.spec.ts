@@ -4,12 +4,15 @@ import { expect, test } from './test.ts'
 test.describe('pages that are not there', () => {
   test('an unknown address offers the way back to the overview, in both languages, under its own title', async ({ page, context }) => {
     await signInAsSandboxUser(context)
+
     const cases = [
       { lang: 'en', title: 'Page not found · Formline Admin', link: 'Overview' },
       { lang: 'ru', title: 'Страница не найдена · Formline Admin', link: 'Обзор' },
     ]
+
     for (const { lang, title, link } of cases) {
       const response = await page.goto(`/no-such-page?lang=${lang}`)
+
       expect(response!.status()).toBe(404)
       await expect(page).toHaveTitle(title)
       await expect(page.getByRole('main')).toBeVisible()

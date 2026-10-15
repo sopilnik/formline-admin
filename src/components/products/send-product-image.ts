@@ -9,10 +9,13 @@ export type UploadProblem = { error: Exclude<UploadError, 'rate_limited'> } | { 
  */
 export async function sendProductImage(productId: string, file: File): Promise<UploadProblem | null> {
   const response = await fetch(`/api/media?product=${productId}`, { method: 'POST', body: file, headers: { 'X-Requested-With': 'formline' } }).catch(() => null)
+
   if (response?.status === 201) return null
 
   const body = response ? await response.json().catch(() => null) as { error?: UploadError } | null : null
   const error = body?.error ?? 'unavailable'
+
   if (error === 'rate_limited') return { error, minutes: Math.max(1, Math.ceil(Number(response?.headers.get('Retry-After') ?? 60) / 60)) }
+
   return { error }
 }

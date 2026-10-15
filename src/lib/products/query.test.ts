@@ -37,12 +37,14 @@ describe('productsHref', () => {
   it('round-trips through the parser', () => {
     const query = { status: ['draft' as const], q: 'low tide', collection: 'monochrome', stock: 'low' as const, sort: 'price' as const, dir: 'desc' as const, page: 3, size: 100 as const }
     const href = productsHref(query)
+
     expect(href).toBe('/products?status=draft&q=low+tide&collection=monochrome&stock=low&sort=price&dir=desc&page=3&size=100')
     expect(parseProductsQuery(new URLSearchParams(href.split('?')[1]))).toEqual(query)
   })
 
   it('goes back to the first page when a filter, the sort or the size changes, and keeps it when only the page changes', () => {
     const page3 = { ...DEFAULT_PRODUCTS_QUERY, page: 3 }
+
     expect(productsHref(page3)).toBe('/products?page=3')
     expect(productsHref(page3, { page: 4 })).toBe('/products?page=4')
     expect(productsHref(page3, { stock: 'low' })).toBe('/products?stock=low')

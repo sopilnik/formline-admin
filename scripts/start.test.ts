@@ -32,7 +32,9 @@ function harness(steps: Array<'ok' | Error>, role: 'ok' | Error = 'ok') {
     env: ENV,
     migrate: async delays => {
       retries.push(delays)
+
       const step = steps.shift() ?? 'ok'
+
       if (step !== 'ok') throw step
     },
     checkRole: async () => {
@@ -42,7 +44,9 @@ function harness(steps: Array<'ok' | Error>, role: 'ok' | Error = 'ok') {
       let exit: (code: number) => void = () => undefined
       const exited = new Promise<number>(resolve => { exit = resolve })
       const server: FakeServer = { env, signals: [], exited, exit: code => exit(code), stop: signal => { server.signals.push(signal); exit(143) } }
+
       servers.push(server)
+
       return server
     },
     stopped: new Promise(resolve => { stop = resolve }),
@@ -51,6 +55,7 @@ function harness(steps: Array<'ok' | Error>, role: 'ok' | Error = 'ok') {
     log: event => { events.push(event) },
   }
   const flush = () => new Promise(resolve => setImmediate(resolve))
+
   return { deps, servers, events, retries, stop: (signal: NodeJS.Signals) => stop(signal), tick: () => tick(), flush }
 }
 
@@ -75,6 +80,7 @@ describe('classify', () => {
 describe('runStart', () => {
   it('refuses a bad environment before it touches the database', async () => {
     const h = harness([])
+
     h.deps.env = { ...ENV, IP_HASH_KEY: 'short' }
     expect(await runStart(h.deps)).toBe(1)
     expect(h.retries).toEqual([])
@@ -87,6 +93,7 @@ describe('runStart', () => {
   it('migrates, checks the role and serves without the migrator\'s address, then passes the stop on', async () => {
     const h = harness(['ok'])
     const running = runStart(h.deps)
+
     await h.flush()
     expect(h.retries).toEqual([[1_000, 2_000, 4_000, 8_000]])
     expect(h.servers).toHaveLength(1)
@@ -100,8 +107,11 @@ describe('runStart', () => {
 
   it('stops at once when asked to while it is still reaching the database', async () => {
     const h = harness([])
+
     h.deps.migrate = () => new Promise(() => undefined)
+
     const running = runStart(h.deps)
+
     await h.flush()
     h.stop('SIGTERM')
     expect(await running).toBe(143)
@@ -111,9 +121,12 @@ describe('runStart', () => {
 
   it('refuses to serve on a role with too many rights or a failed migration', async () => {
     const role = harness(['ok'], new AppRoleError('over-privileged'))
+
     expect(await runStart(role.deps)).toBe(1)
     expect(role.servers).toEqual([])
+
     const migration = harness([sqlError('42P07')])
+
     expect(await runStart(migration.deps)).toBe(1)
     expect(migration.servers).toEqual([])
   })
@@ -121,6 +134,7 @@ describe('runStart', () => {
   it('serves in maintenance mode while the database is away and restarts the server once it is back', async () => {
     const h = harness([unreachable(), unreachable(), 'ok'])
     const running = runStart(h.deps)
+
     await h.flush()
     expect(h.servers).toHaveLength(1)
     expect(h.servers[0]!.env.FORMLINE_MAINTENANCE).toBe('1')
@@ -141,6 +155,7 @@ describe('runStart', () => {
   it('stops a maintenance server and refuses when the database comes back refusing', async () => {
     const h = harness([unreachable(), sqlError('28P01')])
     const running = runStart(h.deps)
+
     await h.flush()
     h.tick()
     expect(await running).toBe(1)
@@ -151,15 +166,20 @@ describe('runStart', () => {
   it('names the reason behind a refusal or an unreachable database in its log', async () => {
     const password = Object.assign(new pg.DatabaseError('password authentication failed for user "owner"', 1, 'error'), { code: '28P01' })
     const refused = harness([new Error('database unreachable after 5 attempts', { cause: password })])
+
     expect(await runStart(refused.deps)).toBe(1)
     expect(refused.events.at(-1)).toEqual({ event: 'start.refused', message: 'database unreachable after 5 attempts', cause: 'password authentication failed for user "owner"' })
+
     const away = harness([unreachable()])
     const running = runStart(away.deps)
+
     await away.flush()
     expect(away.events[0]).toEqual({ event: 'start.unreachable', message: 'database unreachable after 1 attempts', cause: 'connect ECONNREFUSED' })
     away.stop('SIGTERM')
     expect(await running).toBe(143)
+
     const role = harness(['ok'], new AppRoleError('over-privileged'))
+
     expect(await runStart(role.deps)).toBe(1)
     expect(role.events.at(-1)).toEqual({ event: 'start.refused', message: 'over-privileged' })
   })
@@ -167,6 +187,7 @@ describe('runStart', () => {
   it('names the DETAIL Postgres gives with a refusal', async () => {
     const denied = Object.assign(new pg.DatabaseError('permission denied for schema fa', 1, 'error'), { code: '42501', detail: 'Only roles with the CREATE privilege may create objects.' })
     const refused = harness([new Error('migration 0016 failed', { cause: denied })])
+
     expect(await runStart(refused.deps)).toBe(1)
     expect(refused.events.at(-1)).toEqual({
       event: 'start.refused',
@@ -182,12 +203,15 @@ describe('runStart', () => {
     const reason = 'connect ECONNREFUSED ::1:5432; connect ECONNREFUSED 127.0.0.1:5432'
     const migration = harness([new Error('database unreachable after 1 attempts', { cause: everyAddress() })])
     const migrating = runStart(migration.deps)
+
     await migration.flush()
     expect(migration.events[0]).toEqual({ event: 'start.unreachable', message: 'database unreachable after 1 attempts', cause: reason })
     migration.stop('SIGTERM')
     expect(await migrating).toBe(143)
+
     const role = harness(['ok'], everyAddress())
     const checking = runStart(role.deps)
+
     await role.flush()
     expect(role.events[0]).toEqual({ event: 'start.unreachable', message: reason })
     role.stop('SIGTERM')
@@ -197,6 +221,7 @@ describe('runStart', () => {
   it('stops with the server when the server stops by itself', async () => {
     const h = harness(['ok'])
     const running = runStart(h.deps)
+
     await h.flush()
     h.servers[0]!.exit(1)
     expect(await running).toBe(1)

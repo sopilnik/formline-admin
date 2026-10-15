@@ -22,6 +22,7 @@ describe('parseCollection', () => {
   it('counts a line break of the description once, as the field does, and keeps it as LF', () => {
     const lines = Array.from({ length: 15 }, () => 'x'.repeat(131))
     const result = parseCollection({ name: 'Newline check', slug: '', description: `${lines.join('\r\n')}\r\n${'y'.repeat(15)}` })
+
     expect(result.ok && result.data.description).toBe(`${lines.join('\n')}\n${'y'.repeat(15)}`)
   })
 })

@@ -25,15 +25,20 @@ test.describe('app frame', () => {
   test('keyboard focus shows the solid outline in the color of its surface', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await openFramed(page, '/overview')
+
     const orders = page.getByRole('link', { name: /^Orders/ })
+
     await orders.focus()
     await page.keyboard.press('Shift+Tab')
     await page.keyboard.press('Tab')
     await expect(orders).toBeFocused()
+
     const outline = await orders.evaluate(el => {
       const s = getComputedStyle(el)
+
       return [s.outlineStyle, s.outlineWidth, s.outlineColor]
     })
+
     expect(outline).toEqual(['solid', '2px', 'rgb(240, 122, 79)'])
   })
 
@@ -78,6 +83,7 @@ test.describe('app frame', () => {
 
     // app/global-error.tsx replaces the root layout and reads both through document.cookie.
     const cookie = await page.evaluate(() => document.cookie)
+
     expect(cookie).toMatch(/(?:^|; )formline_theme=dark(?:;|$)/)
     expect(cookie).toMatch(/(?:^|; )NEXT_LOCALE=ru(?:;|$)/)
   })
@@ -104,10 +110,12 @@ test.describe('app frame', () => {
   test('the menu moves between its widths in 200 ms with its icons in place', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/overview')
+
     const aside = page.locator('aside')
     const orders = aside.getByRole('link', { name: /^Orders/ })
     const iconLeft = () => orders.locator('svg').evaluate(el => Math.round(el.getBoundingClientRect().left))
     const before = await iconLeft()
+
     expect(await aside.evaluate(el => [getComputedStyle(el).transitionProperty, getComputedStyle(el).transitionDuration])).toEqual(['width', '0.2s'])
 
     // The same element before and after: a link drawn anew would show its label without the fade.
@@ -122,6 +130,7 @@ test.describe('app frame', () => {
     // The faded labels never wrap and stick out to the right, so a sideways wheel must not scroll the icons away; the
     // scroll lands within two frames.
     const nav = aside.locator('nav')
+
     await nav.hover()
     await page.mouse.wheel(60, 0)
     expect(await nav.evaluate(el => new Promise<number>(done => requestAnimationFrame(() => requestAnimationFrame(() => done(el.scrollLeft)))))).toBe(0)
@@ -134,23 +143,31 @@ test.describe('app frame', () => {
   test('the focus ring of every menu link is drawn whole, expanded and collapsed', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await openFramed(page, '/overview')
+
     const nav = page.locator('aside nav')
     const orders = nav.getByRole('link', { name: /^Orders/ })
+
     await orders.focus()
     await page.keyboard.press('Shift+Tab')
     await page.keyboard.press('Tab')
     await expect(orders).toBeFocused()
+
     // The ring reaches outline-width + outline-offset past the link; the nav clips whatever leaves its own box.
     const reach = await orders.evaluate(el => parseFloat(getComputedStyle(el).outlineWidth) + parseFloat(getComputedStyle(el).outlineOffset))
+
     expect(reach).toBe(4)
+
     const cut = () => nav.evaluate((el, ring) => {
       const box = el.getBoundingClientRect()
+
       return [...el.querySelectorAll('a')].flatMap(link => {
         const r = link.getBoundingClientRect()
         const sides = [r.left - ring < box.left && 'left', r.right + ring > box.right && 'right', r.top - ring < box.top && 'top']
+
         return sides.filter(Boolean).map(side => `${link.textContent}: ${side}`)
       })
     }, reach)
+
     expect(await cut()).toEqual([])
 
     await page.getByRole('button', { name: 'Collapse menu' }).click()
@@ -164,7 +181,9 @@ test.describe('app frame', () => {
     await page.goto('/overview')
     await expect(page.locator('aside')).toBeHidden()
     await page.getByRole('button', { name: 'Open menu' }).click()
+
     const drawer = page.getByRole('dialog', { name: 'Main menu' })
+
     await expect(drawer.getByRole('link', { name: /^Orders/ })).toBeVisible()
     await expectNoSeriousA11yViolations(page)
     await drawer.getByRole('button', { name: 'Close menu' }).click()

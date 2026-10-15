@@ -15,6 +15,7 @@ import { notificationItems, readerOf } from '@/server/notifications/feed'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('notifications')
+
   return { title: t('title') }
 }
 
@@ -26,9 +27,12 @@ export default async function NotificationsPage({ searchParams }: { searchParams
     list: await listNotifications(tx, await readerOf(tx, session), query),
     timeZone: (await getStoreSettings(tx, session.workspaceId)).timezone,
   }))
+
   if (list.total > 0 && query.page > list.pages) redirect(pageQueryHref('/notifications', query, { page: list.pages }))
+
   const items = await notificationItems(list.rows, await getLocale(), timeZone)
   const t = await getTranslations('notifications')
+
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-5">
       <div className="flex flex-wrap items-end justify-between gap-3">

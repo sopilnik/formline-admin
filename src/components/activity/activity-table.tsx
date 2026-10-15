@@ -12,6 +12,7 @@ const LINK = 'font-medium underline decoration-border-strong underline-offset-3 
 
 function SubjectText({ subject }: { subject: Subject | null }) {
   if (!subject) return null
+
   return subject.href ? <Link href={subject.href} prefetch={false} className={LINK}>{subject.text}</Link> : <span>{subject.text}</span>
 }
 
@@ -21,6 +22,7 @@ function SubjectText({ subject }: { subject: Subject | null }) {
  */
 function known(translate: unknown, value: string): string {
   const lookup = translate as { (key: string): string; has: (key: string) => boolean }
+
   return lookup.has(value) ? lookup(value) : value
 }
 
@@ -40,6 +42,7 @@ function DetailText({ detail }: { detail: Detail | null }) {
     case 'role': {
       const translate = detail.kind === 'orderStatus' ? order : detail.kind === 'productStatus' ? product : role
       const text = t('transition', { from: known(translate, detail.from), to: known(translate, detail.to) })
+
       return <>{detail.kind === 'orderStatus' && detail.bulk ? t('inBulk', { transition: text }) : text}</>
     }
 
@@ -76,6 +79,7 @@ function DetailText({ detail }: { detail: Detail | null }) {
  */
 export function ActivityTable({ entries }: { entries: ActivityEntryView[] }) {
   const t = useTranslations('activity')
+
   return (
     <>
       <table aria-label={t('title')} className="hidden w-full table-fixed border-separate border-spacing-0 text-[13px] @4xl:table">

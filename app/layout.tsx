@@ -24,6 +24,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const nonce = await getNonce()
   const locale = await getLocale()
   const t = await getTranslations('common')
+
   return (
     <html lang={locale} className={cn(inter.variable, spaceGrotesk.variable, themeClassName(theme))}>
       <body>

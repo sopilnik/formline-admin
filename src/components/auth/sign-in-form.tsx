@@ -15,8 +15,11 @@ export function SignInForm({ expired = false }: { expired?: boolean }) {
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending, unreached] = useFormAction(signInAction, IDLE as FormState<SignInField>, form)
   const errorFor = useErrorText(state)
+
   useFocusOnError(state, 'sign-in', 'email')
+
   const email = state.status === 'error' ? state.values?.email : undefined
+
   return (
     <form ref={form} action={action} noValidate className="flex flex-col gap-4">
       <UnreachedAlert unreached={unreached} />

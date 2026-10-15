@@ -35,5 +35,6 @@ const MATRIX: Record<Action, { roles: readonly Role[]; kinds: readonly Workspace
 
 export function can(role: Role, action: Action, kind: WorkspaceKind): boolean {
   const rule = MATRIX[action]
+
   return rule.roles.includes(role) && rule.kinds.includes(kind)
 }

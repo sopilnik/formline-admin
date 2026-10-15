@@ -26,7 +26,9 @@ test.describe('menus, the palette and hints', () => {
     await signInAsSandboxUser(context)
     await openFramed(page, '/overview')
     await page.getByRole('region', { name: 'Demo sandbox' }).getByRole('button', { name: 'Switch user' }).click()
+
     const dialog = page.getByRole('dialog', { name: 'Switch user' })
+
     await expect(dialog).toBeVisible()
     await page.keyboard.press('Control+k')
     await expect(page.getByRole('dialog', { name: 'Search and commands' })).toHaveCount(0)
@@ -36,7 +38,9 @@ test.describe('menus, the palette and hints', () => {
   test('the palette\'s form actions put the focus in the form\'s first field', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await openFramed(page, '/overview')
+
     const input = page.getByRole('combobox', { name: 'Search pages, actions, orders, customers and products' })
+
     await page.keyboard.press('Control+k')
     await input.fill('invite')
     await page.keyboard.press('Enter')
@@ -57,11 +61,13 @@ test.describe('a metric\'s explanation on a touch screen', () => {
   test('opens with a tap and closes with the next', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await openFramed(page, '/overview')
+
     // What a person sees: an explanation drawn in full, not one faded out after the touch passed over the button.
     const shown = () => page.locator('[data-slot="tooltip-content"]').evaluateAll(tips => tips
       .filter(tip => tip.getBoundingClientRect().width > 0 && getComputedStyle(tip).opacity === '1')
       .map(tip => tip.textContent?.trim()))
     const about = page.getByRole('button', { name: 'About revenue' })
+
     await about.tap()
     await expect.poll(shown, { timeout: 3000 }).toEqual([REVENUE_HINT])
     await page.waitForTimeout(1500)

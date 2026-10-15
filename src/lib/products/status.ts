@@ -29,7 +29,9 @@ export type DeleteBlocker = 'has_orders' | 'has_orders_archived' | 'not_draft' |
  */
 export function deleteBlocker(status: ProductStatus, hasOrders: boolean): DeleteBlocker | null {
   const archived = status === 'archived'
+
   if (hasOrders) return archived ? 'has_orders_archived' : 'has_orders'
   if (status === 'draft') return null
+
   return archived ? 'not_draft_archived' : 'not_draft'
 }

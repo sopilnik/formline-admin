@@ -13,7 +13,9 @@ export const noBreach = async (): Promise<boolean> => false
 /** Creates the owner unless a test already has; returns its id. */
 export async function ensureOwner(admin: pg.Pool, app: pg.Pool): Promise<string> {
   const existing = await findOwner(app)
+
   if (existing) return existing.id
+
   const totp = await nextTotp(admin)
   const result = await setupOwner({
     token: TEST_AUTH_ENV.OWNER_SETUP_TOKEN,
@@ -25,7 +27,9 @@ export async function ensureOwner(admin: pg.Pool, app: pg.Pool): Promise<string>
     locale: 'en',
     theme: 'system',
   }, { pool: app, now: totp.now, isBreached: noBreach })
+
   if (!result.ok) throw new Error(`owner setup failed: ${result.error}`)
+
   return (await findOwner(app))!.id
 }
 
@@ -38,5 +42,6 @@ export async function nextTotp(admin: pg.Pool): Promise<{ code: string; now: () 
     "select u.totp_last_step as step from fa.users u join fa.workspaces w on w.id = u.workspace_id where w.kind = 'owner' and u.role = 'owner'")
   const last = rows[0]?.step ? Number(rows[0].step) : 0
   const step = Math.max(last, Math.floor(Date.now() / 30_000) + 100) + 1
+
   return { code: generateHOTP(OWNER_TOTP_SECRET, BigInt(step), 6), now: () => step * 30_000 + 5_000 }
 }

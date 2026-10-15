@@ -10,7 +10,9 @@ import { useEffect, type ReactNode } from 'react'
 export function FrameReady({ children }: { children: ReactNode }) {
   useEffect(() => {
     const root = document.documentElement
+
     root.dataset.hydrated = ''
+
     return () => {
       delete root.dataset.hydrated
     }

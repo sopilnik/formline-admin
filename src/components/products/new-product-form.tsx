@@ -36,13 +36,17 @@ export function NewProductForm({ collections }: Props) {
   const [name, setName] = useState('')
   const [image, setImage] = useState<File | null>(null)
   const [state, action, pending, unreached] = useFormAction(createProductAction, IDLE, form)
+
   useLeaveGuard(form, state.status === 'error')
+
   // Once the product exists, its image is on the way until the form moves on.
   const uploading = state.status === 'done' && image !== null
   // True once the owner has left the page, so an upload that ends later does not pull them back.
   const left = useRef(false)
+
   useEffect(() => {
     left.current = false
+
     return () => {
       left.current = true
     }
@@ -56,9 +60,11 @@ export function NewProductForm({ collections }: Props) {
         if (!left.current) router.push(productHref(result.slug))
         router.refresh()
       }
+
       if (!image) {
         toast.success(t('created'))
         moveOn()
+
         return
       }
 
@@ -71,10 +77,13 @@ export function NewProductForm({ collections }: Props) {
     }
     if (result.status === 'error') {
       const first = [...DETAIL_FIELDS, 'palettes' as const].find(field => result.fieldErrors[field])
+
       form.current?.querySelector<HTMLElement>(first ? `[name="${first}"]` : '[role="alert"]')?.focus()
     }
   })
+
   useEffect(() => settle(state), [state])
+
   const error = state.status === 'error' ? state : null
   const values: Record<DetailField, string> = error?.values ?? { name: '', slug: '', collection: collections[0]?.id ?? '', basePrice: '', tags: '', description: '' }
   const palettesError = error?.fieldErrors.palettes ? fieldText(`errors.${error.fieldErrors.palettes}`) : undefined
@@ -83,7 +92,9 @@ export function NewProductForm({ collections }: Props) {
   // stay in view while its image uploads.
   const submit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault()
+
     const data = new FormData(event.currentTarget)
+
     startTransition(() => action(data))
   }
 

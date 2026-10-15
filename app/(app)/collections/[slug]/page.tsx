@@ -24,6 +24,7 @@ type Params = { params: Promise<{ slug: string }> }
 // The title and the page read the same collection: one set of queries per request.
 const load = cache(async (slug: string) => {
   const session = await requireSession()
+
   return withWorkspace(workspaceContext(session), tx => getCollection(tx, session.workspaceId, slug))
 })
 
@@ -31,18 +32,26 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const t = await getTranslations('collections')
   const slug = (await params).slug
   const collection = SLUG_PATTERN.test(slug) ? await load(slug) : null
+
   return { title: collection ? collection.name : t('notFoundTitle') }
 }
 
 export default async function CollectionPage({ params }: Params) {
   const session = await requireSession()
+
   authorize(session, 'data.read')
+
   const slug = (await params).slug
+
   if (!SLUG_PATTERN.test(slug)) notFound()
+
   const collection = await load(slug)
+
   if (!collection) notFound()
+
   const t = await getTranslations('collections')
   const canWrite = can(session.role, 'catalog.write', session.workspaceKind)
+
   return (
     <div className="flex flex-col gap-5">
       <BackLink href="/collections">{t('back')}</BackLink>

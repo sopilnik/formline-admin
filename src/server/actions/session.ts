@@ -10,10 +10,12 @@ import { endSandbox } from '@/server/sandbox/lifecycle'
 /** Signs out of this device; in a sandbox that ends the sandbox itself. */
 export async function signOutAction(): Promise<void> {
   const session = await getSession()
+
   if (session?.workspaceKind === 'sandbox') {
     await endSandbox(session)
   } else if (session) {
     const ipHash = await requestIpHash()
+
     await withWorkspace(workspaceContext(session), async tx => {
       await deleteSession(tx, session)
       await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.sign_out', ipHash })

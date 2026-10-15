@@ -5,7 +5,9 @@ const pools: pg.Pool[] = []
 
 function make(connectionString: string, max: number): pg.Pool {
   const pool = new pg.Pool({ connectionString, max })
+
   pools.push(pool)
+
   return pool
 }
 

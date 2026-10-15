@@ -16,6 +16,7 @@ export function ThemeMenu({ theme }: { theme: Theme }) {
   const [, startTransition] = useTransition()
   const send = useReach()
   const Icon = ICONS[theme]
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger render={<Button variant="ghost" aria-label={t('label', { name: t(theme) })} />}>
@@ -27,6 +28,7 @@ export function ThemeMenu({ theme }: { theme: Theme }) {
         <DropdownMenuRadioGroup value={theme} onValueChange={value => startTransition(async () => { await send(() => setThemeAction(String(value))) })}>
           {THEMES.map(value => {
             const ItemIcon = ICONS[value]
+
             return (
               <DropdownMenuRadioItem key={value} value={value} closeOnClick>
                 <ItemIcon aria-hidden />

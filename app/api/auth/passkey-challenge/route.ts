@@ -9,9 +9,11 @@ export async function GET(): Promise<Response> {
   const config = authConfig()
   const options = await authenticationOptions(config)
   const store = await cookies()
+
   store.set(CHALLENGE_COOKIE, challengeCookie(options.challenge, 'auth', undefined, config, Date.now()), {
     ...CHALLENGE_COOKIE_OPTIONS,
     maxAge: CHALLENGE_TTL_SECONDS,
   })
+
   return Response.json(options, { headers: { 'Cache-Control': 'no-store' } })
 }

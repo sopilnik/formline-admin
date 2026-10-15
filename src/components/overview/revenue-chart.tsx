@@ -13,13 +13,16 @@ const TODAY = 'border border-primary bg-[image:repeating-linear-gradient(135deg,
 /** The previous period as polyline point lists, split where the previous month has no such day. */
 function segments(bars: readonly ChartBar[], max: number): string[] {
   const lists: string[][] = [[]]
+
   bars.forEach((bar, i) => {
     if (bar.previous === null) {
       if (lists.at(-1)!.length > 0) lists.push([])
+
       return
     }
     lists.at(-1)!.push(`${i + 0.5},${(100 - (Math.min(bar.previous, max) / max) * 100).toFixed(3)}`)
   })
+
   return lists.filter(list => list.length > 1).map(list => list.join(' '))
 }
 
@@ -38,6 +41,7 @@ export function RevenueChart({ model, title, summary, legend }: Props) {
   const lines = segments(model.bars, model.max)
   const hovered = active === null ? null : model.bars[active]!
   const at = active === null ? 0 : (active + 0.5) / count
+
   return (
     <section aria-labelledby="revenue-title" className="@container flex min-w-0 flex-col rounded-lg border bg-card p-4 sm:p-5">
       <div className="mb-3.5 flex flex-wrap items-baseline gap-x-2.5 gap-y-1">

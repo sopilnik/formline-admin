@@ -14,10 +14,12 @@ export async function listLetters(tx: Tx, workspaceId: string, query: { page: nu
   const rows = await tx.select(columns).from(outboxEmails).where(eq(outboxEmails.workspaceId, workspaceId))
     .orderBy(desc(outboxEmails.createdAt), desc(outboxEmails.id)).limit(query.size).offset((query.page - 1) * query.size)
   const total = totalRow?.n ?? 0
+
   return { rows, total, pages: pageCount(total, query.size) }
 }
 
 export async function getLetter(tx: Tx, workspaceId: string, id: string): Promise<StoredLetter | null> {
   const [row] = await tx.select(columns).from(outboxEmails).where(and(eq(outboxEmails.workspaceId, workspaceId), eq(outboxEmails.id, id)))
+
   return row ?? null
 }

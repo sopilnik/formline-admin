@@ -8,6 +8,7 @@ import { resolve } from 'node:path'
  * the timing tests fail under that load.
  */
 export const E2E_WORKERS = process.env.CI ? 1 : 4
+
 // The ports of the four servers; 4334 is the Stripe stand-in's.
 const PORTS = [4331, 4332, 4333, 4335]
 
@@ -16,6 +17,7 @@ export type E2eWorker = { port: number; baseUrl: string; database: string; migra
 export function e2eWorker(index: number): E2eWorker {
   const port = PORTS[index]!
   const database = `formline_e2e_${index}`
+
   return {
     port,
     // localhost, not 127.0.0.1: passkeys need a host name as the relying party.

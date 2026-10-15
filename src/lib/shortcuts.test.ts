@@ -7,6 +7,7 @@ const press = (key: string, time: number, extra: Partial<KeyInput> = {}): KeyInp
 describe('createShortcutReader', () => {
   it('goes to a page on "g" and its letter', () => {
     const read = createShortcutReader()
+
     expect(read(press('g', 0))).toBeNull()
     expect(read(press('o', 300))).toEqual({ type: 'go', page: 'orders' })
     expect(read(press('g', 1000))).toBeNull()
@@ -19,6 +20,7 @@ describe('createShortcutReader', () => {
 
   it('forgets "g" after a second, or after any other key', () => {
     const read = createShortcutReader()
+
     read(press('g', 0))
     expect(read(press('o', SEQUENCE_MS + 1))).toBeNull()
     read(press('g', 5000))
@@ -29,12 +31,14 @@ describe('createShortcutReader', () => {
 
   it('reads "/" and "?"', () => {
     const read = createShortcutReader()
+
     expect(read(press('/', 0, { code: 'Slash' }))).toEqual({ type: 'search' })
     expect(read(press('?', 10, { code: 'Slash' }))).toEqual({ type: 'help' })
   })
 
   it('takes the letters by their place on a Cyrillic layout, and ignores capitals', () => {
     const read = createShortcutReader()
+
     read(press('п', 0, { code: 'KeyG' }))
     expect(read(press('щ', 100, { code: 'KeyO' }))).toEqual({ type: 'go', page: 'orders' })
     read(press('G', 1000, { code: 'KeyG' }))
@@ -43,6 +47,7 @@ describe('createShortcutReader', () => {
 
   it('stays out of fields and of keys held with a modifier', () => {
     const read = createShortcutReader()
+
     expect(read(press('/', 0, { typing: true }))).toBeNull()
     read(press('g', 100, { typing: true }))
     expect(read(press('o', 200))).toBeNull()

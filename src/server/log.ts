@@ -13,22 +13,26 @@ const QUERY_VALUES = ['params', 'detail']
 function chain(error: Error): Error[] {
   const errors: Error[] = []
   let current: unknown = error
+
   for (let depth = 0; current instanceof Error && depth < 10; depth++) {
     errors.push(current)
     current = current.cause
   }
+
   return errors
 }
 
 /** The text drizzle adds to a failed query's message, the values it ran with; null for any other error. */
 function valueText(error: Error): string | null {
   const { params, query } = error as Error & { params?: unknown; query?: unknown }
+
   return Array.isArray(params) && typeof query === 'string' ? `\nparams: ${params.join(',')}` : null
 }
 
 /** pino's own serializer, without the values of a failed query, wherever they appear. */
 export function serializeError(error: Error): pino.SerializedError {
   const serialized = pino.stdSerializers.err(error)
+
   for (const key of QUERY_VALUES) delete serialized[key]
 
   for (const text of chain(error).map(valueText)) {
@@ -36,6 +40,7 @@ export function serializeError(error: Error): pino.SerializedError {
     serialized.message = serialized.message.replaceAll(text, '')
     serialized.stack = serialized.stack.replaceAll(text, '')
   }
+
   return serialized
 }
 
@@ -48,6 +53,7 @@ export function scrubError(error: unknown): void {
 
   for (const link of chain(error)) {
     const text = valueText(link)
+
     if (text !== null) {
       link.message = link.message.replaceAll(text, '')
       if (link.stack) link.stack = link.stack.replaceAll(text, '')
@@ -63,6 +69,7 @@ export function scrubError(error: unknown): void {
 function logMethod(this: Logger, args: Parameters<LogFn>, method: LogFn): void {
   const [merging] = args
   const holdsError = args.length === 1 && typeof merging === 'object' && merging !== null && 'err' in merging && merging.err instanceof Error
+
   if (holdsError) method.call(this, merging, serializeError(merging.err as Error).message)
   else method.apply(this, args)
 }
@@ -81,6 +88,7 @@ export function createLogger(destination?: DestinationStream): Logger {
     serializers: { err: serializeError },
     hooks: { logMethod },
   }
+
   return destination ? pino(options, destination) : pino(options)
 }
 

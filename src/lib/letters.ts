@@ -34,6 +34,7 @@ export type LetterContent = {
 function when(payload: Payload, locale: Locale, timeZone: string): string {
   const at = text(payload, 'at')
   const date = at ? new Date(at) : null
+
   return date && !Number.isNaN(date.getTime()) ? formatDateTime(date, locale, timeZone) : '—'
 }
 
@@ -52,9 +53,11 @@ export function letterContent(template: string, rawPayload: unknown, timeZone: s
   const locale = parseLocale(text(payload, 'locale'))
   const name = text(payload, 'name')
   const date = when(payload, locale, timeZone)
+
   switch (template) {
     case 'auth.new_sign_in': {
       const device = text(payload, 'device')
+
       return {
         locale, name,
         subject: { key: 'newSignIn.subject' },
@@ -84,6 +87,7 @@ export function letterContent(template: string, rawPayload: unknown, timeZone: s
       const inviter = text(payload, 'inviter') ?? '—'
       const role = ASSIGNABLE_ROLES.find(r => r === payload.role)
       const token = text(payload, 'token')
+
       return {
         locale, name: null,
         subject: { key: 'invitation.subject', values: { inviter } },

@@ -19,19 +19,28 @@ test.describe('overview', () => {
     const { workspaceId } = await signInAsSandboxUser(context, 'viewer')
     const revenue = await one(`select coalesce(sum(o.total_cents), 0) as n from fa.orders o where o.workspace_id = $1 and ${REVENUE} and ${LAST_30_DAYS}`, [workspaceId])
     const orders = await one(`select count(*) as n from fa.orders o where o.workspace_id = $1 and ${REVENUE} and ${LAST_30_DAYS}`, [workspaceId])
+
     await page.goto('/overview')
     await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
+
     // Inside one month a range names the month once ("1 – 30 Aug"); across a new year both ends name their year. A day keeps
     // its month and its year with no-break spaces.
     const range = String.raw`\d{1,2}(?:\u00a0\w{3,4}(?:\u00a0\d{4})?)?[\u2009 ]–[\u2009 ]\d{1,2}\u00a0\w{3,4}(?:\u00a0\d{4})?`
+
     await expect(page.getByText(new RegExp(`^${range}, compared with ${range}$`))).toBeVisible()
+
     const periods = page.getByRole('navigation', { name: 'Period' })
+
     await expect(periods.getByRole('link', { name: '30 days' })).toHaveAttribute('aria-current', 'page')
+
     const figures = page.getByRole('region', { name: 'Key figures' })
+
     for (const label of ['Revenue', 'Orders', 'Average order value', 'New customers']) await expect(figures.getByRole('heading', { name: label, exact: true })).toBeVisible()
     await expect(figures.getByRole('group', { name: 'Revenue' }).getByText(dollars(revenue), { exact: true })).toBeVisible()
     await expect(figures.getByRole('group', { name: 'Orders', exact: true }).getByText(String(orders), { exact: true })).toBeVisible()
+
     const about = figures.getByRole('button', { name: 'About revenue' })
+
     await expect(about).toHaveAccessibleDescription('The sum of the totals of the paid, processing, shipped and delivered orders placed in the period.')
     await about.hover()
     await expect(page.getByText('The sum of the totals of the paid, processing, shipped and delivered orders placed in the period.').last()).toBeVisible()
@@ -41,7 +50,9 @@ test.describe('overview', () => {
   test('switches the period through links', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/overview')
+
     const periods = page.getByRole('navigation', { name: 'Period' })
+
     await expect(periods.getByRole('link', { name: '30 days' })).toHaveAttribute('href', '/overview')
     await periods.getByRole('link', { name: '7 days' }).click()
     await expect(page).toHaveURL(/\/overview\?period=7d$/)
@@ -56,8 +67,11 @@ test.describe('overview', () => {
     const toProcess = await one("select count(*) as n from fa.orders where workspace_id = $1 and status = 'paid'", [workspaceId])
     const processing = await one("select count(*) as n from fa.orders where workspace_id = $1 and status = 'processing'", [workspaceId])
     const soldOut = await one("select count(*) as n from fa.product_variants v join fa.products p on p.workspace_id = v.workspace_id and p.id = v.product_id where v.workspace_id = $1 and v.stock = 0 and p.status <> 'archived'", [workspaceId])
+
     await page.goto('/overview')
+
     const strip = page.getByRole('navigation', { name: 'Needs attention' })
+
     await expect(strip.getByRole('link', { name: `${toProcess} orders to process` })).toHaveAttribute('href', '/orders?status=paid')
     if (processing > 0) await expect(strip.getByRole('link', { name: `${processing} in processing` })).toHaveAttribute('href', '/orders?status=processing')
     if (soldOut > 0) await expect(strip.getByRole('link', { name: `${soldOut} ${soldOut === 1 ? 'variant' : 'variants'} sold out` })).toHaveAttribute('href', '/products?stock=out')
@@ -86,14 +100,20 @@ test.describe('overview', () => {
     await signInAsSandboxUser(context)
     await page.goto('/overview')
     await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
+
     const subtitle = (await page.getByText(/, compared with /).boundingBox())!
     const periods = (await page.getByRole('navigation', { name: 'Period' }).boundingBox())!
+
     // The subtitle keeps the width of the page and the period links sit under it, not beside it.
     expect(subtitle.width).toBeGreaterThan(300)
     expect(periods.y).toBeGreaterThanOrEqual(subtitle.y + subtitle.height)
+
     const latest = page.getByRole('region', { name: 'Latest orders' })
+
     await expect(latest.getByRole('table')).toHaveCount(0)
+
     const list = latest.getByRole('list', { name: 'Latest orders' })
+
     await expect(list.getByRole('listitem')).toHaveCount(8)
     await expect(list.getByRole('listitem').first().getByRole('link', { name: /^#\d+$/ })).toBeVisible()
     expect(await list.evaluate(el => el.scrollWidth - el.clientWidth)).toBe(0)
@@ -103,14 +123,20 @@ test.describe('overview', () => {
   test('draws the revenue with the previous period, explains itself and shows the same data as a table', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/overview')
+
     const card = page.getByRole('region', { name: 'Revenue by day', exact: true })
+
     await expect(card.getByRole('img', { name: /^Revenue by day, .+: \$[\d,]+, (up [\d.]+%|down [\d.]+%|no change|no earlier data)$/ })).toBeVisible()
     await card.locator('[data-bucket]').last().hover()
     await expect(card.getByText(/today so far/)).toBeVisible()
+
     const toggle = card.getByRole('button', { name: 'Show as table' })
+
     await toggle.click()
     await expect(toggle).toHaveAttribute('aria-pressed', 'true')
+
     const table = card.getByRole('table', { name: 'Revenue by day' })
+
     await expect(table.getByRole('row')).toHaveCount(31)
     await expect(table.getByRole('row').last().getByRole('rowheader')).toContainText('today so far')
     await expect(card.getByRole('img')).toHaveCount(0)
@@ -123,8 +149,11 @@ test.describe('overview', () => {
     const sums = await asSchemaOwner(async c => (await c.query<{ posters: string; shipping: string }>(
       `select coalesce(sum(o.subtotal_cents), 0) as posters, coalesce(sum(o.shipping_cents), 0) as shipping from fa.orders o where o.workspace_id = $1 and ${REVENUE} and ${LAST_30_DAYS}`,
       [workspaceId])).rows[0]!)
+
     await page.goto('/overview')
+
     const card = page.getByRole('region', { name: 'Revenue by collection' })
+
     for (const name of ['Monochrome', 'Primary', 'Pastel', 'Night']) await expect(card.getByText(name, { exact: true })).toBeVisible()
     await expect(card.getByText(/^\d+ posters?$/).first()).toBeVisible()
     await expect(card.getByText(`Posters ${dollars(Number(sums.posters))}`)).toBeVisible()
@@ -138,16 +167,21 @@ test.describe('overview', () => {
       "select count(*) as n from fa.product_variants v join fa.products p on p.workspace_id = v.workspace_id and p.id = v.product_id where v.workspace_id = $1 and v.stock <= v.low_stock_threshold and p.status <> 'archived'",
       [workspaceId])
     const soldOut = await one('select count(*) as n from fa.product_variants where workspace_id = $1 and stock = 0', [workspaceId])
+
     await page.goto('/overview')
+
     const latest = page.getByRole('region', { name: 'Latest orders' })
     const links = latest.getByRole('link', { name: /^#\d+$/ })
+
     await expect(links).toHaveCount(8)
     await expect(latest.getByRole('table')).toBeVisible()
     await expect(latest.getByRole('listitem')).toHaveCount(0)
     await expect(links.first()).toHaveText(`#${newest}`)
     await expect(links.first()).toHaveAttribute('href', `/orders/${newest}`)
     await expect(latest.getByRole('link', { name: 'All orders' })).toHaveAttribute('href', '/orders')
+
     const stock = page.getByRole('region', { name: 'Low stock' })
+
     await expect(stock.getByRole('listitem')).toHaveCount(Math.min(5, low))
     if (soldOut > 0) await expect(stock.getByRole('listitem').first()).toContainText('Sold out')
     await expect(stock.getByRole('link', { name: `View all ${low}` })).toHaveAttribute('href', '/products?stock=low')

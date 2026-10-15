@@ -27,6 +27,7 @@ describe('tickIndexes', () => {
 
   it('labels every week on 90 days, and marks every other label back from today for narrow charts', () => {
     const ticks = tickIndexes(periodPlan('90d', now, berlin))
+
     expect(ticks).toHaveLength(13)
     expect(ticks.filter(t => t.alternate).map(t => t.index)).toEqual([1, 3, 5, 7, 9, 11])
     expect(tickIndexes(periodPlan('30d', now, berlin)).filter(t => t.alternate).map(t => t.index)).toEqual([8, 22])
@@ -38,6 +39,7 @@ describe('buildChart', () => {
   it('labels days, marks today and scales to the largest value of both periods', () => {
     const plan = periodPlan('7d', now, berlin)
     const model = buildChart({ plan, current: [100, 20000, 0, 50000, 0, 0, 81200], previous: [0, 0, 0, 0, 0, 0, 90000], locale: 'en', timeZone: berlin })
+
     expect(model.max).toBe(90000)
     expect(model.grid.map(g => g.label)).toEqual(['$0', '$300', '$600', '$900'])
     expect(model.bars.at(-1)).toMatchObject({ value: 81200, previous: 90000, amount: '$812', previousAmount: '$900', today: true })
@@ -51,6 +53,7 @@ describe('buildChart', () => {
     const plan = periodPlan('90d', now, berlin)
     const zeros = plan.buckets.map(() => 0)
     const model = buildChart({ plan, current: zeros, previous: zeros, locale: 'en', timeZone: berlin })
+
     expect(model.bars.at(-1)!.label).toMatch(/^21[\u2009 ]–[\u2009 ]27\u00a0Sept?$/)
     expect(model.ticks.at(-1)!.label).toMatch(/^27 Sept?$/)
     expect(model.max).toBe(3000)
@@ -59,6 +62,7 @@ describe('buildChart', () => {
   it('leaves the previous value out where the previous month has no such day', () => {
     const plan = periodPlan('month', new Date('2026-03-30T10:00:00Z'), berlin)
     const model = buildChart({ plan, current: plan.buckets.map(() => 100), previous: plan.previousBuckets.map(b => (b ? 100 : null)), locale: 'ru', timeZone: berlin })
+
     expect(model.bars[29]).toMatchObject({ previous: null, previousLabel: null, previousAmount: null })
     expect(model.bars[0]!.label).toBe('1 мар.')
   })

@@ -11,12 +11,14 @@ test.describe('The smoke test\'s demo', () => {
   test('enters the demo, times it and ends it', async ({ page }) => {
     const { demoSteps } = await smoke()
     const checks = await demoSteps(page, E2E_BASE_URL)
+
     expect(checks.map(check => check.check)).toEqual(['enter the demo', 'end the demo'])
     expect(checks.every(check => check.ok)).toBe(true)
   })
 
   test('names the step that failed and logs the page it stopped on', async ({ page }) => {
     const { demoSteps, SNAPSHOT_LIMIT } = await smoke()
+
     // A sign-in page without the demo: the click on "Enter the demo" finds nothing to press.
     await page.route('**/sign-in', route => route.fulfill({ contentType: 'text/html', body: '<!doctype html><title>Paused</title><h1>Back in a minute</h1>' }))
     page.setDefaultTimeout(2_000)

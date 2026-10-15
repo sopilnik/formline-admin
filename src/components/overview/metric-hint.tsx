@@ -10,6 +10,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
  */
 export function MetricHint({ label, hint, describedBy }: { label: string; hint: string; describedBy: string }) {
   const [open, setOpen] = useState(false)
+
   return (
     <Tooltip open={open} onOpenChange={setOpen}>
       <TooltipTrigger

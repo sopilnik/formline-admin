@@ -26,6 +26,7 @@ const parseNumber = (value: string): number | null => (/^\d{1,9}$/.test(value) ?
 // The title and the page read the same order: one set of queries per request.
 const load = cache(async (number: number) => {
   const session = await requireSession()
+
   return withWorkspace(workspaceContext(session), async tx => ({
     order: await getOrder(tx, session.workspaceId, number),
     timeZone: (await getStoreSettings(tx, session.workspaceId)).timezone,
@@ -36,16 +37,23 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const t = await getTranslations('orders.detail')
   const number = parseNumber((await params).number)
   const order = number === null ? null : (await load(number)).order
+
   return { title: order ? t('title', { number: order.number }) : t('notFoundTitle') }
 }
 
 export default async function OrderPage({ params }: Params) {
   const session = await requireSession()
+
   authorize(session, 'data.read')
+
   const number = parseNumber((await params).number)
+
   if (number === null) notFound()
+
   const { order, timeZone } = await load(number)
+
   if (!order) notFound()
+
   const locale = await getLocale()
   const t = await getTranslations('orders')
   const canUpdate = can(session.role, 'orders.update', session.workspaceKind)
@@ -54,8 +62,10 @@ export default async function OrderPage({ params }: Params) {
   const describe = (event: OrderEventDetail): string => {
     if (event.kind === 'note') return event.note
     if (event.from === null) return t('detail.statusSet', { status: t(`status.${event.to}`) })
+
     return t('detail.statusChanged', { from: t(`status.${event.from}`), to: t(`status.${event.to}`) })
   }
+
   return (
     <div className="flex flex-col gap-5">
       <BackLink href="/orders">{t('detail.back')}</BackLink>

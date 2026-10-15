@@ -16,8 +16,10 @@ export function RecoverForm({ secret, qr }: { secret: string; qr: ReactNode }) {
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending, unreached] = useFormAction(recoverAction, IDLE as FormState<RecoverField>, form)
   const errorFor = useErrorText(state)
+
   useFocusOnError(state, 'recover', 'recoveryCode')
   if (state.status === 'done') return <RecoveryCodesView codes={state.recoveryCodes ?? []} />
+
   return (
     <form ref={form} action={action} noValidate className="flex flex-col gap-4">
       <UnreachedAlert unreached={unreached} />

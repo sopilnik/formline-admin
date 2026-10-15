@@ -13,6 +13,7 @@ export default async function SettingsLayout({ children }: { children: ReactNode
     { href: '/settings/security', label: t('tabs.security') },
     ...(can(session.role, 'settings.store', session.workspaceKind) ? [{ href: '/settings/store', label: t('tabs.store') }] : []),
   ]
+
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-5">
       <SettingsTabs label={t('tabs.label')} tabs={tabs} />

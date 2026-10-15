@@ -29,6 +29,7 @@ export function batchedCsvStream<R extends { id: string }>(
 ): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder()
   let next = 0
+
   return new ReadableStream<Uint8Array>({
     start(controller) {
       controller.enqueue(encoder.encode(CSV_BOM + csvRecord(header.map(csvText))))
@@ -36,16 +37,21 @@ export function batchedCsvStream<R extends { id: string }>(
     async pull(controller) {
       if (next >= ids.length) {
         controller.close()
+
         return
       }
 
       const slice = ids.slice(next, next + BATCH)
+
       next += BATCH
+
       const found = await withWorkspace(ctx, tx => rows.read(tx, slice), pool)
       const byId = new Map(found.map(row => [row.id, row]))
       let text = ''
+
       for (const id of slice) {
         const row = byId.get(id)
+
         if (row) text += csvRecord(rows.cells(row))
       }
       controller.enqueue(encoder.encode(text))
@@ -68,19 +74,23 @@ export function csvResponse(name: string, stream: ReadableStream<Uint8Array>, pl
 /** The member who may download a list: signed in past the second factor, in a role that exports; else the 401 or 403. */
 export async function exportSession(): Promise<Session | Response> {
   const session = await getSession()
+
   if (!session?.secondFactorVerified) return new Response(null, { status: 401 })
   if (!can(session.role, 'csv.export', session.workspaceKind)) return new Response(null, { status: 403 })
+
   return session
 }
 
 /** The export limit of the session: null while it allows one more file, else the 429 with its wait. */
 export async function exportLimited(session: Session): Promise<Response | null> {
   const verdict = await consume(LIMITS.csvExport, sessionSubject(session.id))
+
   return verdict.allowed ? null : new Response(null, { status: 429, headers: { 'Retry-After': String(verdict.retryAfterSeconds) } })
 }
 
 /** The activity entry of a download, with the address hash of the request. */
 export async function logExport(session: Session, action: 'orders.exported' | 'customers.exported', details: Record<string, unknown>): Promise<void> {
   const ipHash = await requestIpHash()
+
   await withWorkspace(workspaceContext(session), tx => logActivity(tx, session.workspaceId, { actorUserId: session.userId, action, details, ipHash }))
 }

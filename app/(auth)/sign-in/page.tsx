@@ -9,15 +9,18 @@ import { getSession } from '@/server/auth/sessions'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('auth.signIn')
+
   return { title: t('title') }
 }
 
 // Without a session cookie this page does not touch the database.
 export default async function SignInPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   if ((await getSession())?.secondFactorVerified) redirect('/overview')
+
   const params = await searchParams
   const ended = params.ended === '1'
   const t = await getTranslations('auth.signIn')
+
   return (
     <AuthCard title={t('title')} description={t('intro')}>
       <div className="flex flex-col gap-5">

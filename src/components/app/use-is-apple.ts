@@ -6,6 +6,7 @@ const noSubscription = () => () => {}
 /** An Apple device, whose shortcuts read ⌘ instead of Ctrl; the newer user-agent data first, the older platform string after. */
 function isApple(): boolean {
   const data = (navigator as Navigator & { userAgentData?: { platform: string } }).userAgentData
+
   return /mac|iphone|ipad/i.test(data?.platform ?? navigator.platform)
 }
 

@@ -9,10 +9,13 @@ test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip'
 test.describe('switch user', () => {
   test('lists the other demo users and continues as the chosen one', async ({ page, context }) => {
     const { workspaceId } = await signInAsSandboxUser(context)
+
     await page.goto('/overview')
     await expect(page.getByRole('link', { name: 'Activity' })).toBeVisible()
     await page.getByRole('region', { name: 'Demo sandbox' }).getByRole('button', { name: 'Switch user' }).click()
+
     const dialog = page.getByRole('dialog', { name: 'Switch user' })
+
     await expect(dialog.getByRole('radio')).toHaveCount(3)
     for (const name of ['Noah Becker', 'Priya Nair', 'Tomás Ferreira']) await expect(dialog.getByText(name)).toBeVisible()
     await expect(dialog.getByRole('button', { name: 'Switch', exact: true })).toBeDisabled()
@@ -22,7 +25,9 @@ test.describe('switch user', () => {
     await expect(page).toHaveURL(/\/overview$/)
     await expect(page.getByRole('button', { name: 'Account menu: Tomás Ferreira, Viewer' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Activity' })).toHaveCount(0)
+
     const log = await asSchemaOwner(async c => (await c.query("select 1 from fa.activity_log where workspace_id = $1 and action = 'sandbox.switched_user'", [workspaceId])).rowCount)
+
     expect(log).toBe(1)
   })
 
@@ -32,7 +37,9 @@ test.describe('switch user', () => {
     await page.goto('/overview')
     await page.getByRole('region', { name: 'Demo sandbox' }).getByRole('button', { name: 'More actions' }).click()
     await page.getByRole('menuitem', { name: 'Switch user' }).click()
+
     const dialog = page.getByRole('dialog', { name: 'Switch user' })
+
     await expect(dialog.getByText('Dana Ortiz')).toBeVisible()
     await dialog.getByRole('button', { name: 'Cancel' }).click()
     await expect(dialog).toBeHidden()
@@ -42,10 +49,13 @@ test.describe('switch user', () => {
     const { workspaceId } = await signInAsSandboxUser(context)
     const admin = await asSchemaOwner(async c => (await c.query<{ id: string }>("select id from fa.users where workspace_id = $1 and role = 'admin'", [workspaceId])).rows[0]!)
     const secret = new Uint8Array(20).fill(9)
+
     await enrollAuthenticator(workspaceId, admin.id, secret)
     await page.goto('/overview')
     await page.getByRole('region', { name: 'Demo sandbox' }).getByRole('button', { name: 'Switch user' }).click()
+
     const dialog = page.getByRole('dialog', { name: 'Switch user' })
+
     await dialog.getByRole('radio', { name: /Noah Becker/ }).check()
     await dialog.getByLabel('Authenticator code').fill('000000')
     await dialog.getByRole('button', { name: 'Switch', exact: true }).click()
@@ -60,12 +70,17 @@ test.describe('switch user', () => {
   test('says a wrong code aloud and keeps the focus in the code field', async ({ page, context }) => {
     const { workspaceId } = await signInAsSandboxUser(context)
     const admin = await asSchemaOwner(async c => (await c.query<{ id: string }>("select id from fa.users where workspace_id = $1 and role = 'admin'", [workspaceId])).rows[0]!)
+
     await enrollAuthenticator(workspaceId, admin.id, new Uint8Array(20).fill(7))
     await page.goto('/overview')
     await page.getByRole('region', { name: 'Demo sandbox' }).getByRole('button', { name: 'Switch user' }).click()
+
     const dialog = page.getByRole('dialog', { name: 'Switch user' })
+
     await dialog.getByRole('radio', { name: /Noah Becker/ }).check()
+
     const code = dialog.getByLabel('Authenticator code')
+
     await code.fill('123456')
     await code.press('Enter')
     await expect(dialog.getByRole('alert')).toHaveText('The code is not correct. Check it and try again.')
@@ -88,14 +103,19 @@ test.describe('switch user', () => {
   test('says the member is told when ten wrong codes lock their authenticator', async ({ page, context }) => {
     const { workspaceId } = await signInAsSandboxUser(context)
     const admin = await asSchemaOwner(async c => (await c.query<{ id: string }>("select id from fa.users where workspace_id = $1 and role = 'admin'", [workspaceId])).rows[0]!)
+
     await enrollAuthenticator(workspaceId, admin.id, new Uint8Array(20).fill(3))
     await page.goto('/overview')
     await page.getByRole('region', { name: 'Demo sandbox' }).getByRole('button', { name: 'Switch user' }).click()
+
     const dialog = page.getByRole('dialog', { name: 'Switch user' })
+
     await dialog.getByRole('radio', { name: /Noah Becker/ }).check()
     for (let attempt = 1; attempt <= 10; attempt++) {
       await dialog.getByLabel('Authenticator code').fill('000000')
+
       const answered = page.waitForResponse(r => r.request().method() === 'POST' && r.request().headers()['next-action'] !== undefined)
+
       await dialog.getByRole('button', { name: 'Switch', exact: true }).click()
       await answered
     }
@@ -106,7 +126,9 @@ test.describe('switch user', () => {
     await signInAsSandboxUser(context)
     await page.goto('/overview?lang=ru')
     await page.getByRole('region', { name: 'Демо-песочница' }).getByRole('button', { name: 'Сменить пользователя' }).click()
+
     const dialog = page.getByRole('dialog', { name: 'Сменить пользователя' })
+
     await dialog.getByRole('radio', { name: /Noah Becker/ }).check()
     await dialog.getByRole('button', { name: 'Сменить', exact: true }).click()
     await expect(page.getByRole('button', { name: 'Меню аккаунта: Noah Becker, Администратор' })).toBeVisible()
@@ -118,7 +140,9 @@ test.describe('switch user', () => {
     await page.getByRole('button', { name: 'Отправить приглашение' }).click()
     await expect(page.getByRole('list', { name: 'Открытые приглашения' }).getByRole('listitem')).toHaveCount(1)
     await page.goto('/outbox')
+
     const letter = page.getByRole('list', { name: 'Исходящие' }).getByRole('listitem').first().getByRole('link')
+
     await expect(letter).toHaveText('Noah Becker приглашает вас в Formline Admin')
     await expect(letter).toHaveAttribute('lang', 'ru')
   })

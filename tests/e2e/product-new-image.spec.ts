@@ -20,10 +20,12 @@ async function holdUpload(page: Page): Promise<() => void> {
   const held = new Promise<void>(resolve => {
     release = resolve
   })
+
   await page.route(/\/api\/media\?product=/, async route => {
     await held
     await route.continue()
   })
+
   return release
 }
 
@@ -46,7 +48,9 @@ test.describe('new product image', () => {
     await page.getByRole('button', { name: 'Create product' }).click()
     await expect(page).toHaveURL(/\/products\/salt-flat$/)
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('Product created.')).toBeVisible()
+
     const shown = page.getByRole('region', { name: 'Image' }).locator('img')
+
     await expect(shown).toHaveAttribute('src', /^\/media\/[0-9a-f-]{36}$/)
     await expect.poll(() => shown.evaluate(img => (img as HTMLImageElement).naturalWidth)).toBe(640)
   })
@@ -54,12 +58,16 @@ test.describe('new product image', () => {
   test('takes a dropped image, and can let it go again', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await fillProduct(page, 'Dropped Light')
+
     const bytes = [...(await poster()).buffer]
     const dropped = await page.evaluateHandle(data => {
       const transfer = new DataTransfer()
+
       transfer.items.add(new File([new Uint8Array(data)], 'dropped.png', { type: 'image/png' }))
+
       return transfer
     }, bytes)
+
     await field(page).getByText('Drop an image here or').dispatchEvent('drop', { dataTransfer: dropped })
     await expect(field(page).locator('img')).toHaveAttribute('src', /^blob:/)
     await expect(field(page)).toContainText('dropped.png')
@@ -72,7 +80,9 @@ test.describe('new product image', () => {
   test('says what is wrong with a file before anything is sent', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await fillProduct(page, 'Too Heavy')
+
     const picker = field(page).locator('input[type="file"]')
+
     await picker.setInputFiles({ name: 'big.jpg', mimeType: 'image/jpeg', buffer: Buffer.alloc(2 * 1024 * 1024 + 10, 1) })
     await expect(field(page).getByRole('alert')).toHaveText('The file is larger than 2 MB.')
     await picker.setInputFiles({ name: 'drawing.svg', mimeType: 'image/svg+xml', buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>') })
@@ -83,7 +93,9 @@ test.describe('new product image', () => {
   test('keeps the chosen image when a later file is refused', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await fillProduct(page, 'Second Thought')
+
     const picker = field(page).locator('input[type="file"]')
+
     await picker.setInputFiles(await poster())
     await expect(field(page).locator('img')).toHaveAttribute('src', /^blob:/)
 
@@ -95,11 +107,15 @@ test.describe('new product image', () => {
 
   test('does not light up for a file dragged over it while the image uploads', async ({ page, context }) => {
     await signInAsSandboxUser(context)
+
     const release = await holdUpload(page)
+
     await fillProduct(page, 'Still Water')
     await field(page).locator('input[type="file"]').setInputFiles(await poster())
+
     const frame = field(page).locator('img').locator('xpath=..')
     const clear = 'rgba(0, 0, 0, 0)'
+
     await frame.dispatchEvent('dragover')
     await expect(frame).not.toHaveCSS('background-color', clear)
     await frame.dispatchEvent('dragleave')
@@ -128,7 +144,9 @@ test.describe('new product image', () => {
 
   test('keeps the form as typed while the image uploads', async ({ page, context }) => {
     await signInAsSandboxUser(context)
+
     const release = await holdUpload(page)
+
     await fillProduct(page, 'Slow Tide')
     await field(page).locator('input[type="file"]').setInputFiles(await poster())
     await page.getByRole('button', { name: 'Create product' }).click()
@@ -144,7 +162,9 @@ test.describe('new product image', () => {
 
   test('lets the owner go elsewhere while the image uploads, and leaves them there', async ({ page, context }) => {
     await signInAsSandboxUser(context)
+
     const release = await holdUpload(page)
+
     await fillProduct(page, 'Night Ferry')
     await field(page).locator('input[type="file"]').setInputFiles(await poster())
     await page.getByRole('button', { name: 'Create product' }).click()
@@ -156,6 +176,7 @@ test.describe('new product image', () => {
     // Once the upload ends the form refreshes the page in view instead of opening the product.
     const visits = navigationsTo(page, '/products/night-ferry')
     const refreshed = page.waitForRequest(request => new URL(request.url()).pathname === '/orders' && new URL(request.url()).searchParams.has('_rsc'))
+
     release()
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('Product created.')).toBeVisible()
     await (await refreshed).response()

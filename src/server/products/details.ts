@@ -10,12 +10,14 @@ import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 export async function saveProductDetails(actor: Actor, input: DetailsInput, pool: Pool = getPool()): Promise<DetailsChange> {
   return withWorkspace(workspaceContext(actor), async tx => {
     const result = await updateProductDetails(tx, actor.workspaceId, input)
+
     if (result.ok && result.changed.length > 0) {
       await logActivity(tx, actor.workspaceId, {
         actorUserId: actor.userId, action: 'product.updated', entityType: 'product', entityId: input.productId,
         details: { slug: result.slug, changed: result.changed }, ipHash: actor.ipHash,
       })
     }
+
     return result
   }, pool)
 }

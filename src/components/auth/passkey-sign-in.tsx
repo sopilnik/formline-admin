@@ -17,10 +17,12 @@ async function attempt(autofill: boolean, call: Call): Promise<PasskeyOutcome | 
   const options = await passkeyChallenge()
   const answer = await startAuthentication({ optionsJSON: options, useBrowserAutofill: autofill })
   const outcome = await call(() => signInWithPasskeyAction(answer))
+
   if (outcome && !outcome.ok && outcome.error === 'passkey_unknown' && outcome.credentialId) {
     // Lets the password manager hide a passkey this site no longer knows.
     await sendSignal({ signalName: 'unknownCredential', rpID: options.rpId ?? location.hostname, credentialID: outcome.credentialId }).catch(() => undefined)
   }
+
   return outcome
 }
 
@@ -40,6 +42,7 @@ export function PasskeySignIn() {
 
   useEffect(() => {
     let active = true
+
     browserSupportsWebAuthnAutofill()
       .then(supported => (supported && active ? attempt(true, action => action()) : null))
       .then(outcome => {
@@ -49,6 +52,7 @@ export function PasskeySignIn() {
       })
       // Cancelled when the button starts its own request or the page is left.
       .catch(() => undefined)
+
     return () => {
       active = false
     }
@@ -59,6 +63,7 @@ export function PasskeySignIn() {
     setError(null)
     try {
       const outcome = await attempt(false, send)
+
       if (!outcome) return
       if (outcome.ok) enter()
       else setError({ code: outcome.error, minutes: outcome.retryAfterMinutes ?? 1 })

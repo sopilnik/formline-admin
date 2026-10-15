@@ -15,6 +15,7 @@ let other: WorkspaceContext
 
 async function sandbox(locale = 'en'): Promise<WorkspaceContext> {
   const { workspaceId, userId } = await createSandbox(app, { locale })
+
   return { workspaceId, userId, role: 'owner' }
 }
 
@@ -23,7 +24,9 @@ beforeAll(async () => {
   app = appPool()
   owner = await sandbox('ru')
   other = await sandbox()
+
   const m = await admin.query<{ id: string }>("select id from fa.users where workspace_id = $1 and role = 'manager'", [owner.workspaceId])
+
   manager = { workspaceId: owner.workspaceId, userId: m.rows[0]!.id, role: 'manager' }
 })
 afterAll(closeAll)
@@ -32,16 +35,21 @@ describe('securityNotice', () => {
   it('writes the bell entry and a letter in the recipient’s language that greets them by name', async () => {
     await withWorkspace(owner, async tx => {
       const self = (await getSelf(tx, { workspaceId: owner.workspaceId, userId: owner.userId! }))!
+
       await securityNotice(tx, owner.workspaceId, self, 'auth.new_sign_in', { device: 'Firefox, Linux' }, { at: new Date() })
     }, app)
+
     const { rows } = await admin.query<{ to_address: string; template: string; payload: Record<string, unknown> }>(
       'select to_address, template, payload from fa.outbox_emails where workspace_id = $1', [owner.workspaceId])
+
     expect(rows).toHaveLength(1)
     expect(rows[0]).toMatchObject({ to_address: 'dana.ortiz@formline.example', template: 'auth.new_sign_in' })
     expect(rows[0]!.payload).toMatchObject({ device: 'Firefox, Linux', name: 'Dana Ortiz', locale: 'ru' })
     expect(Number.isNaN(Date.parse(String(rows[0]!.payload.at)))).toBe(false)
+
     const bell = await admin.query<{ payload: Record<string, unknown> }>(
       "select payload from fa.notifications where workspace_id = $1 and kind = 'auth.new_sign_in'", [owner.workspaceId])
+
     expect(bell.rows[0]!.payload).not.toHaveProperty('name')
   })
 })
@@ -53,11 +61,15 @@ describe('the outbox', () => {
         "insert into fa.outbox_emails (workspace_id, to_address, template, payload, created_at) values ($1, $2, 'auth.second_factor_locked', '{}', now() - make_interval(hours => $3))",
         [owner.workspaceId, `letter${i}@example.test`, i])
     }
+
     const first = await withWorkspace(owner, tx => listLetters(tx, owner.workspaceId, { page: 1, size: 2 }), app)
+
     expect(first.total).toBe(5)
     expect(first.pages).toBe(3)
     expect(first.rows.map(r => r.to)).toEqual(['dana.ortiz@formline.example', 'letter1@example.test'])
+
     const second = await withWorkspace(owner, tx => listLetters(tx, owner.workspaceId, { page: 2, size: 2 }), app)
+
     expect(second.rows.map(r => r.to)).toEqual(['letter2@example.test', 'letter3@example.test'])
     expect((await withWorkspace(owner, tx => getLetter(tx, owner.workspaceId, first.rows[1]!.id), app))?.template).toBe('auth.second_factor_locked')
   })
@@ -65,6 +77,7 @@ describe('the outbox', () => {
   it('shows nothing to a manager or to another workspace', async () => {
     const [letter] = (await withWorkspace(owner, tx => listLetters(tx, owner.workspaceId, { page: 1, size: 25 }), app)).rows
     const managerView = await withWorkspace(manager, tx => listLetters(tx, manager.workspaceId, { page: 1, size: 25 }), app)
+
     expect([managerView.total, managerView.rows]).toEqual([0, []])
     expect(await withWorkspace(manager, tx => getLetter(tx, manager.workspaceId, letter!.id), app)).toBeNull()
     expect((await withWorkspace(other, tx => listLetters(tx, other.workspaceId, { page: 1, size: 25 }), app)).total).toBe(0)

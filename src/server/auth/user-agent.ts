@@ -12,5 +12,6 @@ const pick = (ua: string, list: [RegExp, string][], fallback: string): string =>
 /** "Chrome, Linux": enough to recognize a device in a session list or a sign-in letter, and the same in every language. */
 export function summarizeUserAgent(ua: string | null): string | null {
   if (!ua) return null
+
   return `${pick(ua, BROWSERS, 'Browser')}, ${pick(ua, SYSTEMS, 'unknown system')}`
 }

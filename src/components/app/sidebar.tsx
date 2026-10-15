@@ -16,8 +16,11 @@ export function Sidebar({ items, collapsed: initiallyCollapsed }: { items: NavIt
 
   function toggle() {
     const next = !collapsed
+
     setCollapsed(next)
+
     const secure = location.protocol === 'https:' ? '; secure' : ''
+
     document.cookie = `${SIDEBAR_COOKIE}=${next ? 'collapsed' : 'expanded'}; path=/; max-age=31536000; samesite=lax${secure}`
   }
 

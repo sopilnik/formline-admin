@@ -25,10 +25,14 @@ export async function notificationItems(rows: NotificationRow[], locale: Locale,
   const t = await getTranslations({ locale, namespace: 'notifications.kinds' })
   const roles = await getTranslations({ locale, namespace: 'user.roles' })
   const roleName = (role: string): string => (isRole(role) ? roles(role) : role)
+
   return rows.flatMap(row => {
     const view = notificationView(row.kind, row.payload)
+
     if (!view) return []
+
     const message = notificationMessage(view, locale, roleName)
+
     return [{
       id: row.id,
       kind: view.kind,

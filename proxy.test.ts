@@ -28,7 +28,9 @@ describe('origin check', () => {
     ['a client IP that is not an address', { ...good, 'x-client-ip': 'not-an-ip' }],
   ])('refuses %s with 403', (_name, headers) => {
     production()
+
     const res = proxy(req('/overview', headers))
+
     expect(res.status).toBe(403)
     expect(res.headers.get('cache-control')).toBe('no-store')
   })
@@ -65,14 +67,18 @@ describe('maintenance mode', () => {
 
   it('answers every page with 503 and a short page in the visitor\'s language', async () => {
     maintenance()
+
     const res = proxy(req('/overview', good))
+
     expect(res.status).toBe(503)
     expect(res.headers.get('content-type')).toBe('text/html; charset=utf-8')
     expect(res.headers.get('cache-control')).toBe('no-store')
     expect(res.headers.get('retry-after')).toBe('30')
     expect(res.headers.get('content-security-policy')).toContain("default-src 'none'")
     expect(await res.text()).toContain('<h1>The panel is starting</h1>')
+
     const ru = proxy(req('/sign-in', { ...good, cookie: 'NEXT_LOCALE=ru' }))
+
     expect(await ru.text()).toContain('<html lang="ru">')
   })
 
@@ -86,9 +92,11 @@ describe('maintenance mode', () => {
 describe('request decoration', () => {
   it('sets a fresh nonce CSP and request id on every response', () => {
     production()
+
     const a = proxy(req('/overview', good))
     const b = proxy(req('/overview', good))
     const csp = a.headers.get('content-security-policy') ?? ''
+
     expect(csp).toMatch(/script-src 'self' 'nonce-[A-Za-z0-9+/=]+' 'strict-dynamic'/)
     expect(csp).not.toBe(b.headers.get('content-security-policy'))
     expect(a.headers.get('x-request-id')).toMatch(/^[0-9a-f-]{36}$/)
@@ -102,15 +110,19 @@ describe('request decoration', () => {
 
   it('leaves the cookie alone for a form sent from a page opened with ?lang', () => {
     production()
+
     // A cookie set in a Server Action's answer makes Next draw the page again at its old address (a renamed product's).
     const action = new NextRequest('https://formline-admin.test/products/hush?lang=en', { method: 'POST', headers: { ...good, 'next-action': 'abc' } })
+
     expect(proxy(action).cookies.get('NEXT_LOCALE')).toBeUndefined()
   })
 
   it('forwards the panel\'s own host in production, so Server Actions match the browser\'s Origin', () => {
     production()
     vi.stubEnv('SITE_URL', 'https://formline-admin.sopilnik.dev')
+
     const res = proxy(req('/overview', { ...good, host: 'formline-admin.b-cdn.run', 'x-forwarded-host': 'formline-admin.b-cdn.run' }))
+
     expect(res.headers.get('x-middleware-request-x-forwarded-host')).toBe('formline-admin.sopilnik.dev')
     expect(res.headers.get('x-middleware-request-x-forwarded-proto')).toBe('https')
     vi.stubEnv('NODE_ENV', 'development')
@@ -125,8 +137,10 @@ describe('request decoration', () => {
 
   it('lets the request that carries ?lang render in that language already', () => {
     production()
+
     const res = proxy(req('/sign-in?lang=ru', { ...good, cookie: 'formline_theme=dark' }))
     const forwarded = res.headers.get('x-middleware-request-cookie') ?? ''
+
     expect(forwarded).toContain('NEXT_LOCALE=ru')
     expect(forwarded).toContain('formline_theme=dark')
   })

@@ -19,6 +19,7 @@ async function focusByKeyboard(page: Page, target: Locator): Promise<void> {
 const outlineOf = (target: Locator) =>
   target.evaluate(el => {
     const s = getComputedStyle(el)
+
     return [s.outlineStyle, s.outlineWidth, s.outlineColor]
   })
 
@@ -28,10 +29,13 @@ const ringInsideItsClip = (target: Locator) =>
     const s = getComputedStyle(el)
     const reach = parseFloat(s.outlineWidth) + parseFloat(s.outlineOffset)
     let box = el.parentElement
+
     while (box && getComputedStyle(box).overflowX === 'visible' && getComputedStyle(box).overflowY === 'visible') box = box.parentElement
     if (!box) return { left: true, top: true, right: true, bottom: true }
+
     const r = el.getBoundingClientRect()
     const b = box.getBoundingClientRect()
+
     return { left: r.left - reach >= b.left, top: r.top - reach >= b.top, right: r.right + reach <= b.right, bottom: r.bottom + reach <= b.bottom }
   })
 
@@ -41,11 +45,13 @@ test.describe('keyboard focus', () => {
   test('every kind of control shows the solid outline when the keyboard reaches it', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/orders')
+
     const controls = [
       page.getByRole('searchbox'),
       page.getByRole('button', { name: /^Export [\d,]+ as CSV$/ }),
       page.getByRole('checkbox', { name: /^Select order #\d+$/ }).first(),
     ]
+
     for (const control of controls) {
       await focusByKeyboard(page, control)
       // A field fades its outline color in (transition-colors), so the reading waits for the end of it.
@@ -54,7 +60,9 @@ test.describe('keyboard focus', () => {
 
     await page.getByRole('link', { name: /^Customers/ }).click()
     await page.locator('main tbody a, main [data-slot=card] a').first().click()
+
     const notes = page.getByRole('textbox', { name: 'Notes about this customer' })
+
     await focusByKeyboard(page, notes)
     await expect.poll(() => outlineOf(notes)).toEqual(['solid', '2px', RING])
   })
@@ -62,11 +70,15 @@ test.describe('keyboard focus', () => {
   test('the highlighted item of a menu and of the command palette shows the outline', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/overview')
+
     const account = page.getByRole('button', { name: /^Account menu:/ })
+
     await focusByKeyboard(page, account)
     await page.keyboard.press('Enter')
     await page.keyboard.press('ArrowDown')
+
     const item = page.locator('[role=menuitem]:focus')
+
     await expect(item).toBeFocused()
     await expect.poll(() => outlineOf(item)).toEqual(['solid', '2px', RING])
     await page.keyboard.press('Escape')
@@ -74,7 +86,9 @@ test.describe('keyboard focus', () => {
     await page.keyboard.press('Control+k')
     await page.keyboard.type('ord')
     await page.keyboard.press('ArrowDown')
+
     const option = page.locator('[role=option][data-highlighted]')
+
     await expect(option).toHaveCount(1)
     await expect.poll(() => outlineOf(option)).toEqual(['solid', '2px', RING])
   })
@@ -83,18 +97,24 @@ test.describe('keyboard focus', () => {
     await signInAsSandboxUser(context)
     await page.setViewportSize({ width: 375, height: 800 })
     await page.goto('/settings/profile')
+
     const tab = page.getByRole('navigation', { name: 'Settings sections' }).getByRole('link', { name: 'Profile' })
+
     await focusByKeyboard(page, tab)
     expect(await ringInsideItsClip(tab)).toEqual(whole)
 
     await page.goto('/orders')
+
     const chip = page.getByRole('button', { name: /^All, / })
+
     await focusByKeyboard(page, chip)
     expect(await ringInsideItsClip(chip)).toEqual(whole)
 
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/overview')
+
     const order = page.getByRole('table', { name: /Latest orders/ }).getByRole('link').first()
+
     await focusByKeyboard(page, order)
     expect(await ringInsideItsClip(order)).toEqual(whole)
   })
@@ -109,6 +129,7 @@ test.describe('keyboard focus', () => {
     let posts = 0
     let release = () => {}
     const held = new Promise<void>(resolve => { release = resolve })
+
     await page.route('**/customers/**', async route => {
       if (route.request().method() !== 'POST') return route.continue()
       posts += 1
@@ -116,11 +137,14 @@ test.describe('keyboard focus', () => {
       await route.continue()
     })
     await page.getByRole('textbox', { name: 'Notes about this customer' }).fill('Prefers matte frames.')
+
     const save = page.getByRole('button', { name: 'Save notes' })
+
     await focusByKeyboard(page, save)
     await page.keyboard.press('Enter')
 
     const pending = page.getByRole('button', { name: 'Saving…' })
+
     await expect(pending).toBeFocused()
     await expect(pending).toHaveAttribute('aria-disabled', 'true')
     await page.keyboard.press('Enter')

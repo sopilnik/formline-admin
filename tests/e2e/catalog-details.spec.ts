@@ -15,7 +15,9 @@ test.describe('catalog details', () => {
   test('an image error goes with the removed image, on the product page and the new-product form', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await openFramed(page, '/products/hush')
+
     const image = page.getByRole('region', { name: 'Image' })
+
     await image.locator('input[type="file"]').setInputFiles({ name: 'broken.png', mimeType: 'image/png', buffer: (await poster()).subarray(0, 100) })
     await expect(image.getByRole('alert')).toHaveText('The image could not be read. It may be damaged.')
     await image.getByRole('button', { name: 'Remove image' }).click()
@@ -24,7 +26,9 @@ test.describe('catalog details', () => {
     await expect(image.getByRole('alert')).toHaveCount(0)
 
     await openFramed(page, '/products/new')
+
     const field = page.getByRole('group', { name: 'Image' })
+
     await field.locator('input[type="file"]').setInputFiles({ name: 'poster.png', mimeType: 'image/png', buffer: await poster() })
     await field.locator('input[type="file"]').setInputFiles({ name: 'big.jpg', mimeType: 'image/jpeg', buffer: Buffer.alloc(2 * 1024 * 1024 + 10, 1) })
     await expect(field.getByRole('alert')).toHaveText('The file is larger than 2 MB.')
@@ -34,6 +38,7 @@ test.describe('catalog details', () => {
 
   test('an archived product says why it cannot be deleted without the advice to archive it', async ({ page, context }) => {
     const { workspaceId } = await signInAsSandboxUser(context)
+
     await asSchemaOwner(c => c.query("update fa.products set status = 'archived' where workspace_id = $1 and slug = 'night-blocks'", [workspaceId]))
     await openFramed(page, '/products/night-blocks')
     await expect(deleteCard(page)).toContainText('This product has orders, so it cannot be deleted. It is archived and out of the catalog.')
@@ -59,7 +64,9 @@ test.describe('catalog details', () => {
   test('a renamed product moves to its new address when its page was opened with ?lang', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await openFramed(page, '/products/hush?lang=en')
+
     const details = page.getByRole('region', { name: 'Details' })
+
     await details.getByLabel('Slug').fill('hush-renamed')
     await details.getByRole('button', { name: 'Save changes' }).click()
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('Changes saved.')).toBeVisible()

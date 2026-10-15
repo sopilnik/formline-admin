@@ -23,6 +23,7 @@ export function SignOutProvider({ kind, children }: { kind: WorkspaceKind; child
   const send = useReach()
   const signOut = () => startTransition(async () => { await send(() => signOutAction()) })
   const request = () => (kind === 'sandbox' ? setConfirm(true) : signOut())
+
   return (
     <SignOutContext value={{ request, pending }}>
       {children}
@@ -46,6 +47,8 @@ export function SignOutProvider({ kind, children }: { kind: WorkspaceKind; child
 
 export function useSignOut(): SignOut {
   const value = use(SignOutContext)
+
   if (!value) throw new Error('useSignOut needs a SignOutProvider above it')
+
   return value
 }

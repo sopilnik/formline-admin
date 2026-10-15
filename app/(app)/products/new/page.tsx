@@ -11,15 +11,19 @@ import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('products.new')
+
   return { title: await titleFor('catalog.write', t('title')) }
 }
 
 /** The new-product form; a role that cannot write products gets the not-found page. */
 export default async function NewProductPage() {
   const session = await requireSession()
+
   if (!can(session.role, 'catalog.write', session.workspaceKind)) notFound()
+
   const collections = await withWorkspace(workspaceContext(session), tx => listCollectionOptions(tx, session.workspaceId))
   const t = await getTranslations('products')
+
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-5">
       <BackLink href="/products">{t('detail.back')}</BackLink>

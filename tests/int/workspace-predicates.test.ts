@@ -15,6 +15,7 @@ async function twins(): Promise<{ a: string; b: string; userId: string }> {
   const a = await createWorkspace(admin)
   const b = await createWorkspace(admin)
   const userId = randomUUID()
+
   await asSchemaOwner(admin, async c => {
     for (const [workspace, name] of [[a, 'Owner A'], [b, 'Owner B']] as const) {
       await c.query("insert into fa.users (workspace_id, id, email, name, role) values ($1, $2, $3, $4, 'owner')", [workspace, userId, `${randomUUID()}@example.test`, name])
@@ -22,6 +23,7 @@ async function twins(): Promise<{ a: string; b: string; userId: string }> {
       await c.query('insert into fa.recovery_codes (workspace_id, user_id, code_hash) values ($1, $2, $3)', [workspace, userId, createHash('sha256').update(randomUUID()).digest('hex')])
     }
   })
+
   return { a, b, userId }
 }
 
@@ -42,6 +44,7 @@ describe('user, passkey and recovery-code queries', () => {
       counted: await countPasskeys(tx, who),
       codes: await countUnusedRecoveryCodes(tx, who),
     }), admin)
+
     expect(read).toEqual({ self: 'Owner B', members: ['Owner B'], passkeys: 1, counted: 1, codes: 1 })
     expect(a).not.toBe(b)
   })

@@ -12,12 +12,14 @@ export async function createProductWithLog(actor: Actor, input: Omit<NewProductI
   return withWorkspace(workspaceContext(actor), async tx => {
     const { lowStockDefault } = await getStoreSettings(tx, actor.workspaceId)
     const result = await createProduct(tx, actor.workspaceId, { ...input, lowStockThreshold: lowStockDefault })
+
     if (result.ok) {
       await logActivity(tx, actor.workspaceId, {
         actorUserId: actor.userId, action: 'product.created', entityType: 'product', entityId: result.id,
         details: { slug: result.slug, variants: result.variants }, ipHash: actor.ipHash,
       })
     }
+
     return result
   }, pool)
 }

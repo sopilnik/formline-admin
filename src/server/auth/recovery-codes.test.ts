@@ -4,6 +4,7 @@ import { generateRecoveryCodes, hashRecoveryCode, normalizeRecoveryCode } from '
 describe('recovery codes', () => {
   it('are ten distinct codes of ten base32 characters', () => {
     const codes = generateRecoveryCodes()
+
     expect(codes).toHaveLength(10)
     expect(new Set(codes).size).toBe(10)
     for (const code of codes) expect(code).toMatch(/^[a-z2-7]{5}-[a-z2-7]{5}$/)

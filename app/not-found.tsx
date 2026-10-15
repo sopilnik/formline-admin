@@ -4,6 +4,7 @@ import { getTranslations } from 'next-intl/server'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('notFound')
+
   return { title: t('title') }
 }
 
@@ -13,6 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function NotFound() {
   const t = await getTranslations('notFound')
   const nav = await getTranslations('nav')
+
   return (
     <main id="main" className="flex min-h-dvh flex-col items-center justify-center gap-2 px-4 text-center">
       <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>

@@ -24,6 +24,7 @@ export function NewProductImage({ file, onChange, disabled = false }: Props) {
   const [refused, setRefused] = useState<'too_large' | 'type' | null>(null)
   const [over, setOver] = useState(false)
   const preview = useMemo(() => (file ? URL.createObjectURL(file) : null), [file])
+
   useEffect(() => () => {
     if (preview) URL.revokeObjectURL(preview)
   }, [preview])
@@ -31,7 +32,9 @@ export function NewProductImage({ file, onChange, disabled = false }: Props) {
   // A refused file is named in the alert and leaves the image chosen before it in place.
   const take = (chosen: File | undefined): void => {
     if (!chosen) return
+
     const problem = precheckUpload(chosen)
+
     setRefused(problem)
     if (!problem) onChange(chosen)
   }

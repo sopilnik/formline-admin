@@ -5,6 +5,7 @@ import { migrate } from './migrate.ts'
 
 const migratorUrl = process.env.DATABASE_URL_MIGRATOR
 const appUrl = process.env.DATABASE_URL
+
 if (!migratorUrl || !appUrl) {
   console.error(JSON.stringify({ event: 'migrate.failed', message: 'DATABASE_URL_MIGRATOR and DATABASE_URL are required' }))
   process.exit(1)

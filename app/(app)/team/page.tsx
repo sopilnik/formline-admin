@@ -16,6 +16,7 @@ import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('team')
+
   return { title: await titleFor('team.read', t('title')) }
 }
 
@@ -25,7 +26,9 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default async function TeamPage() {
   const session = await requireSession()
+
   if (!can(session.role, 'team.read', session.workspaceKind)) notFound()
+
   const manage = can(session.role, 'team.manage', session.workspaceKind)
   const { members, invitations, timeZone } = await withWorkspace(workspaceContext(session), async tx => ({
     members: await listTeam(tx, session.workspaceId),
@@ -40,6 +43,7 @@ export default async function TeamPage() {
     const active = member.deactivatedAt === null
     // Nobody changes the owner row or their own.
     const changeable = manage && !self
+
     return {
       id: member.id, name: member.name, email: member.email, role: member.role, self, twoFactor: member.twoFactor, active,
       lastActive: member.lastActiveAt ? formatDateTime(member.lastActiveAt, locale, timeZone) : null,
@@ -48,6 +52,7 @@ export default async function TeamPage() {
         : null,
     }
   })
+
   return (
     <div className="flex flex-col gap-5">
       <div>

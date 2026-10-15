@@ -33,6 +33,7 @@ export function parseProductsQuery(params: SearchParams | URLSearchParams): Prod
   const statuses = new Set(all(params, 'status').flatMap(v => v.split(',')).filter(isProductStatus))
   const collection = one(params, 'collection') ?? ''
   const sort = pick(PRODUCT_SORTS, one(params, 'sort'), DEFAULT_PRODUCTS_QUERY.sort)
+
   return {
     status: PRODUCT_STATUSES.filter(s => statuses.has(s)),
     q: searchText(params),
@@ -53,6 +54,7 @@ export function productsHref(query: ProductsQuery, changes: Partial<ProductsQuer
   const resetsPage = Object.keys(changes).some(key => key !== 'page')
   const next: ProductsQuery = { ...query, ...changes, page: changes.page ?? (resetsPage ? 1 : query.page) }
   const params = new URLSearchParams()
+
   if (next.status.length > 0) params.set('status', PRODUCT_STATUSES.filter(s => next.status.includes(s)).join(','))
   if (next.q) params.set('q', next.q)
   if (next.collection) params.set('collection', next.collection)
@@ -61,7 +63,9 @@ export function productsHref(query: ProductsQuery, changes: Partial<ProductsQuer
   if (next.dir !== FIRST_DIR[next.sort]) params.set('dir', next.dir)
   if (next.page !== DEFAULT_PRODUCTS_QUERY.page) params.set('page', String(next.page))
   if (next.size !== DEFAULT_PRODUCTS_QUERY.size) params.set('size', String(next.size))
+
   const text = params.toString().replace(/%2C/g, ',')
+
   return text ? `/products?${text}` : '/products'
 }
 

@@ -12,6 +12,7 @@ export function DemoEntry({ ended = false }: { ended?: boolean }) {
   const t = useTranslations('demo.entry')
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending, unreached] = useFormAction(enterDemoAction, IDLE as FormState, form)
+
   return (
     <form ref={form} action={action} className="flex flex-col gap-3 rounded-md border border-border p-4">
       <UnreachedAlert unreached={unreached} />

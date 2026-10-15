@@ -29,12 +29,15 @@ export function OrderStatusControl({ orderId, number, status, canUpdate }: Props
   const targets = nextStatuses(shown)
   const change = (to: OrderStatus): void => startTransition(async () => {
     setShown(to)
+
     const result = await send(() => changeOrderStatusAction({ orderId, to }))
+
     if (!result) return
     if (result.ok) toast.success(t('changed', { number, status: statusLabel(to) }))
     else if (result.code === 'forbidden') refused(orders('forbidden'))
     else toast.error(result.code === 'conflict' ? t('conflict') : t('failed'))
   })
+
   return (
     <div className="flex flex-wrap items-center gap-2.5">
       <span aria-live="polite"><StatusBadge status={shown} /></span>

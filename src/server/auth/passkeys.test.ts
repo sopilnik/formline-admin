@@ -16,6 +16,7 @@ const NOW = 1_800_000_000_000
 describe('user handles', () => {
   it('carry the user id as its 16 bytes', () => {
     const handle = handleFromUserId(USER)
+
     expect(handle).toHaveLength(16)
     expect(userIdFromHandle(encodeBase64urlNoPadding(handle))).toBe(USER)
   })
@@ -30,6 +31,7 @@ describe('user handles', () => {
 describe('challenge cookies', () => {
   it('give the challenge back for their purpose within five minutes', () => {
     const cookie = challengeCookie('challenge-1', 'auth', undefined, config, NOW)
+
     expect(readChallenge(cookie, 'auth', undefined, config, NOW + 299_000)).toBe('challenge-1')
     expect(readChallenge(cookie, 'auth', undefined, config, NOW + 300_000)).toBeNull()
     expect(readChallenge(cookie, 'register', undefined, config, NOW)).toBeNull()
@@ -37,12 +39,14 @@ describe('challenge cookies', () => {
 
   it('bind a registration challenge to its session', () => {
     const cookie = challengeCookie('challenge-2', 'register', 'session-a', config, NOW)
+
     expect(readChallenge(cookie, 'register', 'session-a', config, NOW)).toBe('challenge-2')
     expect(readChallenge(cookie, 'register', 'session-b', config, NOW)).toBeNull()
   })
 
   it('refuse a cookie signed with another key', () => {
     const other = { ...config, cookieSigningKey: 'x'.repeat(32) }
+
     expect(readChallenge(challengeCookie('challenge-3', 'auth', undefined, other, NOW), 'auth', undefined, config, NOW)).toBeNull()
   })
 })

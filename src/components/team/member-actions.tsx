@@ -29,14 +29,17 @@ export function MemberActions({ userId, person, role, active }: Props) {
   }
   const makeRole = (next: AssignableRole): void => startTransition(async () => {
     const result = await send(() => changeMemberRoleAction({ userId, role: next }))
+
     if (result) report(result, t(`roleChanged.${next}`, { person }))
   })
   const setActive = (next: boolean): void => startTransition(async () => {
     const result = await send(() => changeMemberActiveAction({ userId, active: next }))
+
     if (!result) return
     setConfirming(false)
     report(result, next ? t('reactivated', { person }) : t('deactivated', { person }))
   })
+
   return (
     <>
       <DropdownMenu>

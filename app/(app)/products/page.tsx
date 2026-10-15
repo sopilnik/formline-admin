@@ -21,28 +21,34 @@ import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('products')
+
   return { title: t('title') }
 }
 
 export default async function ProductsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const session = await requireSession()
+
   authorize(session, 'data.read')
+
   const query = parseProductsQuery(await searchParams)
   const { timeZone, list } = await withWorkspace(workspaceContext(session), async tx => ({
     timeZone: (await getStoreSettings(tx, session.workspaceId)).timezone,
     list: await listProducts(tx, session.workspaceId, query),
   }))
+
   // A page number past the end (an old link, a narrower filter) lands on the last page, as on the orders.
   if (list.filtered > 0 && query.page > list.pages) redirect(productsHref(query, { page: list.pages }))
   // A collection renamed or deleted since the link was made no longer filters: the list shows every collection, as its
   // select says.
   if (query.collection && !list.collections.some(c => c.slug === query.collection)) redirect(productsHref(query, { collection: '' }))
+
   const locale = await getLocale()
   const t = await getTranslations('products')
   const filtered = isProductsFiltered(query)
   const count = filtered ? t('countFiltered', { filtered: list.filtered, total: list.total }) : t('count', { total: list.total })
   const empty = list.total === 0 ? t('empty.noneTitle') : t('empty.filteredTitle')
   const results = list.rows.length > 0 ? t('pager.range', { ...pageRange(query.page, query.size, list.filtered), total: list.filtered }) : empty
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-end gap-4">

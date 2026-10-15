@@ -39,6 +39,7 @@ export async function drainPendingDeletions(storage: MediaStorage, pool: Pool = 
     }
 
     const client = await pool.connect()
+
     try {
       await client.query('begin')
       await client.query('delete from fa.pending_media_deletions where storage_path = $1', [row.storage_path])

@@ -24,12 +24,14 @@ type Params = { params: Promise<{ id: string }> }
 
 const parseId = (value: string): string | null => {
   const id = z.uuid().safeParse(value)
+
   return id.success ? id.data : null
 }
 
 // The title and the page read the same customer: one set of queries per request.
 const load = cache(async (id: string) => {
   const session = await requireSession()
+
   return withWorkspace(workspaceContext(session), async tx => ({
     customer: await getCustomer(tx, session.workspaceId, id),
     timeZone: (await getStoreSettings(tx, session.workspaceId)).timezone,
@@ -40,16 +42,23 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const t = await getTranslations('customers.detail')
   const id = parseId((await params).id)
   const customer = id === null ? null : (await load(id)).customer
+
   return { title: customer ? customer.name : t('notFoundTitle') }
 }
 
 export default async function CustomerPage({ params }: Params) {
   const session = await requireSession()
+
   authorize(session, 'data.read')
+
   const id = parseId((await params).id)
+
   if (id === null) notFound()
+
   const { customer, timeZone } = await load(id)
+
   if (!customer) notFound()
+
   const locale = await getLocale()
   const t = await getTranslations('customers')
   const money = (cents: number): string => formatMoney(cents, locale)
@@ -63,6 +72,7 @@ export default async function CustomerPage({ params }: Params) {
     [t('detail.last'), customer.lastOrderAt ? formatDate(customer.lastOrderAt, locale, timeZone) : '—'],
     [t('detail.since'), formatDate(customer.createdAt, locale, timeZone)],
   ]
+
   return (
     <div className="flex flex-col gap-5">
       <BackLink href="/customers">{t('detail.back')}</BackLink>

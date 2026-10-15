@@ -23,11 +23,15 @@ async function entry(input: { actor: string | null; action: string; entityType?:
 beforeAll(async () => {
   admin = adminPool()
   app = appPool()
+
   const { workspaceId, userId } = await createSandbox(app)
+
   owner = { workspaceId, userId, role: 'owner' }
   ids = await memberIds(admin, owner.workspaceId)
+
   const order = (await admin.query<{ id: string; number: number }>('select id, number from fa.orders where workspace_id = $1 order by number limit 1', [owner.workspaceId])).rows[0]!
   const product = (await admin.query<{ id: string }>("select id from fa.products where workspace_id = $1 and slug = 'far-orbit'", [owner.workspaceId])).rows[0]!
+
   await admin.query("update fa.products set name = 'Farther Orbit' where workspace_id = $1 and id = $2", [owner.workspaceId, product.id])
   await entry({ actor: ids.manager, action: 'order.status_changed', entityType: 'order', entityId: order.id, details: { number: order.number, from: 'paid', to: 'processing', bulk: false }, daysAgo: 10 })
   await entry({ actor: ids.admin, action: 'product.updated', entityType: 'product', entityId: product.id, details: { slug: 'far-orbit', changed: ['name'] }, daysAgo: 3 })
@@ -42,6 +46,7 @@ const list = (query: Partial<ActivityQuery>, ctx = owner) =>
 describe('listActivity', () => {
   it('lists the workspace’s entries newest first, with the names the page needs', async () => {
     const page = await list({})
+
     // The four entries above and the sandbox's own first entry.
     expect(page.total).toBe(5)
     expect(page.rows.map(r => r.action)).toEqual(['sandbox.created', 'order.status_changed', 'product.deleted', 'product.updated', 'order.status_changed'])
@@ -53,7 +58,9 @@ describe('listActivity', () => {
   it('filters by a member, by the system, by action and by period', async () => {
     expect((await list({ actor: ids.admin })).rows.map(r => r.action)).toEqual(['product.deleted', 'product.updated'])
     expect((await list({ actor: 'system' })).rows.map(r => r.details)).toEqual([expect.objectContaining({ to: 'shipped' })])
+
     const statuses = await list({ action: 'order.status_changed' })
+
     expect([statuses.filtered, statuses.total]).toEqual([2, 5])
     expect((await list({ when: '7d' })).filtered).toBe(4)
     expect((await list({ when: 'today' })).rows.map(r => r.action)).toEqual(['sandbox.created'])
@@ -61,9 +68,13 @@ describe('listActivity', () => {
 
   it('pages the log', async () => {
     for (let i = 0; i < 26; i++) await entry({ actor: ids.owner, action: 'auth.sign_in', details: { method: 'password' }, daysAgo: 20 })
+
     const first = await list({})
+
     expect([first.filtered, first.pages, first.rows.length]).toEqual([31, 2, 25])
+
     const second = await list({ page: 2 })
+
     expect(second.rows).toHaveLength(6)
     expect(second.rows.some(row => first.rows.some(r => r.id === row.id))).toBe(false)
   })
@@ -71,6 +82,7 @@ describe('listActivity', () => {
   it('shows nothing to a manager', async () => {
     const manager = { ...owner, userId: ids.manager, role: 'manager' as const }
     const page = await list({}, manager)
+
     expect([page.total, page.rows]).toEqual([0, []])
   })
 })

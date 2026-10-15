@@ -19,17 +19,27 @@ const empty = (status: number): Response => new Response(null, { status, headers
  */
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   const session = await getSession()
+
   if (!session?.secondFactorVerified) return empty(401)
   if (!can(session.role, 'data.read', session.workspaceKind)) return empty(404)
+
   const id = z.uuid().safeParse((await params).id)
+
   if (!id.success) return empty(404)
+
   const image = await withWorkspace(workspaceContext(session), tx => getUpload(tx, session.workspaceId, id.data))
+
   if (!image) return empty(404)
+
   const storage = mediaStorage()
+
   if (!storage) return empty(503)
+
   const small = new URL(request.url).searchParams.get('size') === 'thumb'
   const bytes = (small ? await storage.get(thumbPath(image.storagePath)) : null) ?? await storage.get(image.storagePath)
+
   if (!bytes) return empty(404)
+
   return new Response(new Uint8Array(bytes), {
     headers: { ...NO_STORE, 'Content-Type': 'image/webp', 'Content-Length': String(bytes.length), 'Content-Disposition': 'inline' },
   })

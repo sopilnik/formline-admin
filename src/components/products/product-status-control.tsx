@@ -28,12 +28,15 @@ export function ProductStatusControl({ productId, name, status, canWrite }: Prop
   const targets = nextProductStatuses(shown)
   const change = (to: ProductStatus): void => startTransition(async () => {
     setShown(to)
+
     const result = await send(() => changeProductStatusAction({ productId, to }))
+
     if (!result) return
     if (result.ok) toast.success(t(`done.${to}`, { name }))
     else if (result.code === 'forbidden') refused(failed('forbidden'))
     else toast.error(result.code === 'conflict' ? t('conflict') : t('failed'))
   })
+
   return (
     <div className="flex flex-wrap items-center gap-2.5">
       <span aria-live="polite"><ProductStatusBadge status={shown} /></span>

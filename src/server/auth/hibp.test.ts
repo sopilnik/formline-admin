@@ -8,14 +8,17 @@ function fake(body: string, status = 200): { fetcher: Fetcher; calls: { url: str
   const calls: { url: string; init: RequestInit }[] = []
   const fetcher: Fetcher = async (url, init) => {
     calls.push({ url, init })
+
     return new Response(body, { status })
   }
+
   return { fetcher, calls }
 }
 
 describe('isBreachedPassword', () => {
   it('sends only the first five characters of the SHA-1, with padding asked for', async () => {
     const { fetcher, calls } = fake('')
+
     await isBreachedPassword('password', { fetcher })
     expect(calls[0]?.url).toBe('https://api.pwnedpasswords.com/range/5BAA6')
     expect(new Headers(calls[0]?.init.headers).get('Add-Padding')).toBe('true')
@@ -23,6 +26,7 @@ describe('isBreachedPassword', () => {
 
   it('reports a suffix that appears with a count', async () => {
     const { fetcher } = fake(`0018A45C4D1DEF81644B54AB7F969B88D65:1\r\n${SUFFIX}:9659365\r\n`)
+
     expect(await isBreachedPassword('password', { fetcher })).toBe(true)
   })
 
@@ -34,9 +38,11 @@ describe('isBreachedPassword', () => {
   it('answers null, never blocking, when the service cannot be asked', async () => {
     expect(await isBreachedPassword('password', { fetcher: fake('', 503).fetcher })).toBeNull()
     expect(await isBreachedPassword('password', { fetcher: async () => { throw new TypeError('fetch failed') } })).toBeNull()
+
     const hanging: Fetcher = (_url, init) => new Promise((_resolve, reject) => {
       init.signal?.addEventListener('abort', () => reject(init.signal?.reason))
     })
+
     expect(await isBreachedPassword('password', { fetcher: hanging, timeoutMs: 20 })).toBeNull()
   })
 })

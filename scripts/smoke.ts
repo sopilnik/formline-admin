@@ -29,6 +29,7 @@ export const DEMO_ENTRY_LIMIT_MS = 10_000
 
 /** A template product with a poster; the upload replaces the poster inside the sandbox only. */
 export const UPLOAD_PRODUCT = 'hush'
+
 /** An 8 × 8 PNG, small enough to sit in the source; the panel re-encodes it to WebP like any upload. */
 const UPLOAD_PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAEUlEQVQImWNYeXYTVsQwtCQA6aOKASzfMAMAAAAASUVORK5CYII='
 const UPLOAD_CHECK = 'upload an image and read it back'
@@ -36,6 +37,7 @@ const UPLOAD_CHECK = 'upload an image and read it back'
 export function securityHeaders(headers: Headers): Check[] {
   return Object.entries(SECURITY_HEADERS).map(([name, pattern]) => {
     const value = headers.get(name)
+
     return { check: `header ${name}`, ok: value !== null && pattern.test(value), ...(value === null ? { detail: 'missing' } : {}) }
   })
 }
@@ -44,6 +46,7 @@ export function securityHeaders(headers: Headers): Check[] {
 export function notCached(check: string, headers: Headers): Check {
   const edge = headers.get('cdn-cache')
   const control = headers.get('cache-control') ?? ''
+
   return { check, kind: 'cache', ok: edge !== 'HIT' && /no-store/.test(control), detail: `cdn-cache ${edge ?? 'none'}, cache-control ${control || 'none'}` }
 }
 
@@ -53,6 +56,7 @@ export type Served = { status: number; type: string | null; cache: string | null
 export function imageServed(served: Served): Check {
   const ok = served.status === 200 && served.type === 'image/webp' && /no-store/.test(served.cache ?? '') && served.edge !== 'HIT'
   const detail = `HTTP ${served.status}, ${served.type ?? 'no type'}, cache-control ${served.cache ?? 'none'}, cdn-cache ${served.edge ?? 'none'}`
+
   return { check: UPLOAD_CHECK, ok, detail }
 }
 
@@ -73,9 +77,12 @@ export async function requestChecks(o: SmokeOptions): Promise<Check[]> {
   const get = (path: string) => o.fetch(new URL(path, o.siteUrl), { headers: o.headers, redirect: 'manual', signal: AbortSignal.timeout(20_000) })
 
   const live = await get('/api/health')
+
   checks.push({ check: 'liveness', ok: live.status === 200, detail: `HTTP ${live.status}` })
+
   const ready = await get('/api/health?db=1')
   const readiness = await ready.json().catch(() => null) as { db?: string; role?: string } | null
+
   checks.push({
     check: 'readiness',
     ok: ready.status === 200 && readiness?.db === 'ok' && readiness?.role === 'ok',
@@ -83,11 +90,14 @@ export async function requestChecks(o: SmokeOptions): Promise<Check[]> {
   })
 
   const signIn = await get('/sign-in')
+
   checks.push({ check: 'sign-in page', ok: signIn.status === 200, detail: `HTTP ${signIn.status}` })
   checks.push(...securityHeaders(signIn.headers))
   checks.push(notCached('sign-in not cached', signIn.headers))
   checks.push(notCached('sign-in not cached on a second request', (await get('/sign-in')).headers))
+
   const media = await get('/media/00000000-0000-4000-8000-000000000000')
+
   checks.push({ check: 'media refused without a session', ok: media.status === 401, detail: `HTTP ${media.status}` })
   checks.push(notCached('media not cached', media.headers))
 
@@ -96,8 +106,11 @@ export async function requestChecks(o: SmokeOptions): Promise<Check[]> {
   for (const [index, host] of o.rawHosts.entries()) {
     const label = `raw hostname ${index + 1} of ${o.rawHosts.length}`
     const raw = await o.fetch(`https://${host}/sign-in`, { redirect: 'manual', signal: AbortSignal.timeout(20_000) }).catch(() => null)
+
     checks.push({ check: `${label} refuses a request around the panel's address`, ok: raw?.status === 403, detail: raw ? `HTTP ${raw.status}` : 'no answer' })
+
     const image = await o.fetch(`https://${host}${OPTIMIZER_PATH}`, { redirect: 'manual', signal: AbortSignal.timeout(20_000) }).catch(() => null)
+
     checks.push({ check: `${label} refuses the image optimizer`, ok: image?.status === 403, detail: image ? `HTTP ${image.status}` : 'no answer' })
   }
 
@@ -107,16 +120,23 @@ export async function requestChecks(o: SmokeOptions): Promise<Check[]> {
 /** An image uploaded to a product of the sandbox and read back through /media, as the browser would ask for it. */
 async function uploadCheck(page: Page, siteUrl: string): Promise<Check> {
   await page.goto(new URL(`/products/${UPLOAD_PRODUCT}`, siteUrl).href)
+
   const card = page.getByRole('region', { name: 'Image' })
+
   await card.locator('input[type="file"]').setInputFiles({ name: 'smoke.png', mimeType: 'image/png', buffer: Buffer.from(UPLOAD_PNG, 'base64') })
+
   const shown = card.locator('img[src^="/media/"]')
   const refused = card.getByRole('alert')
+
   await shown.or(refused).first().waitFor({ timeout: 30_000 })
   if (await refused.isVisible()) return { check: UPLOAD_CHECK, ok: false, detail: (await refused.innerText()).trim() }
+
   const src = await shown.getAttribute('src')
+
   return imageServed(await page.evaluate(async url => {
     const response = await fetch(url)
     const header = (name: string) => response.headers.get(name)
+
     return { status: response.status, type: header('content-type'), cache: header('cache-control'), edge: header('cdn-cache') }
   }, src ?? ''))
 }
@@ -135,6 +155,7 @@ export async function demoSteps(page: Page, siteUrl: string, steps: { upload?: b
   // Runs one named step, so a failure can say which step it happened in.
   const step = async <T>(name: string, action: () => Promise<T>): Promise<T> => {
     current = name
+
     return action()
   }
 
@@ -142,11 +163,14 @@ export async function demoSteps(page: Page, siteUrl: string, steps: { upload?: b
     await step('open the sign-in page', () => page.goto(new URL('/sign-in', siteUrl).href))
 
     const started = Date.now()
+
     await step('enter the demo', async () => {
       await page.getByRole('button', { name: 'Enter the demo' }).click()
       await page.getByRole('heading', { level: 1, name: 'Overview' }).waitFor({ timeout: 30_000 })
     })
+
     const elapsed = Date.now() - started
+
     checks.push({ check: 'enter the demo', ok: elapsed < DEMO_ENTRY_LIMIT_MS, detail: `${elapsed} ms` })
 
     if (steps.upload) checks.push(await uploadCheck(page, siteUrl).catch(error => ({ check: UPLOAD_CHECK, ok: false, detail: firstLine(error) })))
@@ -159,6 +183,7 @@ export async function demoSteps(page: Page, siteUrl: string, steps: { upload?: b
   } catch (error) {
     const snapshot = await page.locator('body').ariaSnapshot({ timeout: 5_000 }).catch(() => '')
     const stopped = { url: page.url(), snapshot: snapshot.slice(0, SNAPSHOT_LIMIT) }
+
     checks.push({ check: 'demo', ok: false, detail: `${current}: ${firstLine(error)}`, page: stopped })
   }
 
@@ -168,8 +193,10 @@ export async function demoSteps(page: Page, siteUrl: string, steps: { upload?: b
 /** The demo steps in a browser of their own, every request carrying `headers` (the edge's own in a local run). */
 export async function demoChecks(o: Pick<SmokeOptions, 'siteUrl' | 'headers'>, steps: { upload?: boolean } = {}): Promise<Check[]> {
   const browser = await chromium.launch()
+
   try {
     const page = await (await browser.newContext({ extraHTTPHeaders: o.headers })).newPage()
+
     return await demoSteps(page, o.siteUrl, steps)
   } finally {
     await browser.close()
@@ -193,7 +220,9 @@ if (import.meta.main) {
     const headers = env.SMOKE_HEADERS ? (JSON.parse(env.SMOKE_HEADERS) as Record<string, string>) : undefined
 
     const checks = await smoke({ siteUrl: env.SITE_URL, rawHosts, headers, fetch })
+
     for (const check of checks) log(check)
+
     return checks.every(check => check.ok) ? 0 : 1
   }
 

@@ -10,6 +10,7 @@ const FORMULA_START = /^[=+\-@\t\r]/
 /** A text cell: a formula starter gets a leading apostrophe; quotes, commas and line breaks are quoted (RFC 4180). */
 export function csvText(value: string): string {
   const safe = FORMULA_START.test(value) ? `'${value}` : value
+
   return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe
 }
 

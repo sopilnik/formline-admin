@@ -25,6 +25,7 @@ import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('overview')
+
   return { title: t('title') }
 }
 
@@ -46,12 +47,15 @@ function kpiView(id: string, label: string, hint: string, kpi: Kpi, format: Form
 // Every page checks the session itself: a layout does not re-run on client navigation.
 export default async function OverviewPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const session = await requireSession()
+
   authorize(session, 'data.read')
+
   const period = parsePeriod((await searchParams).period)
   const now = new Date()
   const data = await withWorkspace(workspaceContext(session), async tx => {
     const settings = await getStoreSettings(tx, session.workspaceId)
     const plan = periodPlan(period, now, settings.timezone)
+
     return {
       timeZone: settings.timezone,
       plan,

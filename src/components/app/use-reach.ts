@@ -12,9 +12,12 @@ import { reach } from '@/lib/reach'
 export function useReach(): <T>(call: () => Promise<T>) => Promise<T | null> {
   const t = useTranslations('common')
   const toast = useToast()
+
   return async call => {
     const answer = await reach(call)
+
     if (answer === null) toast.error(t('unreached'))
+
     return answer
   }
 }
@@ -26,6 +29,7 @@ export function useReach(): <T>(call: () => Promise<T>) => Promise<T | null> {
 export function useRoleRefusal(): (message: string) => void {
   const toast = useToast()
   const router = useRouter()
+
   return message => {
     toast.error(message)
     router.refresh()

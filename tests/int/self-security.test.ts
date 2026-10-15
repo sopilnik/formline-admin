@@ -24,6 +24,7 @@ beforeAll(async () => {
 afterAll(async () => {
   // The owner is shared by every auth test file: the password goes back to the one they sign in with.
   const passwordHash = await hashPassword(OWNER.password)
+
   await asSchemaOwner(admin, c => c.query('update fa.users set password_hash = $2 where workspace_id = $1 and id = $3', [ownerWorkspace, passwordHash, ownerId]))
   await closeAll()
 })
@@ -42,8 +43,11 @@ const passwordHashOf = async () => (await admin.query<{ hash: string }>('select 
 describe('changeOwnPassword', () => {
   it('asks for a fresh sign-in and applies the password rules', async () => {
     const stale = await device(ownerWorkspace, ownerId, 'Firefox, Linux', new Date(Date.now() - 3_600_000))
+
     expect(await changeOwnPassword(stale, { password: 'a-long-new-password-1', ip: null }, { pool: app, isBreached: noBreach })).toEqual({ ok: false, error: 'reauth_required' })
+
     const fresh = await device(ownerWorkspace, ownerId, 'Firefox, Linux')
+
     expect(await changeOwnPassword(fresh, { password: 'short', ip: null }, { pool: app, isBreached: noBreach })).toEqual({ ok: false, error: 'password_too_short', field: 'password' })
     expect(await changeOwnPassword(fresh, { password: 'a-long-new-password-1', ip: null }, { pool: app, isBreached: async () => true }))
       .toEqual({ ok: false, error: 'password_breached', field: 'password' })
@@ -54,6 +58,7 @@ describe('changeOwnPassword', () => {
     const current = await device(ownerWorkspace, ownerId, 'Chrome, macOS')
     const other = await device(ownerWorkspace, ownerId, 'Safari, iOS')
     const result = await changeOwnPassword(current, { password: 'lantern-harbor-quiet-9083', ip: '192.0.2.10' }, { pool: app, isBreached: noBreach })
+
     if (!result.ok) throw new Error(result.error)
     // At least the other device; earlier test files may have left more of the owner's sessions.
     expect(result.signedOut).toBeGreaterThanOrEqual(1)
@@ -65,6 +70,7 @@ describe('changeOwnPassword', () => {
   it('is not offered in a sandbox, where members have no password', async () => {
     const { workspaceId, userId } = await createSandbox(app)
     const session = await device(workspaceId, userId, 'Chrome, Linux')
+
     expect(await changeOwnPassword(session, { password: 'lantern-harbor-quiet-9083', ip: null }, { pool: app, isBreached: noBreach })).toEqual({ ok: false, error: 'generic' })
   })
 })
@@ -74,12 +80,17 @@ describe('signed-in devices', () => {
     const { workspaceId: ws, userId: me } = await createSandbox(app)
     const current = await device(ws, me, 'Chrome, Linux')
     const phone = await device(ws, me, 'Safari, iOS')
+
     await admin.query("update fa.sessions set last_seen_at = now() + interval '1 minute' where id = $1", [phone.id])
     await admin.query("insert into fa.sessions (workspace_id, id, user_id, expires_at, second_factor_verified) values ($1, $2, $3, now() + interval '10 minutes', false)",
       [ws, hashToken(generateToken()), me])
+
     const admin_ = (await admin.query<{ id: string }>("select id from fa.users where workspace_id = $1 and role = 'admin'", [ws])).rows[0]!.id
+
     await device(ws, admin_, 'Edge, Windows')
+
     const listed = await withWorkspace({ workspaceId: ws, userId: me, role: 'owner' }, tx => listOwnSessions(tx, me), app)
+
     expect(listed.map(s => s.userAgentSummary)).toEqual(['Safari, iOS', 'Chrome, Linux', 'Vitest'])
 
     expect(await revokeOwnSession(current, current.id, { ip: null }, { pool: app })).toBe(false)
@@ -90,7 +101,9 @@ describe('signed-in devices', () => {
     expect((await withWorkspace({ workspaceId: ws, userId: me, role: 'owner' }, tx => listOwnSessions(tx, me), app)).map(s => s.id)).toEqual([current.id])
     expect(await actions(ws, 'auth.session_revoked')).toEqual([{ device: 'Safari, iOS' }])
     expect(await actions(ws, 'auth.other_sessions_revoked')).toEqual([{ count: 2 }])
+
     const adminSessions = await admin.query<{ n: number }>('select count(*)::int as n from fa.sessions where workspace_id = $1 and user_id = $2', [ws, admin_])
+
     expect(adminSessions.rows[0]!.n).toBe(1)
   })
 })

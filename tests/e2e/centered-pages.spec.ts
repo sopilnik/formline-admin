@@ -15,6 +15,7 @@ const offCenter = (page: Page) => page.locator('main').evaluate(main => {
   const middle = (box.left + parseFloat(style.paddingLeft) + box.right - parseFloat(style.paddingRight)) / 2
   const framed = [...main.querySelectorAll('*')].find(el => parseFloat(getComputedStyle(el).borderTopWidth) > 0 && el.getBoundingClientRect().width > 300)!
   const card = framed.getBoundingClientRect()
+
   return Math.round((card.left + card.right) / 2 - middle)
 })
 

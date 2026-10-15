@@ -19,19 +19,25 @@ import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('activity')
+
   return { title: await titleFor('activity.read', t('title')) }
 }
 
 /** The activity log: owners and admins; for other roles the address does not exist. */
 export default async function ActivityPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const session = await requireSession()
+
   if (!can(session.role, 'activity.read', session.workspaceKind)) notFound()
+
   const query = parseActivityQuery(await searchParams)
   const { log, timeZone } = await withWorkspace(workspaceContext(session), async tx => {
     const zone = (await getStoreSettings(tx, session.workspaceId)).timezone
+
     return { log: await listActivity(tx, session.workspaceId, query, new Date(), zone), timeZone: zone }
   })
+
   if (log.filtered > 0 && query.page > log.pages) redirect(activityHref(query, { page: log.pages }))
+
   const locale = await getLocale()
   const t = await getTranslations('activity')
   const entries: ActivityEntryView[] = log.rows.map(row => ({
@@ -44,6 +50,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
     ...describeEntry(row, log.lookups),
   }))
   const filtered = isActivityFiltered(query)
+
   return (
     <div className="flex flex-col gap-5">
       <div>

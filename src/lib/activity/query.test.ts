@@ -18,8 +18,10 @@ describe('parseActivityQuery', () => {
 describe('activityHref', () => {
   it('leaves the defaults out and round-trips through the parser', () => {
     expect(activityHref(DEFAULT_ACTIVITY_QUERY)).toBe('/activity')
+
     const query = { actor: ID, action: 'team.invited' as const, when: 'month' as const, page: 3, size: 100 as const }
     const href = activityHref(query)
+
     expect(href).toBe(`/activity?actor=${ID}&action=team.invited&when=month&page=3&size=100`)
     expect(parseActivityQuery(new URLSearchParams(href.split('?')[1]))).toEqual(query)
   })

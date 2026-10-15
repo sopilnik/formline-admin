@@ -17,6 +17,7 @@ describe('withWorkspace', () => {
     // The bare pool falls under the app role's own default (tests/int/migrate.test.ts).
     const inside = await withWorkspace({ workspaceId: randomUUID(), userId: null, role: 'system' }, async tx =>
       (await tx.execute<{ timeout: string }>(sql`select current_setting('statement_timeout') as timeout`)).rows[0]!.timeout, app)
+
     expect(inside).toBe('30s')
   })
 })

@@ -3,6 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export default async function CustomersLoading() {
   const t = await getTranslations('customers')
+
   return (
     <div role="status" className="flex flex-col gap-5">
       <span className="sr-only">{t('loading')}</span>

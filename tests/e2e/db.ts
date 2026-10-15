@@ -8,12 +8,16 @@ export type Role = 'owner' | 'admin' | 'manager' | 'viewer'
 /** Runs fn as schema_owner on the e2e database and commits (the identity of the definer functions). */
 export async function asSchemaOwner<T>(fn: (client: pg.Client) => Promise<T>): Promise<T> {
   const client = new pg.Client({ connectionString: E2E_MIGRATOR_URL })
+
   await client.connect()
   try {
     await client.query('begin')
     await client.query('set local role schema_owner')
+
     const result = await fn(client)
+
     await client.query('commit')
+
     return result
   } catch (error) {
     await client.query('rollback')
@@ -50,13 +54,17 @@ export function createSandboxSession(role: Role = 'owner'): Promise<{ token: str
     const entry = await client.query<{ outcome: string; sandbox_id: string; demo_user_id: string }>(
       'select * from fa.create_sandbox($1, $2, $3, $4)', [sha256(randomUUID()), sha256(entryToken), 'Playwright', 'en'])
     const row = entry.rows[0]
+
     if (row?.outcome !== 'created') throw new Error(`create_sandbox: ${row?.outcome ?? 'no row'}`)
     if (role === 'owner') return { token: entryToken, workspaceId: row.sandbox_id, userId: row.demo_user_id }
+
     const user = await client.query<{ id: string }>('select id from fa.users where workspace_id = $1 and role = $2', [row.sandbox_id, role])
     const token = encodeBase32LowerCaseNoPadding(randomBytes(20))
+
     await client.query(
       'insert into fa.sessions (workspace_id, id, user_id, expires_at, second_factor_verified, reauth_at) values ($1, $2, $3, (select expires_at from fa.workspaces where id = $1), true, now())',
       [row.sandbox_id, sha256(token), user.rows[0]!.id])
+
     return { token, workspaceId: row.sandbox_id, userId: user.rows[0]!.id }
   })
 }
@@ -69,10 +77,13 @@ export async function enrollAuthenticator(workspaceId: string, userId: string, s
   const [keyId = '', encoded = ''] = E2E_AUTH_ENV.TOTP_ENCRYPTION_KEYS.split(',')[0]!.split(':')
   const iv = randomBytes(12)
   const cipher = createCipheriv('aes-256-gcm', Buffer.from(encoded, 'base64'), iv, { authTagLength: 16 })
+
   cipher.setAAD(Buffer.from(`${workspaceId}${userId}`))
+
   const ciphertext = Buffer.concat([cipher.update(secret), cipher.final()])
   const part = (bytes: Uint8Array) => encodeBase64urlNoPadding(bytes)
   const value = `${keyId}.${part(iv)}.${part(ciphertext)}.${part(cipher.getAuthTag())}`
+
   await asSchemaOwner(client => client.query('update fa.users set totp_secret_enc = $3 where workspace_id = $1 and id = $2', [workspaceId, userId, value]))
 }
 
@@ -85,16 +96,22 @@ export function createOwnerSession(): Promise<{ token: string; workspaceId: stri
     const sha256 = (value: string) => createHash('sha256').update(value).digest('hex')
     const workspaceId = (await client.query<{ id: string }>("select id from fa.workspaces where kind = 'owner'")).rows[0]!.id
     let userId = (await client.query<{ id: string }>("select id from fa.users where workspace_id = $1 and role = 'owner'", [workspaceId])).rows[0]?.id
+
     if (!userId) {
       userId = randomUUID()
+
       const codes = Array.from({ length: 10 }, () => sha256(randomUUID()))
+
       await client.query('select fa.create_owner($1, $2, $3, $4, null, null, $5, $6, $7, $8)',
         [userId, 'owner@formline.test', 'Alex Owner', `$argon2id$v=19$m=19456,t=2,p=1$${randomUUID()}`, codes, sha256(randomUUID()), 'Playwright', sha256(randomUUID())])
     }
+
     const token = encodeBase32LowerCaseNoPadding(randomBytes(20))
+
     await client.query(
       "insert into fa.sessions (workspace_id, id, user_id, expires_at, second_factor_verified, reauth_at) values ($1, $2, $3, now() + interval '1 day', true, now())",
       [workspaceId, sha256(token), userId])
+
     return { token, workspaceId, userId }
   })
 }

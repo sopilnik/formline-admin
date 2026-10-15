@@ -9,7 +9,9 @@ export class Rollback extends Error {}
 /** The Postgres text of an error: drizzle-orm wraps it and keeps the original on `cause`. */
 export function errorText(error: unknown): string {
   const parts: string[] = []
+
   for (let e: unknown = error; e instanceof Error; e = e.cause) parts.push(e.message)
+
   return parts.length > 0 ? parts.join(' | ') : String(error)
 }
 
@@ -17,6 +19,7 @@ export function errorText(error: unknown): string {
 export function gate(): { wait: Promise<void>; open: () => void } {
   let open!: () => void
   const wait = new Promise<void>(resolve => { open = resolve })
+
   return { wait, open }
 }
 
@@ -25,6 +28,7 @@ export async function lockWaiter(admin: pg.Pool): Promise<void> {
   for (let attempt = 0; attempt < 200; attempt++) {
     const { rows } = await admin.query<{ n: number }>(
       "select count(*)::int as n from pg_stat_activity where datname = current_database() and wait_event_type = 'Lock'")
+
     if (rows[0]!.n > 0) return
     await sleep(25)
   }
@@ -34,8 +38,10 @@ export async function lockWaiter(admin: pg.Pool): Promise<void> {
 /** Runs fn in a transaction that is always rolled back; returns fn's result. */
 export async function inRollback<T>(pool: pg.Pool, fn: (c: pg.PoolClient) => Promise<T>): Promise<T> {
   const client = await pool.connect()
+
   try {
     await client.query('begin')
+
     return await fn(client)
   } finally {
     await client.query('rollback')
@@ -46,11 +52,15 @@ export async function inRollback<T>(pool: pg.Pool, fn: (c: pg.PoolClient) => Pro
 /** Runs fn as schema_owner (the identity of the definer functions) and commits. */
 export async function asSchemaOwner<T>(pool: pg.Pool, fn: (c: pg.PoolClient) => Promise<T>): Promise<T> {
   const client = await pool.connect()
+
   try {
     await client.query('begin')
     await client.query('set local role schema_owner')
+
     const result = await fn(client)
+
     await client.query('commit')
+
     return result
   } catch (error) {
     await client.query('rollback')
@@ -63,6 +73,7 @@ export async function asSchemaOwner<T>(pool: pg.Pool, fn: (c: pg.PoolClient) => 
 export async function createWorkspace(pool: pg.Pool, kind: 'sandbox' | 'owner' | 'template' = 'sandbox'): Promise<string> {
   const expires = kind === 'sandbox' ? "now() + interval '1 day'" : 'null'
   const { rows } = await pool.query<{ id: string }>(`insert into fa.workspaces (kind, expires_at) values ($1, ${expires}) returning id`, [kind])
+
   return rows[0]!.id
 }
 
@@ -71,6 +82,7 @@ export async function createUser(pool: pg.Pool, workspaceId: string, role: 'owne
     const { rows } = await c.query<{ id: string }>(
       'insert into fa.users (workspace_id, email, name, role) values ($1, $2, $3, $4) returning id',
       [workspaceId, email, `Test ${role}`, role])
+
     return rows[0]!.id
   })
 }
@@ -89,6 +101,7 @@ export async function createSandbox(app: pg.Pool, { locale = 'en', ipHash = rand
   const { rows } = await app.query<{ outcome: string; sandbox_id: string; demo_user_id: string; sandbox_expires_at: Date }>(
     'select outcome, sandbox_id, demo_user_id, sandbox_expires_at from fa.create_sandbox($1, $2, $3, $4)', [ipHash, hashToken(token), 'Vitest', locale])
   const row = rows[0]
+
   if (row?.outcome !== 'created') throw new Error(`create_sandbox answered ${row?.outcome ?? 'nothing'}`)
 
   return { workspaceId: row.sandbox_id, userId: row.demo_user_id, token, expiresAt: row.sandbox_expires_at }
@@ -99,6 +112,7 @@ export type MemberRole = 'owner' | 'admin' | 'manager' | 'viewer'
 /** The ids of a workspace's members by role, as the template gives every sandbox one of each. */
 export async function memberIds(admin: pg.Pool, workspaceId: string): Promise<Record<MemberRole, string>> {
   const { rows } = await admin.query<{ id: string; role: MemberRole }>('select id, role from fa.users where workspace_id = $1', [workspaceId])
+
   return Object.fromEntries(rows.map(row => [row.role, row.id])) as Record<MemberRole, string>
 }
 
@@ -130,5 +144,6 @@ export async function placeOrder(admin: pg.Pool, workspaceId: string, order: Han
     `insert into fa.orders (workspace_id, number, customer_id, status, source, delivery, subtotal_cents, shipping_cents, total_cents, placed_at)
      values ($1, $2, $3, $4, 'seed', 'standard', $5, 900, $5 + 900, $6) returning id`,
     [workspaceId, order.number, order.customerId, order.status, order.subtotalCents, order.placedAt])
+
   return rows[0]!.id
 }

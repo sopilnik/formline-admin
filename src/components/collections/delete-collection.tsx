@@ -21,6 +21,7 @@ export function DeleteCollection({ id, name, products }: { id: string; name: str
   const [pending, startTransition] = useTransition()
   const remove = (): void => startTransition(async () => {
     const result = await send(() => deleteCollectionAction({ id }))
+
     if (!result) return
     setOpen(false)
     if (result.ok) {
@@ -33,7 +34,9 @@ export function DeleteCollection({ id, name, products }: { id: string; name: str
       else toast.error(result.code === 'conflict' ? t('conflict') : t('failed'))
     }
   })
+
   if (products > 0) return <p className="text-[13px] text-muted-foreground">{t('blocked', { count: products })}</p>
+
   return (
     <>
       <p className="text-[13px] text-muted-foreground">{t('body')}</p>

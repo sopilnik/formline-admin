@@ -17,7 +17,9 @@ test.describe('invitations', () => {
     await page.getByLabel('Role').selectOption('manager')
     await page.getByRole('button', { name: 'Send invitation' }).click()
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('The invitation to alex.kim@example.test is in the Outbox.')).toBeVisible()
+
     const open = page.getByRole('list', { name: 'Open invitations' })
+
     await expect(open.getByRole('listitem')).toHaveCount(1)
     await expect(open).toContainText('Manager · sent')
     await expect(page.getByLabel('Email')).toHaveValue('')
@@ -30,7 +32,9 @@ test.describe('invitations', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Invitation to the team' })).toBeVisible()
     await expect(page.getByText('Dana Ortiz invited alex.kim@example.test to join the Formline team. Role: Manager.')).toBeVisible()
     await expectNoSeriousA11yViolationsInBothThemes(page)
+
     const link = page.url()
+
     await page.getByLabel('Your name').fill('Alex Kim')
     await page.getByRole('button', { name: 'Accept and continue' }).click()
     await expect(page).toHaveURL(/\/overview$/)
@@ -42,6 +46,7 @@ test.describe('invitations', () => {
 
   test('puts the focus on an empty name and says why', async ({ page, context }) => {
     const { workspaceId } = await signInAsSandboxUser(context)
+
     await page.goto('/team')
     await page.getByLabel('Email').fill('lee.park@example.test')
     await page.getByRole('button', { name: 'Send invitation' }).click()
@@ -67,15 +72,20 @@ test.describe('invitations', () => {
 
   test('resends and revokes an open invitation', async ({ page, context }) => {
     const { workspaceId } = await signInAsSandboxUser(context, 'admin')
+
     await page.goto('/team')
     await page.getByLabel('Email').fill('sam.lee@example.test')
     await page.getByRole('button', { name: 'Send invitation' }).click()
     await page.getByRole('button', { name: 'Resend the invitation to sam.lee@example.test' }).click()
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('A new letter to sam.lee@example.test is in the Outbox.')).toBeVisible()
+
     const letters = await asSchemaOwner(async c => (await c.query<{ n: number }>(
       "select count(*)::int as n from fa.outbox_emails where workspace_id = $1 and to_address = 'sam.lee@example.test'", [workspaceId])).rows[0]!.n)
+
     expect(letters).toBe(2)
+
     const token = await tokenOfLetter(workspaceId, 'sam.lee@example.test')
+
     await page.getByRole('button', { name: 'Revoke the invitation to sam.lee@example.test' }).click()
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('The invitation to sam.lee@example.test is revoked.')).toBeVisible()
     await expect(page.getByRole('list', { name: 'Open invitations' })).toHaveCount(0)
@@ -85,14 +95,19 @@ test.describe('invitations', () => {
 
   test('does not open another sandbox’s invitation', async ({ page, context, browser }) => {
     const { workspaceId } = await signInAsSandboxUser(context)
+
     await page.goto('/team')
     await page.getByLabel('Email').fill('kept.private@example.test')
     await page.getByRole('button', { name: 'Send invitation' }).click()
     await expect(page.getByRole('list', { name: 'Open invitations' }).getByRole('listitem')).toHaveCount(1)
+
     const token = await tokenOfLetter(workspaceId, 'kept.private@example.test')
     const stranger = await browser.newContext({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip': '203.0.113.45' } })
+
     await signInAsSandboxUser(stranger)
+
     const other = await stranger.newPage()
+
     await other.goto(`/invite/${token}`)
     await expect(other.getByText('This sandbox has no invitation at this address.')).toBeVisible()
     await expect(other.getByRole('button', { name: 'Accept and continue' })).toHaveCount(0)
@@ -103,10 +118,14 @@ test.describe('invitations', () => {
     await signInAsSandboxUser(context)
     await page.setViewportSize({ width: 375, height: 800 })
     await page.goto('/team')
+
     const email = 'alexandra.konstantinopolskaya@example.test'
+
     await page.getByLabel('Email').fill(email)
     await page.getByRole('button', { name: 'Send invitation' }).click()
+
     const toast = page.getByRole('region', { name: 'Messages' }).getByText(`The invitation to ${email} is in the Outbox.`)
+
     await expect(toast).toBeVisible()
     expect(await toast.evaluate(title => title.scrollWidth <= title.clientWidth)).toBe(true)
   })

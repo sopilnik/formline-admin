@@ -11,6 +11,7 @@ describe('parseNote', () => {
 
   it('counts a line break once, as the field does, and keeps it as LF', () => {
     const lines = Array.from({ length: 100 }, (_, i) => `line ${String(i).padStart(4, '0')}`)
+
     expect(parseNote(`${lines.join('\r\n')}x`)).toEqual({ ok: true, note: `${lines.join('\n')}x` })
   })
 
@@ -29,12 +30,14 @@ describe('fitNote', () => {
   it('keeps as many whole lines as fit beside the count of the others', () => {
     const lines = Array.from({ length: 12 }, (_, i) => `${i}`.padEnd(100, 'x'))
     const note = fitNote(lines, more)
+
     expect(note).toBe([...lines.slice(0, 9), 'and 3 more'].join('\n'))
     expect(note.length).toBeLessThanOrEqual(NOTE_MAX)
   })
 
   it('counts characters, as the database does', () => {
     const lines = Array.from({ length: 10 }, () => 'ж'.repeat(99))
+
     expect(fitNote(lines, more)).toBe(lines.join('\n'))
   })
 })

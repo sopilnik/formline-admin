@@ -13,6 +13,7 @@ export const GLOBAL_ERROR_COPY = {
 /** The theme the visitor chose in the theme menu, from its cookie (`formline_theme`); System by default. */
 export function globalErrorTheme(cookie: string): Theme {
   const chosen = new RegExp(`(?:^|;\\s*)${THEME_COOKIE}=([a-z]+)(?:;|$)`).exec(cookie)
+
   return parseTheme(chosen?.[1])
 }
 

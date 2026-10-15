@@ -24,6 +24,7 @@ export function newestPoint(charts: Record<string, unknown>): string | null {
     .flatMap(chart => (chart && typeof chart === 'object' ? Object.keys(chart) : []))
     .filter(key => !Number.isNaN(Date.parse(key)))
     .sort((a, b) => Date.parse(a) - Date.parse(b))
+
   return times.at(-1) ?? null
 }
 
@@ -48,7 +49,9 @@ export async function runProbe(o: ProbeOptions): Promise<boolean> {
       const [app, summary, statistics, billing] = await Promise.all([o.bunny('/mc/apps/{id}'), o.bunny('/mc/apps/{id}/summary'), o.bunny(statisticsPath), o.bunny('/billing')])
 
       const newest = newestPoint(statistics)
+
       o.log({ probe: 'p1', status: app.status, summary: shape(summary), statistics: Object.keys(statistics), monthlyCost: summary.monthlyCost, magicContainers: billing.MonthlyChargesMagicContainers, newestPoint: newest, ageMinutes: newest ? Math.round((o.now() - Date.parse(newest)) / 60_000) : null })
+
       return typeof summary.monthlyCost === 'number' && typeof billing.MonthlyChargesMagicContainers === 'number'
     }
 
@@ -67,13 +70,16 @@ export async function runProbe(o: ProbeOptions): Promise<boolean> {
       const image = await Promise.all(hosts.map(host => status(host, OPTIMIZER_PATH)))
 
       o.log({ probe: 'p2', viaEdgeWithForgedHeaders: viaEdge.status, rawHosts: hosts.length, rawWithForgedHeaders: direct, rawWithout: bare, rawImage: image })
+
       return viaEdge.status === 200 && hosts.length > 0 && [...direct, ...bare, ...image].every(code => code === 403)
     }
 
     case 'p3': {
       const { items } = (await o.bunny('/mc/apps/{id}/endpoints')) as { items?: { type?: string; pullZoneId?: string; publicHost?: string }[] }
       const endpoints = (items ?? []).map(e => ({ type: e.type, pullZone: Boolean(e.pullZoneId), publicHost: Boolean(e.publicHost) }))
+
       o.log({ probe: 'p3', endpoints })
+
       return endpoints.some(e => e.type === 'cdn' && e.pullZone)
     }
 
@@ -87,7 +93,9 @@ export async function runProbe(o: ProbeOptions): Promise<boolean> {
       const cached = { check: 'built files come from the edge', ok: second?.headers.get('cdn-cache') === 'HIT', detail: `first ${first?.headers.get('cdn-cache') ?? 'none'}, second ${second?.headers.get('cdn-cache') ?? 'none'}` }
 
       const caching = checks.filter(c => c.kind === 'cache')
+
       for (const check of [...caching, cached]) o.log({ probe: 'p4', ...check })
+
       // An empty list would pass every(): without its cache checks the probe proves nothing.
       return caching.length > 0 && caching.every(c => c.ok) && cached.ok
     }
@@ -96,7 +104,9 @@ export async function runProbe(o: ProbeOptions): Promise<boolean> {
       const started = o.now()
       const res = await site('/api/health?db=1')
       const body = (await res.json().catch(() => ({}))) as Record<string, unknown>
+
       o.log({ probe: 'p5', status: res.status, readiness: body, ms: o.now() - started })
+
       return res.status === 200 && body.role === 'ok'
     }
 
@@ -104,7 +114,9 @@ export async function runProbe(o: ProbeOptions): Promise<boolean> {
       // The first entry may wake the database; the second shows the warm figure, which should stay under 3 s.
       const first = await demoChecks({ siteUrl: o.siteUrl })
       const second = await demoChecks({ siteUrl: o.siteUrl })
+
       for (const check of [...first, ...second]) o.log({ probe: 'p6', ...check })
+
       return [...first, ...second].every(c => c.ok)
     }
   }
@@ -114,6 +126,7 @@ if (import.meta.main) {
   const env = process.env
   const log: Log = event => console.log(JSON.stringify(event))
   const probe = env.PROBE as Probe
+
   if (!PROBES.includes(probe) || !env.SITE_URL || !env.BUNNY_API_KEY || !env.MC_APP_ID) {
     log({ probe: env.PROBE ?? null, ok: false, detail: `PROBE (${PROBES.join(', ')}), SITE_URL, BUNNY_API_KEY and MC_APP_ID are required` })
     process.exit(1)
@@ -124,7 +137,9 @@ if (import.meta.main) {
   const siteUrl = env.SITE_URL
   const bunny: Bunny = async path => {
     const res = await fetch(`https://api.bunny.net${path.replace('{id}', appId)}`, { headers: { AccessKey: key, Accept: 'application/json' }, signal: AbortSignal.timeout(20_000) })
+
     if (!res.ok) throw new Error(`bunny GET ${path}: HTTP ${res.status}`)
+
     return (await res.json()) as Record<string, unknown>
   }
   const rawHosts = () => fetchRawHosts({ key, appId, siteUrl, fetch })

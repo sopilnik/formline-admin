@@ -16,7 +16,9 @@ test.describe('team', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Team' })).toBeVisible()
     await expect(page).toHaveTitle('Team · Formline Admin')
     await expect(page.getByText('4 members')).toBeVisible()
+
     const table = page.getByRole('table', { name: 'Members' })
+
     await expect(table.getByRole('row')).toHaveCount(5)
     await expect(table.getByRole('row').nth(1)).toContainText('Dana Ortiz')
     await expect(table.getByRole('row').nth(1)).toContainText('You')
@@ -30,6 +32,7 @@ test.describe('team', () => {
 
   test('changes a member’s role and logs it', async ({ page, context }) => {
     const { workspaceId } = await signInAsSandboxUser(context)
+
     await page.goto('/team')
     await page.getByRole('button', { name: 'Actions for Priya Nair' }).click()
     await page.getByRole('menuitem', { name: 'Make viewer' }).click()
@@ -40,20 +43,27 @@ test.describe('team', () => {
 
   test('deactivates a member after a confirmation, takes them out of the user switch, and reactivates them', async ({ page, context }) => {
     const { workspaceId } = await signInAsSandboxUser(context)
+
     await page.goto('/team')
     await page.getByRole('button', { name: 'Actions for Noah Becker' }).click()
     await page.getByRole('menuitem', { name: 'Deactivate…' }).click()
+
     const dialog = page.getByRole('dialog', { name: 'Deactivate Noah Becker?' })
+
     await expect(dialog).toBeVisible()
     // A title that wraps on a phone needs air between its lines: 16 px text on a 22 px line.
     await expect(dialog.getByRole('heading', { name: 'Deactivate Noah Becker?' })).toHaveCSS('line-height', '22px')
     await dialog.getByRole('button', { name: 'Deactivate' }).click()
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('Noah Becker is deactivated.')).toBeVisible()
+
     const table = page.getByRole('table', { name: 'Members' })
+
     await expect(table.getByRole('row').last()).toContainText('Noah Becker')
     await expect(table.getByRole('row').last()).toContainText('Deactivated')
     await page.getByRole('button', { name: 'Switch user' }).click()
+
     const switcher = page.getByRole('dialog', { name: 'Switch user' })
+
     await expect(switcher.getByRole('radio')).toHaveCount(2)
     await expect(switcher.getByText('Noah Becker')).toHaveCount(0)
     await switcher.getByRole('button', { name: 'Cancel' }).click()
@@ -85,7 +95,9 @@ test.describe('team', () => {
     await page.setViewportSize({ width: 375, height: 800 })
     await page.goto('/team')
     await expect(page.getByRole('table', { name: 'Members' })).toBeHidden()
+
     const cards = page.getByRole('list', { name: 'Members' }).getByRole('listitem')
+
     await expect(cards).toHaveCount(4)
     await expect(cards.nth(3).getByRole('button', { name: 'Actions for Tomás Ferreira' })).toBeVisible()
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375)

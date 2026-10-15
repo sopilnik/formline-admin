@@ -20,7 +20,9 @@ test.describe('product page', () => {
     await expect(details(page).getByText('Your role can view products but not change them.')).toBeVisible()
     await expect(details(page).getByRole('textbox')).toHaveCount(0)
     await expect(details(page).getByRole('definition').first()).toHaveText('far-orbit')
+
     const variants = page.getByRole('table', { name: 'Variants' })
+
     await expect(variants.getByRole('row')).toHaveCount(7)
     await expect(variants.getByRole('row').nth(1)).toContainText('A3 · Ink')
     await expect(variants.getByRole('row').nth(1)).toContainText('far-orbit-a3-ink')
@@ -31,6 +33,7 @@ test.describe('product page', () => {
 
   test('saves the details, logs the change and shows the new name in the list', async ({ page, context }) => {
     const { workspaceId } = await signInAsSandboxUser(context)
+
     await page.goto('/products/low-tide')
     await details(page).getByLabel('Name').fill('Low Tide, Revisited')
     await details(page).getByLabel('Base price, $').fill('33.5')
@@ -41,8 +44,10 @@ test.describe('product page', () => {
     await expect(details(page).getByLabel('Base price, $')).toHaveValue('33.50')
     await expect(details(page).getByLabel('Tags')).toHaveValue('calm, sea-glass')
     await expect(page.getByRole('region', { name: 'Variants' }).getByLabel('Own price, $, A3 · Paper')).toHaveAttribute('placeholder', '33.50')
+
     const entries = await asSchemaOwner(async c => (await c.query<{ details: { changed: string[] } }>(
       "select details from fa.activity_log where workspace_id = $1 and action = 'product.updated'", [workspaceId])).rows)
+
     expect(entries.map(e => e.details.changed)).toEqual([['name', 'basePrice', 'tags']])
     await page.goto('/products?q=revisited')
     await expect(page.getByRole('table', { name: 'Products' }).getByRole('link', { name: 'Low Tide, Revisited' })).toBeVisible()
@@ -82,11 +87,14 @@ test.describe('product page', () => {
 
   test('reports a change made meanwhile and loads it on request', async ({ page, context }) => {
     const { workspaceId } = await signInAsSandboxUser(context)
+
     await page.goto('/products/loud')
     await asSchemaOwner(c => c.query("update fa.products set description = 'Changed in another tab.', updated_at = now() where workspace_id = $1 and slug = 'loud'", [workspaceId]))
     await details(page).getByLabel('Name').fill('Louder')
     await details(page).getByRole('button', { name: 'Save changes' }).click()
+
     const alert = details(page).getByRole('alert')
+
     await expect(alert).toContainText('Someone changed this product while the page was open.')
     await expect(details(page).getByLabel('Name')).toHaveValue('Louder')
     // The action sits inside the message in nearly its color: the underline is what marks it as a control.
@@ -107,6 +115,7 @@ test.describe('product page', () => {
          join fa.product_variants v on v.workspace_id = l.workspace_id and v.id = l.variant_id
          join fa.products p on p.workspace_id = v.workspace_id and p.id = v.product_id
         where o.workspace_id = $1 order by o.placed_at desc limit 1`, [workspaceId])).rows[0]!)
+
     await page.setViewportSize({ width: 375, height: 800 })
     await page.goto(`/orders/${line.number}`)
     await page.getByRole('link', { name: line.name }).click()
@@ -123,15 +132,20 @@ test.describe('product page', () => {
          join fa.products p on p.workspace_id = v.workspace_id and p.id = v.product_id
         where v.workspace_id = $1 and p.slug = 'after-dark' and v.stock > v.low_stock_threshold
         order by v.sku limit 1`, [workspaceId])).rows[0]!)
+
     await page.setViewportSize({ width: 375, height: 800 })
     await page.goto('/products/after-dark')
+
     const item = page.getByRole('list', { name: 'Variants' }).getByRole('listitem').filter({ hasText: variant.sku })
+
     await expect(item).toContainText(`${variant.stock} in stock`)
   })
 
   test('sends the title inside the head, with the page', async ({ page, context }) => {
     await signInAsSandboxUser(context)
+
     const html = await (await page.request.get('/products/after-dark')).text()
+
     expect(html).toContain('<title>After Dark · Formline Admin</title>')
     // Streamed behind the page, the title left the tab without one for up to 0.3 s after a refresh or a navigation.
     expect(html.indexOf('<title>')).toBeLessThan(html.indexOf('</head>'))

@@ -11,12 +11,14 @@ type ErrorState = Extract<FormState, { status: 'error' }>
 
 export function useErrorMessage(): (state: ErrorState) => string {
   const t = useTranslations('auth.errors')
+
   return state => t(state.error, { minutes: state.retryAfterMinutes ?? 1 })
 }
 
 /** The error of one field, shown next to it. */
 export function useErrorText<F extends string>(state: FormState<F>): (field: F) => string | undefined {
   const message = useErrorMessage()
+
   return field => (state.status === 'error' && state.field === field ? message(state) : undefined)
 }
 
@@ -36,7 +38,9 @@ export function ErrorAlert({ children, className }: { children: ReactNode; class
 /** How many times `pending` has fallen back to false: one for each answered submit. */
 export function useAnswers(pending: boolean): number {
   const [seen, setSeen] = useState({ pending, answers: 0 })
+
   if (seen.pending !== pending) setSeen({ pending, answers: pending ? seen.answers : seen.answers + 1 })
+
   return seen.answers
 }
 
@@ -55,7 +59,9 @@ export function useAnsweredSubmits(): number {
 export function FormAlert({ state, answers }: { state: FormState; answers?: number }) {
   const message = useErrorMessage()
   const own = useAnsweredSubmits()
+
   if (state.status !== 'error' || state.field) return null
+
   return <ErrorAlert key={answers ?? own}>{message(state)}</ErrorAlert>
 }
 
@@ -92,7 +98,9 @@ export function useFormAction<S>(
   const [unreached, setUnreached] = useState<Unreached | null>(null)
   const [state, run, pending] = useActionState<S, FormData>(async (previous, sent) => {
     const next = await reach(() => action(previous, sent))
+
     setUnreached(current => (next === null ? { sent, count: (current?.count ?? 0) + 1 } : null))
+
     return next ?? previous
   }, initial)
 
@@ -107,7 +115,9 @@ export function useFormAction<S>(
 /** Says that a submit got no answer, once for each such submit. */
 export function UnreachedAlert({ unreached, className }: { unreached: Unreached | null; className?: string }) {
   const t = useTranslations('common')
+
   if (!unreached) return null
+
   return <ErrorAlert key={unreached.count} className={className}>{t('unreached')}</ErrorAlert>
 }
 
@@ -119,6 +129,7 @@ function unsaved(form: HTMLFormElement): boolean {
     if (!(field instanceof HTMLInputElement) || ['hidden', 'file', 'submit', 'button'].includes(field.type)) continue
     if (field.type === 'checkbox' || field.type === 'radio' ? field.checked !== field.defaultChecked : field.value !== field.defaultValue) return true
   }
+
   return false
 }
 
@@ -132,7 +143,9 @@ export function useLeaveGuard(form: RefObject<HTMLFormElement | null>, refused: 
     const warn = (event: BeforeUnloadEvent): void => {
       if (refused || (form.current && unsaved(form.current))) event.preventDefault()
     }
+
     window.addEventListener('beforeunload', warn)
+
     return () => window.removeEventListener('beforeunload', warn)
   }, [form, refused])
 }

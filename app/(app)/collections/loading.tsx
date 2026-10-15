@@ -3,6 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export default async function CollectionsLoading() {
   const t = await getTranslations('collections')
+
   return (
     <div role="status" className="mx-auto flex max-w-4xl flex-col gap-5">
       <span className="sr-only">{t('loading')}</span>

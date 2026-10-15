@@ -18,14 +18,19 @@ export function OrderNoteForm({ orderId }: { orderId: string }) {
   const field = useRef<HTMLTextAreaElement>(null)
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending, unreached] = useFormAction(addOrderNoteAction, IDLE, form)
+
   useLeaveGuard(form, state.status === 'error')
+
   // Once per result, with the latest translations.
   const settle = useEffectEvent((result: NoteState) => {
     if (result.status === 'done') toast.success(t('noteAdded'))
     if (result.status === 'error') field.current?.focus()
   })
+
   useEffect(() => settle(state), [state])
+
   const error = state.status === 'error' ? t(`noteErrors.${state.error}`) : undefined
+
   return (
     <form ref={form} action={action} className="flex flex-col gap-2 border-t pt-4">
       <UnreachedAlert unreached={unreached} />

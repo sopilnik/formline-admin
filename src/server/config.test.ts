@@ -7,6 +7,7 @@ const K2 = Buffer.alloc(32, 2).toString('base64')
 describe('parseKeyring', () => {
   it('encrypts with the first key and keeps every key for decryption', () => {
     const ring = parseKeyring(`k2:${K2},k1:${K1}`)
+
     expect(ring.current).toBe('k2')
     expect([...ring.keys.keys()]).toEqual(['k2', 'k1'])
     expect(ring.keys.get('k1')).toEqual(Buffer.alloc(32, 1))
@@ -27,6 +28,7 @@ describe('authConfig', () => {
       COOKIE_SIGNING_KEY: 'c'.repeat(32),
       TOTP_ENCRYPTION_KEYS: `k1:${K1}`,
     })
+
     expect(config.rpId).toBe('formline-admin.sopilnik.dev')
     expect(config.origin).toBe('https://formline-admin.sopilnik.dev')
     expect(config.setupToken).toBeNull()

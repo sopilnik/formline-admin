@@ -13,6 +13,7 @@ import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from '@/com
 export function MobileNav({ items }: { items: NavItem[] }) {
   const t = useTranslations('nav')
   const [open, setOpen] = useState(false)
+
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger render={<Button variant="ghost" size="icon" className="md:hidden" aria-label={t('open')} />}>

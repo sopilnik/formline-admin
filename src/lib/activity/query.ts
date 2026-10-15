@@ -25,6 +25,7 @@ export function parseActivityQuery(params: SearchParams | URLSearchParams): Acti
   const actor = one(params, 'actor') ?? ''
   const action = one(params, 'action') ?? ''
   const when = one(params, 'when') ?? ''
+
   return {
     actor: actor === SYSTEM_ACTOR || UUID_PATTERN.test(actor) ? actor : '',
     action: isActivityAction(action) ? action : '',
@@ -39,12 +40,15 @@ export function activityHref(query: ActivityQuery, changes: Partial<ActivityQuer
   const resetsPage = Object.keys(changes).some(key => key !== 'page')
   const next: ActivityQuery = { ...query, ...changes, page: changes.page ?? (resetsPage ? 1 : query.page) }
   const params = new URLSearchParams()
+
   if (next.actor) params.set('actor', next.actor)
   if (next.action) params.set('action', next.action)
   if (next.when !== DEFAULT_ACTIVITY_QUERY.when) params.set('when', next.when)
   if (next.page !== DEFAULT_ACTIVITY_QUERY.page) params.set('page', String(next.page))
   if (next.size !== DEFAULT_ACTIVITY_QUERY.size) params.set('size', String(next.size))
+
   const text = params.toString()
+
   return text ? `/activity?${text}` : '/activity'
 }
 

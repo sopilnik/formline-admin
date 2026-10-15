@@ -41,6 +41,7 @@ export function notificationMessage(view: NotificationView, locale: Locale, role
       if (view.stock === 0) {
         return { title: { key: 'soldOut.title', values: { product: view.product } }, detail: { key: 'soldOut.detail', values: { variant } } }
       }
+
       return {
         title: { key: 'lowStock.title', values: { product: view.product } },
         detail: view.threshold === null

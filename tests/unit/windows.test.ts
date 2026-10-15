@@ -16,6 +16,7 @@ describe('waitForRoom', () => {
 
   it('counts windows from the epoch, as the database does', () => {
     const quarter = 15 * minute
+
     expect(waitForRoom(4 * quarter - 3_000, 15 * 60, 10)).toBe(3_250)
     expect(waitForRoom(4 * quarter, 15 * 60, 10)).toBe(0)
   })

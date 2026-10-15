@@ -20,14 +20,20 @@ export type ProfileState =
 export async function saveProfileAction(previous: ProfileState, form: FormData): Promise<ProfileState> {
   const session = await requireSession()
   const values = Object.fromEntries(PROFILE_FIELDS.map(field => [field, formText(form, field)])) as Record<ProfileField, string>
+
   if (!can(session.role, 'self.manage', session.workspaceKind)) return { status: 'error', error: 'forbidden', fieldErrors: {}, values }
+
   const parsed = parseProfile(values)
+
   if (!parsed.ok) return { status: 'error', error: 'invalid', fieldErrors: parsed.fieldErrors, values }
+
   const changed = await saveProfile(await actorOf(session), parsed.data)
+
   if (!changed) return { status: 'error', error: 'failed', fieldErrors: {}, values }
   // The server renders the language and the theme from these cookies.
   await setPreferenceCookies({ locale: parsed.data.locale, theme: parsed.data.theme })
   refresh()
+
   return { status: 'done', count: previous.status === 'done' ? previous.count + 1 : 1 }
 }
 
@@ -40,11 +46,17 @@ export type StoreSettingsState =
 export async function saveStoreSettingsAction(previous: StoreSettingsState, form: FormData): Promise<StoreSettingsState> {
   const session = await requireSession()
   const values = Object.fromEntries(STORE_FIELDS.map(field => [field, formText(form, field)])) as Record<StoreField, string>
+
   if (!can(session.role, 'settings.store', session.workspaceKind)) return { status: 'error', error: 'forbidden', fieldErrors: {}, values }
+
   const parsed = parseStoreSettings(values)
+
   if (!parsed.ok) return { status: 'error', error: 'invalid', fieldErrors: parsed.fieldErrors, values }
+
   const changed = await saveStoreSettings(await actorOf(session), parsed.data)
+
   if (!changed) return { status: 'error', error: 'failed', fieldErrors: {}, values }
   refresh()
+
   return { status: 'done', count: previous.status === 'done' ? previous.count + 1 : 1 }
 }

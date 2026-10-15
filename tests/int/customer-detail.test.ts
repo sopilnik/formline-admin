@@ -17,11 +17,13 @@ let other: Actor
 
 async function sandbox(): Promise<Actor> {
   const { workspaceId, userId } = await createSandbox(app)
+
   return { workspaceId, userId, role: 'owner', ipHash: 'ip-hash-of-the-test' }
 }
 
 async function member(actor: Actor, role: 'manager' | 'viewer'): Promise<Actor> {
   const { rows } = await admin.query<{ id: string }>('select id from fa.users where workspace_id = $1 and role = $2', [actor.workspaceId, role])
+
   return { ...actor, userId: rows[0]!.id, role }
 }
 
@@ -31,6 +33,7 @@ async function busiest(workspaceId: string): Promise<{ id: string; name: string;
     `select c.id, c.name, count(o.id)::int as orders from fa.customers c
        join fa.orders o on o.workspace_id = c.workspace_id and o.customer_id = c.id
       where c.workspace_id = $1 group by c.workspace_id, c.id order by count(o.id) desc, c.id limit 1`, [workspaceId])
+
   return rows[0]!
 }
 
@@ -64,10 +67,13 @@ describe('getCustomer', () => {
               min(placed_at) as first, max(placed_at) as last
          from fa.orders where workspace_id = $1 and customer_id = $2`, [owner.workspaceId, id])
     const expected = rows[0]!
+
     expect([customer.orders, customer.revenueOrders, customer.spentCents]).toEqual([expected.orders, expected.revenue, expected.spent])
     expect([customer.firstOrderAt?.getTime(), customer.lastOrderAt?.getTime()]).toEqual([expected.first.getTime(), expected.last.getTime()])
     expect(customer.recent).toHaveLength(Math.min(orders, CUSTOMER_ORDERS_SHOWN))
+
     const placed = customer.recent.map(o => o.placedAt.getTime())
+
     expect(placed).toEqual([...placed].sort((a, b) => b - a))
     expect(customer.recent[0]!.placedAt.getTime()).toBe(expected.last.getTime())
   })
@@ -76,6 +82,7 @@ describe('getCustomer', () => {
     const { rows } = await admin.query<{ id: string }>(
       "insert into fa.customers (workspace_id, email, name) values ($1, 'no.orders@example.test', 'No Orders') returning id", [owner.workspaceId])
     const lonely = (await read(rows[0]!.id))!
+
     expect([lonely.orders, lonely.spentCents, lonely.firstOrderAt, lonely.lastOrderAt, lonely.recent]).toEqual([0, 0, null, null, []])
     expect(await read(randomUUID())).toBeNull()
     expect(await read(rows[0]!.id, other)).toBeNull()
@@ -85,6 +92,7 @@ describe('getCustomer', () => {
 describe('saveCustomerNotes', () => {
   it('saves the notes and logs the change with the customer’s name', async () => {
     const { id, name } = await busiest(owner.workspaceId)
+
     expect(await saveCustomerNotes(manager, id, 'Prefers express.\nCall before delivery.', app)).toBe('saved')
     expect(await notesOf(id)).toBe('Prefers express.\nCall before delivery.')
     expect(await logged(id)).toEqual([{ action: 'customer.notes_updated', actor: manager.userId, details: { name }, ip_hash: 'ip-hash-of-the-test' }])
@@ -93,6 +101,7 @@ describe('saveCustomerNotes', () => {
   it('writes and logs nothing when the notes did not change', async () => {
     const { id } = await busiest(owner.workspaceId)
     const before = (await logged(id)).length
+
     await saveCustomerNotes(owner, id, 'Same text', app)
     expect(await saveCustomerNotes(owner, id, 'Same text', app)).toBe('unchanged')
     expect((await logged(id)).length).toBe(before + 1)
@@ -102,6 +111,7 @@ describe('saveCustomerNotes', () => {
     const { id } = await busiest(owner.workspaceId)
     const before = await notesOf(id)
     const entries = (await logged(id)).length
+
     expect(await saveCustomerNotes(viewer, id, 'Viewer was here', app)).toBe('not_found')
     expect(await notesOf(id)).toBe(before)
     expect((await logged(id)).length).toBe(entries)
@@ -111,11 +121,14 @@ describe('saveCustomerNotes', () => {
     // Sandboxes copy the template with its ids: the other sandbox holds a customer with the same id.
     const { id } = await busiest(owner.workspaceId)
     const before = await notesOf(id)
+
     expect(await saveCustomerNotes(other, id, 'Another sandbox', app)).toBe('saved')
     expect(await notesOf(id, other.workspaceId)).toBe('Another sandbox')
     expect(await notesOf(id)).toBe(before)
+
     const { rows } = await admin.query<{ id: string }>(
       "insert into fa.customers (workspace_id, email, name) values ($1, 'only.here@example.test', 'Only Here') returning id", [owner.workspaceId])
+
     expect(await saveCustomerNotes(other, rows[0]!.id, 'Not theirs', app)).toBe('not_found')
     expect(await notesOf(rows[0]!.id)).toBe('')
   })

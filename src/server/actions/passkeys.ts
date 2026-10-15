@@ -64,7 +64,9 @@ async function meta() {
 async function takeChallengeCookie(): Promise<string | undefined> {
   const store = await cookies()
   const value = store.get(CHALLENGE_COOKIE)?.value
+
   store.set(CHALLENGE_COOKIE, '', { ...CHALLENGE_COOKIE_OPTIONS, maxAge: 0 })
+
   return value
 }
 
@@ -77,14 +79,18 @@ function canManageSelf(session: Session): boolean {
 export async function signInWithPasskeyAction(input: unknown): Promise<PasskeyOutcome> {
   const cookie = await takeChallengeCookie()
   const parsed = authenticationResponse.safeParse(input)
+
   if (!parsed.success) return { ok: false, error: 'passkey_failed' }
+
   const response: AuthenticationResponseJSON = { ...parsed.data, clientExtensionResults: {} }
   const result = await signInWithPasskey(response, cookie, await meta())
+
   if (!result.ok) {
     return { ok: false, error: result.error, credentialId: 'credentialId' in result ? result.credentialId : undefined, retryAfterMinutes: 'retryAfterSeconds' in result ? retryMinutes(result.retryAfterSeconds) : undefined }
   }
   await setSessionCookie(result.token, result.expiresAt)
   await setPreferenceCookies({ locale: result.locale, theme: result.theme })
+
   return { ok: true }
 }
 
@@ -92,54 +98,82 @@ export async function reauthWithPasskeyAction(input: unknown): Promise<PasskeyOu
   const session = await requireSession()
   const cookie = await takeChallengeCookie()
   const parsed = authenticationResponse.safeParse(input)
+
   if (!parsed.success) return { ok: false, error: 'passkey_failed' }
+
   const result = await reauthenticateWithPasskey(session, { ...parsed.data, clientExtensionResults: {} }, cookie, await meta())
+
   if (!result.ok) return { ok: false, error: result.error }
   await setSessionCookie(result.token, result.expiresAt)
+
   return { ok: true }
 }
 
 export async function beginPasskeyRegistrationAction(): Promise<{ ok: true; options: PublicKeyCredentialCreationOptionsJSON } | { ok: false; error: AuthError }> {
   const session = await requireSession()
+
   if (!canManageSelf(session)) return { ok: false, error: 'generic' }
+
   const result = await beginRegistration(session)
+
   if (!result.ok) return { ok: false, error: result.error }
+
   const store = await cookies()
+
   store.set(CHALLENGE_COOKIE, result.cookie, { ...CHALLENGE_COOKIE_OPTIONS, maxAge: CHALLENGE_TTL_SECONDS })
+
   return { ok: true, options: result.options }
 }
 
 export async function finishPasskeyRegistrationAction(input: unknown): Promise<PasskeyOutcome> {
   const session = await requireSession()
+
   if (!canManageSelf(session)) return { ok: false, error: 'generic' }
+
   const cookie = await takeChallengeCookie()
   const parsed = registrationResponse.safeParse(input)
+
   if (!parsed.success) return { ok: false, error: 'passkey_failed' }
+
   const response: RegistrationResponseJSON = { ...parsed.data, clientExtensionResults: {} }
   const result = await finishRegistration(session, response, cookie, await meta())
+
   if (!result.ok) return { ok: false, error: result.error }
   refresh()
+
   return { ok: true }
 }
 
 export async function renamePasskeyAction(id: string, name: unknown): Promise<PasskeyOutcome> {
   const session = await requireSession()
+
   if (!canManageSelf(session)) return { ok: false, error: 'generic' }
+
   const passkeyId = z.uuid().safeParse(id)
+
   if (!passkeyId.success || typeof name !== 'string') return { ok: false, error: 'generic' }
+
   const result = await renameOwnPasskey(session, passkeyId.data, name)
+
   if (!result.ok) return { ok: false, error: result.error }
   refresh()
+
   return { ok: true }
 }
 
 export async function removePasskeyAction(id: string): Promise<PasskeyOutcome> {
   const session = await requireSession()
+
   if (!canManageSelf(session)) return { ok: false, error: 'generic' }
+
   const passkeyId = z.uuid().safeParse(id)
+
   if (!passkeyId.success) return { ok: false, error: 'generic' }
+
   const result = await removeOwnPasskey(session, passkeyId.data, await meta())
+
   if (!result.ok) return { ok: false, error: result.error }
   refresh()
+
   return { ok: true }
 }

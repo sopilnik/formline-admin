@@ -23,25 +23,37 @@ const activeInput = z.strictObject({ userId: z.uuid(), active: z.boolean() })
 /** "Make admin / manager / viewer" on the team page: owners and admins, in sandboxes. */
 export async function changeMemberRoleAction(input: unknown): Promise<ActionResult<{ name: string }>> {
   const session = await requireSession()
+
   if (!can(session.role, 'team.manage', session.workspaceKind)) return fail('forbidden')
+
   const parsed = roleInput.safeParse(input)
+
   if (!parsed.success) return fail('invalid')
+
   const result = await changeMemberRole(await actorOf(session), parsed.data.userId, parsed.data.role)
+
   if (!result.ok) return fail(result.reason === 'not_found' ? 'not_found' : 'forbidden')
   // The table and the demo banner's list of users both change.
   refresh()
+
   return ok({ name: result.name })
 }
 
 /** "Deactivate" and "Reactivate" on the team page. */
 export async function changeMemberActiveAction(input: unknown): Promise<ActionResult<{ name: string }>> {
   const session = await requireSession()
+
   if (!can(session.role, 'team.manage', session.workspaceKind)) return fail('forbidden')
+
   const parsed = activeInput.safeParse(input)
+
   if (!parsed.success) return fail('invalid')
+
   const result = await changeMemberActive(await actorOf(session), parsed.data.userId, parsed.data.active)
+
   if (!result.ok) return fail(result.reason === 'not_found' ? 'not_found' : 'forbidden')
   refresh()
+
   return ok({ name: result.name })
 }
 
@@ -58,38 +70,56 @@ export type InviteState =
 export async function inviteMemberAction(previous: InviteState, form: FormData): Promise<InviteState> {
   const session = await requireSession()
   const values = { email: formText(form, 'email').trim(), role: formText(form, 'role') }
+
   if (!can(session.role, 'team.manage', session.workspaceKind)) return { status: 'error', error: 'forbidden', values }
+
   const parsed = inviteInput.safeParse(values)
+
   if (!parsed.success) return { status: 'error', error: 'email_invalid', values }
+
   // A sandbox session lives as long as its sandbox, and so does the invitation.
   const result = await inviteMember(await actorOf(session), { ...parsed.data, expiresAt: session.expiresAt })
+
   if (!result.ok) return { status: 'error', error: result.reason, values }
   refresh()
+
   return { status: 'done', email: parsed.data.email.toLowerCase(), count: previous.status === 'done' ? previous.count + 1 : 1 }
 }
 
 /** "Resend": the same link in a new letter. */
 export async function resendInvitationAction(input: unknown): Promise<ActionResult<{ email: string }>> {
   const session = await requireSession()
+
   if (!can(session.role, 'team.manage', session.workspaceKind)) return fail('forbidden')
+
   const parsed = idInput.safeParse(input)
+
   if (!parsed.success) return fail('invalid')
+
   const result = await resendInvitation(await actorOf(session), parsed.data.id)
+
   if (!result) return fail('not_found')
   // The new letter and its log entry show on other pages, which the browser keeps for a minute.
   refresh()
+
   return ok(result)
 }
 
 /** "Revoke": the link stops working. */
 export async function revokeInvitationAction(input: unknown): Promise<ActionResult<{ email: string }>> {
   const session = await requireSession()
+
   if (!can(session.role, 'team.manage', session.workspaceKind)) return fail('forbidden')
+
   const parsed = idInput.safeParse(input)
+
   if (!parsed.success) return fail('invalid')
+
   const result = await revokeMemberInvitation(await actorOf(session), parsed.data.id)
+
   if (!result) return fail('not_found')
   refresh()
+
   return ok(result)
 }
 
@@ -100,11 +130,16 @@ export async function acceptInvitationAction(_previous: AcceptState, form: FormD
   const session = await requireSession()
   const typed = formText(form, 'name').trim()
   const token = formText(form, 'token')
+
   if (!TOKEN_PATTERN.test(token)) return { status: 'error', error: 'invalid', name: typed }
+
   const name = memberName(typed)
+
   if (!name) return { status: 'error', error: 'name_required', name: typed }
+
   const preferences = { locale: await getLocale(), theme: parseTheme((await cookies()).get(THEME_COOKIE)?.value) }
   const result = await acceptInvitation(session, { token, name, userAgentSummary: summarizeUserAgent((await headers()).get('user-agent')), ipHash: await requestIpHash(), preferences })
+
   if (!result.ok) return { status: 'error', error: result.reason, name }
   await setSessionCookie(result.token, result.expiresAt, { demo: true })
   redirect('/overview')

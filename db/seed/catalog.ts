@@ -107,5 +107,6 @@ export function unitPriceCents(product: CatalogProduct, size: SizeId): number {
 /** The store's rates: express is always $19; standard is $9, and free from $150. */
 export function shippingCents(subtotalCents: number, delivery: 'standard' | 'express'): number {
   if (delivery === 'express') return SHIPPING_CENTS.express
+
   return subtotalCents >= FREE_SHIPPING_FROM_CENTS ? 0 : SHIPPING_CENTS.standard
 }

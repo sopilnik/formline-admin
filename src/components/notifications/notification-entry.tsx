@@ -23,6 +23,7 @@ export function NotificationEntry({ item, onOpen }: { item: NotificationItem; on
   const t = useTranslations('notifications')
   const Icon = ICONS[item.kind]
   const unread = !item.read && !item.thisDevice
+
   return (
     <form action={openNotificationAction} onSubmit={() => onOpen?.(item.id)}>
       <input type="hidden" name="id" value={item.id} />

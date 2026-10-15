@@ -29,8 +29,11 @@ export async function getSelf(tx: Tx, who: Who): Promise<Self | null> {
     shortcutsEnabled: users.shortcutsEnabled,
     totpSecretEnc: users.totpSecretEnc,
   }).from(users).where(isUser(who))
+
   if (!row) return null
+
   const { totpSecretEnc, ...self } = row
+
   return { ...self, hasTotp: totpSecretEnc !== null }
 }
 
@@ -49,6 +52,7 @@ export const ROLE_ORDER: Record<Role, number> = { owner: 0, admin: 1, manager: 2
 export async function listMembers(tx: Tx, workspaceId: string): Promise<Member[]> {
   const rows = await tx.select({ id: users.id, name: users.name, role: users.role, totpSecretEnc: users.totpSecretEnc })
     .from(users).where(and(eq(users.workspaceId, workspaceId), isNull(users.deactivatedAt)))
+
   return rows
     .map(r => ({ id: r.id, name: r.name, role: r.role, hasTotp: r.totpSecretEnc !== null }))
     .sort((a, b) => ROLE_ORDER[a.role] - ROLE_ORDER[b.role] || compareNames(a.name, b.name))
@@ -60,6 +64,7 @@ export type MemberFactor = { id: string; role: Role; totpSecretEnc: string | nul
 export async function getMemberFactor(tx: Tx, who: Who): Promise<MemberFactor | null> {
   const [row] = await tx.select({ id: users.id, role: users.role, totpSecretEnc: users.totpSecretEnc, totpLastStep: users.totpLastStep, deactivatedAt: users.deactivatedAt })
     .from(users).where(isUser(who))
+
   return row ?? null
 }
 
@@ -76,10 +81,14 @@ export async function updateProfile(
 ): Promise<('name' | 'locale' | 'theme' | 'shortcuts')[] | null> {
   const [current] = await tx.select({ name: users.name, locale: users.locale, theme: users.theme, shortcuts: users.shortcutsEnabled })
     .from(users).where(isUser(who))
+
   if (!current) return null
+
   const changed = (['name', 'locale', 'theme', 'shortcuts'] as const).filter(field => current[field] !== profile[field])
+
   if (changed.length > 0) {
     await tx.update(users).set({ name: profile.name, locale: profile.locale, theme: profile.theme, shortcutsEnabled: profile.shortcuts }).where(isUser(who))
   }
+
   return changed
 }

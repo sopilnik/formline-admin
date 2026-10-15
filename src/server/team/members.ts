@@ -11,12 +11,14 @@ import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 export async function changeMemberRole(actor: Actor, userId: string, role: AssignableRole, pool: Pool = getPool()): Promise<MemberChange> {
   return withWorkspace(workspaceContext(actor), async tx => {
     const result = await setMemberRole(tx, actor.workspaceId, actor.userId, userId, role)
+
     if (result.ok && result.changed) {
       await logActivity(tx, actor.workspaceId, {
         actorUserId: actor.userId, action: 'team.role_changed', entityType: 'user', entityId: userId,
         details: { name: result.name, from: result.from, to: role }, ipHash: actor.ipHash,
       })
     }
+
     return result
   }, pool)
 }
@@ -25,12 +27,14 @@ export async function changeMemberRole(actor: Actor, userId: string, role: Assig
 export async function changeMemberActive(actor: Actor, userId: string, active: boolean, pool: Pool = getPool()): Promise<MemberChange> {
   return withWorkspace(workspaceContext(actor), async tx => {
     const result = await setMemberActive(tx, actor.workspaceId, actor.userId, userId, active)
+
     if (result.ok && result.changed) {
       await logActivity(tx, actor.workspaceId, {
         actorUserId: actor.userId, action: active ? 'team.reactivated' : 'team.deactivated', entityType: 'user', entityId: userId,
         details: { name: result.name }, ipHash: actor.ipHash,
       })
     }
+
     return result
   }, pool)
 }

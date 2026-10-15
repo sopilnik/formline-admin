@@ -16,6 +16,7 @@ describe('parseCustomerNotes', () => {
 
   it('counts a line break once, as the field does, and keeps it as LF', () => {
     const lines = Array.from({ length: 200 }, (_, i) => `note ${String(i).padStart(4, '0')}`)
+
     expect(parseCustomerNotes(`${lines.join('\r\n')}x`)).toEqual({ ok: true, notes: `${lines.join('\n')}x` })
   })
 })

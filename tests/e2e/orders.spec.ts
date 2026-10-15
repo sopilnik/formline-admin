@@ -25,12 +25,15 @@ test.describe('orders list', () => {
     const { workspaceId } = await signInAsSandboxUser(context, 'viewer')
     const total = await count(workspaceId)
     const newest = await firstNumber(workspaceId, 'placed_at desc, id desc')
+
     await page.goto('/orders')
     await expect(page.getByRole('heading', { level: 1, name: 'Orders' })).toBeVisible()
     await expect(page).toHaveTitle('Orders · Formline Admin')
     await expect(page.getByText(`${total} orders`, { exact: true })).toBeVisible()
+
     const table = page.getByRole('table', { name: 'Orders' })
     const numbers = table.getByRole('link', { name: /^#\d+$/ })
+
     await expect(numbers).toHaveCount(25)
     await expect(numbers.first()).toHaveText(`#${newest}`)
     await expect(numbers.first()).toHaveAttribute('href', `/orders/${newest}`)
@@ -44,8 +47,11 @@ test.describe('orders list', () => {
     const total = await count(workspaceId)
     const paid = await count(workspaceId, "o.status = 'paid'")
     const processing = await count(workspaceId, "o.status = 'processing'")
+
     await page.goto('/orders')
+
     const chips = page.getByRole('group', { name: 'Status' })
+
     await expect(chips.getByRole('button', { name: /^All/ })).toHaveAttribute('aria-pressed', 'true')
     await expect(chips.getByRole('button', { name: /^Paid/ })).toHaveAccessibleName(`Paid, ${paid}`)
     await chips.getByRole('button', { name: /^Paid/ }).click()
@@ -55,7 +61,9 @@ test.describe('orders list', () => {
     await expect(page.getByText(`${paid + processing} of ${total} orders`, { exact: true })).toBeVisible()
     await expect(chips.getByRole('button', { name: /^All/ })).toHaveAttribute('aria-pressed', 'false')
     await expect(chips.getByRole('button', { name: /^Paid/ })).toHaveAttribute('aria-pressed', 'true')
+
     const table = page.getByRole('table', { name: 'Orders' })
+
     for (const other of ['Shipped', 'Delivered', 'Canceled', 'Refunded']) await expect(table.getByText(other, { exact: true })).toHaveCount(0)
     await chips.getByRole('button', { name: /^All/ }).click()
     await expect(page).toHaveURL(/\/orders$/)
@@ -74,11 +82,16 @@ test.describe('orders list', () => {
     const total = await count(workspaceId)
     const lastName = order.name.split(' ').at(-1)!
     const byName = await matching(workspaceId, lastName)
+
     await page.goto('/orders')
+
     const search = page.getByRole('searchbox', { name: 'Search orders' })
+
     await search.fill(String(order.number))
     await expect(page).toHaveURL(new RegExp(`\\?q=${order.number}$`))
+
     const table = page.getByRole('table', { name: 'Orders' })
+
     await expect(table.getByRole('link', { name: /^#\d+$/ })).toHaveText([`#${order.number}`])
     await search.fill(lastName)
     await expect(page.getByText(`${byName} of ${total} orders`, { exact: true })).toBeVisible()
@@ -94,13 +107,18 @@ test.describe('orders list', () => {
     const total = await count(workspaceId)
     const week = await count(workspaceId, LAST_7_DAYS)
     const weekSample = await count(workspaceId, `${LAST_7_DAYS} and o.source = 'seed'`)
+
     await page.goto('/orders')
+
     const placed = page.getByLabel('Placed', { exact: true })
+
     await expect(placed).toHaveValue('any')
     await placed.selectOption('7d')
     await expect(page).toHaveURL(/\/orders\?placed=7d$/)
     await expect(page.getByText(`${week} of ${total} orders`, { exact: true })).toBeVisible()
+
     const background = await placed.evaluate(el => getComputedStyle(el).backgroundColor)
+
     expect(background).toBe('rgb(23, 24, 26)')
     await page.getByLabel('Source', { exact: true }).selectOption('seed')
     await expect(page).toHaveURL(/\/orders\?placed=7d&source=seed$/)
@@ -111,17 +129,24 @@ test.describe('orders list', () => {
     const { workspaceId } = await signInAsSandboxUser(context)
     const total = await count(workspaceId)
     const top = await firstNumber(workspaceId, 'total_cents desc, id desc')
+
     await page.goto('/orders')
+
     const header = page.getByRole('columnheader', { name: 'Total' })
+
     await header.getByRole('link').click()
     await expect(page).toHaveURL(/\/orders\?sort=total$/)
     await expect(header).toHaveAttribute('aria-sort', 'descending')
+
     const numbers = page.getByRole('table', { name: 'Orders' }).getByRole('link', { name: /^#\d+$/ })
+
     await expect(numbers.first()).toHaveText(`#${top}`)
     await header.getByRole('link').click()
     await expect(page).toHaveURL(/\/orders\?sort=total&dir=asc$/)
     await expect(header).toHaveAttribute('aria-sort', 'ascending')
+
     const pager = page.getByRole('navigation', { name: 'Pagination' })
+
     await pager.getByRole('link', { name: 'Next page' }).click()
     await expect(page).toHaveURL(/\/orders\?sort=total&dir=asc&page=2$/)
     await expect(pager.getByRole('link', { name: 'Page 2' })).toHaveAttribute('aria-current', 'page')
@@ -138,10 +163,14 @@ test.describe('orders list', () => {
     await signInAsSandboxUser(context)
     await page.goto('/orders')
     await expect(page.getByRole('table', { name: 'Orders' })).toBeHidden()
+
     const cards = page.getByRole('list', { name: 'Orders' })
+
     await expect(cards.getByRole('listitem')).toHaveCount(25)
+
     const chips = page.getByRole('group', { name: 'Status' })
     const { scroll, client } = await chips.evaluate(el => ({ scroll: el.scrollWidth, client: el.clientWidth }))
+
     expect(scroll).toBeGreaterThan(client)
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375)
     await expectNoSeriousA11yViolationsInBothThemes(page)

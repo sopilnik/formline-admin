@@ -7,17 +7,21 @@ import { encodeBase32UpperCaseNoPadding } from './encoding.ts'
 /** The code for `counter`: the HMAC-SHA-1 of the counter, cut by dynamic truncation to `digits` decimal digits. */
 export function generateHOTP(key: Uint8Array, counter: bigint, digits: number): string {
   const message = Buffer.alloc(8)
+
   message.writeBigUInt64BE(counter)
+
   const mac = createHmac('sha1', key).update(message).digest()
 
   const offset = mac[mac.length - 1]! & 0x0f
   const binary = mac.readUInt32BE(offset) & 0x7fffffff
+
   return String(binary % 10 ** digits).padStart(digits, '0')
 }
 
 /** Whether `code` is the code for `counter`, compared in constant time. */
 export function verifyHOTP(key: Uint8Array, counter: bigint, digits: number, code: string): boolean {
   if (Buffer.byteLength(code) !== digits) return false
+
   return timingSafeEqual(Buffer.from(generateHOTP(key, counter, digits)), Buffer.from(code))
 }
 
@@ -31,5 +35,6 @@ export function createTOTPKeyURI(issuer: string, accountName: string, key: Uint8
     period: String(periodSeconds),
     digits: String(digits),
   })
+
   return `otpauth://totp/${label}?${query}`
 }

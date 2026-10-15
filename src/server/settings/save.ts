@@ -12,11 +12,13 @@ import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 export async function saveProfile(actor: Actor, profile: Profile, pool: Pool = getPool()): Promise<string[] | null> {
   return withWorkspace(workspaceContext(actor), async tx => {
     const changed = await updateProfile(tx, actor, profile)
+
     if (changed && changed.length > 0) {
       await logActivity(tx, actor.workspaceId, {
         actorUserId: actor.userId, action: 'profile.updated', entityType: 'user', entityId: actor.userId, details: { changed }, ipHash: actor.ipHash,
       })
     }
+
     return changed
   }, pool)
 }
@@ -25,11 +27,13 @@ export async function saveProfile(actor: Actor, profile: Profile, pool: Pool = g
 export async function saveStoreSettings(actor: Actor, input: StoreSettingsInput, pool: Pool = getPool()): Promise<string[] | null> {
   return withWorkspace(workspaceContext(actor), async tx => {
     const changed = await updateStoreSettings(tx, actor.workspaceId, input)
+
     if (changed && changed.length > 0) {
       await logActivity(tx, actor.workspaceId, {
         actorUserId: actor.userId, action: 'settings.store_updated', entityType: 'settings', details: { changed }, ipHash: actor.ipHash,
       })
     }
+
     return changed
   }, pool)
 }

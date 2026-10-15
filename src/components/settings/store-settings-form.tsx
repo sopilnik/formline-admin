@@ -17,18 +17,24 @@ export function StoreSettingsForm({ settings, zones }: { settings: Record<StoreF
   const toast = useToast()
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending, unreached] = useFormAction(saveStoreSettingsAction, IDLE, form)
+
   useLeaveGuard(form, state.status === 'error')
+
   const settle = useEffectEvent((result: StoreSettingsState) => {
     if (result.status === 'done') toast.success(t('saved'))
     if (result.status === 'error') {
       const first = STORE_FIELDS.find(field => result.fieldErrors[field])
+
       form.current?.querySelector<HTMLElement>(first ? `[name="${first}"]` : '[role="alert"]')?.focus()
     }
   })
+
   useEffect(() => settle(state), [state])
+
   const error = state.status === 'error' ? state : null
   const values = error?.values ?? settings
   const message = (field: StoreField): string | undefined => (error?.fieldErrors[field] ? t(`errors.${error.fieldErrors[field]}`) : undefined)
+
   return (
     <form ref={form} action={action} noValidate className="flex max-w-md flex-col gap-4">
       <UnreachedAlert unreached={unreached} />

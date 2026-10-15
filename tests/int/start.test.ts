@@ -14,14 +14,17 @@ function start(env: Env, roleUrl = APP_POOLED_URL) {
     checkRole: () => checkRole(roleUrl),
     serve: serverEnv => {
       served.push(serverEnv)
+
       let exit: (code: number) => void = () => undefined
       const server: Server = { exited: new Promise(resolve => { exit = resolve }), stop: () => exit(0) }
+
       return server
     },
     stopped: new Promise(resolve => { stop = resolve }),
     sleep: () => new Promise(() => undefined),
     log: () => undefined,
   }
+
   return { running: runStart(deps), served, stop: () => stop('SIGTERM') }
 }
 
@@ -31,6 +34,7 @@ const settle = () => new Promise(resolve => setTimeout(resolve, 50))
 describe('the container start against a real database', () => {
   it('migrates, passes the role check and serves without the migrator\'s address', async () => {
     const s = start(ENV)
+
     try {
       for (let i = 0; i < 100 && s.served.length === 0; i++) await settle()
       expect(s.served).toHaveLength(1)
@@ -44,6 +48,7 @@ describe('the container start against a real database', () => {
 
   it('serves in maintenance mode when the database cannot be reached', async () => {
     const s = start({ ...ENV, DATABASE_URL_MIGRATOR: 'postgres://postgres:postgres@127.0.0.1:9/formline_test' })
+
     try {
       for (let i = 0; i < 100 && s.served.length === 0; i++) await settle()
       expect(s.served).toHaveLength(1)
@@ -56,6 +61,7 @@ describe('the container start against a real database', () => {
 
   it('refuses to serve on a role with too many rights', async () => {
     const s = start(ENV, MIGRATOR_URL)
+
     expect(await s.running).toBe(1)
     expect(s.served).toEqual([])
   })

@@ -18,13 +18,16 @@ test.describe('customer page', () => {
   test('shows the summary and the orders, links to them, and passes axe', async ({ page, context }) => {
     const { workspaceId } = await signInAsSandboxUser(context)
     const customer = await busiest(workspaceId)
+
     await page.goto(`/customers/${customer.id}`)
     await expect(page.getByRole('heading', { level: 1, name: customer.name })).toBeVisible()
     await expect(page).toHaveTitle(`${customer.name} · Formline Admin`)
     await expect(page.getByText(customer.email)).toBeVisible()
     await expect(page.getByText(customer.email)).toHaveCSS('word-break', 'normal')
     await expect(page.getByText(customer.email)).toHaveCSS('overflow-wrap', 'anywhere')
+
     const orders = page.getByRole('list', { name: 'Orders' })
+
     await expect(orders.getByRole('listitem')).toHaveCount(customer.orders)
     await expect(orders.getByRole('listitem').first().getByRole('link')).toHaveText(`#${customer.latest}`)
     await expect(page.getByRole('region', { name: 'Summary' })).toContainText(`Orders${customer.orders}`)
@@ -37,24 +40,32 @@ test.describe('customer page', () => {
   test('saves the notes, keeps them and logs the change', async ({ page, context }) => {
     const { workspaceId } = await signInAsSandboxUser(context, 'manager')
     const customer = await busiest(workspaceId)
+
     await page.goto(`/customers/${customer.id}`)
+
     const field = page.getByLabel('Notes about this customer')
+
     await field.fill('Prefers express delivery.\nWraps every poster as a gift.')
     await page.getByRole('button', { name: 'Save notes' }).click()
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('Notes saved.')).toBeVisible()
     await page.reload()
     await expect(page.getByLabel('Notes about this customer')).toHaveValue('Prefers express delivery.\nWraps every poster as a gift.')
+
     const entries = await asSchemaOwner(async c => (await c.query<{ n: number }>(
       "select count(*)::int as n from fa.activity_log where workspace_id = $1 and action = 'customer.notes_updated' and entity_id = $2", [workspaceId, customer.id])).rows[0]!.n)
+
     expect(entries).toBe(1)
   })
 
   test('shows a viewer the notes as text, without the form', async ({ page, context }) => {
     const { workspaceId } = await signInAsSandboxUser(context, 'viewer')
     const customer = await busiest(workspaceId)
+
     await asSchemaOwner(c => c.query('update fa.customers set notes = $3 where workspace_id = $1 and id = $2', [workspaceId, customer.id, 'Asked for a paper invoice.']))
     await page.goto(`/customers/${customer.id}`)
+
     const notes = page.getByRole('region', { name: 'Notes', exact: true })
+
     await expect(notes).toContainText('Asked for a paper invoice.')
     await expect(notes.getByRole('textbox')).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Save notes' })).toHaveCount(0)
@@ -73,6 +84,7 @@ test.describe('customer page', () => {
   test('is reached from the list and from an order', async ({ page, context }) => {
     const { workspaceId } = await signInAsSandboxUser(context)
     const customer = await busiest(workspaceId)
+
     await page.goto(`/customers?q=${encodeURIComponent(customer.email)}`)
     await page.getByRole('table', { name: 'Customers' }).getByRole('link', { name: customer.name }).click()
     await expect(page).toHaveURL(new RegExp(`/customers/${customer.id}$`))

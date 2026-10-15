@@ -44,12 +44,15 @@ export function classify(error: unknown): 'unreachable' | 'refused' {
       return /^(08|57P0[1-3]|53300)/.test(e.code ?? '') ? 'unreachable' : 'refused'
     }
   }
+
   return 'unreachable'
 }
 
 export function withoutMigrator(env: Env): Env {
   const rest = { ...env }
+
   delete rest.DATABASE_URL_MIGRATOR
+
   return rest
 }
 
@@ -57,10 +60,13 @@ async function prepare(deps: StartDeps, retryDelaysMs: number[]): Promise<'ready
   try {
     await deps.migrate(retryDelaysMs)
     await deps.checkRole()
+
     return 'ready'
   } catch (error) {
     const verdict = classify(error)
+
     deps.log({ event: verdict === 'refused' ? 'start.refused' : 'start.unreachable', ...errorFields(error) })
+
     return verdict
   }
 }
@@ -72,6 +78,7 @@ export async function runStart(deps: StartDeps): Promise<number> {
     if (!deps.env.DATABASE_URL_MIGRATOR) throw new Error('DATABASE_URL_MIGRATOR is required')
   } catch (error) {
     deps.log({ event: 'start.refused', ...errorFields(error) })
+
     return 1
   }
 
@@ -79,14 +86,17 @@ export async function runStart(deps: StartDeps): Promise<number> {
   // A stop during the first attempts ends the start at once: nothing is served yet, and Postgres rolls back a migration
   // that the exit cuts off.
   const first = await Promise.race([prepare(deps, FIRST_RETRIES_MS), deps.stopped.then(signal => ({ signal }))])
+
   if (typeof first === 'object') {
     deps.log({ event: 'start.stopped', signal: first.signal })
+
     return 128 + constants.signals[first.signal]
   }
   if (first === 'refused') return 1
 
   let maintenance = first === 'unreachable'
   let server = deps.serve(maintenance ? { ...serverEnv, FORMLINE_MAINTENANCE: '1' } : serverEnv)
+
   deps.log({ event: 'start.serving', maintenance })
 
   for (;;) {
@@ -98,14 +108,17 @@ export async function runStart(deps: StartDeps): Promise<number> {
 
     if (next.kind === 'stop') {
       server.stop(next.signal)
+
       return await server.exited
     }
     if (next.kind === 'exited') {
       deps.log({ event: 'start.server_exited', code: next.code })
+
       return next.code
     }
 
     const verdict = await prepare(deps, [])
+
     if (verdict === 'unreachable') continue
     server.stop('SIGTERM')
     await server.exited
@@ -119,6 +132,7 @@ export async function runStart(deps: StartDeps): Promise<number> {
 /** The role check on its own short-lived pool (the server keeps its own). */
 export async function checkRole(url: string): Promise<void> {
   const pool = new pg.Pool({ connectionString: url, max: 1, connectionTimeoutMillis: 10_000 })
+
   try {
     await assertAppRole(pool)
   } finally {
@@ -132,6 +146,7 @@ function serve(script: string, env: Env): Server {
   const exited = new Promise<number>(resolve => {
     child.on('exit', (code, signal) => resolve(code ?? 128 + (signal ? constants.signals[signal] : 0)))
   })
+
   return { stop: signal => { child.kill(signal) }, exited }
 }
 
@@ -142,6 +157,7 @@ export function main(): void {
   const stopped = new Promise<NodeJS.Signals>(resolve => {
     for (const signal of ['SIGTERM', 'SIGINT'] as const) process.once(signal, () => resolve(signal))
   })
+
   void runStart({
     env,
     migrate: async retryDelaysMs => {

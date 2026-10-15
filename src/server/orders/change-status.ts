@@ -20,11 +20,14 @@ const newestFirst = (a: number, b: number): number => b - a
  */
 export async function changeStatuses(actor: Actor, orderIds: readonly string[], to: OrderStatus, pool: Pool = getPool()): Promise<StatusOutcome> {
   const ids = [...new Set(orderIds)].sort()
+
   return withWorkspace(workspaceContext(actor), async tx => {
     const changed: number[] = []
     const skipped: number[] = []
+
     for (const orderId of ids) {
       const result = await changeOrderStatus(tx, { workspaceId: actor.workspaceId, userId: actor.userId }, { orderId, to })
+
       if (result.ok) {
         changed.push(result.number)
         await logActivity(tx, actor.workspaceId, {
@@ -39,6 +42,7 @@ export async function changeStatuses(actor: Actor, orderIds: readonly string[], 
         skipped.push(result.number)
       }
     }
+
     return { changed: changed.sort(newestFirst), skipped: skipped.sort(newestFirst) }
   }, pool)
 }

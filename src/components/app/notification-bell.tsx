@@ -32,6 +32,7 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
 
   useEffect(() => {
     const controller = new AbortController()
+
     fetch('/api/notifications', { signal: controller.signal, cache: 'no-store' })
       .then(response => (response.ok ? (response.json() as Promise<Feed>) : Promise.reject(new Error(String(response.status)))))
       .then(next => {
@@ -41,6 +42,7 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
       .catch(() => {
         if (!controller.signal.aborted) setFailed(true)
       })
+
     return () => controller.abort()
   }, [pathname, opened, initialUnread])
 
@@ -54,14 +56,17 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
     setOpen(false)
     setFeed(current => {
       if (!current) return current
+
       const item = current.items.find(i => i.id === id)
       const counted = item && !item.read && !item.thisDevice
+
       return { ...current, unread: counted ? current.unread - 1 : current.unread, items: current.items.map(i => (i.id === id ? { ...i, read: true } : i)) }
     })
   }
 
   const markAll = () => {
     const before = feed
+
     setFeed(current => (current ? { ...current, unread: 0, items: current.items.map(i => ({ ...i, read: true })) } : current))
     startTransition(async () => {
       // No answer: nothing was marked, so the bell shows the entries unread again.

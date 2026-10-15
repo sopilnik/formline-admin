@@ -23,6 +23,7 @@ describe('KPI arithmetic', () => {
 
   it('assembles the four cards', () => {
     const result = kpis({ revenueCents: 1428600, orders: 214, newCustomers: 61 }, { revenueCents: 1271000, orders: 198, newCustomers: 64 })
+
     expect(result.revenue).toEqual({ value: 1428600, previous: 1271000, change: (1428600 - 1271000) / 1271000 })
     expect(result.orders.value).toBe(214)
     expect(result.averageOrder).toEqual({ value: 6676, previous: 6419, change: (6676 - 6419) / 6419 })
@@ -41,6 +42,7 @@ describe('KPI arithmetic', () => {
       { at: new Date('2026-10-25T23:00:00Z'), cents: 400 },   // midnight: the next day
       { at: new Date('2026-10-27T09:00:00Z'), cents: 800 },   // outside every bucket
     ]
+
     expect(bucketSums(points, buckets)).toEqual([300, 400, null])
   })
 
@@ -50,6 +52,7 @@ describe('KPI arithmetic', () => {
       { slug: 'primary', name: 'Primary', posters: 112, cents: 480700 },
       { slug: 'pastel', name: 'Pastel', posters: 0, cents: 0 },
     ], 850000)
+
     expect(rows.map(r => r.slug)).toEqual(['primary', 'night', 'pastel'])
     expect(rows[0]).toMatchObject({ bar: 1, share: 480700 / 850000 })
     expect(rows[1]!.bar).toBeCloseTo(365200 / 480700, 6)

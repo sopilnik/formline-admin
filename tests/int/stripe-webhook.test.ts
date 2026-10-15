@@ -29,6 +29,7 @@ describe('the Stripe webhook', () => {
     const paid = storeSession(TAG)
     const gateway = fakeGateway([paid])
     const event = signedEvent(paid.session)
+
     expect(await handleWebhook(event, { config: TEST_STRIPE, gateway, pool: app })).toEqual({ status: 200, body: { received: true } })
     expect(gateway.calls).toEqual([paid.session.id])
     expect(await ordersOf(paid.session.id)).toEqual([{ number: expect.any(Number), workspace_kind: 'owner' }])
@@ -42,10 +43,13 @@ describe('the Stripe webhook', () => {
     const gateway = fakeGateway([paid])
     const refused = { status: 400, body: { received: false, error: 'signature' } }
     const event = signedEvent(paid.session)
+
     expect(await handleWebhook({ body: event.body, signature: null }, { config: TEST_STRIPE, gateway, pool: app })).toEqual(refused)
     expect(await handleWebhook(signedEvent(paid.session, { secret: `whsec_${'other'.repeat(6)}` }), { config: TEST_STRIPE, gateway, pool: app })).toEqual(refused)
     expect(await handleWebhook(signedEvent(paid.session, { timestamp: Math.floor(Date.now() / 1000) - 600 }), { config: TEST_STRIPE, gateway, pool: app })).toEqual(refused)
+
     const tampered = { body: Buffer.from(event.body.toString().replace('12900', '1')), signature: event.signature }
+
     expect(await handleWebhook(tampered, { config: TEST_STRIPE, gateway, pool: app })).toEqual(refused)
     expect(gateway.calls).toEqual([])
     expect(await ordersOf(paid.session.id)).toEqual([])
@@ -56,6 +60,7 @@ describe('the Stripe webhook', () => {
     const unpaid = storeSession(TAG, { payment_status: 'unpaid' })
     const gateway = fakeGateway([paid, unpaid])
     const ok = { status: 200, body: { received: true } }
+
     expect(await handleWebhook(signedEvent(paid.session, { type: 'checkout.session.expired' }), { config: TEST_STRIPE, gateway, pool: app })).toEqual(ok)
     expect(await handleWebhook(signedEvent(unpaid.session), { config: TEST_STRIPE, gateway, pool: app })).toEqual(ok)
     expect(gateway.calls).toEqual([])
@@ -65,6 +70,7 @@ describe('the Stripe webhook', () => {
   it('records a session the panel cannot keep and answers 200, so Stripe does not send it again', async () => {
     const euro = storeSession(TAG, { currency: 'eur' })
     const event = signedEvent(euro.session)
+
     expect(await handleWebhook(event, { config: TEST_STRIPE, gateway: fakeGateway([euro]), pool: app })).toEqual({ status: 200, body: { received: true } })
     expect((await admin.query('select outcome from fa.stripe_events where event_id = $1', [event.id])).rows).toEqual([{ outcome: 'skipped:currency' }])
     expect(await ordersOf(euro.session.id)).toEqual([])
@@ -73,6 +79,7 @@ describe('the Stripe webhook', () => {
   it('answers 500 when the line items cannot be read, keeps nothing, and keeps the order on the retry', async () => {
     const paid = storeSession(TAG)
     const event = signedEvent(paid.session)
+
     expect(await handleWebhook(event, { config: TEST_STRIPE, gateway: fakeGateway([]), pool: app })).toEqual({ status: 500, body: { received: false, error: 'failed' } })
     expect(await ordersOf(paid.session.id)).toEqual([])
     expect((await admin.query('select 1 from fa.stripe_events where event_id = $1', [event.id])).rowCount).toBe(0)

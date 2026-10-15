@@ -32,8 +32,11 @@ async function api(o: DeployOptions, method: 'GET' | 'PATCH', path: string, body
     body: body ? JSON.stringify(body) : undefined,
     signal: AbortSignal.timeout(20_000),
   })
+
   if (!res.ok) throw new Error(`bunny ${method} ${path.replace(/\/apps\/[^/]+/, '/apps/{id}')}: HTTP ${res.status}`)
+
   const text = await res.text()
+
   return text ? JSON.parse(text) : null
 }
 
@@ -41,8 +44,11 @@ async function liveVersion(o: DeployOptions): Promise<string | null> {
   try {
     // A query of its own keeps any cache out of the way; through the edge it is still the liveness check.
     const res = await o.fetch(new URL(`/api/health?deploy=${encodeURIComponent(o.tag)}`, o.siteUrl), { signal: AbortSignal.timeout(10_000) })
+
     if (!res.ok) return null
+
     const body = (await res.json()) as { version?: unknown }
+
     return typeof body.version === 'string' ? body.version : null
   } catch {
     return null
@@ -53,9 +59,11 @@ async function liveVersion(o: DeployOptions): Promise<string | null> {
 async function appStatus(o: DeployOptions): Promise<string | null> {
   try {
     const { status } = (await api(o, 'GET', `/apps/${o.appId}`)) as { status?: string }
+
     return status ?? null
   } catch (error) {
     o.log({ event: 'deploy.poll_error', message: error instanceof Error ? error.message : String(error) })
+
     return null
   }
 }
@@ -63,17 +71,24 @@ async function appStatus(o: DeployOptions): Promise<string | null> {
 export async function deployImage(o: DeployOptions): Promise<void> {
   const app = (await api(o, 'GET', `/apps/${o.appId}`)) as { containerTemplates?: Template[] }
   const templates = (app.containerTemplates ?? []).filter(t => t.name === o.container)
+
   if (templates.length !== 1) throw new Error(`expected one container named ${o.container}, found ${templates.length}`)
   await api(o, 'PATCH', `/apps/${o.appId}/containers/${templates[0]!.id}`, { imageTag: o.tag, imageDigest: o.digest })
   o.log({ event: 'deploy.updated', container: o.container, tag: o.tag })
+
   const deadline = o.now() + (o.timeoutMs ?? 15 * 60_000)
+
   for (;;) {
     const version = await liveVersion(o)
+
     if (version === o.tag) {
       o.log({ event: 'deploy.live', tag: o.tag })
+
       return
     }
+
     const status = await appStatus(o)
+
     if (status === 'failing' || status === 'suspended') throw new Error(`bunny reports the application ${status}`)
     if (o.now() >= deadline) throw new Error(`the panel still answers ${version ?? 'nothing'} instead of ${o.tag}`)
     await o.sleep(o.pollMs ?? 10_000)
@@ -84,6 +99,7 @@ if (import.meta.main) {
   const env = process.env
   const missing = ['BUNNY_API_KEY', 'MC_APP_ID', 'MC_CONTAINER_NAME', 'IMAGE_TAG', 'IMAGE_DIGEST', 'SITE_URL'].filter(name => !env[name])
   const log = (event: Record<string, unknown>) => console.log(JSON.stringify(event))
+
   if (missing.length > 0) {
     log({ event: 'deploy.failed', message: `missing ${missing.join(', ')}` })
     process.exit(1)

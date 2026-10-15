@@ -7,7 +7,9 @@ export type SearchParams = Record<string, string | string[] | undefined>
 /** Every value of a key, from a page's params or from a URL. */
 export function all(params: SearchParams | URLSearchParams, key: string): string[] {
   if (params instanceof URLSearchParams) return params.getAll(key)
+
   const value = params[key]
+
   return value === undefined ? [] : Array.isArray(value) ? value : [value]
 }
 

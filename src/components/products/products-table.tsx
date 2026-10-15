@@ -17,7 +17,9 @@ const TD = 'border-b px-3 py-2 group-last/row:border-b-0'
  */
 function StockNote({ row, stacked = false }: { row: ProductRowView; stacked?: boolean }) {
   const t = useTranslations('products.stockNote')
+
   if (row.soldOut === 0 && row.low === 0) return null
+
   return (
     <span className="block text-xs whitespace-nowrap">
       {row.soldOut > 0 ? <span className={cn('text-status-bad', stacked && 'block')}>{t('soldOut', { count: row.soldOut })}</span> : null}
@@ -35,6 +37,7 @@ export function ProductsTable({ rows, query }: { rows: ProductRowView[]; query: 
   const t = useTranslations('products')
   const sortHref = (sort: ProductSort, dir: SortDir): string => productsHref(query, { sort, dir })
   const price = (row: ProductRowView): string => (row.priceFrom === null ? t('noVariants') : t('priceFrom', { price: row.priceFrom }))
+
   return (
     <>
       <table aria-label={t('title')} className="hidden w-full table-fixed border-separate border-spacing-0 text-[13px] @4xl:table">

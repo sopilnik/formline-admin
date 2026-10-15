@@ -13,7 +13,9 @@ describe('catalog labels', () => {
     expect(PALETTE_IDS).toEqual(Object.keys(PALETTES))
     expect(paletteName('ocean')).toBe('Ocean')
     expect(paletteName('teal')).toBe('teal')
+
     const variants = [{ size: 'a1', palette: 'ink' }, { size: 'a3', palette: 'ocean' }, { size: 'a3', palette: 'ink' }, { size: 'a2', palette: 'paper' }]
+
     expect([...variants].sort(compareVariants)).toEqual([{ size: 'a2', palette: 'paper' }, { size: 'a3', palette: 'ink' }, { size: 'a1', palette: 'ink' }, { size: 'a3', palette: 'ocean' }])
   })
 

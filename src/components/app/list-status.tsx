@@ -27,7 +27,9 @@ export function ListStatusRegion({ children }: { children: ReactNode }) {
 export function ListStatus({ text }: { text: string }) {
   const report = use(Report)
   const path = usePathname()
+
   useEffect(() => report(path, text), [report, path, text])
+
   return null
 }
 
@@ -36,6 +38,7 @@ const Refresh = createContext<{ pending: boolean; start: TransitionStartFunction
 /** One list's controls and its body share one transition, so the body shows while new results load. */
 export function ListRefresh({ children }: { children: ReactNode }) {
   const [pending, start] = useTransition()
+
   return <Refresh value={{ pending, start }}>{children}</Refresh>
 }
 
@@ -43,11 +46,13 @@ export function ListRefresh({ children }: { children: ReactNode }) {
 export function useListTransition(): TransitionStartFunction {
   const shared = use(Refresh)
   const [, own] = useTransition()
+
   return shared?.start ?? own
 }
 
 /** A list's body: busy and dimmed while its controls load new results. */
 export function ListBody({ className, ...props }: ComponentProps<'section'>) {
   const pending = use(Refresh)?.pending ?? false
+
   return <section aria-busy={pending || undefined} className={cn(className, pending && 'opacity-60 transition-opacity')} {...props} />
 }

@@ -48,6 +48,7 @@ const unreadSql = (reader: NotificationReader) => sql<boolean>`(${notificationRe
 export async function countUnread(tx: Tx, reader: NotificationReader): Promise<number> {
   const [row] = await tx.select({ n: count() }).from(notifications).leftJoin(notificationReads, readJoin(reader))
     .where(and(visible(reader), unreadSql(reader)))
+
   return row?.n ?? 0
 }
 
@@ -65,6 +66,7 @@ export async function listNotifications(tx: Tx, reader: NotificationReader, quer
   }).from(notifications).leftJoin(notificationReads, readJoin(reader)).where(visible(reader))
     .orderBy(desc(notifications.createdAt), desc(notifications.id)).limit(query.size).offset((query.page - 1) * query.size)
   const total = totals?.total ?? 0
+
   return { rows, total, unread: totals?.unread ?? 0, pages: pageCount(total, query.size) }
 }
 
@@ -75,8 +77,10 @@ export async function listNotifications(tx: Tx, reader: NotificationReader, quer
 export async function markNotificationRead(tx: Tx, reader: NotificationReader, id: string): Promise<{ kind: string; payload: unknown } | null> {
   const [row] = await tx.select({ id: notifications.id, kind: notifications.kind, payload: notifications.payload })
     .from(notifications).where(and(visible(reader), eq(notifications.id, id)))
+
   if (!row) return null
   await tx.insert(notificationReads).values({ workspaceId: reader.workspaceId, notificationId: row.id, userId: reader.userId }).onConflictDoNothing()
+
   return { kind: row.kind, payload: row.payload }
 }
 
@@ -87,6 +91,7 @@ export async function markAllNotificationsRead(tx: Tx, reader: NotificationReade
     select ${notifications.workspaceId}, ${notifications.id}, ${reader.userId}::uuid from ${notifications}
      where ${visible(reader)}
     on conflict do nothing`)
+
   return result.rowCount ?? 0
 }
 
@@ -99,14 +104,17 @@ export type NotificationOpener = { workspaceId: string; role: Role; workspaceKin
 /** The page a notification opens: its order, its product (by id, whatever its slug is now), or a settings page. */
 export async function notificationHref(tx: Tx, opener: NotificationOpener, kind: string, payload: unknown): Promise<string> {
   const target = notificationTarget(kind, payload)
+
   if (!target) return '/notifications'
   if (target.type === 'order') return orderHref(target.number)
   if (target.type === 'page') {
     const action = PAGE_ACTIONS[target.href]
+
     return action && !can(opener.role, action, opener.workspaceKind) ? '/notifications' : target.href
   }
 
   const [product] = await tx.select({ slug: products.slug }).from(products)
     .where(and(eq(products.workspaceId, opener.workspaceId), eq(products.id, target.productId)))
+
   return product ? productHref(product.slug) : '/products'
 }

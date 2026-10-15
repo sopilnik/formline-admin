@@ -10,6 +10,7 @@ describe('parseOrdersQuery', () => {
 
   it('reads every field, repeated or comma-separated statuses included', () => {
     const query = parseOrdersQuery(new URLSearchParams('status=paid,processing&q=%20maya%20&placed=7d&source=stripe&sort=total&dir=asc&page=3&size=50'))
+
     expect(query).toEqual({ status: ['paid', 'processing'], q: 'maya', placed: '7d', source: 'stripe', sort: 'total', dir: 'asc', page: 3, size: 50 })
     expect(parseOrdersQuery({ status: ['shipped', 'paid', 'shipped'] }).status).toEqual(['paid', 'shipped'])
     expect(parseOrdersQuery({ q: 'x'.repeat(300) }).q).toHaveLength(100)
@@ -25,6 +26,7 @@ describe('ordersHref', () => {
 
   it('goes back to the first page when a filter or the sort changes, and keeps it when only the page changes', () => {
     const page3 = { ...DEFAULT_ORDERS_QUERY, page: 3 }
+
     expect(ordersHref(page3, { source: 'seed' })).toBe('/orders?source=seed')
     expect(ordersHref(page3, { sort: 'number' })).toBe('/orders?sort=number')
     expect(ordersHref(page3, { page: 4 })).toBe('/orders?page=4')

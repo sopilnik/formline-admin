@@ -18,8 +18,10 @@ async function upload(page: Page, productId: string): Promise<string> {
   const answer = await page.evaluate(async ({ url, base64 }) => {
     const body = Uint8Array.from(atob(base64), c => c.charCodeAt(0))
     const response = await fetch(url, { method: 'POST', body, headers: { 'X-Requested-With': 'formline' } })
+
     return response.json() as Promise<{ image: { id: string } }>
   }, { url: `/api/media?product=${productId}`, base64: png.toString('base64') })
+
   return answer.image.id
 }
 
@@ -27,9 +29,11 @@ async function upload(page: Page, productId: string): Promise<string> {
 async function sizeAt(page: Page, url: string): Promise<[number, number]> {
   const base64 = await page.evaluate(async address => {
     const bytes = new Uint8Array(await (await fetch(address)).arrayBuffer())
+
     return btoa(String.fromCharCode(...bytes))
   }, url)
   const meta = await sharp(Buffer.from(base64, 'base64')).metadata()
+
   return [meta.width!, meta.height!]
 }
 
@@ -39,7 +43,9 @@ test.describe('thumbnails', () => {
     await page.goto('/products')
     // The list streams in behind the loading skeleton and is revealed a frame after the load event.
     await expect(page.locator('main img').first()).toBeVisible()
+
     const sources = await page.locator('main img').evaluateAll(list => list.map(img => img.getAttribute('src') ?? ''))
+
     expect(sources.length).toBeGreaterThan(0)
     expect(sources.filter(src => !src.startsWith('/posters/thumb/'))).toEqual([])
     expect(await sizeAt(page, sources[0]!)).toEqual([120, 170])
@@ -47,8 +53,11 @@ test.describe('thumbnails', () => {
 
   test('an upload gets its small copy, and one stored without a copy is served whole', async ({ page, context }) => {
     const { workspaceId } = await signInAsSandboxUser(context)
+
     await page.goto('/products')
+
     const id = await upload(page, await productId(workspaceId, 'hush'))
+
     expect(await sizeAt(page, `/media/${id}?size=thumb`)).toEqual([120, 170])
     expect(await sizeAt(page, `/media/${id}`)).toEqual([360, 509])
 

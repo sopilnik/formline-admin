@@ -49,8 +49,11 @@ export function userIdFromHandle(handle: string | undefined): string | null {
   if (!handle) return null
   try {
     const bytes = decodeBase64urlIgnorePadding(handle)
+
     if (bytes.length !== 16) return null
+
     const hex = encodeHexLowerCase(bytes)
+
     return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
   } catch {
     return null
@@ -60,21 +63,26 @@ export function userIdFromHandle(handle: string | undefined): string | null {
 /** The challenge travels in a signed five-minute cookie: no database row until it is used. */
 export function challengeCookie(challenge: string, purpose: Purpose, sessionId: string | undefined, config: AuthConfig, nowMs: number): string {
   const payload: ChallengePayload = { c: challenge, p: purpose, s: sessionId, e: nowMs + CHALLENGE_TTL_SECONDS * 1000 }
+
   return signValue(payload, config.cookieSigningKey)
 }
 
 /** The challenge of an unexpired cookie for this purpose; a registration challenge belongs to one session. */
 export function readChallenge(value: string | undefined, purpose: Purpose, sessionId: string | undefined, config: AuthConfig, nowMs: number): string | null {
   if (!value) return null
+
   const payload = verifySignedValue(value, config.cookieSigningKey) as Partial<ChallengePayload> | null
+
   if (!payload || payload.p !== purpose || typeof payload.c !== 'string' || typeof payload.e !== 'number' || payload.e <= nowMs) return null
   if (purpose === 'register' && payload.s !== sessionId) return null
+
   return payload.c
 }
 
 /** A challenge counts once: the first use stores its hash. */
 export async function markChallengeUsed(challenge: string, pool: Pool): Promise<boolean> {
   const { rowCount } = await pool.query('insert into fa.used_challenges (challenge_hash) values ($1) on conflict do nothing', [hashToken(challenge)])
+
   return rowCount === 1
 }
 
@@ -99,6 +107,7 @@ async function verifyAssertion(response: AuthenticationResponseJSON, challenge: 
       },
       requireUserVerification: true,
     })
+
     return result.verified ? { newCounter: result.authenticationInfo.newCounter } : null
   } catch {
     return null
@@ -118,32 +127,43 @@ export async function signInWithPasskey(
   const { pool, config } = deps
   const address = ipSubject(meta.ip, config.ipHashKey)
   const limit = await peek(LIMITS.passkeyFailIp, address, pool)
+
   if (!limit.allowed) return { ok: false, error: 'rate_limited', retryAfterSeconds: limit.retryAfterSeconds }
+
   const failed = async (): Promise<AuthFailure> => {
     await consume(LIMITS.passkeyFailIp, address, pool)
+
     return { ok: false, error: 'passkey_failed' }
   }
 
   const challenge = readChallenge(cookie, 'auth', undefined, config, deps.now())
   const userId = userIdFromHandle(response.response.userHandle)
+
   if (!challenge || !userId) return failed()
+
   const workspaceId = await ownerWorkspaceId(pool)
   // The handle's user is the identity row-level security reads the passkey under.
   const ctx = { workspaceId, userId, role: 'system' } as const
   const passkey = await withWorkspace(ctx, tx => findPasskeyByCredential(tx, workspaceId, response.id), pool)
+
   if (!passkey) {
     await consume(LIMITS.passkeyFailIp, address, pool)
+
     return { ok: false, error: 'passkey_unknown', credentialId: response.id }
   }
   if (!(await markChallengeUsed(challenge, pool))) return failed()
+
   const verified = await verifyAssertion(response, challenge, passkey, config)
+
   if (!verified) return failed()
 
   const ipHash = hashIp(meta.ip, config.ipHashKey)
   const signedIn = await withWorkspace(ctx, async tx => {
     await recordPasskeyUse(tx, ctx, passkey.id, verified.newCounter)
+
     return finishSignIn(tx, { workspaceId, userId, method: 'passkey', userAgent: meta.userAgent, ipHash, at: new Date(deps.now()) })
   }, pool)
+
   return { ok: true, ...signedIn }
 }
 
@@ -158,20 +178,31 @@ export async function reauthenticateWithPasskey(
   const deps = authDeps(overrides)
   const { pool, config } = deps
   const challenge = readChallenge(cookie, 'auth', undefined, config, deps.now())
+
   if (!challenge || userIdFromHandle(response.response.userHandle) !== session.userId) return { ok: false, error: 'passkey_failed' }
+
   const ctx = workspaceContext(session)
   const passkey = await withWorkspace(ctx, tx => findPasskeyByCredential(tx, session.workspaceId, response.id), pool)
+
   if (!passkey || !(await markChallengeUsed(challenge, pool))) return { ok: false, error: 'passkey_failed' }
+
   const verified = await verifyAssertion(response, challenge, passkey, config)
+
   if (!verified) return { ok: false, error: 'passkey_failed' }
+
   const ipHash = hashIp(meta.ip, config.ipHashKey)
   const fresh = await withWorkspace(ctx, async tx => {
     await recordPasskeyUse(tx, session, passkey.id, verified.newCounter)
+
     const rotated = await rotateSession(tx, session, { userAgentSummary: summarizeUserAgent(meta.userAgent), ipHash })
+
     if (rotated) await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.reauthenticated', details: { method: 'passkey' }, ipHash })
+
     return rotated
   }, pool)
+
   if (!fresh) return { ok: false, error: 'session_expired' }
+
   return { ok: true, ...fresh }
 }
 
@@ -181,8 +212,10 @@ export async function beginRegistration(
   overrides: Partial<AuthDeps> = {},
 ): Promise<{ ok: true; options: PublicKeyCredentialCreationOptionsJSON; cookie: string } | AuthFailure> {
   const deps = authDeps(overrides)
+
   if (session.workspaceKind !== 'owner') return { ok: false, error: 'generic' }
   if (!isRecentAuth(session, deps.now())) return { ok: false, error: 'reauth_required' }
+
   const { self, existing } = await withWorkspace(workspaceContext(session), async tx => ({
     self: (await getSelf(tx, session))!,
     existing: await listPasskeys(tx, session),
@@ -198,6 +231,7 @@ export async function beginRegistration(
     authenticatorSelection: { residentKey: 'required', userVerification: 'required' },
     timeout: CHALLENGE_TTL_SECONDS * 1000,
   })
+
   return { ok: true, options, cookie: challengeCookie(options.challenge, 'register', session.id, deps.config, deps.now()) }
 }
 
@@ -210,11 +244,16 @@ export async function finishRegistration(
 ): Promise<{ ok: true } | AuthFailure> {
   const deps = authDeps(overrides)
   const { pool, config } = deps
+
   if (session.workspaceKind !== 'owner') return { ok: false, error: 'generic' }
   if (!isRecentAuth(session, deps.now())) return { ok: false, error: 'reauth_required' }
+
   const challenge = readChallenge(cookie, 'register', session.id, config, deps.now())
+
   if (!challenge || !(await markChallengeUsed(challenge, pool))) return { ok: false, error: 'passkey_failed' }
+
   let credential: { id: string; publicKey: Uint8Array; counter: number; transports?: string[] }
+
   try {
     const result = await verifyRegistrationResponse({
       response,
@@ -223,12 +262,15 @@ export async function finishRegistration(
       expectedRPID: config.rpId,
       requireUserVerification: true,
     })
+
     if (!result.verified) return { ok: false, error: 'passkey_failed' }
     credential = result.registrationInfo.credential
   } catch {
     return { ok: false, error: 'passkey_failed' }
   }
+
   const ipHash = hashIp(meta.ip, config.ipHashKey)
+
   await withWorkspace(workspaceContext(session), async tx => {
     const id = await addPasskey(tx, session.workspaceId, session.userId, {
       credentialId: credential.id,
@@ -237,34 +279,45 @@ export async function finishRegistration(
       transports: credential.transports ?? [],
       name: (summarizeUserAgent(meta.userAgent) ?? 'Passkey').slice(0, PASSKEY_NAME_MAX),
     })
+
     await deleteOtherOwnSessions(tx, session)
     await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.passkey_added', entityType: 'passkey', entityId: id, ipHash })
   }, pool)
+
   return { ok: true }
 }
 
 export async function renameOwnPasskey(session: Session, passkeyId: string, name: string, overrides: Partial<AuthDeps> = {}): Promise<{ ok: true } | AuthFailure> {
   const deps = authDeps(overrides)
   const trimmed = name.trim()
+
   if (trimmed.length < 1 || trimmed.length > PASSKEY_NAME_MAX) return { ok: false, error: 'generic' }
+
   const renamed = await withWorkspace(workspaceContext(session), tx => renamePasskey(tx, session, passkeyId, trimmed), deps.pool)
+
   return renamed ? { ok: true } : { ok: false, error: 'generic' }
 }
 
 /** Never the last second factor; signs out the owner's other sessions. */
 export async function removeOwnPasskey(session: Session, passkeyId: string, meta: Meta, overrides: Partial<AuthDeps> = {}): Promise<{ ok: true } | AuthFailure> {
   const deps = authDeps(overrides)
+
   if (session.workspaceKind !== 'owner') return { ok: false, error: 'generic' }
   if (!isRecentAuth(session, deps.now())) return { ok: false, error: 'reauth_required' }
+
   const ipHash = hashIp(meta.ip, deps.config.ipHashKey)
+
   return withWorkspace(workspaceContext(session), async (tx): Promise<{ ok: true } | AuthFailure> => {
     await lockSelf(tx, session)
+
     const self = (await getSelf(tx, session))!
+
     if ((await countPasskeys(tx, session)) + (self.hasTotp ? 1 : 0) <= 1) return { ok: false, error: 'last_factor' }
     if (!(await deletePasskey(tx, session, passkeyId))) return { ok: false, error: 'generic' }
 
     await deleteOtherOwnSessions(tx, session)
     await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.passkey_removed', entityType: 'passkey', entityId: passkeyId, ipHash })
+
     return { ok: true }
   }, deps.pool)
 }

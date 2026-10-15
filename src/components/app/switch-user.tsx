@@ -20,11 +20,14 @@ export function SwitchUserDialog({ open, onOpenChange, members }: { open: boolea
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending, unreached] = useFormAction(switchUserAction, IDLE as FormState<'code'>, form)
   const errorText = useErrorText(state)
+
   useFocusOnError(state, 'switch', 'code')
+
   const handleOpenChange = (next: boolean): void => {
     onOpenChange(next)
     if (!next) setSelected(null)
   }
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent showCloseButton={false}>

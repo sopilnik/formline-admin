@@ -25,7 +25,9 @@ export async function assertAppRole(pool: Pool): Promise<void> {
         where n.nspname = 'fa' and c.relowner = r.oid) as owned
     from pg_catalog.pg_roles r where r.rolname = current_user`)
   const role = rows[0]
+
   if (!role) throw new AppRoleError('the current database role was not found')
+
   const problems = [
     role.rolsuper && 'superuser',
     role.rolbypassrls && 'bypassrls',
@@ -34,6 +36,7 @@ export async function assertAppRole(pool: Pool): Promise<void> {
     role.memberships > 0 && `member of ${role.memberships} role(s)`,
     role.owned > 0 && `owns ${role.owned} relation(s) in schema fa`,
   ].filter(Boolean)
+
   if (problems.length > 0) {
     throw new AppRoleError(`database role ${role.rolname} is over-privileged: ${problems.join(', ')}`)
   }

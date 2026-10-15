@@ -22,6 +22,7 @@ export const FIRST_DIR: Record<CustomerSort, 'asc' | 'desc'> = { name: 'asc', or
 /** Tolerant, as the other lists: an unknown value means the default. */
 export function parseCustomersQuery(params: SearchParams | URLSearchParams): CustomersQuery {
   const sort = pick(CUSTOMER_SORTS, one(params, 'sort'), DEFAULT_CUSTOMERS_QUERY.sort)
+
   return {
     q: searchText(params),
     sort,
@@ -36,16 +37,19 @@ function customersParams(query: CustomersQuery, changes: Partial<CustomersQuery>
   const resetsPage = Object.keys(changes).some(key => key !== 'page')
   const next: CustomersQuery = { ...query, ...changes, page: changes.page ?? (resetsPage ? 1 : query.page) }
   const params = new URLSearchParams()
+
   if (next.q) params.set('q', next.q)
   if (next.sort !== DEFAULT_CUSTOMERS_QUERY.sort) params.set('sort', next.sort)
   if (next.dir !== FIRST_DIR[next.sort]) params.set('dir', next.dir)
   if (next.page !== DEFAULT_CUSTOMERS_QUERY.page) params.set('page', String(next.page))
   if (next.size !== DEFAULT_CUSTOMERS_QUERY.size) params.set('size', String(next.size))
+
   return params
 }
 
 export function customersHref(query: CustomersQuery, changes: Partial<CustomersQuery> = {}): string {
   const text = customersParams(query, changes).toString()
+
   return text ? `/customers?${text}` : '/customers'
 }
 
@@ -58,5 +62,6 @@ export function isCustomersFiltered(query: CustomersQuery): boolean {
 export function customersExportHref(query: CustomersQuery): string {
   const params = customersParams({ ...query, page: 1, size: DEFAULT_CUSTOMERS_QUERY.size }, {})
   const text = params.toString()
+
   return text ? `/api/customers/export?${text}` : '/api/customers/export'
 }

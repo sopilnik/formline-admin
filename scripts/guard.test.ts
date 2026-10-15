@@ -40,13 +40,19 @@ function bunny(answers: Record<string, unknown>, health = 200) {
   const fetchImpl = (async (input: string | URL, init?: RequestInit) => {
     const url = String(input)
     const method = init?.method ?? 'GET'
+
     calls.push({ url, method, key: new Headers(init?.headers).get('AccessKey') })
     if (url.endsWith('/api/health')) return new Response('{"status":"ok"}', { status: health })
+
     const key = `${method} ${url.replace('https://api.bunny.net', '')}`
+
     if (!(key in answers)) return new Response('', { status: 404 })
+
     const body = answers[key]
+
     return body instanceof Response ? body : new Response(body === null ? '' : JSON.stringify(body), { status: 200 })
   }) as typeof fetch
+
   return { calls, fetchImpl }
 }
 
@@ -63,6 +69,7 @@ describe('runGuard', () => {
   it('reads, finds nothing to do and passes', async () => {
     const { calls, fetchImpl } = bunny(healthy)
     const events: Record<string, unknown>[] = []
+
     expect(await run(fetchImpl, events)).toBe(0)
     expect(calls.filter(c => new URL(c.url).origin === 'https://api.bunny.net').every(c => c.key === 'test-account-key')).toBe(true)
     expect(calls.some(c => c.method === 'POST')).toBe(false)
@@ -71,6 +78,7 @@ describe('runGuard', () => {
 
   it('undeploys at the limit and fails, so the owner hears of it', async () => {
     const { calls, fetchImpl } = bunny({ ...healthy, 'GET /mc/apps/app-1/summary': { monthlyCost: 4.2 }, 'POST /mc/apps/app-1/undeploy': null })
+
     expect(await run(fetchImpl, [])).toBe(1)
     expect(calls.filter(c => c.method === 'POST').map(c => c.url)).toEqual(['https://api.bunny.net/mc/apps/app-1/undeploy'])
   })
@@ -78,6 +86,7 @@ describe('runGuard', () => {
   it('leaves a stopped application alone and passes', async () => {
     const { calls, fetchImpl } = bunny({ 'GET /mc/apps/app-1': { status: 'inactive' } })
     const events: Record<string, unknown>[] = []
+
     expect(await run(fetchImpl, events)).toBe(0)
     expect(calls).toHaveLength(1)
     expect(events).toEqual([{ event: 'guard.stopped', status: 'inactive' }])
@@ -86,10 +95,13 @@ describe('runGuard', () => {
   it('fails when bunny does not answer, naming the call but never the key or the application', async () => {
     const { fetchImpl } = bunny({ ...healthy, 'GET /billing': new Response('', { status: 503 }) })
     const events: Record<string, unknown>[] = []
+
     expect(await run(fetchImpl, events)).toBe(1)
     expect(events).toEqual([{ event: 'guard.failed', message: 'bunny GET /billing: HTTP 503' }])
+
     const missing = bunny({ 'GET /mc/apps/app-1': { status: 'active' } })
     const more: Record<string, unknown>[] = []
+
     expect(await run(missing.fetchImpl, more)).toBe(1)
     expect(JSON.stringify(more)).not.toContain('app-1')
     expect(JSON.stringify(more)).not.toContain('test-account-key')
@@ -97,6 +109,7 @@ describe('runGuard', () => {
 
   it('fails when the panel is silent', async () => {
     const { fetchImpl } = bunny(healthy, 502)
+
     expect(await run(fetchImpl, [])).toBe(1)
   })
 })

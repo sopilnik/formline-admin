@@ -19,15 +19,19 @@ export type CustomersList = {
 export const ordersSql = sql<number>`count(${orders.id})::int`
 export const spentSql = sql<number>`coalesce(sum(${orders.totalCents}) filter (where ${orders.status} in (${revenueStatuses})), 0)::int`
 export const lastSql = sql<Date | null>`max(${orders.placedAt})`
+
 const nameSql = unicodeName(customers.name)
 
 /** The search: a case-insensitive part of the name or the email. */
 export function customerFilters(workspaceId: string, query: CustomersQuery): SQL {
   const parts: SQL[] = [eq(customers.workspaceId, workspaceId)]
+
   if (query.q) {
     const pattern = containsPattern(query.q)
+
     parts.push(or(ilike(customers.name, pattern), ilike(customers.email, pattern))!)
   }
+
   return and(...parts)!
 }
 
@@ -35,8 +39,10 @@ export function customerFilters(workspaceId: string, query: CustomersQuery): SQL
 export function customerSort(query: CustomersQuery): SQL[] {
   const direction = query.dir === 'asc' ? asc : desc
   const tail = [direction(nameSql), direction(customers.id)]
+
   if (query.sort === 'name') return tail
   if (query.sort === 'last') return [query.dir === 'asc' ? sql`${lastSql} asc nulls last` : sql`${lastSql} desc nulls last`, ...tail]
+
   return [direction(query.sort === 'orders' ? ordersSql : spentSql), ...tail]
 }
 
@@ -58,6 +64,7 @@ export async function listCustomers(tx: Tx, workspaceId: string, query: Customer
     .orderBy(...customerSort(query)).limit(query.size).offset((query.page - 1) * query.size)
   const total = totalRow?.n ?? 0
   const filtered = filteredRow?.n ?? 0
+
   return { rows, total, filtered, page: query.page, pages: pageCount(filtered, query.size) }
 }
 
@@ -81,7 +88,9 @@ export async function getCustomer(tx: Tx, workspaceId: string, id: string): Prom
     id: customers.id, name: customers.name, email: customers.email, city: customers.city, country: customers.country,
     notes: customers.notes, createdAt: customers.createdAt,
   }).from(customers).where(and(eq(customers.workspaceId, workspaceId), eq(customers.id, id)))
+
   if (!customer) return null
+
   const own = and(eq(orders.workspaceId, workspaceId), eq(orders.customerId, id))
   const [figures] = await tx.select({
     orders: ordersSql,
@@ -92,6 +101,7 @@ export async function getCustomer(tx: Tx, workspaceId: string, id: string): Prom
   }).from(orders).where(own)
   const recent = await tx.select({ id: orders.id, number: orders.number, placedAt: orders.placedAt, totalCents: orders.totalCents, status: orders.status })
     .from(orders).where(own).orderBy(desc(orders.placedAt), desc(orders.id)).limit(CUSTOMER_ORDERS_SHOWN)
+
   return {
     ...customer,
     orders: figures?.orders ?? 0, revenueOrders: figures?.revenueOrders ?? 0, spentCents: figures?.spentCents ?? 0,
@@ -104,10 +114,13 @@ export async function getCustomer(tx: Tx, workspaceId: string, id: string): Prom
 export async function updateCustomerNotes(tx: Tx, workspaceId: string, id: string, notes: string): Promise<{ name: string; changed: boolean } | null> {
   const [current] = await tx.select({ name: customers.name, notes: customers.notes }).from(customers)
     .where(and(eq(customers.workspaceId, workspaceId), eq(customers.id, id)))
+
   if (!current) return null
   if (current.notes === notes) return { name: current.name, changed: false }
+
   // A role that may not write customers updates nothing under row-level security: that is not a save.
   const updated = await tx.update(customers).set({ notes }).where(and(eq(customers.workspaceId, workspaceId), eq(customers.id, id)))
     .returning({ id: customers.id })
+
   return updated.length === 1 ? { name: current.name, changed: true } : null
 }

@@ -40,35 +40,45 @@ function subjectOf(entry: EntryInput, details: Payload, lookups: Lookups): Subje
   switch (entry.entityType) {
     case 'order': {
       const number = (id ? lookups.orders.get(id) : undefined) ?? whole(details, 'number')
+
       return number === null ? null : { text: `#${number}`, href: orderHref(number) }
     }
 
     case 'product': {
       const product = id ? lookups.products.get(id) : undefined
+
       if (product) return { text: product.name, href: productHref(product.slug) }
+
       const name = text(details, 'name') ?? text(details, 'slug')
+
       return name ? { text: name, href: null } : null
     }
 
     case 'collection': {
       const collection = id ? lookups.collections.get(id) : undefined
+
       if (collection) return { text: collection.name, href: collectionHref(collection.slug) }
+
       const name = text(details, 'name') ?? text(details, 'slug')
+
       return name ? { text: name, href: null } : null
     }
 
     case 'customer': {
       const name = (id ? lookups.customers.get(id) : undefined) ?? text(details, 'name')
+
       return name ? { text: name, href: id && lookups.customers.has(id) ? customerHref(id) : null } : null
     }
 
     case 'user': {
       const name = (id ? lookups.users.get(id) : undefined) ?? text(details, 'name')
+
       return name ? { text: name, href: null } : null
     }
 
     case 'invitation': {
       const email = text(details, 'email')
+
       return email ? { text: email, href: null } : null
     }
 
@@ -91,12 +101,14 @@ function detailOf(action: string, details: Payload): Detail | null {
 
     case 'orders.imported': {
       const count = whole(details, 'imported')
+
       return count === null ? null : { kind: 'imported', count }
     }
 
     case 'orders.exported':
     case 'customers.exported': {
       const rows = whole(details, 'rows')
+
       return rows === null ? null : { kind: 'rows', count: rows, truncated: details.truncated === true }
     }
 
@@ -104,12 +116,14 @@ function detailOf(action: string, details: Payload): Detail | null {
     case 'profile.updated':
     case 'settings.store_updated': {
       const fields = Array.isArray(details.changed) ? details.changed.filter((f): f is string => typeof f === 'string') : []
+
       return fields.length > 0 ? { kind: 'fields', fields } : null
     }
 
     case 'product.created':
     case 'product.deleted': {
       const count = whole(details, 'variants')
+
       return count === null ? null : { kind: 'variants', count }
     }
     case 'product.variants_updated':
@@ -118,12 +132,14 @@ function detailOf(action: string, details: Payload): Detail | null {
     case 'product.image_changed': {
       const width = whole(details, 'width')
       const height = whole(details, 'height')
+
       return width !== null && height !== null ? { kind: 'image', width, height } : null
     }
 
     case 'collection.moved': {
       const a = whole(details, 'from')
       const b = whole(details, 'to')
+
       return a !== null && b !== null ? { kind: 'position', from: a, to: b } : null
     }
 
@@ -131,10 +147,12 @@ function detailOf(action: string, details: Payload): Detail | null {
     case 'team.invitation_resent': {
       const email = text(details, 'email')
       const role = text(details, 'role')
+
       return email && role ? { kind: 'invited', email, role } : null
     }
     case 'team.invitation_accepted': {
       const role = text(details, 'role')
+
       return role ? { kind: 'joined', role } : null
     }
 
@@ -142,19 +160,23 @@ function detailOf(action: string, details: Payload): Detail | null {
     case 'auth.sign_in_failed':
     case 'auth.reauthenticated': {
       const method = text(details, 'method')
+
       return method === 'password' || method === 'passkey' ? { kind: 'method', method } : null
     }
     case 'auth.recovery_code_used': {
       const remaining = whole(details, 'remaining')
+
       return remaining === null ? null : { kind: 'remaining', count: remaining }
     }
     case 'auth.session_revoked': {
       const device = text(details, 'device')
+
       return device ? { kind: 'device', device } : null
     }
     case 'auth.other_sessions_revoked':
     case 'auth.password_changed': {
       const count = whole(details, 'count') ?? whole(details, 'signedOut')
+
       return count === null ? null : { kind: 'devices', count }
     }
 
@@ -169,5 +191,6 @@ function detailOf(action: string, details: Payload): Detail | null {
  */
 export function describeEntry(entry: EntryInput, lookups: Lookups): { subject: Subject | null; detail: Detail | null } {
   const details = asRecord(entry.details) ?? {}
+
   return { subject: subjectOf(entry, details, lookups), detail: detailOf(entry.action, details) }
 }

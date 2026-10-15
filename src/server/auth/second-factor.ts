@@ -21,26 +21,37 @@ type Check = { ok: true; method: Method; remaining?: number } | { ok: false }
 
 async function checkCode(tx: Tx, session: Session, code: string, deps: AuthDeps): Promise<Check> {
   const digits = code.replace(/\s+/g, '')
+
   if (isTotpShape(digits)) {
     const [row] = await tx.select({ secret: users.totpSecretEnc, lastStep: users.totpLastStep }).from(users).where(isUser(session))
+
     if (!row?.secret) return { ok: false }
+
     const secret = decryptTotpSecret(row.secret, { workspaceId: session.workspaceId, userId: session.userId }, deps.config.totpKeys)
     const result = verifyTotp(secret, digits, row.lastStep, deps.now())
+
     if (!result.ok) return { ok: false }
+
     // Conditional on the stored step, so two requests with the same code cannot both pass.
     const stored = await tx.update(users)
       .set({ totpLastStep: result.step })
       .where(and(isUser(session), or(isNull(users.totpLastStep), lt(users.totpLastStep, result.step))))
       .returning({ id: users.id })
+
     return stored.length === 1 ? { ok: true, method: 'totp' } : { ok: false }
   }
+
   const normalized = normalizeRecoveryCode(code)
+
   if (!normalized) return { ok: false }
+
   const used = await tx.update(recoveryCodes)
     .set({ usedAt: sql`now()` })
     .where(and(ownCodes(session), eq(recoveryCodes.codeHash, hashRecoveryCode(normalized)), isNull(recoveryCodes.usedAt)))
     .returning({ id: recoveryCodes.id })
+
   if (used.length !== 1) return { ok: false }
+
   return { ok: true, method: 'recovery_code', remaining: await countUnusedRecoveryCodes(tx, session) }
 }
 
@@ -62,35 +73,45 @@ export async function attemptSecondFactor(
   const ipHash = hashIp(input.ip, config.ipHashKey)
 
   const claim = await claimAttempt(GUARDS.secondFactor, subject, pool)
+
   if (!claim.ok) {
     await withWorkspace(ctx, tx => deleteSession(tx, session), pool)
+
     return { ok: false, error: 'second_factor_locked' }
   }
 
   const check = await withWorkspace(ctx, async tx => {
     const result = await checkCode(tx, session, input.code, deps)
+
     if (result.ok && result.method === 'recovery_code') {
       const self = (await getSelf(tx, session))!
+
       await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.recovery_code_used', details: { remaining: result.remaining }, ipHash })
       await securityNotice(tx, session.workspaceId, self, 'auth.recovery_code_used', { remaining: result.remaining }, { at: new Date(deps.now()) })
     }
+
     return result
   }, pool)
+
   if (check.ok) {
     await giveBack(GUARDS.secondFactor, subject, claim, pool)
+
     return { ok: true, method: check.method }
   }
 
   if (claim.lockStart) {
     await withWorkspace(ctx, async tx => {
       const self = (await getSelf(tx, session))!
+
       await deleteSession(tx, session)
       await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.second_factor_locked', ipHash })
       await securityNotice(tx, session.workspaceId, self, 'auth.second_factor_locked', {}, { at: new Date(deps.now()) })
     }, pool)
+
     return { ok: false, error: 'second_factor_locked' }
   }
   await withWorkspace(ctx, tx => logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.second_factor_failed', ipHash }), pool)
+
   return { ok: false, error: 'code_invalid', field: 'code' }
 }
 
@@ -102,6 +123,7 @@ export async function verifySecondFactor(
 ): Promise<({ ok: true } & SignedIn) | AuthFailure<'code'>> {
   const deps = authDeps(overrides)
   const attempt = await attemptSecondFactor(session, input, deps)
+
   if (!attempt.ok) return attempt
 
   const signedIn = await withWorkspace(workspaceContext(session), tx => finishSignIn(tx, {
@@ -113,7 +135,9 @@ export async function verifySecondFactor(
     at: new Date(deps.now()),
     pending: session,
   }), deps.pool)
+
   // The pending session ended while its code was checked (the lock of a parallel attempt, its expiry): no sign-in.
   if (!signedIn) return { ok: false, error: 'session_expired' }
+
   return { ok: true, ...signedIn }
 }

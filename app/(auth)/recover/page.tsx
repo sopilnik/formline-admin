@@ -7,6 +7,7 @@ import { formatTotpSecret, generateTotpSecret, totpUri } from '@/server/auth/tot
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('auth.recover')
+
   return { title: t('title') }
 }
 
@@ -15,6 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RecoverPage() {
   const t = await getTranslations('auth')
   const secret = generateTotpSecret()
+
   return (
     <AuthCard title={t('recover.title')} description={t('recover.intro')}>
       <RecoverForm secret={formatTotpSecret(secret)} qr={<QrCode value={totpUri(secret, 'owner')} label={t('totp.qr')} />} />

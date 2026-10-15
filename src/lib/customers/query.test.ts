@@ -35,12 +35,14 @@ describe('customersHref', () => {
   it('round-trips through the parser', () => {
     const query = { q: 'anna@example', sort: 'orders' as const, dir: 'asc' as const, page: 3, size: 100 as const }
     const href = customersHref(query)
+
     expect(href).toBe('/customers?q=anna%40example&sort=orders&dir=asc&page=3&size=100')
     expect(parseCustomersQuery(new URLSearchParams(href.split('?')[1]))).toEqual(query)
   })
 
   it('goes back to the first page when the search, the sort or the size changes, and keeps it when only the page changes', () => {
     const page3 = { ...DEFAULT_CUSTOMERS_QUERY, page: 3 }
+
     expect(customersHref(page3)).toBe('/customers?page=3')
     expect(customersHref(page3, { page: 4 })).toBe('/customers?page=4')
     expect(customersHref(page3, { q: 'ben' })).toBe('/customers?q=ben')

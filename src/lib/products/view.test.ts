@@ -19,6 +19,7 @@ describe('toProductRowView', () => {
 
   it('writes Russian numbers and keeps an upload behind the media route', () => {
     const view = toProductRowView({ ...row, image: { id: 'i9', storagePath: 'ws/w/i9.webp', source: 'upload' }, priceFromCents: null }, 'ru', 'Europe/Berlin')
+
     expect(view.imageSrc).toBe('/media/i9')
     expect(view.priceFrom).toBeNull()
     expect(view.stock).toBe('1 234')

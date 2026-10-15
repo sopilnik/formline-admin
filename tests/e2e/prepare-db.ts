@@ -8,6 +8,7 @@ import { E2E_ADMIN_URL, E2E_WORKERS, e2eWorker } from './constants.ts'
 const workers = Array.from({ length: E2E_WORKERS }, (_, index) => e2eWorker(index))
 
 const admin = new pg.Client({ connectionString: E2E_ADMIN_URL })
+
 await admin.connect()
 try {
   for (const worker of workers) {

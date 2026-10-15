@@ -17,6 +17,7 @@ export function UserMenu({ user }: { user: FrameUser }) {
   const signOut = useSignOut()
   const role = t(`roles.${user.role}`)
   const letters = initials(user.name)
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger render={<Button variant="ghost" className="h-auto gap-2 px-1.5 py-1" aria-label={t('menu', { name: user.name, role })} />}>

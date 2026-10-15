@@ -14,6 +14,7 @@ import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('settings.store')
+
   return { title: await titleFor('settings.store', t('title')) }
 }
 
@@ -23,11 +24,14 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default async function StoreSettingsPage() {
   const session = await requireSession()
+
   if (!can(session.role, 'settings.store', session.workspaceKind)) notFound()
+
   const settings = await withWorkspace(workspaceContext(session), tx => getStoreSettings(tx, session.workspaceId))
   const t = await getTranslations('settings.store')
   const importing = can(session.role, 'stripe.import', session.workspaceKind)
   const recent = isRecentAuth(session)
+
   return (
     <div className="flex flex-col gap-5">
       <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>

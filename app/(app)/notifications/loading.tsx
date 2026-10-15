@@ -3,6 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export default async function NotificationsLoading() {
   const t = await getTranslations('notifications')
+
   return (
     <div role="status" className="mx-auto flex max-w-3xl flex-col gap-5">
       <span className="sr-only">{t('loading')}</span>

@@ -9,6 +9,7 @@ import type { Keyring } from '@/server/config'
 const PERIOD = 30
 const DIGITS = 6
 const CODE = new RegExp(`^\\d{${DIGITS}}$`)
+
 export const TOTP_SECRET_BYTES = 20
 
 export function generateTotpSecret(): Uint8Array {
@@ -24,6 +25,7 @@ export function formatTotpSecret(secret: Uint8Array): string {
 export function parseTotpSecret(value: string): Uint8Array | null {
   try {
     const bytes = decodeBase32IgnorePadding(value.replace(/\s+/g, '').toUpperCase())
+
     return bytes.length === TOTP_SECRET_BYTES ? bytes : null
   } catch {
     return null
@@ -45,12 +47,16 @@ export function isTotpShape(code: string): boolean {
  */
 export function verifyTotp(secret: Uint8Array, code: string, lastStep: number | null, nowMs: number = Date.now()): { ok: true; step: number } | { ok: false } {
   const otp = code.replace(/\s+/g, '')
+
   if (!isTotpShape(otp)) return { ok: false }
+
   const current = Math.floor(nowMs / 1000 / PERIOD)
+
   for (const step of [current - 1, current, current + 1]) {
     if (lastStep !== null && step <= lastStep) continue
     if (verifyHOTP(secret, BigInt(step), DIGITS, otp)) return { ok: true, step }
   }
+
   return { ok: false }
 }
 
@@ -64,18 +70,25 @@ const aad = (binding: TotpBinding): Buffer => Buffer.from(`${binding.workspaceId
 export function encryptTotpSecret(secret: Uint8Array, binding: TotpBinding, keys: Keyring): string {
   const iv = randomBytes(12)
   const cipher = createCipheriv('aes-256-gcm', keys.keys.get(keys.current)!, iv, { authTagLength: 16 })
+
   cipher.setAAD(aad(binding))
+
   const ciphertext = Buffer.concat([cipher.update(secret), cipher.final()])
   const part = (bytes: Uint8Array) => encodeBase64urlNoPadding(bytes)
+
   return `${keys.current}.${part(iv)}.${part(ciphertext)}.${part(cipher.getAuthTag())}`
 }
 
 export function decryptTotpSecret(value: string, binding: TotpBinding, keys: Keyring): Uint8Array {
   const [keyId = '', iv = '', ciphertext = '', tag = ''] = value.split('.')
   const key = keys.keys.get(keyId)
+
   if (!key) throw new Error('unknown TOTP key id')
+
   const decipher = createDecipheriv('aes-256-gcm', key, decodeBase64urlIgnorePadding(iv), { authTagLength: 16 })
+
   decipher.setAAD(aad(binding))
   decipher.setAuthTag(decodeBase64urlIgnorePadding(tag))
+
   return new Uint8Array(Buffer.concat([decipher.update(decodeBase64urlIgnorePadding(ciphertext)), decipher.final()]))
 }

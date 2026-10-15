@@ -5,6 +5,7 @@ const PALETTE_NAMES: Record<string, string> = { paper: 'Paper', ink: 'Ink', sign
 
 /** The store's palettes in its own order: the choices of a new product and the order of its variants. */
 export const PALETTE_IDS: readonly string[] = Object.keys(PALETTE_NAMES)
+
 const SIZE_ORDER = Object.keys(SIZE_NAMES)
 
 /** Variants in the store's order: by palette, then A3, A2, A1. */

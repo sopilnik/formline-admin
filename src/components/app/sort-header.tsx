@@ -24,6 +24,7 @@ export function SortHeader<S extends string>({ query, sort, first, href, label, 
   // A new column starts in its own direction; the active one flips.
   const dir = active ? (query.dir === 'asc' ? 'desc' : 'asc') : first
   const Icon = !active ? ArrowUpDown : query.dir === 'desc' ? ArrowDown : ArrowUp
+
   return (
     <th
       scope="col"

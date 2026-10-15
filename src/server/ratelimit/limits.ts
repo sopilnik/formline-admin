@@ -23,13 +23,16 @@ export const LOCKS = {
 } as const
 
 export const SECOND_FACTOR_LOCK_SECONDS = 60 * 60
+
 const PASSWORD_LOCK_FIRST_SECONDS = 15 * 60
 const PASSWORD_LOCK_MAX_SECONDS = 60 * 60
 
 /** From the account's failure limit in an hour: 15 minutes, doubling per further failure, at most an hour. */
 export function passwordLockSeconds(failures: number): number {
   const beyond = failures - LIMITS.signInFailAccount.limit
+
   if (beyond < 0) return 0
+
   return Math.min(PASSWORD_LOCK_FIRST_SECONDS * 2 ** beyond, PASSWORD_LOCK_MAX_SECONDS)
 }
 

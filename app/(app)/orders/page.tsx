@@ -21,26 +21,33 @@ import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('orders')
+
   return { title: t('title') }
 }
 
 export default async function OrdersPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const session = await requireSession()
+
   authorize(session, 'data.read')
+
   const query = parseOrdersQuery(await searchParams)
   const now = new Date()
   const { timeZone, page } = await withWorkspace(workspaceContext(session), async tx => {
     const settings = await getStoreSettings(tx, session.workspaceId)
+
     return { timeZone: settings.timezone, page: await listOrders(tx, session.workspaceId, query, now, settings.timezone) }
   })
+
   // A page number past the end (an old link, a narrower filter) lands on the last page.
   if (page.filtered > 0 && query.page > page.pages) redirect(ordersHref(query, { page: page.pages }))
+
   const locale = await getLocale()
   const t = await getTranslations('orders')
   const filtered = isOrdersFiltered(query)
   const count = filtered ? t('countFiltered', { filtered: page.filtered, total: page.total }) : t('count', { total: page.total })
   const empty = page.total === 0 ? t('empty.noneTitle') : t('empty.filteredTitle')
   const results = page.rows.length > 0 ? t('pager.range', { ...pageRange(query.page, query.size, page.filtered), total: page.filtered }) : empty
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-end gap-4">

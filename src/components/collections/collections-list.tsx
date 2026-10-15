@@ -18,9 +18,13 @@ type Direction = 'up' | 'down'
 function moved(rows: CollectionItem[], move: { id: string; direction: Direction }): CollectionItem[] {
   const index = rows.findIndex(row => row.id === move.id)
   const target = move.direction === 'up' ? index - 1 : index + 1
+
   if (index === -1 || target < 0 || target >= rows.length) return rows
+
   const next = [...rows]
+
   ;[next[index], next[target]] = [next[target]!, next[index]!]
+
   return next
 }
 
@@ -43,10 +47,12 @@ export function CollectionsList({ rows, canWrite }: { rows: CollectionItem[]; ca
 
   useEffect(() => {
     if (!focus) return
+
     const button = (direction: Direction) => list.current?.querySelector<HTMLButtonElement>(`[data-move="${focus.id}:${direction}"]`)
     const wanted = button(focus.direction)
     // A move button at the end of the list is disabled but keeps the focus (ui/button.tsx): the other one takes it over.
     const target = wanted && wanted.getAttribute('aria-disabled') !== 'true' ? wanted : button(focus.direction === 'up' ? 'down' : 'up')
+
     target?.focus()
   }, [focus, order])
 
@@ -54,7 +60,9 @@ export function CollectionsList({ rows, canWrite }: { rows: CollectionItem[]; ca
     setFocus({ id: row.id, direction })
     startTransition(async () => {
       move({ id: row.id, direction })
+
       const result = await send(() => moveCollectionAction({ id: row.id, direction }))
+
       if (!result) return
       if (result.ok) setAnnouncement(t('moved', { name: row.name, position: result.data.position, count: result.data.of }))
       else if (result.code === 'forbidden') refused(failed('forbidden'))

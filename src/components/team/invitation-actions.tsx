@@ -17,11 +17,13 @@ export function InvitationActions({ id, email }: { id: string; email: string }) 
   const [pending, startTransition] = useTransition()
   const run = (kind: 'resend' | 'revoke'): void => startTransition(async () => {
     const result = await send(() => (kind === 'resend' ? resendInvitationAction({ id }) : revokeInvitationAction({ id })))
+
     if (!result) return
     if (result.ok) toast.success(t(kind === 'resend' ? 'resent' : 'revoked', { email }))
     else if (result.code === 'forbidden') refused(invite('forbidden'))
     else toast.error(t('failed'))
   })
+
   return (
     <span className="flex shrink-0 gap-2">
       <Button type="button" variant="outline" size="sm" disabled={pending} aria-label={t('resendLabel', { email })} onClick={() => run('resend')}>{t('resend')}</Button>

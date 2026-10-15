@@ -44,15 +44,24 @@ export async function setupOwner(
 ): Promise<{ ok: true; token: string; expiresAt: Date; recoveryCodes: string[] } | AuthFailure<SetupField>> {
   const deps = authDeps(overrides)
   const { config, pool } = deps
+
   if (!config.setupToken) return { ok: false, error: 'unavailable' }
+
   const attempt = await consume(LIMITS.setupIp, ipSubject(input.ip, config.ipHashKey), pool)
+
   if (!attempt.allowed) return { ok: false, error: 'rate_limited', retryAfterSeconds: attempt.retryAfterSeconds }
   if (!sameSecret(input.token.trim(), config.setupToken)) return { ok: false, error: 'token_invalid', field: 'token' }
+
   const name = memberName(input.name)
+
   if (!name) return { ok: false, error: 'name_required', field: 'name' }
+
   const email = input.email.trim()
+
   if (!z.email().max(EMAIL_MAX).safeParse(email).success) return { ok: false, error: 'email_invalid', field: 'email' }
+
   const checked = await checkNewCredentials(input, deps)
+
   if (!checked.ok) return checked
 
   const workspaceId = await ownerWorkspaceId(pool)
@@ -60,11 +69,13 @@ export async function setupOwner(
   const sealed = await sealCredentials({ password: input.password, secret: checked.secret, workspaceId, userId }, deps)
   const ipHash = hashIp(input.ip, config.ipHashKey)
   let expiresAt: Date
+
   try {
     const { rows } = await pool.query<{ expires: Date }>(
       'select fa.create_owner($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) as expires',
       [userId, email, name, sealed.passwordHash, sealed.totpSecretEnc, checked.step, sealed.recoveryHashes,
         sealed.sessionHash, summarizeUserAgent(input.userAgent), ipHash])
+
     expiresAt = rows[0]!.expires
   } catch (error) {
     if (isUniqueViolation(error)) return { ok: false, error: 'owner_exists' }
@@ -74,5 +85,6 @@ export async function setupOwner(
     await updateSelfPreferences(tx, { workspaceId, userId }, { locale: input.locale, theme: input.theme })
     await logActivity(tx, workspaceId, { actorUserId: userId, action: 'auth.owner_created', entityType: 'user', entityId: userId, ipHash })
   }, pool)
+
   return { ok: true, token: sealed.sessionToken, expiresAt, recoveryCodes: sealed.recoveryCodes }
 }

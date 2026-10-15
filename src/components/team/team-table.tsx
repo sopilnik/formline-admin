@@ -35,6 +35,7 @@ export function TeamTable({ members }: { members: MemberView[] }) {
       {member.active ? null : <Pill tone="off">{t('status.deactivated')}</Pill>}
     </span>
   )
+
   return (
     <>
       <table aria-label={t('members')} className="hidden w-full table-fixed border-separate border-spacing-0 text-[13px] @4xl:table">

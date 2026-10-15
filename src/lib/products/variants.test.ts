@@ -9,6 +9,7 @@ const form = (values: Record<string, string>) => (name: string) => values[name] 
 describe('parseVariants', () => {
   it('reads every row, an empty price as no override', () => {
     const text = form({ [`price:${A}`]: '', [`stock:${A}`]: '12', [`stockWas:${A}`]: '10', [`threshold:${A}`]: '3', [`price:${B}`]: '55,5', [`stock:${B}`]: ' 0 ', [`stockWas:${B}`]: '0', [`threshold:${B}`]: '0' })
+
     expect(parseVariants([A, B, A], text)).toEqual({
       ok: true,
       rows: [
@@ -20,6 +21,7 @@ describe('parseVariants', () => {
 
   it('names the problem of each field of each row', () => {
     const text = form({ [`price:${A}`]: '0', [`stock:${A}`]: '-1', [`stockWas:${A}`]: '4', [`threshold:${A}`]: '1001', [`stock:${B}`]: '2.5', [`stockWas:${B}`]: '2', [`threshold:${B}`]: '3' })
+
     expect(parseVariants([A, B], text)).toEqual({
       ok: false,
       errors: { [A]: { price: 'price_invalid', stock: 'stock_invalid', threshold: 'threshold_invalid' }, [B]: { stock: 'stock_invalid' } },
@@ -28,6 +30,7 @@ describe('parseVariants', () => {
 
   it('keeps stock within 100,000', () => {
     const text = form({ [`stock:${A}`]: '100001', [`stockWas:${A}`]: '0', [`threshold:${A}`]: '3' })
+
     expect(parseVariants([A], text)).toEqual({ ok: false, errors: { [A]: { stock: 'stock_invalid' } } })
   })
 

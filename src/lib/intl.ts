@@ -17,6 +17,7 @@ export function countryName(code: string, locale: Locale): string {
 /** Money is integer cents in USD; the narrow symbol in both languages ("$14,286", "14 286 $"). */
 export function formatMoney(cents: number, locale: Locale, digits: 'cents' | 'whole' = 'cents'): string {
   const fraction = digits === 'whole' ? 0 : 2
+
   return new Intl.NumberFormat(INTL_LOCALE[locale], { style: 'currency', currency: 'USD', currencyDisplay: 'narrowSymbol', minimumFractionDigits: fraction, maximumFractionDigits: fraction }).format(cents / 100)
 }
 
@@ -50,6 +51,7 @@ export function formatDay(date: Date, locale: Locale, timeZone: string): string 
  */
 export function formatDayRange(start: Date, endInclusive: Date, locale: Locale, timeZone: string): string {
   const range = new Intl.DateTimeFormat(INTL_LOCALE[locale], { day: 'numeric', month: 'short', timeZone }).formatRange(start, endInclusive)
+
   return range.replaceAll(' ', '\u00a0').replace('\u00a0–\u00a0', ' – ')
 }
 

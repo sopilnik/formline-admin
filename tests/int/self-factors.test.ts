@@ -37,7 +37,9 @@ const exists = async (session: Session) => (await admin.query('select 1 from fa.
 beforeAll(async () => {
   admin = adminPool()
   app = appPool()
+
   const { workspaceId, userId } = await createSandbox(app)
+
   // A sandbox member: no fresh sign-in is asked for.
   current = await device(workspaceId, userId, null)
   other = await device(workspaceId, userId, null)
@@ -52,10 +54,13 @@ describe('the authenticator app', () => {
 
   it('turns on with the key and its first code, with ten recovery codes, and signs the other devices out', async () => {
     const result = await enableOwnTotp(current, { secret: formatTotpSecret(SECRET), code: codeAt(SECRET), ip: null }, { pool: app, now })
+
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.recoveryCodes).toHaveLength(10)
+
     const stored = await self()
+
     expect(decryptTotpSecret(stored.totp_secret_enc!, { workspaceId: current.workspaceId, userId: current.userId }, authConfig().totpKeys)).toEqual(SECRET)
     expect(Number(stored.totp_last_step)).toBe(STEP)
     expect(await codeHashes()).toEqual(result.recoveryCodes!.map(hashRecoveryCode).sort())
@@ -66,6 +71,7 @@ describe('the authenticator app', () => {
     const before = await codeHashes()
     const next = new Uint8Array(20).fill(4)
     const result = await enableOwnTotp(current, { secret: formatTotpSecret(next), code: codeAt(next), ip: null }, { pool: app, now })
+
     expect(result).toEqual({ ok: true, recoveryCodes: null })
     expect(decryptTotpSecret((await self()).totp_secret_enc!, { workspaceId: current.workspaceId, userId: current.userId }, authConfig().totpKeys)).toEqual(next)
     expect(await codeHashes()).toEqual(before)
@@ -74,8 +80,11 @@ describe('the authenticator app', () => {
   it('makes ten new recovery codes in place of the old ones', async () => {
     const before = await codeHashes()
     const result = await regenerateOwnRecoveryCodes(current, { ip: null }, { pool: app })
+
     expect(result.ok).toBe(true)
+
     const after = await codeHashes()
+
     expect(after).toHaveLength(10)
     expect(after.filter(hash => before.includes(hash))).toEqual([])
   })
@@ -93,13 +102,18 @@ describe('in the owner workspace', () => {
     const ownerId = await ensureOwner(admin, app)
     const ownerWorkspace = (await admin.query<{ id: string }>("select id from fa.workspaces where kind = 'owner'")).rows[0]!.id
     const stale = await device(ownerWorkspace, ownerId, new Date(Date.now() - 3_600_000))
+
     expect(await disableOwnTotp(stale, { ip: null }, { pool: app })).toEqual({ ok: false, error: 'reauth_required' })
     expect(await regenerateOwnRecoveryCodes(stale, { ip: null }, { pool: app })).toEqual({ ok: false, error: 'reauth_required' })
+
     const fresh = await device(ownerWorkspace, ownerId)
+
     // The authenticator is the owner's only factor here, whatever another file left behind.
     await admin.query('delete from fa.passkeys where workspace_id = $1 and user_id = $2', [ownerWorkspace, ownerId])
     expect(await disableOwnTotp(fresh, { ip: null }, { pool: app })).toEqual({ ok: false, error: 'last_factor' })
+
     const stillThere = await admin.query<{ on: boolean }>('select totp_secret_enc is not null as on from fa.users where workspace_id = $1 and id = $2', [ownerWorkspace, ownerId])
+
     expect(stillThere.rows[0]!.on).toBe(true)
   })
 })

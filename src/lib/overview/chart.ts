@@ -22,13 +22,16 @@ const STEPS = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]
 /** The smallest round step — 1, 1.5, 2, 2.5, 3, 4, 5, 6 or 8 × 10^k cents, at least $10 — that reaches `value`. */
 export function niceStep(value: number): number {
   if (value <= 1000) return 1000
+
   const magnitude = 10 ** Math.floor(Math.log10(value))
+
   return STEPS.map(m => m * magnitude).find(step => step >= value) ?? 10 * magnitude
 }
 
 /** Three round steps above the largest value of both periods, so the grid reads 0, ⅓, ⅔ and the top. */
 export function scaleTop(values: readonly (number | null)[]): number {
   const largest = Math.max(0, ...values.map(value => value ?? 0))
+
   return 3 * niceStep(largest / 3)
 }
 
@@ -41,7 +44,9 @@ export function tickIndexes(plan: Pick<PeriodPlan, 'period' | 'buckets'>): { ind
   const last = plan.buckets.length - 1
   const everyBucket = plan.period === '7d' || plan.period === '90d'
   const indexes: number[] = []
+
   for (let index = last; index >= 0; index -= everyBucket ? 1 : 7) indexes.unshift(index)
+
   return indexes.map((index, k) => ({ index, alternate: (indexes.length - 1 - k) % 2 === 1 }))
 }
 
@@ -60,6 +65,7 @@ export function buildChart(input: {
     const value = input.current[i] ?? 0
     const previousBucket = plan.previousBuckets[i] ?? null
     const previous = previousBucket ? (input.previous[i] ?? 0) : null
+
     return {
       value,
       previous,
@@ -74,7 +80,9 @@ export function buildChart(input: {
   const grid = [0, 1, 2, 3].map(step => ({ fraction: step / 3, label: formatMoney((max * step) / 3, locale, 'whole') }))
   const ticks = tickIndexes(plan).map(({ index, alternate }) => {
     const bucket = plan.buckets[index]!
+
     return { index, alternate, label: formatDay(week ? lastMoment(bucket) : bucket.start, locale, timeZone) }
   })
+
   return { bars, max, grid, ticks }
 }

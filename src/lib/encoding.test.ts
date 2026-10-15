@@ -37,6 +37,7 @@ describe('base32', () => {
   it('round-trips random keys', () => {
     for (let length = 0; length < 41; length++) {
       const key = crypto.getRandomValues(new Uint8Array(length))
+
       expect(decodeBase32IgnorePadding(encodeBase32UpperCaseNoPadding(key))).toEqual(key)
     }
   })

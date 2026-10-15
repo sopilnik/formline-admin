@@ -21,6 +21,7 @@ export async function revenueTotals(tx: Tx, workspaceId: string, range: Range): 
      where o.workspace_id = ${workspaceId} and o.status in (${revenueStatuses})
        and o.placed_at >= ${range.start} and o.placed_at < ${range.end}`)
   const row = rows[0]!
+
   return { revenueCents: Number(row.revenue), orders: Number(row.orders), newCustomers: Number(row.new_customers) }
 }
 
@@ -31,6 +32,7 @@ export async function revenuePoints(tx: Tx, workspaceId: string, range: Range): 
       from fa.orders o
      where o.workspace_id = ${workspaceId} and o.status in (${revenueStatuses})
        and o.placed_at >= ${range.start} and o.placed_at < ${range.end}`)
+
   return rows.map(row => ({ at: asDate(row.placed_at), cents: Number(row.total_cents) }))
 }
 
@@ -61,16 +63,22 @@ export async function collectionRevenue(tx: Tx, workspaceId: string, range: Rang
     select c.id, c.slug, c.name from fa.collections c where c.workspace_id = ${workspaceId} order by c.position`)
   const collectionOf = new Map(owners.rows.map(row => [row.variant_id, row.collection_id]))
   const byCollection = new Map<string, { posters: number; cents: number }>()
+
   for (const row of sold.rows) {
     // A store line the catalog does not know stays out of every collection; collectionShares reports it as "other".
     const collectionId = row.variant_id === null ? undefined : collectionOf.get(row.variant_id)
+
     if (!collectionId) continue
+
     const sum = byCollection.get(collectionId) ?? { posters: 0, cents: 0 }
+
     sum.posters += Number(row.posters)
     sum.cents += Number(row.cents)
     byCollection.set(collectionId, sum)
   }
+
   const sums = totals.rows[0]!
+
   return {
     postersCents: Number(sums.posters),
     shippingCents: Number(sums.shipping),
@@ -88,6 +96,7 @@ export async function attentionCounts(tx: Tx, workspaceId: string): Promise<{ to
               join fa.products p on p.workspace_id = v.workspace_id and p.id = v.product_id
              where v.workspace_id = ${workspaceId} and v.stock = 0 and p.status <> 'archived') as sold_out`)
   const row = rows[0]!
+
   return { toProcess: Number(row.to_process), processing: Number(row.processing), soldOut: Number(row.sold_out) }
 }
 
@@ -113,6 +122,7 @@ export async function lowStock(tx: Tx, workspaceId: string, limit = 5): Promise<
      where ${low}
      order by v.stock, p.name collate "unicode", v.sku
      limit ${limit}`)
+
   return {
     total: Number(counted.rows[0]!.n),
     rows: rows.map(row => ({

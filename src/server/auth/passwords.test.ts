@@ -8,6 +8,7 @@ describe('password hashing', () => {
 
   it('verifies the right password and refuses a wrong one or a broken hash', async () => {
     const hashed = await hashPassword('plum-kettle-sunrise-4471')
+
     expect(await verifyPassword(hashed, 'plum-kettle-sunrise-4471')).toBe(true)
     expect(await verifyPassword(hashed, 'plum-kettle-sunrise-4472')).toBe(false)
     expect(await verifyPassword('not-a-hash', 'plum-kettle-sunrise-4471')).toBe(false)
@@ -15,6 +16,7 @@ describe('password hashing', () => {
 
   it('treats compatibility forms of the same text as the same password (NFKC)', async () => {
     const hashed = await hashPassword('ﬁrst-light-harbor')
+
     expect(await verifyPassword(hashed, 'first-light-harbor')).toBe(true)
   })
 

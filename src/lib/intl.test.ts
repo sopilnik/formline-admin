@@ -5,6 +5,7 @@ import { compareNames, countryName, formatDate, formatDateTime, formatDay, forma
 describe('formatDate', () => {
   it('writes the calendar date of the store time zone in the interface language', () => {
     const lateEvening = new Date('2026-09-24T22:30:00Z') // already 25 September in Berlin
+
     expect(formatDate(lateEvening, 'en', TIME_ZONE)).toMatch(/^25 Sept? 2026$/)
     expect(formatDate(lateEvening, 'ru', TIME_ZONE)).toMatch(/^25 сент\. 2026/)
     expect(formatDate(lateEvening, 'en', 'UTC')).toMatch(/^24 Sept? 2026$/)
@@ -37,6 +38,7 @@ describe('money, numbers and dates', () => {
 
   it('formats date-times, days and ranges in the store zone', () => {
     const t = new Date('2026-09-24T12:02:00Z')
+
     expect(formatDateTime(t, 'en', 'Europe/Berlin')).toMatch(/^24 Sept?, 14:02$/)
     expect(formatDateTime(t, 'ru', 'Europe/Berlin')).toBe('24 сент., 14:02')
     expect(formatDay(t, 'en', 'Europe/Berlin')).toMatch(/^24 Sept?$/)

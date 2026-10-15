@@ -17,15 +17,18 @@ export async function expectNoSeriousA11yViolations(page: Page, scope?: string):
     for (;;) {
       const running = document.getAnimations()
         .filter(animation => animation.effect?.getTiming().iterations !== Infinity && animation.playState === 'running')
+
       if (running.length === 0) return
       await Promise.all(running.map(animation => animation.finished.catch(() => undefined)))
     }
   })
+
   const builder = new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
   const { violations } = await (scope ? builder.include(scope) : builder).analyze()
   const serious = violations
     .filter(v => v.impact === 'serious' || v.impact === 'critical')
     .map(v => `${v.id}: ${v.nodes.map(n => n.target.join(' ')).join(', ')}`)
+
   expect(serious).toEqual([])
 }
 

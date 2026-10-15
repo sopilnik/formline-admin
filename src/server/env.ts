@@ -46,8 +46,11 @@ const schema = z.object({
   FORMLINE_MAINTENANCE: z.enum(['1']).optional(),
 }).superRefine((env, ctx) => {
   const bunny = [env.BUNNY_STORAGE_ZONE, env.BUNNY_STORAGE_HOST, env.BUNNY_STORAGE_KEY].filter(Boolean).length
+
   if (bunny !== 0 && bunny !== 3) ctx.addIssue({ code: 'custom', path: ['BUNNY_STORAGE_ZONE'], message: 'BUNNY_STORAGE_ZONE, BUNNY_STORAGE_HOST and BUNNY_STORAGE_KEY go together' })
+
   const stripe = [env.STRIPE_WEBHOOK_SECRET, env.STRIPE_RESTRICTED_KEY, env.PSEUDONYM_KEY].filter(Boolean).length
+
   if (stripe !== 0 && stripe !== 3) ctx.addIssue({ code: 'custom', path: ['STRIPE_WEBHOOK_SECRET'], message: 'STRIPE_WEBHOOK_SECRET, STRIPE_RESTRICTED_KEY and PSEUDONYM_KEY go together' })
   // The deployed container runs the real thing only: the media zone and the Stripe ingest, no local stand-ins.
   if (env.FORMLINE_RUNTIME === 'container') {
@@ -67,7 +70,9 @@ const schema = z.object({
   }
   if (!env.ORIGIN_AUTH_SECRET) ctx.addIssue({ code: 'custom', path: ['ORIGIN_AUTH_SECRET'], message: 'required in production' })
   if (env.ORIGIN_AUTH_DISABLED === '1') ctx.addIssue({ code: 'custom', path: ['ORIGIN_AUTH_DISABLED'], message: 'not allowed in production' })
+
   const site = new URL(env.SITE_URL)
+
   if (site.protocol !== 'https:' && site.hostname !== 'localhost') {
     ctx.addIssue({ code: 'custom', path: ['SITE_URL'], message: 'must be https in production' })
   }

@@ -13,7 +13,9 @@ const good = new Headers({
 describe('securityHeaders', () => {
   it('passes the panel\'s headers and names a missing or weakened one', () => {
     expect(securityHeaders(good).every(c => c.ok)).toBe(true)
+
     const weak = new Headers(good)
+
     weak.delete('X-Frame-Options')
     weak.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'")
     expect(securityHeaders(weak).filter(c => !c.ok)).toEqual([
@@ -35,6 +37,7 @@ describe('notCached', () => {
 describe('imageServed', () => {
   it('passes the panel\'s private WebP read back from a sandbox and fails anything else', () => {
     const webp = { status: 200, type: 'image/webp', cache: 'private, no-store', edge: 'BYPASS' }
+
     expect(imageServed(webp)).toEqual({
       check: 'upload an image and read it back', ok: true, detail: 'HTTP 200, image/webp, cache-control private, no-store, cdn-cache BYPASS',
     })
@@ -51,15 +54,20 @@ describe('requestChecks', () => {
   // the edge's secret.
   const panel = (async (input: string | URL | Request) => {
     const url = new URL(String(input))
+
     if (url.hostname !== 'formline-admin.test') return new Response('Forbidden', { status: 403 })
     if (url.pathname === '/api/health') return Response.json(url.search ? { status: 'ok', db: 'ok', role: 'ok' } : { status: 'ok' })
+
     const noStore = { 'Cache-Control': 'private, no-store' }
+
     if (url.pathname === '/sign-in') return new Response('', { headers: { ...Object.fromEntries(good), ...noStore } })
+
     return new Response('', { status: 401, headers: noStore })
   }) as typeof fetch
 
   it('checks every raw hostname in a check of its own without naming it, and skips the check without any', async () => {
     const checks = await requestChecks({ siteUrl: SITE, rawHosts: ['mc-abc.b-cdn.net', 'mc-abc.bunny.run'], fetch: panel })
+
     expect(checks.every(c => c.ok)).toBe(true)
     expect(checks.filter(c => c.check.startsWith('raw hostname'))).toEqual([
       { check: 'raw hostname 1 of 2 refuses a request around the panel\'s address', ok: true, detail: 'HTTP 403' },
@@ -70,6 +78,7 @@ describe('requestChecks', () => {
     expect(JSON.stringify(checks)).not.toContain('mc-abc')
 
     const none = await requestChecks({ siteUrl: SITE, rawHosts: [], fetch: panel })
+
     expect(none.at(-1)).toEqual({ check: 'raw hostnames refuse a request around the panel\'s address', ok: true, detail: 'skipped: no raw hostname' })
   })
 
@@ -78,12 +87,14 @@ describe('requestChecks', () => {
       ? Response.json({ status: 'unavailable', db: 'ok', role: 'failed' }, { status: 503 })
       : panel(input)) as typeof fetch
     const checks = await requestChecks({ siteUrl: SITE, rawHosts: [], fetch: wrongRole })
+
     expect(checks.find(c => c.check === 'readiness')).toEqual({ check: 'readiness', ok: false, detail: 'HTTP 503, db ok, role failed' })
   })
 
   it('fails a raw hostname that serves the panel', async () => {
     const open = (async (input: string | URL | Request) => panel(String(input).replace('mc-abc.bunny.run', 'formline-admin.test'))) as typeof fetch
     const checks = await requestChecks({ siteUrl: SITE, rawHosts: ['mc-abc.bunny.run'], fetch: open })
+
     expect(checks.find(c => c.check.startsWith('raw hostname 1'))).toMatchObject({ ok: false, detail: 'HTTP 200' })
   })
 })

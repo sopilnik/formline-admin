@@ -19,18 +19,23 @@ export function stripeGateway(config: StripeConfig): StripeGateway {
     telemetry: false,
     ...(base ? { protocol: base.protocol === 'https:' ? 'https' : 'http', host: base.hostname, port: Number(base.port || (base.protocol === 'https:' ? 443 : 80)) } : {}),
   })
+
   return {
     async lineItems(sessionId) {
       const items: LineItemLike[] = []
+
       for await (const item of stripe.checkout.sessions.listLineItems(sessionId, { limit: 100 })) items.push(item)
+
       return items
     },
     async completedSessions(since, max) {
       const sessions: CheckoutSessionLike[] = []
+
       for await (const session of stripe.checkout.sessions.list({ status: 'complete', created: { gte: Math.floor(since.getTime() / 1000) }, limit: 100 })) {
         if (sessions.length === max) return { sessions, more: true }
         sessions.push(session)
       }
+
       return { sessions, more: false }
     },
   }

@@ -5,12 +5,14 @@ const eslint = new ESLint()
 
 async function ruleIds(code: string, filePath: string): Promise<string[]> {
   const [result] = await eslint.lintText(code, { filePath })
+
   return (result?.messages ?? []).map(m => m.ruleId ?? 'fatal')
 }
 
 describe('project lint rules', () => {
   it('bans sql.raw', async () => {
     const code = "const sql = { raw: (s: string) => s }\nexport const q = sql.raw('select 1')\n"
+
     expect(await ruleIds(code, 'src/server/db/example.ts')).toContain('no-restricted-syntax')
   })
 

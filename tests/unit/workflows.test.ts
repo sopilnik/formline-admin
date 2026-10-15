@@ -6,6 +6,7 @@ const read = (path: string) => readFileSync(new URL(`../../${path}`, import.meta
 /** The jobs of a workflow by name, each as the text of its block. */
 function jobs(path: string): Record<string, string> {
   const text = read(path).split('\njobs:\n')[1]!
+
   return Object.fromEntries(text.split(/\n(?= {2}[\w-]+:\n)/).map(block => [block.trim().split(':')[0]!, block]))
 }
 

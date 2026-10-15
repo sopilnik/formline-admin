@@ -17,6 +17,7 @@ type Props = { rows: CollectionRow[]; other: string | null; posters: string; shi
 /** Revenue by collection: an HTML list; the bars are decoration, the numbers are text. */
 export function CollectionRevenue({ rows, other, posters, shipping }: Props) {
   const t = useTranslations('overview.collections')
+
   return (
     <section aria-labelledby="collections-title" className="flex min-w-0 flex-col rounded-lg border bg-card p-4 sm:p-5">
       <h2 id="collections-title" className="mb-3.5 font-sans text-[15px] font-semibold">{t('title')}</h2>

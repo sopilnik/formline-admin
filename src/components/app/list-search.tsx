@@ -33,9 +33,12 @@ export function ListSearch({ id, action, label, placeholder, q, restHref, onSear
   }
 
   const search = useEffectEvent((text: string) => send(text.trim()))
+
   useEffect(() => {
     if (draft === null) return
+
     const timer = setTimeout(() => search(draft.text), SEARCH_DELAY_MS)
+
     return () => clearTimeout(timer)
   }, [draft])
 

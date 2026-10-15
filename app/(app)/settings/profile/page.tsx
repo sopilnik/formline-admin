@@ -8,15 +8,21 @@ import { currentSelf } from '@/server/preferences'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('settings.profile')
+
   return { title: t('title') }
 }
 
 export default async function ProfilePage() {
   const session = await requireSession()
+
   authorize(session, 'self.manage')
+
   const self = await currentSelf()
+
   if (!self) redirect('/sign-in')
+
   const t = await getTranslations('settings.profile')
+
   return (
     <div className="flex flex-col gap-5">
       <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>

@@ -12,15 +12,19 @@ import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('collections')
+
   return { title: t('title') }
 }
 
 export default async function CollectionsPage() {
   const session = await requireSession()
+
   authorize(session, 'data.read')
+
   const rows = await withWorkspace(workspaceContext(session), tx => listCollections(tx, session.workspaceId))
   const t = await getTranslations('collections')
   const canWrite = can(session.role, 'catalog.write', session.workspaceKind)
+
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-5">
       <div className="flex flex-wrap items-end gap-4">

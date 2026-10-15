@@ -22,7 +22,9 @@ const labels: ExportLabels = {
 beforeAll(async () => {
   admin = adminPool()
   app = appPool()
+
   const { workspaceId, userId } = await createSandbox(app)
+
   ctx = { workspaceId, userId, role: 'owner' }
 })
 afterAll(closeAll)
@@ -34,17 +36,20 @@ const read = async (stream: ReadableStream<Uint8Array>): Promise<{ bom: boolean;
   const bytes = new Uint8Array(await new Response(stream).arrayBuffer())
   const bom = bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf
   const text = new TextDecoder('utf-8', { ignoreBOM: true }).decode(bytes.subarray(bom ? 3 : 0))
+
   return { bom, lines: text.split('\r\n').filter(line => line !== '') }
 }
 
 describe('planExport', () => {
   it('takes every order matching the filters, in the list order', async () => {
     const plan = await planExport(ctx, { query: { ...DEFAULT_ORDERS_QUERY, status: ['paid'] }, ids: null, now, timeZone: tz }, app)
+
     expect(plan).toEqual({ ids: await idsWhere("status = 'paid'", 'placed_at desc, id desc'), truncated: false })
   })
 
   it('cuts at the cap and says so', async () => {
     const plan = await planExport(ctx, { query: DEFAULT_ORDERS_QUERY, ids: null, now, timeZone: tz, cap: 50 }, app)
+
     expect(plan.ids).toEqual((await idsWhere('true', 'placed_at desc, id desc')).slice(0, 50))
     expect(plan.truncated).toBe(true)
   })
@@ -52,6 +57,7 @@ describe('planExport', () => {
   it('exports a selection in the list sort and ignores the filters', async () => {
     const chosen = (await idsWhere("status = 'delivered'", 'number')).slice(0, 3)
     const plan = await planExport(ctx, { query: { ...DEFAULT_ORDERS_QUERY, status: ['paid'], sort: 'total', dir: 'asc' }, ids: chosen, now, timeZone: tz }, app)
+
     expect(plan.ids).toEqual(await idsWhere(`id in ('${chosen.join("','")}')`, 'total_cents asc, id asc'))
   })
 })
@@ -60,17 +66,22 @@ describe('exportStream', () => {
   it('writes the byte-order mark, the header and one record per order in the planned order', async () => {
     const ids = (await idsWhere('true', 'number desc')).slice(0, 620)
     const { bom, lines } = await read(exportStream(ctx, ids, labels, tz, app))
+
     expect(bom).toBe(true)
     expect(lines[0]).toBe('Order,Placed,Customer,Email,Items,Subtotal,Shipping,Total,Status,Source,Delivery')
     expect(lines).toHaveLength(621)
+
     const numbers = (await admin.query<{ number: number }>('select number from fa.orders where workspace_id = $1 and id = any($2) order by number desc', [ctx.workspaceId, ids])).rows
+
     expect(lines.slice(1).map(line => Number(line.split(',')[0]))).toEqual(numbers.map(r => r.number))
+
     const { rows } = await admin.query<{ number: number; placed_at: Date; name: string; email: string; items: string; subtotal_cents: number; shipping_cents: number; total_cents: number; status: string; source: string; delivery: string }>(
       `select o.number, o.placed_at, c.name, c.email, (select sum(qty) from fa.order_lines l where l.workspace_id = o.workspace_id and l.order_id = o.id) as items,
               o.subtotal_cents, o.shipping_cents, o.total_cents, o.status, o.source, o.delivery
          from fa.orders o join fa.customers c on c.workspace_id = o.workspace_id and c.id = o.customer_id
         where o.workspace_id = $1 and o.id = $2`, [ctx.workspaceId, ids[0]])
     const o = rows[0]!
+
     expect(lines[1]).toBe([
       o.number, isoInZone(o.placed_at, tz), o.name, o.email, o.items, (o.subtotal_cents / 100).toFixed(2), (o.shipping_cents / 100).toFixed(2),
       (o.total_cents / 100).toFixed(2), labels.status[o.status as 'paid'], labels.source[o.source as 'seed'], labels.delivery[o.delivery as 'standard'],
@@ -79,10 +90,13 @@ describe('exportStream', () => {
 
   it('defuses a customer name a spreadsheet would run as a formula', async () => {
     const [id] = await idsWhere('true', 'number')
+
     await admin.query(
       'update fa.customers c set name = $3 from fa.orders o where o.workspace_id = $1 and o.id = $2 and c.workspace_id = o.workspace_id and c.id = o.customer_id',
       [ctx.workspaceId, id, '=HYPERLINK("http://x.test","hi")'])
+
     const { lines } = await read(exportStream(ctx, [id!], labels, tz, app))
+
     expect(lines[1]).toContain(',"\'=HYPERLINK(""http://x.test"",""hi"")",')
   })
 })

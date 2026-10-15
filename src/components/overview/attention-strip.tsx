@@ -17,7 +17,9 @@ const PARTS: Part[] = [
 export function AttentionStrip({ counts }: { counts: Counts }) {
   const t = useTranslations('overview.attention')
   const parts = PARTS.filter(part => counts[part.key] > 0)
+
   if (parts.length === 0) return null
+
   return (
     <nav aria-label={t('label')}>
       <ul className="flex flex-wrap gap-2.5">

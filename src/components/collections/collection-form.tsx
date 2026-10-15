@@ -25,6 +25,7 @@ export function CollectionForm({ collection }: Props) {
   const form = useRef<HTMLFormElement>(null)
   const [name, setName] = useState(collection?.name ?? '')
   const [state, action, pending, unreached] = useFormAction(saveCollectionAction, IDLE, form)
+
   useLeaveGuard(form, state.status === 'error')
 
   const settle = useEffectEvent((result: CollectionState) => {
@@ -43,9 +44,11 @@ export function CollectionForm({ collection }: Props) {
 
     if (result.status === 'error') {
       const first = COLLECTION_FIELDS.find(field => result.fieldErrors[field])
+
       form.current?.querySelector<HTMLElement>(first ? `[name="${first}"]` : '[role="alert"]')?.focus()
     }
   })
+
   useEffect(() => settle(state), [state])
 
   const error = state.status === 'error' ? state : null

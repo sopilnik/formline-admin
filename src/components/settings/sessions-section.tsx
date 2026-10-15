@@ -18,16 +18,19 @@ export function SessionsSection({ sessions }: { sessions: SessionView[] }) {
   const others = sessions.filter(session => !session.current).length
   const revoke = (id: string): void => startTransition(async () => {
     const result = await send(() => revokeSessionAction({ id }))
+
     if (!result) return
     if (result.ok) toast.success(t('revoked'))
     else toast.error(t('failed'))
   })
   const revokeOthers = (): void => startTransition(async () => {
     const result = await send(() => revokeOtherSessionsAction())
+
     if (!result) return
     if (result.ok) toast.success(t('revokedOthers', { count: result.data.count }))
     else toast.error(t('failed'))
   })
+
   return (
     <section aria-labelledby="sessions-title" className="flex flex-col gap-4 rounded-lg border bg-card p-5">
       <div>
@@ -37,6 +40,7 @@ export function SessionsSection({ sessions }: { sessions: SessionView[] }) {
       <ul aria-labelledby="sessions-title" className="divide-y rounded-md border">
         {sessions.map(session => {
           const device = session.device ?? t('unknownDevice')
+
           return (
             <li key={session.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
               <div className="min-w-48 flex-1">

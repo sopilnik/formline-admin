@@ -28,13 +28,17 @@ export function PasskeysSection({ available, recent, passkeys }: Props) {
     setAdding(true)
     try {
       const begun = await send(() => beginPasskeyRegistrationAction())
+
       if (!begun) return
       if (!begun.ok) {
         toast.error(errors(begun.error, { minutes: 1 }))
+
         return
       }
+
       const answer = await startRegistration({ optionsJSON: begun.options })
       const finished = await send(() => finishPasskeyRegistrationAction(answer))
+
       if (!finished) return
       if (finished.ok) toast.success(t('addedToast'))
       else toast.error(errors(finished.error, { minutes: 1 }))
@@ -54,6 +58,7 @@ export function PasskeysSection({ available, recent, passkeys }: Props) {
       </section>
     )
   }
+
   return (
     <section aria-labelledby="passkeys-title" className="flex flex-col gap-4 rounded-lg border bg-card p-5">
       <div>
@@ -88,12 +93,16 @@ function PasskeyItem({ passkey, canRemove }: { passkey: PasskeyView; canRemove: 
   // Not a form action: React resets a form once its action ends, and a refused name would come back as the old one.
   function rename(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+
     const name = String(new FormData(event.currentTarget).get('name') ?? '')
+
     startTransition(async () => {
       const result = await send(() => renamePasskeyAction(passkey.id, name))
+
       if (!result) return
       if (!result.ok) {
         toast.error(errors(result.error, { minutes: 1 }))
+
         return
       }
       setRenaming(false)
@@ -104,6 +113,7 @@ function PasskeyItem({ passkey, canRemove }: { passkey: PasskeyView; canRemove: 
   function remove() {
     startTransition(async () => {
       const result = await send(() => removePasskeyAction(passkey.id))
+
       if (!result) return
       setRemoving(false)
       if (result.ok) toast.success(t('removedToast'))

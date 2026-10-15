@@ -29,6 +29,7 @@ describe('ipKey', () => {
 describe('hashing', () => {
   it('stores an address only as its keyed hash', () => {
     const hash = hashIp('203.0.113.10', KEY)
+
     expect(hash).toMatch(/^[0-9a-f]{64}$/)
     expect(hashIp('203.0.113.10', KEY)).toBe(hash)
     expect(hashIp('203.0.113.10', 'x'.repeat(32))).not.toBe(hash)
@@ -41,7 +42,9 @@ describe('hashing', () => {
     expect(ipSubject(null, KEY)).toBe('ip:unknown')
     expect(accountSubject(' Owner@Formline.test ', KEY)).toBe(accountSubject('owner@formline.test', KEY))
     expect(accountSubject('owner@formline.test', KEY)).toMatch(/^account:[0-9a-f]{64}$/)
+
     const user = '9b2f1c7e-5d3a-4c1b-8e2f-0a1b2c3d4e5f'
+
     expect(userSubject('0f1e2d3c-4b5a-4968-8776-655443322110', user)).toBe(`user:0f1e2d3c-4b5a-4968-8776-655443322110:${user}`)
     expect(userSubject('0f1e2d3c-4b5a-4968-8776-655443322110', user)).not.toBe(userSubject('1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d', user))
   })

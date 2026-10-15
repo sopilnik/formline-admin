@@ -11,7 +11,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
  */
 export function SourceLabel({ source }: { source: 'seed' | 'stripe' }) {
   const t = useTranslations('orders.source')
+
   if (source === 'seed') return <span className="text-xs text-muted-foreground">{t('seed')}</span>
+
   return (
     <Tooltip>
       <TooltipTrigger render={<span className="relative z-10 inline-flex items-center gap-1.5 text-xs font-medium text-ink-2" />}>

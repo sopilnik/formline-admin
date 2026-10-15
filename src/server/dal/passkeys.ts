@@ -39,6 +39,7 @@ export function listPasskeys(tx: Tx, who: Who): Promise<Passkey[]> {
 /** The passkey a sign-in names, before anyone is signed in: the workspace and the credential find it. */
 export async function findPasskeyByCredential(tx: Tx, workspaceId: string, credentialId: string): Promise<Passkey | null> {
   const [row] = await tx.select(columns).from(passkeys).where(and(eq(passkeys.workspaceId, workspaceId), eq(passkeys.credentialId, credentialId))).limit(1)
+
   return row ?? null
 }
 
@@ -49,6 +50,7 @@ export async function addPasskey(
   passkey: { credentialId: string; publicKey: string; counter: number; transports: string[]; name: string },
 ): Promise<string> {
   const [row] = await tx.insert(passkeys).values({ workspaceId, userId, ...passkey }).returning({ id: passkeys.id })
+
   return row!.id
 }
 
@@ -66,5 +68,6 @@ export async function deletePasskey(tx: Tx, who: Who, id: string): Promise<boole
 
 export async function countPasskeys(tx: Tx, who: Who): Promise<number> {
   const [row] = await tx.select({ n: count() }).from(passkeys).where(own(who))
+
   return row?.n ?? 0
 }

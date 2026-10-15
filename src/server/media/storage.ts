@@ -27,6 +27,7 @@ export function thumbPath(path: string): string {
 
 function checked(path: string): string {
   if (!MEDIA_PATH.test(path)) throw new Error(`not a media path: ${path}`)
+
   return path
 }
 
@@ -52,20 +53,25 @@ export function bunnyStorage(zone: BunnyZone, fetchImpl: typeof fetch = fetch): 
   const url = (path: string): string => `https://${zone.host}/${zone.zone}/${checked(path)}`
   const request = (path: string, init: RequestInit): Promise<Response> =>
     fetchImpl(url(path), { ...init, headers: { AccessKey: zone.key, ...init.headers }, signal: AbortSignal.timeout(TIMEOUT_MS) })
+
   return {
     async put(path, bytes) {
       const checksum = createHash('sha256').update(bytes).digest('hex').toUpperCase()
       const response = await request(path, { method: 'PUT', body: new Uint8Array(bytes), headers: { 'Content-Type': 'application/octet-stream', Checksum: checksum } })
+
       if (!response.ok) throw new Error(`media storage refused the upload: ${response.status}`)
     },
     async get(path) {
       const response = await request(path, { method: 'GET' })
+
       if (response.status === 404) return null
       if (!response.ok) throw new Error(`media storage refused the read: ${response.status}`)
+
       return Buffer.from(await response.arrayBuffer())
     },
     async delete(path) {
       const response = await request(path, { method: 'DELETE' })
+
       if (!response.ok && response.status !== 404) throw new Error(`media storage refused the deletion: ${response.status}`)
     },
   }
@@ -77,6 +83,7 @@ const missing = (error: unknown): boolean => (error as NodeJS.ErrnoException).co
 export function directoryStorage(dir: string): MediaStorage {
   const root = resolve(dir)
   const file = (path: string): string => join(root, checked(path))
+
   return {
     async put(path, bytes) {
       await mkdir(dirname(file(path)), { recursive: true })
@@ -103,10 +110,13 @@ let cached: MediaStorage | null | undefined
 /** The configured storage: the bunny zone when its variables are set, else the local folder, else null. */
 export function mediaStorage(source?: EnvSource): MediaStorage | null {
   if (!source && cached !== undefined) return cached
+
   const env = readEnv(source)
   const storage = env.BUNNY_STORAGE_ZONE && env.BUNNY_STORAGE_HOST && env.BUNNY_STORAGE_KEY
     ? bunnyStorage({ zone: env.BUNNY_STORAGE_ZONE, host: env.BUNNY_STORAGE_HOST, key: env.BUNNY_STORAGE_KEY })
     : env.MEDIA_STORAGE_DIR ? directoryStorage(env.MEDIA_STORAGE_DIR) : null
+
   if (!source) cached = storage
+
   return storage
 }

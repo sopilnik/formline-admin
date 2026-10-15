@@ -27,8 +27,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       unread: await countUnread(tx, await readerOf(tx, session)),
     })),
   ])
+
   if (!self) redirect('/sign-in')
+
   const store = await cookies()
+
   return (
     <AppFrame
       items={navItems(session.role, session.workspaceKind, { orders: toProcess })}

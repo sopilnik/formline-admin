@@ -20,6 +20,7 @@ type Props = {
 async function fetchFile(href: string): Promise<{ response: Response; file: Blob } | null> {
   try {
     const response = await fetch(href, { cache: 'no-store' })
+
     return { response, file: response.ok ? await response.blob() : new Blob() }
   } catch {
     return null
@@ -37,31 +38,40 @@ export function ExportButton({ href, label, size = 'default', namespace, cap }: 
   const [pending, setPending] = useState(false)
   const run = async (): Promise<void> => {
     setPending(true)
+
     const fetched = await fetchFile(href)
+
     setPending(false)
     if (!fetched) {
       toast.error(t('failed'))
+
       return
     }
 
     const { response, file } = fetched
+
     if (response.status === 429) {
       toast.error(t('rateLimited', { seconds: Number(response.headers.get('Retry-After') ?? 60) }))
+
       return
     }
     if (!response.ok) {
       toast.error(t('failed'))
+
       return
     }
+
     const name = /filename="([^"]+)"/.exec(response.headers.get('Content-Disposition') ?? '')?.[1] ?? `${namespace.split('.')[0]}.csv`
     const url = URL.createObjectURL(file)
     const link = document.createElement('a')
+
     link.href = url
     link.download = name
     link.click()
     setTimeout(() => URL.revokeObjectURL(url), 1_000)
     if (response.headers.get('X-Export-Truncated') === 'true') toast.success(t('truncated', { count: cap }))
   }
+
   return (
     <Button type="button" variant="outline" size={size} disabled={pending} onClick={run}>
       <Download aria-hidden />

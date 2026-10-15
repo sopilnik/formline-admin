@@ -15,6 +15,7 @@ const TD = 'h-11 border-b px-3 first:pl-0 last:pr-0 group-last/row:border-b-0'
 export function LatestOrders({ rows }: { rows: OrderRowView[] }) {
   const t = useTranslations('overview.latest')
   const columns = useTranslations('orders.columns')
+
   return (
     <section aria-labelledby="latest-title" className="@container flex min-w-0 flex-col rounded-lg border bg-card p-4 sm:p-5">
       <div className="mb-2 flex items-baseline gap-2.5">

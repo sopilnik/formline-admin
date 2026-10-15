@@ -17,6 +17,7 @@ type Props = {
 /** A new authenticator: the QR code and the key to type, then its first code (setup, recovery and the security settings). */
 export function TotpEnrollment({ id, secret, qr, error, bare = false }: Props) {
   const t = useTranslations('auth')
+
   return (
     <fieldset className={cn('flex flex-col gap-3', !bare && 'rounded-lg border p-4')}>
       <legend className={bare ? 'sr-only' : 'px-1 text-sm font-medium'}>{t('totp.title')}</legend>

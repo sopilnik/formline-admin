@@ -21,6 +21,7 @@ const items: LineItemLike[] = [
 describe('readCheckout', () => {
   it('reads a paid session into an order with matched lines', () => {
     const reading = readCheckout(session, items)
+
     expect(reading).toEqual({
       ok: true,
       order: {
@@ -45,20 +46,27 @@ describe('readCheckout', () => {
 
   it('tells express from standard by the amount: $19 is express, $9 and free are standard', () => {
     const express = readCheckout({ ...session, amount_total: 13_900, total_details: { amount_shipping: 1900 } }, items)
+
     expect(express.ok && express.order.delivery).toBe('express')
+
     const free = readCheckout({ ...session, amount_total: 12_000, total_details: { amount_shipping: 0 } }, items)
+
     expect(free.ok && free.order).toMatchObject({ delivery: 'standard', shippingCents: 0 })
+
     const none = readCheckout({ ...session, amount_total: 12_000, total_details: null }, items)
+
     expect(none.ok && none.order.shippingCents).toBe(0)
   })
 
   it('keeps a line it cannot match as free text', () => {
     const reading = readCheckout({ ...session, amount_subtotal: 12_500, amount_total: 13_400 }, [...items, { description: 'Gift wrap', quantity: 1, amount_subtotal: 500, price: null }])
+
     expect(reading.ok && reading.order.lines[2]).toEqual({ name: 'Gift wrap', qty: 1, unitCents: 500, variant: null })
   })
 
   it('fills what the session leaves out with nothing rather than a guess', () => {
     const reading = readCheckout({ ...session, customer_details: { email: ' mia@example.com ', name: '  ', address: { city: null, country: 'Germany' } }, metadata: null }, items)
+
     expect(reading.ok && reading.order).toMatchObject({ email: 'mia@example.com', name: null, city: null, country: null, externalRef: null })
   })
 

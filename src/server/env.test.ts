@@ -18,6 +18,7 @@ function publishedSecrets(): { setting: string; value: string }[] {
     ...read('.env.example').matchAll(/^([A-Z_]+)=(\S+)$/gm),
     ...['tests/e2e/constants.ts', 'tests/int/env.ts'].flatMap(file => [...read(file).matchAll(/^\s*(?:export const )?([A-Z0-9_]+)(?::| =) '([^']+)'/gm)]),
   ]
+
   return lines
     .map(([, name, value]) => ({ setting: name === 'E2E_ORIGIN_SECRET' ? 'ORIGIN_AUTH_SECRET' : name!, value: value! }))
     .filter(({ setting }) => /_(SECRET|KEYS?|TOKEN)$/.test(setting))
@@ -51,6 +52,7 @@ describe('readEnv', () => {
 
   it('takes the media zone as three variables together, on a bunny storage host', () => {
     const zone = { BUNNY_STORAGE_ZONE: 'formline-admin-media', BUNNY_STORAGE_HOST: 'storage.bunnycdn.com', BUNNY_STORAGE_KEY: 'k'.repeat(36) }
+
     expect(readEnv({ ...base, ...zone }).BUNNY_STORAGE_ZONE).toBe('formline-admin-media')
     expect(readEnv({ ...base, ...zone, BUNNY_STORAGE_HOST: 'uk.storage.bunnycdn.com' }).BUNNY_STORAGE_HOST).toBe('uk.storage.bunnycdn.com')
     expect(() => readEnv({ ...base, ...zone, BUNNY_STORAGE_HOST: 'storage.example.com' })).toThrow(/BUNNY_STORAGE_HOST/)
@@ -61,6 +63,7 @@ describe('readEnv', () => {
   it('takes the Stripe ingest as three variables together, with a restricted test key', () => {
     // Built from parts, so the source never holds a string shaped like a real key.
     const ingest = { STRIPE_WEBHOOK_SECRET: `whsec_${'w'.repeat(32)}`, STRIPE_RESTRICTED_KEY: `rk_test_${'r'.repeat(32)}`, PSEUDONYM_KEY: 'p'.repeat(32) }
+
     expect(readEnv({ ...base, ...ingest }).STRIPE_RESTRICTED_KEY).toBe(ingest.STRIPE_RESTRICTED_KEY)
     expect(() => readEnv({ ...base, ...ingest, STRIPE_RESTRICTED_KEY: `rk_live_${'r'.repeat(32)}` })).toThrow(/rk_test_/)
     expect(() => readEnv({ ...base, ...ingest, STRIPE_RESTRICTED_KEY: `sk_test_${'r'.repeat(32)}` })).toThrow(/rk_test_/)
@@ -108,6 +111,7 @@ describe('readEnv', () => {
 
     it('refuses every placeholder secret this repository publishes', () => {
       const published = publishedSecrets()
+
       expect(published.length).toBeGreaterThanOrEqual(16)
       for (const { setting, value } of published) {
         expect(() => readEnv({ ...container, [setting]: value }), setting).toThrow(/a placeholder this repository publishes/)

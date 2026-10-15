@@ -14,8 +14,11 @@ import { setPreferenceCookies } from '@/server/preferences'
  */
 export async function setThemeAction(value: string): Promise<void> {
   const theme = z.enum(THEMES).parse(value)
+
   await setPreferenceCookies({ theme })
+
   const session = await getSession()
+
   if (session?.secondFactorVerified) {
     await withWorkspace(workspaceContext(session), tx => updateSelfPreferences(tx, session, { theme }))
   }
@@ -24,8 +27,11 @@ export async function setThemeAction(value: string): Promise<void> {
 /** Language menu, the same way, the throw included. */
 export async function setLocaleAction(value: string): Promise<void> {
   const locale = z.enum(LOCALES).parse(value)
+
   await setPreferenceCookies({ locale })
+
   const session = await getSession()
+
   if (session?.secondFactorVerified) {
     await withWorkspace(workspaceContext(session), tx => updateSelfPreferences(tx, session, { locale }))
   }

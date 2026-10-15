@@ -5,6 +5,7 @@ describe('session tokens', () => {
   it('are 32 base32 characters, a fresh one every time', () => {
     const a = generateToken()
     const b = generateToken()
+
     expect(a).toMatch(TOKEN_PATTERN)
     expect(b).toMatch(TOKEN_PATTERN)
     expect(a).not.toBe(b)

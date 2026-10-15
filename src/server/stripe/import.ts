@@ -20,12 +20,15 @@ type Outcome = { kind: 'imported'; number: number } | { kind: 'already' | 'skipp
 async function importSession(session: Session, deps: ImportDeps, pool: Pool): Promise<Outcome> {
   try {
     const reading = readCheckout(session, await deps.gateway.lineItems(session.id))
+
     if (!reading.ok) return { kind: 'skipped' }
 
     const result = await ingestOrder(reading.order, { eventId: null, pseudonymKey: deps.pseudonymKey }, pool)
+
     return result.status === 'created' ? { kind: 'imported', number: result.number } : { kind: 'already' }
   } catch (error) {
     log.error({ event: 'stripe.import_session_failed', sessionId: session.id, err: error })
+
     return { kind: 'failed' }
   }
 }
@@ -58,6 +61,7 @@ export async function importMissedOrders(deps: ImportDeps): Promise<ImportSummar
     }
 
     const outcome = await importSession(session, deps, pool)
+
     if (outcome.kind === 'imported') summary.imported.push(outcome.number)
     else summary[outcome.kind] += 1
   }

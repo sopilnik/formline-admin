@@ -12,13 +12,17 @@ test.describe('demo banner', () => {
   test('on a phone it states the deletion rule in one short line, in both languages', async ({ page, context }) => {
     await page.setViewportSize({ width: 375, height: 740 })
     await signInAsSandboxUser(context)
+
     const cases = [
       { lang: 'en', name: 'Demo sandbox', text: 'Demo sandbox. Deleted after 2 h idle.' },
       { lang: 'ru', name: 'Демо-песочница', text: 'Демо. Удаляется после 2 ч простоя.' },
     ]
+
     for (const { lang, name, text } of cases) {
       await page.goto(`/overview?lang=${lang}`)
+
       const banner = page.getByRole('region', { name })
+
       expect(await shownText(banner)).toBe(text)
       expect(await lineCount(banner.locator('p'))).toBe(1)
       expect(await banner.locator('p').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
@@ -29,7 +33,9 @@ test.describe('demo banner', () => {
     await page.setViewportSize({ width: 1280, height: 800 })
     await signInAsSandboxUser(context)
     await page.goto('/overview')
+
     const banner = page.getByRole('region', { name: 'Demo sandbox' })
+
     expect(await shownText(banner)).toBe('Demo sandbox. Your changes are private. The sandbox is deleted after 2 hours without activity, or after 24 hours at the latest.')
   })
 
@@ -40,6 +46,7 @@ test.describe('demo banner', () => {
     await page.getByRole('region', { name: 'Демо-песочница' }).getByRole('button', { name: 'Ещё действия' }).click()
     for (const name of ['Сбросить данные', 'Сменить пользователя']) {
       const item = page.getByRole('menuitem', { name })
+
       await expect(item).toBeVisible()
       expect(await item.evaluate(el => el.scrollWidth <= el.clientWidth && el.getBoundingClientRect().height < 36)).toBe(true)
     }
@@ -49,7 +56,9 @@ test.describe('demo banner', () => {
     await page.setViewportSize({ width: 768, height: 900 })
     await signInAsSandboxUser(context)
     await page.goto('/overview?lang=ru')
+
     const text = page.getByRole('region', { name: 'Демо-песочница' }).locator('p')
+
     expect((await text.boundingBox())!.width).toBeGreaterThanOrEqual(320)
   })
 })

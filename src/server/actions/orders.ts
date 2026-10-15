@@ -19,24 +19,36 @@ const oneStatusInput = z.strictObject({ orderId: z.uuid(), to: z.enum(ORDER_STAT
 /** "Change status" of the bulk bar: the valid orders change, the others come back as skipped. */
 export async function changeStatusesAction(input: unknown): Promise<ActionResult<StatusOutcome>> {
   const session = await requireSession()
+
   if (!can(session.role, 'orders.update', session.workspaceKind)) return fail('forbidden')
+
   const parsed = statusInput.safeParse(input)
+
   if (!parsed.success) return fail('invalid')
+
   const outcome = await changeStatuses(await actorOf(session), parsed.data.ids, parsed.data.to)
+
   // The list, its chip counts and the sidebar count all change: the router re-renders the page.
   refresh()
+
   return ok(outcome)
 }
 
 /** The status control of the order page: `conflict` when the order moved on meanwhile. */
 export async function changeOrderStatusAction(input: unknown): Promise<ActionResult<{ number: number; to: OrderStatus }>> {
   const session = await requireSession()
+
   if (!can(session.role, 'orders.update', session.workspaceKind)) return fail('forbidden')
+
   const parsed = oneStatusInput.safeParse(input)
+
   if (!parsed.success) return fail('invalid')
+
   const outcome = await changeStatuses(await actorOf(session), [parsed.data.orderId], parsed.data.to)
+
   refresh()
   if (outcome.changed.length === 1) return ok({ number: outcome.changed[0]!, to: parsed.data.to })
+
   return fail(outcome.skipped.length === 1 ? 'conflict' : 'not_found')
 }
 
@@ -49,13 +61,21 @@ export type NoteState =
 export async function addOrderNoteAction(previous: NoteState, form: FormData): Promise<NoteState> {
   const session = await requireSession()
   const text = formText(form, 'note')
+
   if (!can(session.role, 'orders.update', session.workspaceKind)) return { status: 'error', error: 'forbidden', note: text }
+
   const orderId = z.uuid().safeParse(formText(form, 'orderId'))
+
   if (!orderId.success) return { status: 'error', error: 'not_found', note: text }
+
   const parsed = parseNote(text)
+
   if (!parsed.ok) return { status: 'error', error: parsed.error, note: text }
+
   const number = await addNote(await actorOf(session), orderId.data, parsed.note)
+
   if (number === null) return { status: 'error', error: 'not_found', note: text }
   refresh()
+
   return { status: 'done', count: previous.status === 'done' ? previous.count + 1 : 1 }
 }

@@ -29,6 +29,7 @@ export const DEFAULT_ORDERS_QUERY: OrdersQuery = { status: [], q: '', placed: 'a
 /** Tolerant: an unknown value means the default, never an error. Statuses may repeat or be comma-separated. */
 export function parseOrdersQuery(params: SearchParams | URLSearchParams): OrdersQuery {
   const statuses = new Set(all(params, 'status').flatMap(v => v.split(',')).filter(isOrderStatus))
+
   return {
     status: ORDER_STATUSES.filter(s => statuses.has(s)),
     q: searchText(params),
@@ -47,6 +48,7 @@ export function ordersHref(query: OrdersQuery, changes: Partial<OrdersQuery> = {
   const resetsPage = changedKeys.some(key => key !== 'page')
   const next: OrdersQuery = { ...query, ...changes, page: changes.page ?? (resetsPage ? 1 : query.page) }
   const params = new URLSearchParams()
+
   if (next.status.length > 0) params.set('status', ORDER_STATUSES.filter(s => next.status.includes(s)).join(','))
   if (next.q) params.set('q', next.q)
   if (next.placed !== DEFAULT_ORDERS_QUERY.placed) params.set('placed', next.placed)
@@ -55,7 +57,9 @@ export function ordersHref(query: OrdersQuery, changes: Partial<OrdersQuery> = {
   if (next.dir !== DEFAULT_ORDERS_QUERY.dir) params.set('dir', next.dir)
   if (next.page !== DEFAULT_ORDERS_QUERY.page) params.set('page', String(next.page))
   if (next.size !== DEFAULT_ORDERS_QUERY.size) params.set('size', String(next.size))
+
   const text = params.toString().replace(/%2C/g, ',')
+
   return text ? `/orders?${text}` : '/orders'
 }
 
@@ -69,10 +73,13 @@ export function ordersExportHref(query: OrdersQuery, ids?: readonly string[]): s
   const href = ordersHref({ ...query, page: 1, size: DEFAULT_ORDERS_QUERY.size })
   const at = href.indexOf('?')
   const params = new URLSearchParams(at === -1 ? '' : href.slice(at + 1))
+
   if (ids && ids.length > 0) {
     for (const key of ['status', 'q', 'placed', 'source']) params.delete(key)
     params.set('ids', ids.join(','))
   }
+
   const text = params.toString().replace(/%2C/g, ',')
+
   return text ? `/api/orders/export?${text}` : '/api/orders/export'
 }

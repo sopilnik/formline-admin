@@ -9,7 +9,9 @@ const POSTERS = new URL('../public/posters/', import.meta.url)
 const THUMBS = new URL('thumb/', POSTERS)
 
 await mkdir(THUMBS, { recursive: true })
+
 const posters = (await readdir(POSTERS)).filter(name => name.endsWith('.webp')).sort()
+
 for (const name of posters) {
   await sharp(fileURLToPath(new URL(name, POSTERS))).resize({ width: 120, height: 170, fit: 'cover' }).webp({ quality: 75 }).toFile(fileURLToPath(new URL(name, THUMBS)))
 }

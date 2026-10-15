@@ -13,14 +13,17 @@ const TD = 'border-b px-3 py-2 first:pl-0 last:pr-0 group-last/row:border-b-0'
  */
 export function StockLevel({ stock, threshold, spelled = false }: { stock: number; threshold: number; spelled?: boolean }) {
   const t = useTranslations('products')
+
   if (stock === 0) return <span className="font-semibold text-status-bad">{t('variants.soldOut')}</span>
   if (stock <= threshold) return <span className="font-semibold text-status-warn">{t('variants.left', { count: stock })}</span>
+
   return <span>{spelled ? t('inStock', { stock }) : stock}</span>
 }
 
 /** The variants for a role that cannot change them: a table while the card is 36 rem wide, a list below. */
 export function VariantsTable({ variants }: { variants: VariantView[] }) {
   const t = useTranslations('products.variants')
+
   return (
     <>
       <table aria-labelledby="variants-title" className="hidden w-full border-separate border-spacing-0 text-[13px] tabular-nums @xl:table">

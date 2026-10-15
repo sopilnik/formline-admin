@@ -9,6 +9,7 @@ export async function getRequestId(): Promise<string> {
 /** The edge-set client IP; null in local development without the edge. */
 export async function getClientIp(): Promise<string | null> {
   const ip = (await headers()).get('x-client-ip')
+
   return ip && isIP(ip) !== 0 ? ip : null
 }
 

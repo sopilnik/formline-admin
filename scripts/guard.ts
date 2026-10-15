@@ -30,16 +30,22 @@ export function decide(facts: GuardFacts): Verdict {
   const failures: string[] = []
   const appCost = number(facts.appCost)
   const billingCost = number(facts.billingCost)
+
   if (appCost === null) failures.push('the usage summary carries no monthlyCost')
   if (billingCost === null) failures.push('the billing carries no MonthlyChargesMagicContainers')
+
   const cost = appCost === null && billingCost === null ? null : Math.max(appCost ?? 0, billingCost ?? 0)
   const undeploy = cost !== null && cost >= COST_LIMIT_USD
+
   if (undeploy) failures.push(`this month's cost $${cost.toFixed(2)} reached $${COST_LIMIT_USD}: the application is undeployed`)
+
   const balance = number(facts.balance)
+
   if (balance === null) failures.push('the billing carries no Balance')
   else if (balance < BALANCE_FLOOR_USD) failures.push(`the balance $${balance.toFixed(2)} is under $${BALANCE_FLOOR_USD}`)
   if (facts.status === 'suspended') failures.push('bunny reports the application suspended')
   if (!facts.live && !undeploy) failures.push('the panel does not answer its liveness check')
+
   return { undeploy, failures, cost }
 }
 
@@ -47,8 +53,11 @@ type Fetch = typeof fetch
 
 async function api(fetchImpl: Fetch, key: string, method: 'GET' | 'POST', path: string): Promise<unknown> {
   const res = await fetchImpl(`${API}${path}`, { method, headers: { AccessKey: key, Accept: 'application/json' }, signal: AbortSignal.timeout(20_000) })
+
   if (!res.ok) throw new Error(`bunny ${method} ${path.replace(/\/apps\/[^/]+/, '/apps/{id}')}: HTTP ${res.status}`)
+
   const text = await res.text()
+
   return text ? JSON.parse(text) : null
 }
 
@@ -61,27 +70,34 @@ export async function runGuard(o: GuardOptions): Promise<number> {
   try {
     const app = await api(o.fetch, o.key, 'GET', `/mc/apps/${o.appId}`)
     const status = String(field(app, 'status') ?? 'unknown')
+
     if (status === 'inactive') {
       o.log({ event: 'guard.stopped', status })
+
       return 0
     }
+
     const [summary, billing] = await Promise.all([
       api(o.fetch, o.key, 'GET', `/mc/apps/${o.appId}/summary`),
       api(o.fetch, o.key, 'GET', '/billing'),
     ])
     const live = await o.fetch(new URL('/api/health', o.siteUrl), { signal: AbortSignal.timeout(20_000) }).then(r => r.ok, () => false)
     const verdict = decide({ status, appCost: field(summary, 'monthlyCost'), billingCost: field(billing, 'MonthlyChargesMagicContainers'), balance: field(billing, 'Balance'), live })
+
     if (verdict.undeploy) await api(o.fetch, o.key, 'POST', `/mc/apps/${o.appId}/undeploy`)
     o.log({ event: 'guard.checked', status, cost: verdict.cost, live, undeployed: verdict.undeploy, failures: verdict.failures })
+
     return verdict.failures.length === 0 ? 0 : 1
   } catch (error) {
     o.log({ event: 'guard.failed', message: error instanceof Error ? error.message : String(error) })
+
     return 1
   }
 }
 
 if (import.meta.main) {
   const { BUNNY_API_KEY: key, MC_APP_ID: appId, SITE_URL: siteUrl } = process.env
+
   if (!key || !appId || !siteUrl) {
     console.log(JSON.stringify({ event: 'guard.failed', message: 'BUNNY_API_KEY, MC_APP_ID and SITE_URL are required' }))
     process.exit(1)

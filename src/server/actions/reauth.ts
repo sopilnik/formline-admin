@@ -16,14 +16,17 @@ export async function reauthAction(_previous: FormState<ReauthField>, form: Form
     ip: await getClientIp(),
     userAgent: (await headers()).get('user-agent'),
   })
+
   if (!result.ok) {
     // A locked second factor has ended the session already.
     if (result.error === 'second_factor_locked') {
       await clearSessionCookie()
       redirect('/sign-in')
     }
+
     return failureState(result)
   }
   await setSessionCookie(result.token, result.expiresAt)
+
   return { status: 'done' }
 }

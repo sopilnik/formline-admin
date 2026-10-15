@@ -12,6 +12,7 @@ describe('Drizzle schema matches the SQL migrations', () => {
   it('covers every table of schema fa', async () => {
     const { rows } = await adminPool().query<{ name: string }>(
       "select table_name as name from information_schema.tables where table_schema = 'fa' and table_name <> 'schema_migrations' order by 1")
+
     expect(tables.map(t => getTableConfig(t).name).sort()).toEqual(rows.map(r => r.name))
   })
 
@@ -20,6 +21,7 @@ describe('Drizzle schema matches the SQL migrations', () => {
       "select column_name, is_nullable from information_schema.columns where table_schema = 'fa' and table_name = $1", [name])
     const db = Object.fromEntries(rows.map(r => [r.column_name, r.is_nullable === 'NO']))
     const ts = Object.fromEntries(getTableConfig(table).columns.map(c => [c.name, c.notNull]))
+
     expect(ts).toEqual(db)
   })
 })

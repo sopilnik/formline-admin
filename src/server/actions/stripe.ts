@@ -21,28 +21,38 @@ import { importMissedOrders } from '@/server/stripe/import'
 /** Settings → Store → "Import missed orders": the owner, after a fresh sign-in, three times an hour. */
 export async function importStripeOrdersAction(_previous: ImportState, _form: FormData): Promise<ImportState> {
   const session = await requireSession()
+
   if (!can(session.role, 'stripe.import', session.workspaceKind)) return { status: 'error', error: 'forbidden' }
   if (!isRecentAuth(session)) return { status: 'error', error: 'reauth_required' }
+
   const config = stripeConfig()
+
   if (!config) return { status: 'error', error: 'unavailable' }
+
   const verdict = await consume(LIMITS.stripeImport, userSubject(session.workspaceId, session.userId))
+
   if (!verdict.allowed) return { status: 'error', error: 'rate_limited', retryAfterMinutes: retryMinutes(verdict.retryAfterSeconds) }
+
   let summary: ImportSummary
+
   try {
     summary = await importMissedOrders({ gateway: stripeGateway(config), pseudonymKey: config.pseudonymKey })
   } catch (error) {
     log.error({ event: 'stripe.import_failed', requestId: await getRequestId(), err: error })
+
     return { status: 'error', error: 'failed' }
   }
 
   // The orders are in by now: a failed log entry is logged itself and never turns the import into an error.
   await logImport(session, summary).catch(async error => log.error({ event: 'stripe.import_log_failed', requestId: await getRequestId(), err: error }))
   refresh()
+
   return { status: 'done', ...summary }
 }
 
 async function logImport(session: Session, summary: ImportSummary): Promise<void> {
   const actor = await actorOf(session)
+
   await withWorkspace(workspaceContext(actor), tx => logActivity(tx, actor.workspaceId, {
     actorUserId: actor.userId,
     action: 'orders.imported',

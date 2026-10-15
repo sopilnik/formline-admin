@@ -7,7 +7,9 @@ test.describe('invitation form', () => {
     for (const width of [768, 800, 900]) {
       await page.setViewportSize({ width, height: 900 })
       await page.goto('/team?lang=ru')
+
       const email = page.locator('#invite-email')
+
       await expect(email).toBeVisible()
       expect((await email.boundingBox())!.width).toBeGreaterThanOrEqual(300)
     }
@@ -18,10 +20,12 @@ test.describe('invitation form', () => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/team')
     await expect(page.locator('#invite-email')).toBeVisible()
+
     const top = async (y: Promise<{ y: number } | null>) => Math.round((await y)!.y)
     const email = await top(page.locator('#invite-email').boundingBox())
     const role = await top(page.locator('#invite-role').boundingBox())
     const button = await top(page.getByRole('button', { name: 'Send invitation' }).boundingBox())
+
     expect(role).toBe(email)
     expect(button).toBe(email)
   })

@@ -4,6 +4,7 @@ import { GLOBAL_ERROR_COPY } from '@/lib/global-error-copy'
 /** The document of the root error page: its own <html>, because the root layout that would give one has failed. */
 export function ErrorDocument({ locale, className, onRetry }: { locale: keyof typeof GLOBAL_ERROR_COPY; className: string; onRetry: () => void }) {
   const t = GLOBAL_ERROR_COPY[locale]
+
   return (
     <html lang={locale} className={className}>
       <body>

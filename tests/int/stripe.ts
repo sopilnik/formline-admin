@@ -38,16 +38,21 @@ export function storeSession(tag: string, over: Partial<CheckoutSessionLike> = {
 /** A gateway that answers from the sessions it was given; `lineItems` of an unknown session fails as Stripe's would. */
 export function fakeGateway(known: { session: CheckoutSessionLike; items: LineItemLike[] }[]): StripeGateway & { calls: string[] } {
   const calls: string[] = []
+
   return {
     calls,
     async lineItems(sessionId) {
       calls.push(sessionId)
+
       const found = known.find(k => k.session.id === sessionId)
+
       if (!found) throw new Error(`No such checkout.session: ${sessionId}`)
+
       return found.items
     },
     async completedSessions(since, max) {
       const sessions = known.map(k => k.session).filter(s => s.created * 1000 >= since.getTime()).sort((a, b) => b.created - a.created)
+
       return { sessions: sessions.slice(0, max), more: sessions.length > max }
     },
   }
@@ -58,6 +63,7 @@ export function signedEvent(session: CheckoutSessionLike, over: { id?: string; t
   const id = over.id ?? `evt_${randomUUID().replaceAll('-', '')}`
   const body = JSON.stringify({ id, object: 'event', type: over.type ?? 'checkout.session.completed', data: { object: { object: 'checkout.session', ...session } } })
   const signature = Stripe.webhooks.generateTestHeaderString({ payload: body, secret: over.secret ?? TEST_STRIPE.webhookSecret, timestamp: over.timestamp })
+
   return { body: Buffer.from(body), signature, id }
 }
 
@@ -78,6 +84,7 @@ export async function keepStoreState(admin: pg.Pool): Promise<() => Promise<void
   const orders = (await admin.query<{ id: string }>('select id from fa.orders where workspace_id = any($1::uuid[])', [[owner, template]])).rows.map(r => r.id)
   const notifications = (await admin.query<{ id: string }>('select id from fa.notifications where workspace_id = $1', [owner])).rows.map(r => r.id)
   const events = (await admin.query<{ event_id: string }>('select event_id from fa.stripe_events')).rows.map(r => r.event_id)
+
   return async () => {
     await admin.query('delete from fa.orders where workspace_id = any($1::uuid[]) and not (id = any($2::uuid[]))', [[owner, template], orders])
     await admin.query('delete from fa.customers where workspace_id = any($1::uuid[]) and not (id = any($2::uuid[]))', [[owner, template], customers])

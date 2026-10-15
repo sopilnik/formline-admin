@@ -27,27 +27,36 @@ const WHOLE_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 function searchCondition(term: string): SQL {
   const number = orderNumberOf(term)
   const byNumber = number !== null ? eq(orders.number, number) : sql`false`
+
   if (WHOLE_EMAIL.test(term)) return or(byNumber, sql`lower(${customers.email}) = lower(${term})`)!
 
   const pattern = containsPattern(term)
+
   return or(byNumber, ilike(customers.name, pattern), ilike(customers.email, pattern))!
 }
 
 /** Every filter of the query as one condition; `withStatus: false` leaves the status out (the chip counts). */
 export function orderFilters(workspaceId: string, query: OrdersQuery, now: Date, timeZone: string, withStatus = true): SQL {
   const parts: SQL[] = [eq(orders.workspaceId, workspaceId)]
+
   if (withStatus && query.status.length > 0) parts.push(inArray(orders.status, query.status))
+
   const term = query.q.trim()
+
   if (term) parts.push(searchCondition(term))
+
   const range = presetRange(query.placed, now, timeZone)
+
   if (range) parts.push(gte(orders.placedAt, range.start), lt(orders.placedAt, range.end))
   if (query.source !== 'any') parts.push(eq(orders.source, query.source))
+
   return and(...parts)!
 }
 
 /** The ORDER BY of the query, with the id as the tie-breaker so pages never overlap. */
 export function orderSort(query: OrdersQuery): SQL[] {
   const direction = query.dir === 'asc' ? asc : desc
+
   return [direction(SORT_COLUMNS[query.sort]), direction(orders.id)]
 }
 
@@ -68,14 +77,18 @@ export async function listOrders(tx: Tx, workspaceId: string, query: OrdersQuery
   const byStatus = await tx.select({ status: orders.status, n: count() }).from(orders).innerJoin(customers, orderCustomer)
     .where(orderFilters(workspaceId, query, now, timeZone, false)).groupBy(orders.status)
   const statusCounts = Object.fromEntries(ORDER_STATUSES.map(status => [status, 0])) as Record<OrderStatus, number>
+
   for (const row of byStatus) statusCounts[row.status] = row.n
+
   const filtered = filteredRow?.n ?? 0
+
   return { rows, filtered, total: totalRow?.n ?? 0, statusCounts, page: query.page, pages: pageCount(filtered, query.size) }
 }
 
 /** The orders waiting in "paid": the sidebar count and the first link of the overview's strip. */
 export async function ordersToProcess(tx: Tx, workspaceId: string): Promise<number> {
   const [row] = await tx.select({ n: count() }).from(orders).where(and(eq(orders.workspaceId, workspaceId), eq(orders.status, 'paid')))
+
   return row?.n ?? 0
 }
 
@@ -93,10 +106,15 @@ export type StatusChange =
 export async function changeOrderStatus(tx: Tx, ctx: { workspaceId: string; userId: string }, input: { orderId: string; to: OrderStatus }): Promise<StatusChange> {
   const [row] = await tx.select({ number: orders.number, status: orders.status }).from(orders)
     .where(and(eq(orders.workspaceId, ctx.workspaceId), eq(orders.id, input.orderId))).for('update')
+
   if (!row) return { ok: false, reason: 'not_found' }
+
   const from = row.status
+
   if (!canTransition(from, input.to)) return { ok: false, reason: 'invalid_transition', number: row.number, from, to: input.to }
+
   const updated = await tx.update(orders).set({ status: input.to, updatedAt: sql`now()` }).where(and(eq(orders.workspaceId, ctx.workspaceId), eq(orders.id, input.orderId)))
+
   // The locking read already filtered out a role the update policy refuses; should a policy ever
   // disagree with it, a silent no-op must not be reported as a status change.
   if (!updated.rowCount) throw new Error('the order status update was refused')
@@ -108,10 +126,12 @@ export async function changeOrderStatus(tx: Tx, ctx: { workspaceId: string; user
        where l.workspace_id = v.workspace_id and l.variant_id = v.id
          and l.workspace_id = ${ctx.workspaceId} and l.order_id = ${input.orderId}`)
   }
+
   return { ok: true, number: row.number, from, to: input.to }
 }
 
 const addressSchema = z.object({ name: z.string(), line1: z.string(), postalCode: z.string(), city: z.string(), country: z.string() })
+
 export type ShippingAddress = z.infer<typeof addressSchema>
 
 export type OrderLineDetail = {
@@ -145,6 +165,7 @@ type EventRow = { id: string; kind: 'status' | 'note'; from: string | null; to: 
 function toEventDetail(event: EventRow): OrderEventDetail {
   const common = { id: event.id, actorName: event.actorName, at: event.at }
   const to = asStatus(event.to)
+
   if (event.kind === 'status' && to !== null) return { ...common, kind: 'status', from: asStatus(event.from), to }
   if (event.kind === 'note' && event.note !== null) return { ...common, kind: 'note', note: event.note }
   throw new Error(`order event ${event.id} breaks order_events_shape`)
@@ -168,6 +189,7 @@ export async function getOrder(tx: Tx, workspaceId: string, number: number): Pro
     })
     .from(orders).innerJoin(customers, orderCustomer)
     .where(and(eq(orders.workspaceId, workspaceId), eq(orders.number, number)))
+
   if (!order) return null
 
   const lines = await tx.select().from(orderLines)
@@ -193,6 +215,7 @@ export async function getOrder(tx: Tx, workspaceId: string, number: number): Pro
     .orderBy(asc(orderEvents.at), asc(orderEvents.id))
 
   const address = addressSchema.safeParse(order.address)
+
   return {
     id: order.id, number: order.number, status: order.status, source: order.source, delivery: order.delivery,
     subtotalCents: order.subtotalCents, shippingCents: order.shippingCents, totalCents: order.totalCents, placedAt: order.placedAt,
@@ -210,7 +233,9 @@ export async function getOrder(tx: Tx, workspaceId: string, number: number): Pro
 export async function addOrderNote(tx: Tx, ctx: { workspaceId: string; userId: string }, input: { orderId: string; note: string }): Promise<{ number: number } | null> {
   const [row] = await tx.select({ number: orders.number }).from(orders)
     .where(and(eq(orders.workspaceId, ctx.workspaceId), eq(orders.id, input.orderId)))
+
   if (!row) return null
   await tx.insert(orderEvents).values({ workspaceId: ctx.workspaceId, orderId: input.orderId, kind: 'note', note: input.note, actorUserId: ctx.userId })
+
   return { number: row.number }
 }

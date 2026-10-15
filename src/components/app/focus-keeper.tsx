@@ -14,12 +14,14 @@ const shown = (element: Element): boolean => element.getClientRects().length > 0
 
 function takesFocus(element: Element): element is HTMLElement {
   if (!(element instanceof HTMLElement) || element.tabIndex < 0 || !shown(element)) return false
+
   return !element.hasAttribute('disabled') && element.getAttribute('aria-hidden') !== 'true' && (element as HTMLInputElement).type !== 'hidden'
 }
 
 /** The element itself when it takes the focus, or the first element inside it that does. */
 function firstFocusable(element: Element): HTMLElement | null {
   if (takesFocus(element)) return element
+
   return [...element.querySelectorAll(CANDIDATES)].find(takesFocus) ?? null
 }
 
@@ -27,8 +29,10 @@ function firstFocusable(element: Element): HTMLElement | null {
 function replacement(main: HTMLElement, key: string): HTMLElement | null {
   for (const holder of main.querySelectorAll(`[data-focus-key="${CSS.escape(key)}"]`)) {
     const found = firstFocusable(holder)
+
     if (found) return found
   }
+
   return null
 }
 
@@ -36,18 +40,23 @@ function replacement(main: HTMLElement, key: string): HTMLElement | null {
 function headingNear(ancestors: Element[]): HTMLElement | null {
   for (const ancestor of ancestors) {
     if (!ancestor.isConnected) continue
+
     const heading = [...ancestor.querySelectorAll<HTMLElement>('h1, h2, h3')].find(shown)
+
     if (heading) return heading
   }
+
   return null
 }
 
 function ancestorsOf(control: HTMLElement, main: HTMLElement): Element[] {
   const ancestors: Element[] = []
+
   for (let element = control.parentElement; element; element = element.parentElement) {
     ancestors.push(element)
     if (element === main) break
   }
+
   return ancestors
 }
 
@@ -61,6 +70,7 @@ function ancestorsOf(control: HTMLElement, main: HTMLElement): Element[] {
 export function FocusKeeper() {
   useEffect(() => {
     const main = document.getElementById('main')
+
     if (!main) return
 
     let held: Held | null = null
@@ -69,6 +79,7 @@ export function FocusKeeper() {
 
     const remember = (event: FocusEvent): void => {
       const control = event.target
+
       if (!(control instanceof HTMLElement) || control === main || !main.contains(control)) return
       held = { control, key: control.closest('[data-focus-key]')?.getAttribute('data-focus-key') ?? null, ancestors: ancestorsOf(control, main), path: location.pathname }
       lostAt = null
@@ -79,18 +90,22 @@ export function FocusKeeper() {
       if (document.activeElement && document.activeElement !== document.body) return
       if (location.pathname !== held.path) {
         held = null
+
         return
       }
 
       const found = held.key ? replacement(main, held.key) : null
+
       lostAt ??= Date.now()
       if (!found && held.key && Date.now() - lostAt < REPLACEMENT_WAIT_MS) {
         clearTimeout(timer)
         timer = setTimeout(restore, REPLACEMENT_WAIT_MS)
+
         return
       }
 
       const target = found ?? headingNear(held.ancestors)
+
       held = null
       if (!target) return
       if (!target.hasAttribute('tabindex') && target.tabIndex < 0) target.tabIndex = -1
@@ -101,7 +116,9 @@ export function FocusKeeper() {
     // that removes the control does not move the focus on its own. Looked at a moment later, once a removal has shown.
     const letGo = (event: FocusEvent): void => {
       if (event.relatedTarget || !held || held.control !== event.target) return
+
       const left = held
+
       setTimeout(() => {
         if (held === left && left.control.isConnected && document.activeElement === document.body) held = null
       })
@@ -109,9 +126,11 @@ export function FocusKeeper() {
 
     // The removal may happen inside the main area or in a dialog or a menu's own layer, so the whole body is watched.
     const observer = new MutationObserver(restore)
+
     observer.observe(document.body, { childList: true, subtree: true })
     document.addEventListener('focusin', remember)
     document.addEventListener('focusout', letGo)
+
     return () => {
       observer.disconnect()
       document.removeEventListener('focusin', remember)

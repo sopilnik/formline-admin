@@ -10,10 +10,12 @@ import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 export async function addNote(actor: Actor, orderId: string, note: string, pool: Pool = getPool()): Promise<number | null> {
   return withWorkspace(workspaceContext(actor), async tx => {
     const added = await addOrderNote(tx, { workspaceId: actor.workspaceId, userId: actor.userId }, { orderId, note })
+
     if (!added) return null
     await logActivity(tx, actor.workspaceId, {
       actorUserId: actor.userId, action: 'order.note_added', entityType: 'order', entityId: orderId, details: { number: added.number }, ipHash: actor.ipHash,
     })
+
     return added.number
   }, pool)
 }

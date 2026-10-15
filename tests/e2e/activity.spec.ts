@@ -16,8 +16,10 @@ test.describe('activity log', () => {
     await page.goto('/activity')
     await expect(page.getByRole('heading', { level: 1, name: 'Activity' })).toBeVisible()
     await expect(page).toHaveTitle('Activity · Formline Admin')
+
     const table = page.getByRole('table', { name: 'Activity' })
     const newest = table.getByRole('row').nth(1)
+
     await expect(newest).toContainText('Dana Ortiz')
     await expect(newest).toContainText("Changed a member's role")
     await expect(newest).toContainText('Priya Nair')
@@ -29,11 +31,14 @@ test.describe('activity log', () => {
   test('filters by action, by the system and by period, and clears the filters', async ({ page, context }) => {
     const { workspaceId } = await signInAsSandboxUser(context)
     const order = await asSchemaOwner(async c => (await c.query<{ id: string; number: number }>('select id, number from fa.orders where workspace_id = $1 order by number limit 1', [workspaceId])).rows[0]!)
+
     await asSchemaOwner(c => c.query(
       "insert into fa.activity_log (workspace_id, action, entity_type, entity_id, details, at) values ($1, 'order.status_changed', 'order', $2, $3, now() - interval '40 days')",
       [workspaceId, order.id, JSON.stringify({ number: order.number, from: 'paid', to: 'processing' })]))
     await page.goto('/activity')
+
     const table = page.getByRole('table', { name: 'Activity' })
+
     await expect(table.getByRole('row')).toHaveCount(3)
     await page.getByLabel('Who', { exact: true }).selectOption('system')
     await expect(page).toHaveURL(/\/activity\?actor=system$/)
@@ -55,9 +60,13 @@ test.describe('activity log', () => {
     await page.goto('/activity?lang=ru')
     await expect(page.getByRole('heading', { level: 1, name: 'Журнал' })).toBeVisible()
     await expect(page.getByRole('table', { name: 'Журнал' }).getByRole('row').last()).toContainText('Вход в демо')
+
     const other = await browser.newContext({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip': '203.0.113.49' } })
+
     await signInAsSandboxUser(other, 'manager')
+
     const managerPage = await other.newPage()
+
     await managerPage.goto('/activity')
     await expect(managerPage.getByRole('heading', { level: 1, name: /not found/ })).toBeVisible()
     await other.close()
@@ -68,8 +77,10 @@ test.describe('activity log', () => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/activity')
     await expect(page.getByRole('table', { name: 'Activity' })).toBeVisible()
+
     const widths = await page.getByRole('table', { name: 'Activity' }).getByRole('columnheader')
       .evaluateAll(cells => cells.map(cell => Math.round(cell.getBoundingClientRect().width)))
+
     // When 9 rem, Who 11 rem, Details 14 rem; Action and Subject share what is left.
     expect([widths[0], widths[1], widths[4]]).toEqual([144, 176, 224])
     expect(Math.abs(widths[2]! - widths[3]!)).toBeLessThanOrEqual(1)

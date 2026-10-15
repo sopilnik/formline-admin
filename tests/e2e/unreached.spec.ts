@@ -11,6 +11,7 @@ const NO_ANSWER = 'No answer from the server. Check the connection and try again
 /** Fails the next server action request, with a server error page or a cut connection; every other request goes on. */
 async function failNextAction(page: Page, how: 'error page' | 'cut'): Promise<void> {
   let armed = true
+
   await page.route('**/*', async route => {
     if (!armed || !route.request().headers()['next-action']) return route.fallback()
     armed = false
@@ -24,8 +25,10 @@ test.describe('a request that gets no answer', () => {
     await signInAsSandboxUser(context)
     await openFramed(page, '/orders')
     await page.getByRole('table', { name: 'Orders' }).getByRole('link', { name: /^#\d+$/ }).first().click()
+
     const note = page.getByLabel('Internal note')
     const text = 'Courier called: the parcel waits at the depot until Friday, then goes back to us.'
+
     await hydrated(note)
     await note.fill(text)
     await context.setOffline(true)
@@ -42,7 +45,9 @@ test.describe('a request that gets no answer', () => {
   test('a product save answered with a server error keeps the details typed', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await openFramed(page, '/products/hush')
+
     const details = page.getByRole('region', { name: 'Details' })
+
     await hydrated(details.getByLabel('Description'))
     await details.getByLabel('Description').fill('Quiet type on black, printed on matte paper.')
     await failNextAction(page, 'error page')
@@ -82,7 +87,9 @@ test.describe('a request that gets no answer', () => {
   test('a theme switch that gets no answer keeps the page and what was typed on it', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await openFramed(page, '/products/hush')
+
     const description = page.getByRole('region', { name: 'Details' }).getByLabel('Description')
+
     await hydrated(description)
     await description.fill('A draft not saved yet.')
     await failNextAction(page, 'error page')

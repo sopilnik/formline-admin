@@ -14,6 +14,7 @@ test.describe('roles, languages and unsaved forms', () => {
 
     // Another tab of the same browser continues as a viewer.
     const other = await context.newPage()
+
     await openFramed(other, '/overview')
     await other.getByRole('region', { name: 'Demo sandbox' }).getByRole('button', { name: 'Switch user' }).click()
     await other.getByRole('dialog', { name: 'Switch user' }).getByRole('radio', { name: /Tomás Ferreira/ }).check()
@@ -37,25 +38,34 @@ test.describe('roles, languages and unsaved forms', () => {
 
   test('a form with unsaved changes asks before the tab closes, and an untouched one does not', async ({ context }) => {
     await signInAsSandboxUser(context)
+
     const typed = await context.newPage()
+
     await openFramed(typed, '/products/new')
     await typed.getByLabel('Name').fill('Half Typed')
+
     const asked = new Promise<string>(resolve => typed.once('dialog', dialog => {
       resolve(dialog.type())
       void dialog.dismiss()
     }))
+
     await typed.close({ runBeforeUnload: true })
     expect(await Promise.race([asked, new Promise<string>(resolve => setTimeout(() => resolve('no dialog'), 5000))])).toBe('beforeunload')
     await expect(typed.getByLabel('Name')).toHaveValue('Half Typed')
 
     const untouched = await context.newPage()
+
     await openFramed(untouched, '/products/new')
+
     let dialogs = 0
+
     untouched.on('dialog', dialog => {
       dialogs++
       void dialog.dismiss()
     })
+
     const closed = new Promise<void>(resolve => untouched.once('close', () => resolve()))
+
     await untouched.close({ runBeforeUnload: true })
     await closed
     expect(dialogs).toBe(0)
@@ -63,7 +73,9 @@ test.describe('roles, languages and unsaved forms', () => {
 
   test('a form the server refused still asks before the tab closes', async ({ context }) => {
     await signInAsSandboxUser(context)
+
     const refused = await context.newPage()
+
     await openFramed(refused, '/products/new')
     await refused.getByLabel('Name').fill('Half Typed')
     await refused.getByRole('button', { name: 'Create product' }).click()
@@ -73,6 +85,7 @@ test.describe('roles, languages and unsaved forms', () => {
       resolve(dialog.type())
       void dialog.dismiss()
     }))
+
     await refused.close({ runBeforeUnload: true })
     expect(await Promise.race([asked, new Promise<string>(resolve => setTimeout(() => resolve('no dialog'), 5000))])).toBe('beforeunload')
   })

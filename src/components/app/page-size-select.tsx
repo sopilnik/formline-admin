@@ -17,6 +17,7 @@ export function PageSizeSelect({ id, label, value, options }: Props) {
   const router = useRouter()
   const [, startTransition] = useTransition()
   const [size, setSize] = useOptimistic(value)
+
   return (
     <FilterSelect
       id={id}
@@ -24,6 +25,7 @@ export function PageSizeSelect({ id, label, value, options }: Props) {
       value={String(size)}
       onChange={event => {
         const next = options.find(option => String(option.size) === event.target.value)
+
         if (!next) return
         startTransition(() => {
           setSize(next.size)

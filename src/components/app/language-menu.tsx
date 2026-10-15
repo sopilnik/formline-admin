@@ -13,6 +13,7 @@ export function LanguageMenu({ locale }: { locale: Locale }) {
   const t = useTranslations('language')
   const [, startTransition] = useTransition()
   const send = useReach()
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger render={<Button variant="ghost" aria-label={t('label', { name: t(locale), code: locale.toUpperCase() })} />}>

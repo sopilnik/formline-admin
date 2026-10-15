@@ -10,6 +10,7 @@ test.describe('client cache', () => {
   test('a section opened a moment ago opens again without asking the server', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/overview')
+
     const menu = page.getByRole('navigation', { name: 'Main menu' })
 
     await menu.getByRole('link', { name: /^Orders/ }).click()
@@ -18,6 +19,7 @@ test.describe('client cache', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Products' })).toBeVisible()
 
     const requests = navigationsTo(page, '/orders')
+
     await menu.getByRole('link', { name: /^Orders/ }).click()
     await expect(page.getByRole('heading', { level: 1, name: 'Orders' })).toBeVisible()
     expect(requests).toEqual([])
@@ -26,9 +28,13 @@ test.describe('client cache', () => {
   test('an own change clears it, so a page opened a moment ago shows the change', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/overview')
+
     const menu = page.getByRole('navigation', { name: 'Main menu' })
+
     await menu.getByRole('link', { name: 'Products' }).click()
+
     const row = page.getByRole('table', { name: 'Products' }).getByRole('row').filter({ hasText: 'Far Orbit' })
+
     await expect(row).not.toContainText('Archived')
 
     await row.getByRole('link', { name: 'Far Orbit' }).click()
@@ -37,6 +43,7 @@ test.describe('client cache', () => {
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('Far Orbit is archived.')).toBeVisible()
 
     const requests = navigationsTo(page, '/products')
+
     await menu.getByRole('link', { name: 'Products' }).click()
     await expect(row).toContainText('Archived')
     expect(requests).not.toEqual([])
@@ -45,7 +52,9 @@ test.describe('client cache', () => {
   test('a new product is in the list opened a moment ago', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/overview')
+
     const menu = page.getByRole('navigation', { name: 'Main menu' })
+
     await menu.getByRole('link', { name: 'Products' }).click()
     await expect(page.getByRole('heading', { level: 1, name: 'Products' })).toBeVisible()
 
@@ -63,12 +72,17 @@ test.describe('client cache', () => {
   test('a new slug is what the list opened a moment ago links to', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/overview')
+
     const menu = page.getByRole('navigation', { name: 'Main menu' })
+
     await menu.getByRole('link', { name: 'Products' }).click()
+
     const table = page.getByRole('table', { name: 'Products' })
+
     await table.locator('a[href="/products/sparse"]').click()
 
     const details = page.getByRole('region', { name: 'Details' })
+
     await details.getByLabel('Slug').fill('sparse-grid')
     await details.getByRole('button', { name: 'Save changes' }).click()
     await expect(page).toHaveURL(/\/products\/sparse-grid$/)
@@ -80,7 +94,9 @@ test.describe('client cache', () => {
   test('a new collection is in the list opened a moment ago', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/overview')
+
     const menu = page.getByRole('navigation', { name: 'Main menu' })
+
     await menu.getByRole('link', { name: 'Collections' }).click()
     await expect(page.getByRole('heading', { level: 1, name: 'Collections' })).toBeVisible()
 
@@ -96,9 +112,13 @@ test.describe('client cache', () => {
   test('a new collection slug is what the list opened a moment ago links to', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/overview')
+
     const menu = page.getByRole('navigation', { name: 'Main menu' })
+
     await menu.getByRole('link', { name: 'Collections' }).click()
+
     const list = page.getByRole('list', { name: 'Collections' })
+
     await list.locator('a[href="/collections/night"]').click()
 
     await page.getByLabel('Slug').fill('night-sky')
@@ -118,6 +138,7 @@ test.describe('client cache', () => {
 
     const menu = page.getByRole('navigation', { name: 'Main menu' })
     const list = page.getByRole('list', { name: 'Collections' })
+
     await menu.getByRole('link', { name: 'Collections' }).click()
     await list.getByRole('link', { name: 'Deep Sea' }).click()
     await page.getByRole('region', { name: 'Delete collection' }).getByRole('button', { name: 'Delete collection' }).click()
@@ -138,6 +159,7 @@ test.describe('client cache', () => {
 
     const menu = page.getByRole('navigation', { name: 'Main menu' })
     const table = page.getByRole('table', { name: 'Products' })
+
     await menu.getByRole('link', { name: 'Products' }).click()
     await table.getByRole('link', { name: 'Short Lived' }).click()
     await page.getByRole('region', { name: 'Delete product' }).getByRole('button', { name: 'Delete product' }).click()
@@ -150,7 +172,9 @@ test.describe('client cache', () => {
   test('an opened notification is read on the page opened a moment ago', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/overview')
+
     const bell = page.getByRole('button', { name: /^Notifications/ })
+
     await bell.click()
     await page.getByRole('link', { name: 'All notifications' }).click()
     await expect(page.getByText('8 unread · 8 notifications')).toBeVisible()
@@ -173,6 +197,7 @@ test.describe('client cache', () => {
 
     const menu = page.getByRole('navigation', { name: 'Main menu' })
     const letters = page.getByRole('list', { name: 'Outbox' }).getByRole('listitem')
+
     await menu.getByRole('link', { name: 'Outbox' }).click()
     await expect(letters).toHaveCount(1)
 
@@ -187,6 +212,7 @@ test.describe('client cache', () => {
   test('a template poster and its small copy are kept for a day by the browser and the CDN', async ({ request }) => {
     for (const path of ['/posters/hush.webp', '/posters/thumb/hush.webp']) {
       const res = await request.get(path)
+
       expect(res.status(), path).toBe(200)
       expect(res.headers()['cache-control'], path).toBe('public, max-age=86400')
     }

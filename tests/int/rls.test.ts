@@ -54,6 +54,7 @@ async function seed(): Promise<Seeded> {
 
     return out
   })
+
   return { ws, users, ids }
 }
 
@@ -71,6 +72,7 @@ async function probe(ctx: WorkspaceContext, fn: Parameters<typeof withWorkspace>
     throw new Error('unreachable')
   } catch (error) {
     if (error instanceof Undo) return { ok: true, value: error.value }
+
     return { ok: false, message: errorText(error) }
   }
 }
@@ -115,6 +117,7 @@ describe('isolation', () => {
   it.each(everyTable)('%s: no actor ever sees another workspace, even without a filter', async table => {
     for (const actor of ACTORS) {
       const r = await probe(ctx(A, actor), tx => tx.execute(sql`select count(*)::int as n from ${sql.identifier('fa')}.${sql.identifier(table)} where workspace_id = ${B.ws}`))
+
       expect(r).toMatchObject({ ok: true })
       expect((r as { value: { rows: { n: number }[] } }).value.rows[0]?.n).toBe(0)
     }
@@ -122,19 +125,24 @@ describe('isolation', () => {
 
   it('a query outside withWorkspace sees nothing, also on a reused connection', async () => {
     const direct = appDirectPool()
+
     await withWorkspace(ctx(A, 'owner'), async tx => tx.execute(sql`select 1`), direct)
+
     const { rows } = await direct.query<{ w: string | null; n: number }>('select fa.app_workspace() as w, (select count(*)::int from fa.orders) as n')
+
     expect(rows[0]).toEqual({ w: null, n: 0 })
   })
 
   it('cannot write into another workspace', async () => {
     const r = await probe(ctx(A, 'owner'), tx => tx.execute(sql`insert into fa.collections (workspace_id, slug, name) values (${B.ws}, 'sneaky', 'Sneaky')`))
+
     expect(r).toMatchObject({ ok: false, message: expect.stringMatching(/row-level security/) })
   })
 })
 
 // Expected write rights per table and actor.
 type Rights = { insert: Actor[]; update: Actor[]; delete: Actor[] }
+
 const MANAGERS: Actor[] = ['owner', 'admin', 'manager']
 const business: Record<string, { rights: Rights; insert: (s: Seeded) => ReturnType<typeof sql>; update: (s: Seeded) => ReturnType<typeof sql>; del: (s: Seeded) => ReturnType<typeof sql> }> = {
   collections: {
@@ -202,11 +210,15 @@ const business: Record<string, { rights: Rights; insert: (s: Seeded) => ReturnTy
 /** An insert either succeeds or fails on row-level security; an update or delete changes one row or none. */
 async function attempt(s: Seeded, actor: Actor, statement: ReturnType<typeof sql>, op: 'insert' | 'update' | 'delete'): Promise<boolean> {
   const r = await probe(ctx(s, actor), tx => tx.execute(statement))
+
   if (!r.ok) {
     expect(r.message).toMatch(/row-level security|permission denied/)
+
     return false
   }
+
   const rowCount = (r.value as { rowCount: number | null }).rowCount ?? 0
+
   return op === 'insert' ? true : rowCount === 1
 }
 
@@ -216,6 +228,7 @@ describe('write rights follow the matrix', () => {
       it(`${table}: ${op}`, async () => {
         for (const actor of ACTORS) {
           const statement = op === 'insert' ? spec.insert(A) : op === 'update' ? spec.update(A) : spec.del(A)
+
           expect([table, op, actor, await attempt(A, actor, statement, op)]).toEqual([table, op, actor, spec.rights[op].includes(actor)])
         }
       })
@@ -225,6 +238,7 @@ describe('write rights follow the matrix', () => {
   it('the activity log and order events are append-only for the application', async () => {
     for (const statement of [sql`update fa.activity_log set action = action`, sql`delete from fa.activity_log`, sql`update fa.order_events set note = note`, sql`delete from fa.order_events`]) {
       const r = await probe(ctx(A, 'owner'), tx => tx.execute(statement))
+
       expect(r).toMatchObject({ ok: false, message: expect.stringMatching(/permission denied/) })
     }
     expect(await attempt(A, 'viewer', sql`insert into fa.activity_log (workspace_id, action) values (${A.ws}, 'viewed')`, 'insert')).toBe(true)
@@ -233,6 +247,7 @@ describe('write rights follow the matrix', () => {
 
   it('self-service rows belong to their user only', async () => {
     const own = await probe(ctx(A, 'viewer'), tx => tx.execute(sql`select count(*)::int as n from fa.sessions`))
+
     expect((own as { value: { rows: { n: number }[] } }).value.rows[0]?.n).toBe(1)
     expect(await attempt(A, 'viewer', sql`delete from fa.passkeys where id = ${A.ids.passkey}`, 'delete')).toBe(false)
     expect(await attempt(A, 'owner', sql`delete from fa.passkeys where id = ${A.ids.passkey}`, 'delete')).toBe(true)
@@ -244,18 +259,23 @@ describe('write rights follow the matrix', () => {
 
   it("deactivating a user revokes that user's sessions and nobody else's", async () => {
     const C = await seed()
+
     await withWorkspace(ctx(C, 'admin'), tx => tx.execute(sql`update fa.users set deactivated_at = now() where id = ${C.users.viewer}`), app)
+
     const { rows } = await admin.query<{ role: string; n: number }>(
       'select u.role::text as role, count(s.id)::int as n from fa.users u left join fa.sessions s on s.workspace_id = u.workspace_id and s.user_id = u.id where u.workspace_id = $1 group by u.role order by 1',
       [C.ws])
+
     expect(Object.fromEntries(rows.map(r => [r.role, r.n]))).toEqual({ admin: 1, manager: 1, owner: 1, viewer: 0 })
   })
 
   it('notifications show broadcast and own items only; outbox and activity are for owners and admins', async () => {
     const count = async (actor: Actor, table: string) => {
       const r = await probe(ctx(A, actor), tx => tx.execute(sql`select count(*)::int as n from ${sql.identifier('fa')}.${sql.identifier(table)}`))
+
       return (r as { value: { rows: { n: number }[] } }).value.rows[0]?.n
     }
+
     expect(await count('viewer', 'notifications')).toBe(1)
     expect(await count('manager', 'notifications')).toBe(2)
     expect(await count('viewer', 'notification_reads')).toBe(0)
@@ -271,6 +291,7 @@ describe('functions', () => {
   it('the application may execute exactly the helper functions', async () => {
     const { rows } = await admin.query<{ name: string }>(
       "select p.proname as name from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'fa' and has_function_privilege('app', p.oid, 'execute') order by 1")
+
     expect(rows.map(r => r.name)).toEqual(['accept_invitation', 'app_role', 'app_user', 'app_workspace', 'app_workspace_kind', 'auth_session', 'create_owner', 'create_sandbox', 'delete_expired_sandboxes', 'end_sandbox', 'find_invitation', 'owner_workspace_id', 'pseudonymise_customer', 'purge_housekeeping', 'redeem_owner_recovery', 'reset_sandbox', 'sandbox_sign_in_as', 'template_workspace_id'])
   })
 
@@ -278,14 +299,17 @@ describe('functions', () => {
     await inRollback(admin, async c => {
       await c.query('set local role schema_owner')
       await c.query("create function fa.probe_default_privileges() returns int language sql as 'select 1'")
+
       const { rows } = await c.query<{ open: boolean }>(
         "select has_function_privilege('app', 'fa.probe_default_privileges()', 'execute') as open")
+
       expect(rows[0]?.open).toBe(false)
     })
   })
 
   it('app_workspace_kind reports the current workspace only', async () => {
     const r = await probe(ctx(A, 'viewer'), tx => tx.execute(sql`select fa.app_workspace_kind() as k`))
+
     expect((r as { value: { rows: { k: string }[] } }).value.rows[0]?.k).toBe('sandbox')
   })
 })

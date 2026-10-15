@@ -54,14 +54,17 @@ const nameSql = unicodeName(products.name)
 /** Every filter on the product's own columns; `withStatus: false` leaves the status out (the chip counts). */
 function productFilters(workspaceId: string, query: ProductsQuery, collectionId: string | null, withStatus = true): SQL {
   const parts: SQL[] = [eq(products.workspaceId, workspaceId)]
+
   if (withStatus && query.status.length > 0) parts.push(inArray(products.status, query.status))
   if (query.q) {
     const pattern = containsPattern(query.q)
+
     parts.push(or(ilike(products.name, pattern), ilike(products.slug, pattern))!)
   }
   // A collection slug the workspace does not have keeps no product.
   if (query.collection) parts.push(collectionId ? eq(products.collectionId, collectionId) : sql`false`)
   if (query.stock !== 'any') parts.push(ne(products.status, 'archived'))
+
   return and(...parts)!
 }
 
@@ -69,6 +72,7 @@ function productFilters(workspaceId: string, query: ProductsQuery, collectionId:
 function stockFilter(query: ProductsQuery): SQL | undefined {
   if (query.stock === 'out') return sql`${soldOutSql} > 0`
   if (query.stock === 'low') return sql`${lowSql} > 0`
+
   return undefined
 }
 
@@ -82,6 +86,7 @@ function productSort(query: ProductsQuery): SQL[] {
     updated: sql`${products.updatedAt}`,
   }
   const key = column[query.sort]
+
   return [...(key ? [direction(key)] : []), direction(nameSql), direction(products.id)]
 }
 
@@ -101,7 +106,9 @@ export async function listProducts(tx: Tx, workspaceId: string, query: ProductsQ
     .groupBy(products.workspaceId, products.id).having(having).as('kept')
   const byStatus = await tx.select({ status: sql<ProductStatus>`${kept.status}`, n: count() }).from(kept).groupBy(kept.status)
   const statusCounts = Object.fromEntries(PRODUCT_STATUSES.map(s => [s, 0])) as Record<ProductStatus, number>
+
   for (const row of byStatus) statusCounts[row.status] = row.n
+
   const shown: readonly ProductStatus[] = query.status.length > 0 ? query.status : PRODUCT_STATUSES
   const filtered = shown.reduce((sum, s) => sum + statusCounts[s], 0)
   const [totalRow] = await tx.select({ n: count() }).from(products).where(eq(products.workspaceId, workspaceId))
@@ -127,6 +134,7 @@ export async function listProducts(tx: Tx, workspaceId: string, query: ProductsQ
     collection: collectionOf.get(id)!,
     image: imageId ? (imageOf.get(imageId) ?? null) : null,
   }))
+
   return {
     rows, total: totalRow?.n ?? 0, filtered, statusCounts, collections: collectionOptions,
     page: query.page, pages: pageCount(filtered, query.size),
@@ -163,7 +171,9 @@ export async function getProduct(tx: Tx, workspaceId: string, slug: string): Pro
     tags: products.tags, basePriceCents: products.basePriceCents, collectionId: products.collectionId, imageId: products.imageId,
     createdAt: products.createdAt, updatedAt: products.updatedAt, version: versionSql,
   }).from(products).where(and(eq(products.workspaceId, workspaceId), eq(products.slug, slug)))
+
   if (!product) return null
+
   const [collection] = await tx.select({ id: collections.id, slug: collections.slug, name: collections.name }).from(collections)
     .where(and(eq(collections.workspaceId, workspaceId), eq(collections.id, product.collectionId)))
   const [image] = product.imageId === null ? [] : await tx
@@ -176,6 +186,7 @@ export async function getProduct(tx: Tx, workspaceId: string, slug: string): Pro
   const ids = variantRows.map(v => v.id)
   const [ordered] = ids.length === 0 ? [] : await tx.select({ id: orderLines.id }).from(orderLines)
     .where(and(eq(orderLines.workspaceId, workspaceId), inArray(orderLines.variantId, ids))).limit(1)
+
   return {
     id: product.id, slug: product.slug, name: product.name, description: product.description, status: product.status,
     tags: product.tags, basePriceCents: product.basePriceCents,
@@ -205,21 +216,27 @@ export async function updateProductDetails(tx: Tx, workspaceId: string, input: D
     slug: products.slug, name: products.name, collectionId: products.collectionId, basePriceCents: products.basePriceCents,
     tags: products.tags, description: products.description, version: versionSql,
   }).from(products).where(and(eq(products.workspaceId, workspaceId), eq(products.id, input.productId))).for('update')
+
   if (!row) return { ok: false, reason: 'not_found' }
   if (row.version !== input.version) return { ok: false, reason: 'conflict' }
+
   const [collection] = await tx.select({ id: collections.id }).from(collections)
     .where(and(eq(collections.workspaceId, workspaceId), eq(collections.id, input.collectionId)))
+
   if (!collection) return { ok: false, reason: 'collection_missing' }
   if (input.slug !== row.slug) {
     const [other] = await tx.select({ id: products.id }).from(products).where(and(eq(products.workspaceId, workspaceId), eq(products.slug, input.slug)))
+
     if (other) return { ok: false, reason: 'slug_taken' }
   }
+
   const changed = [
     input.name !== row.name && 'name', input.slug !== row.slug && 'slug', input.collectionId !== row.collectionId && 'collection',
     input.basePriceCents !== row.basePriceCents && 'basePrice', input.tags.join(',') !== row.tags.join(',') && 'tags',
     input.description !== row.description && 'description',
   ].filter((field): field is string => typeof field === 'string')
   const saved = { ok: true as const, slug: input.slug, previousSlug: row.slug, changed }
+
   if (changed.length === 0) return saved
 
   return refuseTaken(tx, SLUG_TAKEN, async () => {
@@ -227,6 +244,7 @@ export async function updateProductDetails(tx: Tx, workspaceId: string, input: D
       name: input.name, slug: input.slug, collectionId: input.collectionId, basePriceCents: input.basePriceCents,
       tags: input.tags, description: input.description, updatedAt: sql`now()`,
     }).where(and(eq(products.workspaceId, workspaceId), eq(products.id, input.productId)))
+
     return saved
   })
 }
@@ -247,16 +265,24 @@ export type ProductCreation =
  */
 export async function createProduct(tx: Tx, workspaceId: string, input: NewProductInput): Promise<ProductCreation> {
   await lockCap(tx, workspaceId, 'products')
+
   const [counted] = await tx.select({ n: count() }).from(products).where(eq(products.workspaceId, workspaceId))
+
   if ((counted?.n ?? 0) >= PRODUCT_CAP) return { ok: false, reason: 'cap' }
+
   const [collection] = await tx.select({ id: collections.id }).from(collections)
     .where(and(eq(collections.workspaceId, workspaceId), eq(collections.id, input.collectionId)))
+
   if (!collection) return { ok: false, reason: 'collection_missing' }
+
   const [other] = await tx.select({ id: products.id }).from(products).where(and(eq(products.workspaceId, workspaceId), eq(products.slug, input.slug)))
+
   if (other) return { ok: false, reason: 'slug_taken' }
+
   const variants = input.palettes.flatMap(palette => SIZE_IDS.map(size => ({ size, palette, sku: `${input.slug}-${size}-${palette}` })))
   const [taken] = await tx.select({ id: productVariants.id }).from(productVariants)
     .where(and(eq(productVariants.workspaceId, workspaceId), inArray(productVariants.sku, variants.map(v => v.sku))))
+
   if (taken) return { ok: false, reason: 'sku_taken' }
 
   return refuseTaken(tx, SLUG_OR_SKU_TAKEN, async () => {
@@ -264,9 +290,11 @@ export async function createProduct(tx: Tx, workspaceId: string, input: NewProdu
       workspaceId, slug: input.slug, name: input.name, collectionId: input.collectionId, description: input.description,
       basePriceCents: input.basePriceCents, status: 'draft', tags: input.tags,
     }).returning({ id: products.id })
+
     await tx.insert(productVariants).values(variants.map(v => ({
       workspaceId, productId: created!.id, sku: v.sku, size: v.size, palette: v.palette, stock: 0, lowStockThreshold: input.lowStockThreshold,
     })))
+
     return { ok: true as const, id: created!.id, slug: input.slug, variants: variants.length }
   })
 }
@@ -288,7 +316,9 @@ export type VariantsSave =
 export async function saveVariants(tx: Tx, workspaceId: string, productId: string, rows: readonly VariantRowInput[]): Promise<VariantsSave> {
   const [product] = await tx.select({ slug: products.slug }).from(products)
     .where(and(eq(products.workspaceId, workspaceId), eq(products.id, productId))).for('update')
+
   if (!product) return { ok: false, reason: 'not_found' }
+
   const stored = await tx.select({
     id: productVariants.id, sku: productVariants.sku, priceOverrideCents: productVariants.priceOverrideCents,
     stock: productVariants.stock, lowStockThreshold: productVariants.lowStockThreshold,
@@ -296,13 +326,19 @@ export async function saveVariants(tx: Tx, workspaceId: string, productId: strin
     .where(and(eq(productVariants.workspaceId, workspaceId), eq(productVariants.productId, productId)))
     .orderBy(asc(productVariants.id)).for('update')
   const byId = new Map(stored.map(v => [v.id, v]))
+
   if (rows.some(row => !byId.has(row.id))) return { ok: false, reason: 'not_found' }
+
   const conflicts = rows.filter(row => row.stock !== row.stockWas && byId.get(row.id)!.stock !== row.stockWas).map(row => byId.get(row.id)!.sku)
+
   if (conflicts.length > 0) return { ok: false, reason: 'stock_conflict', skus: conflicts.sort() }
+
   const changes: VariantChange[] = []
+
   for (const row of rows) {
     const current = byId.get(row.id)!
     const change: VariantChange = { sku: current.sku }
+
     if (row.priceOverrideCents !== current.priceOverrideCents) change.price = [current.priceOverrideCents, row.priceOverrideCents]
     if (row.stock !== row.stockWas && row.stock !== current.stock) change.stock = [current.stock, row.stock]
     if (row.lowStockThreshold !== current.lowStockThreshold) change.threshold = [current.lowStockThreshold, row.lowStockThreshold]
@@ -314,6 +350,7 @@ export async function saveVariants(tx: Tx, workspaceId: string, productId: strin
     }).where(and(eq(productVariants.workspaceId, workspaceId), eq(productVariants.id, row.id)))
     changes.push(change)
   }
+
   return { ok: true, slug: product.slug, changes: changes.sort((a, b) => a.sku.localeCompare(b.sku)) }
 }
 
@@ -326,10 +363,12 @@ export type ProductStatusChange =
 export async function changeProductStatus(tx: Tx, workspaceId: string, input: { productId: string; to: ProductStatus }): Promise<ProductStatusChange> {
   const [row] = await tx.select({ slug: products.slug, status: products.status }).from(products)
     .where(and(eq(products.workspaceId, workspaceId), eq(products.id, input.productId))).for('update')
+
   if (!row) return { ok: false, reason: 'not_found' }
   if (!canTransitionProduct(row.status, input.to)) return { ok: false, reason: 'invalid_transition', from: row.status }
   await tx.update(products).set({ status: input.to, updatedAt: sql`now()` })
     .where(and(eq(products.workspaceId, workspaceId), eq(products.id, input.productId)))
+
   return { ok: true, slug: row.slug, from: row.status, to: input.to }
 }
 
@@ -344,15 +383,20 @@ export type ProductDeletion =
 export async function deleteProduct(tx: Tx, workspaceId: string, productId: string): Promise<ProductDeletion> {
   const [row] = await tx.select({ slug: products.slug, name: products.name, status: products.status, imageId: products.imageId }).from(products)
     .where(and(eq(products.workspaceId, workspaceId), eq(products.id, productId))).for('update')
+
   if (!row) return { ok: false, reason: 'not_found' }
+
   const variantRows = await tx.select({ id: productVariants.id }).from(productVariants)
     .where(and(eq(productVariants.workspaceId, workspaceId), eq(productVariants.productId, productId)))
   const ids = variantRows.map(v => v.id)
   const [ordered] = ids.length === 0 ? [] : await tx.select({ id: orderLines.id }).from(orderLines)
     .where(and(eq(orderLines.workspaceId, workspaceId), inArray(orderLines.variantId, ids))).limit(1)
   const blocker = deleteBlocker(row.status, ordered !== undefined)
+
   if (blocker) return { ok: false, reason: blocker }
   await tx.delete(products).where(and(eq(products.workspaceId, workspaceId), eq(products.id, productId)))
+
   const queued = row.imageId ? await releaseImage(tx, workspaceId, row.imageId) : null
+
   return { ok: true, slug: row.slug, name: row.name, variants: ids.length, queued }
 }

@@ -27,12 +27,16 @@ async function connect(url: string, delays: number[]): Promise<pg.Client> {
   for (let attempt = 0; ; attempt++) {
     // A host that swallows packets would otherwise hold the attempt for minutes.
     const client = new pg.Client({ connectionString: url, connectionTimeoutMillis: 10_000 })
+
     try {
       await client.connect()
+
       return client
     } catch (error) {
       await client.end().catch(() => undefined)
+
       const delay = delays[attempt]
+
       if (delay === undefined) throw new Error(`database unreachable after ${attempt + 1} attempts`, { cause: error })
       await sleep(delay)
     }
@@ -41,9 +45,13 @@ async function connect(url: string, delays: number[]): Promise<pg.Client> {
 
 function appCredentials(appUrl: string): { password: string } {
   const url = new URL(appUrl)
+
   if (decodeURIComponent(url.username) !== 'app') throw new MigrateConfigError('DATABASE_URL must connect as the app role')
+
   const password = decodeURIComponent(url.password)
+
   if (password.length < 16) throw new MigrateConfigError('the app role password must be at least 16 characters')
+
   return { password }
 }
 
@@ -62,6 +70,7 @@ async function bootstrap(client: pg.Client, password: string): Promise<void> {
   // is not a superuser, as Neon's owner role is, may not name SUPERUSER in ALTER ROLE at all, and the server's own role
   // check refuses to start on a role that has gained a privilege since.
   const exists = await client.query("select 1 from pg_catalog.pg_roles where rolname = 'app'")
+
   await client.query(exists.rowCount
     ? `alter role app with login password ${lit}`
     : `create role app login password ${lit} ${attrs}`)
@@ -71,6 +80,7 @@ async function bootstrap(client: pg.Client, password: string): Promise<void> {
   await client.query("alter role app set lock_timeout = '10s'")
 
   const { rows } = await client.query<{ db: string }>('select current_database() as db')
+
   await client.query(`grant connect on database ${client.escapeIdentifier(rows[0]!.db)} to app`)
   await client.query('create schema if not exists fa authorization schema_owner')
   await client.query('grant usage on schema fa to app')
@@ -85,6 +95,7 @@ export async function migrate(options: MigrateOptions): Promise<{ applied: strin
   const dir = options.dir ?? DEFAULT_DIR
   const { password } = appCredentials(options.appUrl)
   const client = await connect(options.migratorUrl, options.retryDelaysMs ?? DEFAULT_RETRY_DELAYS_MS)
+
   try {
     await client.query('select pg_advisory_lock($1)', [MIGRATE_LOCK])
     await bootstrap(client, password)
@@ -95,6 +106,7 @@ export async function migrate(options: MigrateOptions): Promise<{ applied: strin
 
     for (const file of files) {
       if (done.has(file)) continue
+
       const text = await readFile(new URL(file, dir), 'utf8')
 
       await client.query('begin')
@@ -117,6 +129,7 @@ export async function migrate(options: MigrateOptions): Promise<{ applied: strin
     // own directory, such as the migration-runner tests, has no fa.workspaces to build into.
     if (!options.dir) {
       const template = await buildTemplate(client)
+
       if (template.rebuilt) log({ event: 'template.built', version: template.version })
     }
 

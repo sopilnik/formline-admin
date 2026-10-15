@@ -13,8 +13,10 @@ export async function readiness(pool: Pool, timeoutMs = 5_000): Promise<Readines
   const late = new Promise<never>((_, reject) => {
     timer = setTimeout(() => reject(new Error('the database did not answer in time')), timeoutMs)
   })
+
   try {
     await Promise.race([assertAppRole(pool), late])
+
     return { status: 'ok', db: 'ok', role: 'ok' }
   } catch (error) {
     return { status: 'unavailable', failed: error instanceof AppRoleError ? 'role' : 'db' }

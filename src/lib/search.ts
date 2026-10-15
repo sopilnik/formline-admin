@@ -4,6 +4,7 @@ import type { ProductStatus } from '@/lib/products/status'
 
 /** A term shorter than this searches nothing: one letter would match most of the catalog. */
 const SEARCH_MIN = 2
+
 /** As long as any field the search looks at is worth typing. */
 export const SEARCH_MAX = 100
 /** Results per group. */
@@ -21,11 +22,13 @@ export const NO_RESULTS: SearchResults = { orders: [], customers: [], products: 
 export function searchTerm(raw: string | null | undefined): string | null {
   const term = (raw ?? '').trim().replace(/\s+/g, ' ')
   const length = [...term].length
+
   return length >= SEARCH_MIN && length <= SEARCH_MAX ? term : null
 }
 
 /** An order number typed with or without its "#". */
 export function orderNumberOf(term: string): number | null {
   const match = /^#?(\d{1,9})$/.exec(term)
+
   return match ? Number(match[1]) : null
 }

@@ -8,7 +8,9 @@ export const APP_DIRECT_URL = `postgres://app:${APP_PASSWORD}@127.0.0.1:55432/${
 /** The same address on another database, for the tests that make a database of their own. */
 export function withDatabase(url: string, database: string): string {
   const address = new URL(url)
+
   address.pathname = `/${database}`
+
   return address.href
 }
 

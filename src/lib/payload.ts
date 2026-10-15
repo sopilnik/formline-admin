@@ -11,18 +11,21 @@ export function asRecord(value: unknown): Payload | null {
 /** A text with more than spaces in it. */
 export function text(payload: Payload, key: string): string | null {
   const value = payload[key]
+
   return typeof value === 'string' && value.trim() !== '' ? value : null
 }
 
 /** A whole number, of either sign. */
 export function whole(payload: Payload, key: string): number | null {
   const value = payload[key]
+
   return typeof value === 'number' && Number.isInteger(value) ? value : null
 }
 
 /** A whole number from zero. */
 export function count(payload: Payload, key: string): number | null {
   const value = whole(payload, key)
+
   return value !== null && value >= 0 ? value : null
 }
 

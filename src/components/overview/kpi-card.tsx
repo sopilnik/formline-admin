@@ -10,6 +10,7 @@ export function KpiCard({ kpi }: { kpi: KpiView }) {
   const t = useTranslations('overview.kpis')
   const labelId = `kpi-${kpi.id}-label`
   const hintId = `kpi-${kpi.id}-hint`
+
   return (
     <div role="group" aria-labelledby={labelId} className="row-span-3 grid min-w-0 grid-rows-subgrid gap-y-0 rounded-lg border bg-card p-4 sm:p-5">
       <div className="flex items-start gap-1 text-muted-foreground">

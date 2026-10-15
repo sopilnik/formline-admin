@@ -20,12 +20,14 @@ export async function deleteOwnSession(tx: Tx, input: { userId: string; currentI
   const [row] = await tx.delete(sessions)
     .where(and(eq(sessions.userId, input.userId), eq(sessions.id, input.id), ne(sessions.id, input.currentId)))
     .returning({ device: sessions.userAgentSummary })
+
   return row ?? null
 }
 
 /** The sign-in a session belongs to, which every rotation of it keeps (migration 0014). */
 export async function sessionSignInId(tx: Tx, sessionId: string): Promise<string | null> {
   const [row] = await tx.select({ signInId: sessions.signInId }).from(sessions).where(eq(sessions.id, sessionId))
+
   return row?.signInId ?? null
 }
 
@@ -36,5 +38,6 @@ export async function deleteOtherOwnSessions(tx: Tx, session: { workspaceId: str
     eq(sessions.userId, session.userId),
     ne(sessions.id, session.id),
   )).returning({ id: sessions.id })
+
   return ended.length
 }

@@ -17,6 +17,7 @@ export function SetupForm({ completed, secret, qr }: { completed: boolean; secre
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending, unreached] = useFormAction(setupAction, IDLE as FormState<SetupField>, form)
   const errorFor = useErrorText(state)
+
   useFocusOnError(state, 'setup', 'token')
   if (state.status === 'done') return <RecoveryCodesView codes={state.recoveryCodes ?? []} />
   if (completed) {
@@ -27,7 +28,9 @@ export function SetupForm({ completed, secret, qr }: { completed: boolean; secre
       </div>
     )
   }
+
   const values = state.status === 'error' ? state.values ?? {} : {}
+
   return (
     <form ref={form} action={action} noValidate className="flex flex-col gap-4">
       <UnreachedAlert unreached={unreached} />

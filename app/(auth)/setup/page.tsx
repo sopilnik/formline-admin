@@ -17,21 +17,28 @@ import { authConfig } from '@/server/config'
  */
 const setupState = cache(async () => {
   if (!authConfig().setupToken) return { owner: null, gone: true }
+
   const owner = await findOwner()
+
   return { owner, gone: owner !== null && (await getSession())?.userId !== owner.id }
 })
 
 export async function generateMetadata(): Promise<Metadata> {
   if ((await setupState()).gone) return { title: (await getTranslations('notFound'))('title') }
+
   const t = await getTranslations('auth.setup')
+
   return { title: t('title') }
 }
 
 export default async function SetupPage() {
   const { owner, gone } = await setupState()
+
   if (gone) notFound()
+
   const t = await getTranslations('auth')
   const secret = generateTotpSecret()
+
   return (
     <AuthCard title={t('setup.title')} description={t('setup.intro')}>
       <SetupForm

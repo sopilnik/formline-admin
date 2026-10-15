@@ -10,6 +10,7 @@ import { useState, type ComponentProps } from 'react'
  */
 export function IntentLink({ onPointerEnter, onFocus, ...props }: Omit<ComponentProps<typeof Link>, 'prefetch'>) {
   const [wanted, setWanted] = useState(false)
+
   return (
     <Link
       {...props}

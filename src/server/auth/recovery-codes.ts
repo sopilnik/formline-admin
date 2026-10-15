@@ -9,6 +9,7 @@ export const RECOVERY_CODE_COUNT = 10
 export function generateRecoveryCodes(): string[] {
   return Array.from({ length: RECOVERY_CODE_COUNT }, () => {
     const code = encodeBase32LowerCaseNoPadding(randomBytes(7)).slice(0, 10)
+
     return `${code.slice(0, 5)}-${code.slice(5)}`
   })
 }
@@ -16,6 +17,7 @@ export function generateRecoveryCodes(): string[] {
 /** Lower case without spaces or dashes; null unless it has the shape of a code. */
 export function normalizeRecoveryCode(input: string): string | null {
   const code = input.toLowerCase().replace(/[\s-]/g, '')
+
   return /^[a-z2-7]{10}$/.test(code) ? code : null
 }
 

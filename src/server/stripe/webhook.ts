@@ -26,29 +26,42 @@ export async function handleWebhook(
   deps: { config: StripeConfig; gateway: StripeGateway; pool?: Pool },
 ): Promise<WebhookAnswer> {
   if (!delivery.signature) return { status: 400, body: { received: false, error: 'signature' } }
+
   let event: Stripe.Event
+
   try {
     event = Stripe.webhooks.constructEvent(delivery.body, delivery.signature, deps.config.webhookSecret)
   } catch {
     log.warn({ event: 'stripe.signature_refused' })
+
     return { status: 400, body: { received: false, error: 'signature' } }
   }
   if (event.type !== 'checkout.session.completed') return received
+
   const session: CheckoutSessionLike = event.data.object
+
   if (session.payment_status !== 'paid') return received
+
   const pool = deps.pool ?? getPool()
+
   try {
     const reading = readCheckout(session, await deps.gateway.lineItems(session.id))
+
     if (!reading.ok) {
       await pool.query('insert into fa.stripe_events (event_id, outcome) values ($1, $2) on conflict do nothing', [event.id, `skipped:${reading.problem}`])
       log.warn({ event: 'stripe.skipped', stripeEvent: event.id, problem: reading.problem })
+
       return received
     }
+
     const result = await ingestOrder(reading.order, { eventId: event.id, pseudonymKey: deps.config.pseudonymKey }, pool)
+
     log.info({ event: 'stripe.delivery', stripeEvent: event.id, outcome: result.status })
+
     return received
   } catch (error) {
     log.error({ event: 'stripe.failed', stripeEvent: event.id, err: error })
+
     return { status: 500, body: { received: false, error: 'failed' } }
   }
 }

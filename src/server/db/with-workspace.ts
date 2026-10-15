@@ -38,6 +38,7 @@ export function workspaceContext(who: { workspaceId: string; userId: string; rol
  */
 export async function withWorkspace<T>(ctx: WorkspaceContext, fn: (tx: Tx) => Promise<T>, pool: Pool = getPool()): Promise<T> {
   const checked = parseWorkspaceContext(ctx)
+
   return withWorkspaces(async enter => fn(await enter(checked)), pool)
 }
 
@@ -49,19 +50,25 @@ export async function withWorkspace<T>(ctx: WorkspaceContext, fn: (tx: Tx) => Pr
 export async function withWorkspaces<T>(fn: (enter: (ctx: WorkspaceContext) => Promise<Tx>) => Promise<T>, pool: Pool = getPool()): Promise<T> {
   const client = await pool.connect()
   let broken = false
+
   try {
     await client.query('begin')
+
     const tx = drizzle({ client, schema })
     const result = await fn(async ctx => {
       const { workspaceId, userId, role } = parseWorkspaceContext(ctx)
+
       // The statement timeout is set here, per transaction: the pooler refuses it as a connection parameter.
       await client.query(
         `select set_config('app.workspace_id', $1, true), set_config('app.user_id', $2, true), set_config('app.role', $3, true),
                 set_config('statement_timeout', $4, true)`,
         [workspaceId, userId ?? '', role, STATEMENT_TIMEOUT])
+
       return tx
     })
+
     await client.query('commit')
+
     return result
   } catch (error) {
     await client.query('rollback').catch(() => { broken = true })

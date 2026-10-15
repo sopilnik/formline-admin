@@ -45,15 +45,18 @@ export function AuthenticatorSection({ enabled, recent, canDisable, secret, qr }
   // appears after "Turn off"; an error from a submit inside it is a new state.
   const shown = state === replacingAfter || state === closed ? (IDLE as FormState<'code'>) : state
   const errorFor = useErrorText(shown)
+
   useFocusOnError(state, 'totp', 'code')
 
   const settle = useEffectEvent((result: FormState<'code'>) => {
     if (result.status === 'done') toast.success(result.recoveryCodes ? t('enabled') : t('replaced'))
   })
+
   useEffect(() => settle(state), [state])
 
   const disable = (): void => startTransition(async () => {
     const result = await send(() => disableTotpAction())
+
     if (!result) return
     setConfirming(false)
     if (result.ok) {

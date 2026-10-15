@@ -29,17 +29,24 @@ export async function createInvitation(tx: Tx, workspaceId: string, input: {
   const email = input.email.toLowerCase()
   const [member] = await tx.select({ id: users.id }).from(users)
     .where(and(eq(users.workspaceId, workspaceId), eq(sql`lower(${users.email})`, email)))
+
   if (member) return { ok: false, reason: 'member' }
+
   const [open] = await tx.select({ id: invitations.id }).from(invitations)
     .where(and(eq(invitations.workspaceId, workspaceId), eq(sql`lower(${invitations.email})`, email), pending))
+
   if (open) return { ok: false, reason: 'pending' }
   await lockCap(tx, workspaceId, 'team')
+
   const [members] = await tx.select({ n: count() }).from(users).where(eq(users.workspaceId, workspaceId))
   const [invited] = await tx.select({ n: count() }).from(invitations).where(and(eq(invitations.workspaceId, workspaceId), pending))
+
   if ((members?.n ?? 0) + (invited?.n ?? 0) >= TEAM_CAP) return { ok: false, reason: 'cap' }
+
   const [row] = await tx.insert(invitations).values({
     workspaceId, email, role: input.role, tokenHash: input.tokenHash, token: input.token, invitedBy: input.invitedBy, expiresAt: input.expiresAt,
   }).returning({ id: invitations.id })
+
   return { ok: true, id: row!.id }
 }
 
@@ -47,6 +54,7 @@ export async function createInvitation(tx: Tx, workspaceId: string, input: {
 export async function getPendingInvitation(tx: Tx, workspaceId: string, id: string): Promise<{ email: string; role: Role; token: string } | null> {
   const [row] = await tx.select({ email: invitations.email, role: invitations.role, token: invitations.token }).from(invitations)
     .where(and(eq(invitations.workspaceId, workspaceId), eq(invitations.id, id), pending))
+
   return row?.token ? { email: row.email, role: row.role, token: row.token } : null
 }
 
@@ -55,6 +63,7 @@ export async function revokeInvitation(tx: Tx, workspaceId: string, id: string):
   const [row] = await tx.update(invitations).set({ revokedAt: sql`now()` })
     .where(and(eq(invitations.workspaceId, workspaceId), eq(invitations.id, id), pending))
     .returning({ email: invitations.email })
+
   return row ?? null
 }
 
@@ -65,5 +74,6 @@ export async function findInvitation(tx: Tx, tokenHash: string): Promise<{ state
   const result = await tx.execute<{ state: InvitationState; email: string; role: Role; inviter_name: string | null }>(
     sql`select state, email, role, inviter_name from fa.find_invitation(${tokenHash})`)
   const row = result.rows[0]
+
   return row ? { state: row.state, email: row.email, role: row.role, inviterName: row.inviter_name } : null
 }

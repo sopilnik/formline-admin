@@ -7,6 +7,7 @@ describe('package.json', () => {
       dependencies: Record<string, string>
       devDependencies: Record<string, string>
     }
+
     for (const [name, version] of Object.entries({ ...pkg.dependencies, ...pkg.devDependencies })) {
       expect(`${name}@${version}`).toMatch(/@\d+\.\d+\.\d+$/)
     }

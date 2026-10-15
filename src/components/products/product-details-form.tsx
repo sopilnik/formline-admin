@@ -35,6 +35,7 @@ export function ProductDetailsForm(props: Props) {
     router.refresh()
     setGeneration(n => n + 1)
   })
+
   return <DetailsForm key={generation} {...props} reloading={reloading} onReload={reload} />
 }
 
@@ -44,7 +45,9 @@ function DetailsForm({ productId, slug, version, values, collections, reloading,
   const router = useRouter()
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending, unreached] = useFormAction(updateProductDetailsAction, IDLE, form)
+
   useLeaveGuard(form, state.status === 'error')
+
   // Once per result, with the latest translations.
   const settle = useEffectEvent((result: DetailsState) => {
     if (result.status === 'done') {
@@ -58,11 +61,15 @@ function DetailsForm({ productId, slug, version, values, collections, reloading,
     }
     if (result.status === 'error') {
       const first = DETAIL_FIELDS.find(field => result.fieldErrors[field])
+
       form.current?.querySelector<HTMLElement>(first ? `[name="${first}"]` : '[role="alert"]')?.focus()
     }
   })
+
   useEffect(() => settle(state), [state])
+
   const failure = state.status === 'error' && state.error !== 'invalid' ? state.error : null
+
   return (
     <form ref={form} action={action} noValidate className="flex flex-col gap-4">
       <UnreachedAlert unreached={unreached} />

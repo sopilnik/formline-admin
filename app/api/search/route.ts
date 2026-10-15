@@ -9,9 +9,12 @@ export const dynamic = 'force-dynamic'
 /** The palette's search across orders, customers and products; every role reads them. */
 export async function GET(request: Request): Promise<Response> {
   const session = await getSession()
+
   if (!session?.secondFactorVerified) return new Response(null, { status: 401 })
   if (!can(session.role, 'data.read', session.workspaceKind)) return new Response(null, { status: 403 })
+
   const term = searchTerm(new URL(request.url).searchParams.get('q'))
   const results = term ? await withWorkspace(workspaceContext(session), tx => searchWorkspace(tx, session.workspaceId, term)) : NO_RESULTS
+
   return Response.json(results, { headers: { 'Cache-Control': 'private, no-store' } })
 }

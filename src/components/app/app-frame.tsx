@@ -18,6 +18,7 @@ type Props = {
 
 export async function AppFrame({ items, collapsed, theme, locale, user, unread, shortcuts, banner, children }: Props) {
   const t = await getTranslations('common')
+
   return (
     <FrameReady>
       <FocusKeeper />

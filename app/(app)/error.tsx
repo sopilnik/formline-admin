@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 // The error itself is logged on the server; the browser receives only its digest.
 export default function AppError({ retry }: { error: Error & { digest?: string }; retry: () => void }) {
   const t = useTranslations('errors')
+
   return (
     <div className="flex max-w-md flex-col items-start gap-3">
       <h1 className="text-2xl font-bold tracking-tight">{t('title')}</h1>

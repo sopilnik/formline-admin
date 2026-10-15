@@ -27,6 +27,7 @@ async function visitorMeta(): Promise<VisitorMeta> {
 /** "Enter the demo": a new sandbox and its session, then the overview. */
 export async function enterDemoAction(_previous: FormState, _form: FormData): Promise<FormState> {
   const entry = await enterSandbox(await visitorMeta())
+
   if (!entry.ok) return failureState(entry)
   await setSessionCookie(entry.token, entry.expiresAt, { demo: true })
   after(() => cleanupExpiredSandboxes())
@@ -36,8 +37,11 @@ export async function enterDemoAction(_previous: FormState, _form: FormData): Pr
 /** "Reset data": a fresh copy and a new session for the same visitor. */
 export async function resetDemoAction(_previous: FormState, _form: FormData): Promise<FormState> {
   const session = await requireSession()
+
   if (session.workspaceKind !== 'sandbox') redirect('/overview')
+
   const entry = await resetSandbox(session, await visitorMeta())
+
   if (!entry.ok) return failureState(entry)
   await setSessionCookie(entry.token, entry.expiresAt, { demo: true })
   redirect('/overview')
@@ -46,15 +50,20 @@ export async function resetDemoAction(_previous: FormState, _form: FormData): Pr
 /** "Switch user": continue as another demo user of the same sandbox. */
 export async function switchUserAction(_previous: FormState<'code'>, form: FormData): Promise<FormState<'code'>> {
   const session = await requireSession()
+
   if (session.workspaceKind !== 'sandbox') redirect('/overview')
+
   const target = z.uuid().safeParse(formText(form, 'user'))
+
   if (!target.success) return { status: 'error', error: 'generic' }
+
   const meta = await visitorMeta()
   const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value)
   const result = await switchUser(session, {
     targetUserId: target.data, code: formText(form, 'code'), userAgentSummary: meta.userAgentSummary, ipHash: meta.ipHash,
     preferences: { locale: meta.locale, theme },
   })
+
   if (!result.ok) return failureState(result)
   await setSessionCookie(result.token, result.expiresAt, { demo: true })
   redirect('/overview')

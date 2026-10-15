@@ -9,18 +9,23 @@ function fakeTimer() {
   const timer: Timer = {
     after(ms, fn) {
       const entry = { ms, fn }
+
       queue.push(entry)
+
       return () => {
         const i = queue.indexOf(entry)
+
         if (i >= 0) queue.splice(i, 1)
       }
     },
   }
   const fire = () => {
     const entry = queue.shift()
+
     if (!entry) throw new Error('nothing scheduled')
     entry.fn()
   }
+
   return { timer, queue, fire }
 }
 
@@ -39,6 +44,7 @@ describe('scheduleDailyJob', () => {
     const run = vi.fn(async () => undefined)
     const { timer, queue, fire } = fakeTimer()
     const stop = scheduleDailyJob(run, now, timer)
+
     expect(queue.map(q => q.ms)).toEqual([msUntilNextRun(now)])
     fire()
     expect(run).toHaveBeenCalledTimes(1)
@@ -52,6 +58,7 @@ describe('scheduleDailyJob', () => {
   it('keeps going when a run fails', async () => {
     const run = vi.fn(async () => { throw new Error('database away') })
     const { timer, queue, fire } = fakeTimer()
+
     scheduleDailyJob(run, Date.parse('2026-09-26T10:00:00Z'), timer)
     fire()
     await Promise.resolve()

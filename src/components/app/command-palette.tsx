@@ -33,9 +33,11 @@ function focusOnArrival(id: string): void {
   const started = performance.now()
   const look = (): void => {
     const field = document.getElementById(id)
+
     if (field) field.focus()
     else if (performance.now() - started < 5000) requestAnimationFrame(look)
   }
+
   requestAnimationFrame(look)
 }
 
@@ -76,7 +78,9 @@ export function CommandPalette({ items, access }: { items: NavItem[]; access: Pa
       setOpened(count => count + 1)
       setOpen(current => !current)
     }
+
     document.addEventListener('keydown', onKey)
+
     return () => document.removeEventListener('keydown', onKey)
   }, [])
 
@@ -139,12 +143,15 @@ function PaletteSearch({ items, access, close }: { items: NavItem[]; access: Pal
     setQuery(next)
     window.clearTimeout(timer.current)
     request.current?.abort()
+
     const term = searchTerm(next)
+
     setFailed(false)
     setSearching(term !== null)
     if (!term) return
     timer.current = window.setTimeout(() => {
       const controller = new AbortController()
+
       request.current = controller
       fetch(`/api/search?q=${encodeURIComponent(term)}`, { signal: controller.signal, cache: 'no-store' })
         .then(response => (response.ok ? (response.json() as Promise<SearchResults>) : Promise.reject(new Error(String(response.status)))))

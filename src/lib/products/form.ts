@@ -16,7 +16,9 @@ const TAG = /^[\p{Ll}\p{N}]+(-[\p{Ll}\p{N}]+)*$/u
 export function parseTags(text: string): string[] | null {
   const tags = text.split(',').map(tag => cleanLine(tag).toLocaleLowerCase().replace(/\s+/g, '-')).filter(Boolean)
   const unique = [...new Set(tags)]
+
   if (unique.length > TAGS_MAX || unique.some(tag => [...tag].length > TAG_MAX || !TAG.test(tag))) return null
+
   return unique
 }
 
@@ -38,26 +40,36 @@ export type DetailsResult = { ok: true; data: ProductDetails } | { ok: false; fi
 export function parseProductDetails(input: Record<DetailField, string>): DetailsResult {
   const fieldErrors: Partial<Record<DetailField, DetailIssue>> = {}
   const parsed = schema.safeParse(input)
+
   if (!parsed.success) {
     for (const problem of parsed.error.issues) {
       const field = problem.path[0]
+
       if (typeof field === 'string' && (DETAIL_FIELDS as readonly string[]).includes(field)) fieldErrors[field as DetailField] ??= problem.message as DetailIssue
     }
   }
+
   const basePriceCents = parseBasePrice(input.basePrice)
+
   if (basePriceCents === null) fieldErrors.basePrice = 'price_invalid'
+
   const tags = parseTags(input.tags)
+
   if (tags === null) fieldErrors.tags = 'tags_invalid'
+
   const name = parsed.success ? parsed.data.name : cleanLine(input.name)
   const typed = parsed.success ? parsed.data.slug : input.slug.trim().toLowerCase()
   const slug = typed || slugify(name, PRODUCT_SLUG_MAX)
+
   if (!fieldErrors.name && !isSlug(slug, PRODUCT_SLUG_MAX)) fieldErrors.slug = slug ? 'slug_invalid' : 'slug_required'
   if (!parsed.success || Object.keys(fieldErrors).length > 0) return { ok: false, fieldErrors }
+
   return { ok: true, data: { name, slug, collectionId: parsed.data.collection, basePriceCents: basePriceCents!, tags: tags!, description: parsed.data.description } }
 }
 
 /** The palettes ticked on the new-product form, in the store's order; null when none of the store's is among them. */
 export function parsePalettes(values: readonly string[]): string[] | null {
   const chosen = PALETTE_IDS.filter(id => values.includes(id))
+
   return chosen.length > 0 ? chosen : null
 }

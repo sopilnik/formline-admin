@@ -26,6 +26,7 @@ export async function consume(limit: Limit, subject: string, pool: Queryable = g
      returning r.count, ceil(extract(epoch from r.window_start + make_interval(secs => $3::int) - now()))::int as retry, r.window_start`,
     [limit.purpose, subject, limit.windowSeconds])
   const row = rows[0]!
+
   return { allowed: row.count <= limit.limit, count: row.count, retryAfterSeconds: Math.max(row.retry, 1), windowStart: row.window_start }
 }
 
@@ -45,6 +46,7 @@ export async function peek(limit: Limit, subject: string, pool: Pool = getPool()
        from w`,
     [limit.purpose, subject, limit.windowSeconds])
   const count = rows[0]?.count ?? 0
+
   return { allowed: count < limit.limit, count, retryAfterSeconds: Math.max(rows[0]?.retry ?? 1, 1) }
 }
 
@@ -59,6 +61,7 @@ export async function setLock(purpose: string, subject: string, seconds: number,
      on conflict (purpose, subject, window_start) do nothing
      returning window_start::text as start`,
     [purpose, subject, seconds])
+
   return rows[0]?.start ?? null
 }
 
@@ -76,6 +79,7 @@ export async function lockRemaining(purpose: string, subject: string, pool: Quer
        from fa.rate_limits r
       where r.purpose = $1 and r.subject = $2 and r.count > 0 and r.window_start + make_interval(secs => r.count) > now()`,
     [purpose, subject])
+
   return Math.max(rows[0]?.remaining ?? 0, 0)
 }
 

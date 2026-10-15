@@ -19,12 +19,16 @@ export type Granted = Extract<Claim, { ok: true }>
 export async function claimAttempt(guard: AttemptGuard, subject: string, pool: Pool = getPool()): Promise<Claim> {
   const client = await pool.connect()
   let broken = false
+
   try {
     await client.query('begin')
     // Held until the commit: the claims of one subject run one after another, each seeing the lock the last one set.
     await client.query('select pg_advisory_xact_lock(hashtext($1), hashtext($2))', [guard.limit.purpose, subject])
+
     const claim = await claimInTransaction(client, guard, subject)
+
     await client.query('commit')
+
     return claim
   } catch (error) {
     await client.query('rollback').catch(() => { broken = true })
@@ -36,11 +40,13 @@ export async function claimAttempt(guard: AttemptGuard, subject: string, pool: P
 
 async function claimInTransaction(client: PoolClient, guard: AttemptGuard, subject: string): Promise<Claim> {
   const remaining = await lockRemaining(guard.lock, subject, client)
+
   if (remaining > 0) return { ok: false, retryAfterSeconds: remaining }
 
   const counted = await consume(guard.limit, subject, client)
   const seconds = guard.lockSeconds(counted.count)
   const lockStart = seconds > 0 ? await setLock(guard.lock, subject, seconds, client) : null
+
   return { ok: true, count: counted.count, windowStart: counted.windowStart, lockStart }
 }
 

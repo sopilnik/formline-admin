@@ -16,11 +16,15 @@ import { readerOf } from '@/server/notifications/feed'
 export async function openNotificationAction(form: FormData): Promise<void> {
   const session = await requireSession()
   const id = z.uuid().safeParse(formText(form, 'id'))
+
   if (!id.success) redirect('/notifications')
+
   const href = await withWorkspace(workspaceContext(session), async tx => {
     const opened = await markNotificationRead(tx, await readerOf(tx, session), id.data)
+
     return opened ? notificationHref(tx, session, opened.kind, opened.payload) : '/notifications'
   })
+
   // The page of notifications shows the mark; this also clears the pages the browser keeps for a minute.
   revalidatePath('/notifications')
   redirect(href)
@@ -29,6 +33,7 @@ export async function openNotificationAction(form: FormData): Promise<void> {
 /** "Mark all as read" in the bell and on the page; the page renders again with every mark in place. */
 export async function markAllNotificationsReadAction(): Promise<void> {
   const session = await requireSession()
+
   await withWorkspace(workspaceContext(session), async tx => markAllNotificationsRead(tx, await readerOf(tx, session)))
   refresh()
 }

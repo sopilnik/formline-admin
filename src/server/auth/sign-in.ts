@@ -38,19 +38,24 @@ export async function claimPasswordAttempt(input: PasswordAttempt, deps: AuthDep
   const { pool, config } = deps
   const addressSubject = ipSubject(input.ip, config.ipHashKey)
   const address = await consume(LIMITS.signInFailIp, addressSubject, pool)
+
   if (!address.allowed) return { ok: false, retryAfterSeconds: address.retryAfterSeconds }
 
   const account = await claimAttempt(GUARDS.password, accountSubject(input.email, config.ipHashKey), pool)
+
   if (!account.ok) {
     await release(LIMITS.signInFailIp, addressSubject, address.windowStart, pool)
+
     return account
   }
+
   return { ok: true, address, account }
 }
 
 /** A right password: both slots are given back, and the lock its claim set, if any, is lifted. */
 export async function passwordAccepted(input: PasswordAttempt, claim: Extract<PasswordClaim, { ok: true }>, deps: AuthDeps): Promise<void> {
   const { pool, config } = deps
+
   await release(LIMITS.signInFailIp, ipSubject(input.ip, config.ipHashKey), claim.address.windowStart, pool)
   await giveBack(GUARDS.password, accountSubject(input.email, config.ipHashKey), claim.account, pool)
 }
@@ -63,10 +68,12 @@ export async function passwordAccepted(input: PasswordAttempt, claim: Extract<Pa
 export async function signInWithPassword(input: SignInInput, overrides: Partial<AuthDeps> = {}): Promise<{ ok: true; token: string; expiresAt: Date } | AuthFailure<SignInField>> {
   const deps = authDeps(overrides)
   const { pool, config } = deps
+
   if (!input.email.trim()) return { ok: false, error: 'email_required', field: 'email' }
   if (!input.password) return { ok: false, error: 'password_required', field: 'password' }
 
   const claim = await claimPasswordAttempt(input, deps)
+
   if (!claim.ok) return { ok: false, error: 'rate_limited', retryAfterSeconds: claim.retryAfterSeconds }
 
   const workspaceId = await ownerWorkspaceId(pool)
@@ -89,12 +96,16 @@ export async function signInWithPassword(input: SignInInput, overrides: Partial<
       details: { method: 'password' },
       ipHash,
     }), pool)
+
     return { ok: false, error: 'credentials_invalid' }
   }
 
   await passwordAccepted(input, claim, deps)
+
   const successes = await consume(LIMITS.signInSuccessAccount, accountSubject(input.email, config.ipHashKey), pool)
+
   if (!successes.allowed) return { ok: false, error: 'rate_limited', retryAfterSeconds: successes.retryAfterSeconds }
+
   const session = await withWorkspace({ workspaceId, userId: user.id, role: 'system' }, tx => createSession(tx, {
     workspaceId,
     userId: user.id,
@@ -102,6 +113,7 @@ export async function signInWithPassword(input: SignInInput, overrides: Partial<
     userAgentSummary: summarizeUserAgent(input.userAgent),
     ipHash,
   }), pool)
+
   return { ok: true, token: session.token, expiresAt: session.expiresAt }
 }
 
@@ -126,10 +138,13 @@ export async function finishSignIn(tx: Tx, input: Finish & { pending?: Session }
   const fresh: CreatedSession | null = input.pending
     ? await rotateSession(tx, input.pending, meta)
     : await createSession(tx, { workspaceId: input.workspaceId, userId: input.userId, verified: true, ...meta })
+
   if (!fresh) return null
 
   const self = (await getSelf(tx, input))!
+
   await logActivity(tx, input.workspaceId, { actorUserId: input.userId, action: 'auth.sign_in', details: { method: input.method }, ipHash: input.ipHash })
   await securityNotice(tx, input.workspaceId, self, 'auth.new_sign_in', { device: meta.userAgentSummary }, { at: input.at, signInId: fresh.signInId })
+
   return { token: fresh.token, expiresAt: fresh.expiresAt, locale: self.locale, theme: self.theme }
 }

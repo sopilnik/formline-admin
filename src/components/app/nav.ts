@@ -24,6 +24,7 @@ const ITEMS: (NavItem & { action?: Action })[] = [
 export function navItems(role: Role, kind: WorkspaceKind, counts: Partial<Record<NavKey, number>> = {}): NavItem[] {
   return ITEMS.filter(item => !item.action || can(role, item.action, kind)).map(({ key, href, group }) => {
     const count = counts[key]
+
     return count ? { key, href, group, count } : { key, href, group }
   })
 }

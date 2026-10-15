@@ -16,8 +16,10 @@ test.describe('top bar', () => {
     await signInAsSandboxUser(context)
     await page.setViewportSize({ width: 1280, height: 800 })
     await page.goto('/overview')
+
     const bar = page.getByRole('banner')
     const sizes: string[] = []
+
     for (const name of [/^Search/, /^Notifications/, /^Theme:/, /^Language:/]) {
       sizes.push(await bar.getByRole('button', { name }).evaluate(el => `${Math.round(el.getBoundingClientRect().height)} px, ${getComputedStyle(el).fontSize}`))
     }
@@ -28,7 +30,9 @@ test.describe('top bar', () => {
     await signInAsSandboxUser(context)
     for (const [lang, name, code] of [['en', 'Language: English (EN)', 'EN'], ['ru', 'Язык: Русский (RU)', 'RU']]) {
       await page.goto(`/overview?lang=${lang}`)
+
       const button = page.getByRole('banner').getByRole('button', { name })
+
       await expect(button).toBeVisible()
       await expect(button).toContainText(code!)
     }

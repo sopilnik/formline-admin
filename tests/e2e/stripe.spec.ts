@@ -35,6 +35,7 @@ async function offer(request: APIRequestContext, fixture: ReturnType<typeof chec
 function deliver(request: APIRequestContext, session: object, secret = E2E_STRIPE_ENV.STRIPE_WEBHOOK_SECRET, id = `evt_e2e_${randomUUID().replaceAll('-', '')}`) {
   const payload = JSON.stringify({ id, object: 'event', type: 'checkout.session.completed', data: { object: session } })
   const signature = Stripe.webhooks.generateTestHeaderString({ payload, secret })
+
   return request.post('/api/stripe/webhook', { data: payload, headers: { 'content-type': 'application/json', 'stripe-signature': signature } })
 }
 
@@ -47,14 +48,19 @@ const ownerStock = () => asSchemaOwner(async client => (await client.query<{ sto
 
 test('a store order arrives through the webhook: the owner sees it, its stock is taken, and a repeat changes nothing', async ({ page, context, request }) => {
   const order = checkout(1, 1)
+
   await offer(request, order)
   await setOwnerStock(5)
+
   const event = `evt_e2e_${TAG}_1`
   const first = await deliver(request, order.session, undefined, event)
+
   expect(first.status()).toBe(200)
   expect(await first.json()).toEqual({ received: true })
   expect((await deliver(request, order.session, undefined, event)).status()).toBe(200)
+
   const number = await numberOf(order.session.id)
+
   expect(number).toEqual(expect.any(Number))
   expect(await ownerStock()).toBe(4)
 
@@ -74,7 +80,9 @@ test('a store order arrives through the webhook: the owner sees it, its stock is
 test('a new sandbox shows the order as a copy under a pseudonym, never the buyer', async ({ page, context }) => {
   await signInAsSandboxUser(context)
   await page.goto('/orders?source=stripe')
+
   const rows = page.getByRole('table', { name: 'Orders' }).getByRole('row').filter({ hasText: 'Store' })
+
   await expect(rows.first()).toBeVisible()
   await expect(rows.first()).toContainText('$66.00')
   await expect(page.getByText(BUYER)).toHaveCount(0)
@@ -84,20 +92,26 @@ test('a new sandbox shows the order as a copy under a pseudonym, never the buyer
 test('a delivery without Stripe\'s signature, signed with another secret or too large is refused', async ({ request }) => {
   const order = checkout(2, 2)
   const unsigned = await request.post('/api/stripe/webhook', { data: JSON.stringify({ id: 'evt_unsigned', type: 'checkout.session.completed', data: { object: order.session } }) })
+
   expect(unsigned.status()).toBe(400)
   expect((await deliver(request, order.session, `whsec_${'other'.repeat(8)}`)).status()).toBe(400)
+
   const large = await request.post('/api/stripe/webhook', { data: 'x'.repeat(70 * 1024), headers: { 'stripe-signature': 't=1,v1=0' } })
+
   expect(large.status()).toBe(413)
   expect(await numberOf(order.session.id)).toBeUndefined()
 })
 
 test('the owner imports a store order the webhook missed, after a fresh sign-in, and the log keeps it', async ({ page, context, request }) => {
   const missed = checkout(3, 5)
+
   await offer(request, missed)
   await signInAsOwner(context)
   await ageOwnerAuthentication()
   await page.goto('/settings/store')
+
   const section = page.getByRole('region', { name: 'Store orders' })
+
   await expect(section).toContainText("Confirm it's you above to import.")
   await expect(section.getByRole('button', { name: 'Import missed orders' })).toHaveCount(0)
   await expect(page.getByText('Importing needs a fresh sign-in: your password and a code, or a passkey.')).toBeVisible()
@@ -106,7 +120,9 @@ test('the owner imports a store order the webhook missed, after a fresh sign-in,
   await page.goto('/settings/store')
   await section.getByRole('button', { name: 'Import missed orders' }).click()
   await expect(section.getByRole('status')).toContainText(/Imported 1 order: #\d+\./)
+
   const number = await numberOf(missed.session.id)
+
   await expect(section.getByRole('status')).toContainText(`Imported 1 order: #${number}.`)
   await expect(section.getByRole('status')).toContainText('1 order of the last 30 days was already here.')
   await expectNoSeriousA11yViolations(page)

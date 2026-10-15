@@ -16,9 +16,11 @@ export function AcceptInvitationForm({ token }: { token: string }) {
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending, unreached] = useFormAction(acceptInvitationAction, IDLE, form)
   const error = state.status === 'error' ? state : null
+
   useEffect(() => {
     if (state.status === 'error' && state.error === 'name_required') document.getElementById('invite-name')?.focus()
   }, [state])
+
   return (
     <form ref={form} action={action} noValidate className="flex flex-col gap-4">
       <UnreachedAlert unreached={unreached} />

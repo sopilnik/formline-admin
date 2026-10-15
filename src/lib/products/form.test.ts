@@ -17,11 +17,13 @@ describe('parseProductDetails', () => {
 
   it('keeps a typed slug, lowercased', () => {
     const result = parseProductDetails({ ...valid, slug: ' Orbit-12 ' })
+
     expect(result.ok && result.data.slug).toBe('orbit-12')
   })
 
   it('names the problem of every field at once', () => {
     const result = parseProductDetails({ name: ' ', slug: 'Far Orbit', collection: 'nope', basePrice: '0', tags: 'ok, not/ok', description: 'x'.repeat(4001) })
+
     expect(result).toEqual({
       ok: false,
       fieldErrors: { name: 'name_required', collection: 'collection_missing', basePrice: 'price_invalid', tags: 'tags_invalid', description: 'description_too_long' },
@@ -44,13 +46,16 @@ describe('parseProductDetails', () => {
 
   it('refuses a name of invisible characters only, and drops such a tag', () => {
     expect(parseProductDetails({ ...valid, name: '\u200b\u200b\u200b', slug: 'invisible' })).toEqual({ ok: false, fieldErrors: { name: 'name_required' } })
+
     const result = parseProductDetails({ ...valid, tags: 'circles, \u200b' })
+
     expect(result.ok && result.data.tags).toEqual(['circles'])
   })
 
   it('counts a line break of the description once, as the field does, and keeps it as LF', () => {
     const lines = Array.from({ length: 20 }, () => 'x'.repeat(198))
     const result = parseProductDetails({ ...valid, description: `${lines.join('\r\n')}\r\n${'y'.repeat(10)}` })
+
     expect(result.ok && result.data.description).toBe(`${lines.join('\n')}\n${'y'.repeat(10)}`)
   })
 })

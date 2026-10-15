@@ -10,6 +10,7 @@ export async function reach<T>(call: () => Promise<T>): Promise<T | null> {
     return await call()
   } catch (error) {
     unstable_rethrow(error)
+
     return null
   }
 }

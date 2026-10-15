@@ -8,12 +8,14 @@ export const DEFAULT_PAGE_SIZE: PageSize = PAGE_SIZES[0]
 /** A page number from the URL: a whole number from 1, else the first page. */
 export function parsePage(value: string | undefined): number {
   const page = Number(value)
+
   return Number.isInteger(page) && page >= 1 ? page : 1
 }
 
 /** A page size from the URL: one of PAGE_SIZES, else the default. */
 export function parsePageSize(value: string | undefined): PageSize {
   const size = Number(value)
+
   return (PAGE_SIZES as readonly number[]).includes(size) ? (size as PageSize) : DEFAULT_PAGE_SIZE
 }
 
@@ -31,9 +33,12 @@ export function pageQueryHref(path: string, query: PageQuery, changes: Partial<P
   const page = changes.page ?? (changes.size !== undefined ? 1 : query.page)
   const size = changes.size ?? query.size
   const params = new URLSearchParams()
+
   if (page !== DEFAULT_PAGE_QUERY.page) params.set('page', String(page))
   if (size !== DEFAULT_PAGE_QUERY.size) params.set('size', String(size))
+
   const text = params.toString()
+
   return text ? `${path}?${text}` : path
 }
 
@@ -51,5 +56,6 @@ export function pageCount(rows: number, size: number): number {
 export function pageWindow(page: number, pages: number): number[] {
   const size = Math.min(5, pages)
   const start = Math.min(Math.max(1, page - 2), pages - size + 1)
+
   return Array.from({ length: size }, (_, i) => start + i)
 }

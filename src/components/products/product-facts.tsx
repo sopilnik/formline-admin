@@ -7,6 +7,7 @@ export function ProductFacts({ slug, collection, basePrice, tags, description }:
   const t = useTranslations('products.form')
   const none = useTranslations('products.detail')('none')
   const row = 'grid gap-0.5 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-3'
+
   return (
     <dl className="flex flex-col gap-3 text-sm">
       <div className={row}><dt className="text-muted-foreground">{t('slug')}</dt><dd className="break-all">{slug}</dd></div>

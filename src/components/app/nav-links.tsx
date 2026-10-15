@@ -24,6 +24,7 @@ const ICONS: Record<NavKey, LucideIcon> = {
 export function NavLinks({ items, collapsed = false, onNavigate }: { items: NavItem[]; collapsed?: boolean; onNavigate?: () => void }) {
   const t = useTranslations('nav')
   const pathname = usePathname()
+
   return (
     <ul className="flex flex-col gap-1">
       {items.map((item, index) => {
@@ -57,6 +58,7 @@ export function NavLinks({ items, collapsed = false, onNavigate }: { items: NavI
           </Link>
         )
         const startsGroup = index > 0 && item.group !== items[index - 1]!.group
+
         return (
           <li key={item.key} className={cn(startsGroup && 'mt-2.5 border-t border-sidebar-border pt-2.5')}>
             {/* Always inside the tooltip, which is off while the labels show: the link stays the same element across

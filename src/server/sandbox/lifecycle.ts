@@ -10,6 +10,7 @@ import { entryFromRow, type EntryRow, type SandboxEntry, type VisitorMeta } from
 /** Deletes the current sandbox; its session goes with it. Returns the number of image paths queued. */
 export async function endSandbox(session: Session, pool: Pool = getPool()): Promise<number> {
   const result = await withWorkspace(workspaceContext(session), tx => tx.execute<{ queued: number }>(sql`select fa.end_sandbox() as queued`), pool)
+
   return result.rows[0]?.queued ?? 0
 }
 
@@ -18,5 +19,6 @@ export async function resetSandbox(session: Session, input: VisitorMeta, pool: P
   const token = generateToken()
   const result = await withWorkspace(workspaceContext(session), tx => tx.execute<EntryRow>(
     sql`select * from fa.reset_sandbox(${input.ipHash}, ${hashToken(token)}, ${input.userAgentSummary}, ${input.locale})`), pool)
+
   return entryFromRow(result.rows[0]!, token)
 }

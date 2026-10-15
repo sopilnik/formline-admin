@@ -48,12 +48,14 @@ async function addPasskeyRow(credentialId: string): Promise<string> {
   const { rows } = await admin.query<{ id: string }>(
     "insert into fa.passkeys (workspace_id, user_id, credential_id, public_key, name) values ($1, $2, $3, 'pk', 'Laptop') returning id",
     [ownerWorkspace, ownerId, credentialId])
+
   return rows[0]!.id
 }
 
 describe('challenges', () => {
   it('count once', async () => {
     const challenge = `challenge-${crypto.randomUUID()}`
+
     expect(await markChallengeUsed(challenge, app)).toBe(true)
     expect(await markChallengeUsed(challenge, app)).toBe(false)
   })
@@ -63,12 +65,14 @@ describe('signInWithPasskey', () => {
   it('reports an unknown credential so the browser can forget it', async () => {
     const cookie = challengeCookie(`c-${crypto.randomUUID()}`, 'auth', undefined, config(), Date.now())
     const credentialId = `unknown${crypto.randomUUID().replace(/-/g, '')}`
+
     expect(await signInWithPasskey(assertion(credentialId, ownerId), cookie, meta, { pool: app }))
       .toEqual({ ok: false, error: 'passkey_unknown', credentialId })
   })
 
   it('refuses without a valid challenge cookie', async () => {
     const credentialId = `known${crypto.randomUUID().replace(/-/g, '')}`
+
     await addPasskeyRow(credentialId)
     expect(await signInWithPasskey(assertion(credentialId, ownerId), undefined, meta, { pool: app })).toEqual({ ok: false, error: 'passkey_failed' })
     expect(await signInWithPasskey(assertion(credentialId, ownerId), 'forged.value', meta, { pool: app })).toEqual({ ok: false, error: 'passkey_failed' })
@@ -76,9 +80,12 @@ describe('signInWithPasskey', () => {
 
   it('refuses a response that does not verify, and burns its challenge', async () => {
     const credentialId = `known${crypto.randomUUID().replace(/-/g, '')}`
+
     await addPasskeyRow(credentialId)
+
     const challenge = `c-${crypto.randomUUID()}`
     const cookie = challengeCookie(challenge, 'auth', undefined, config(), Date.now())
+
     expect(await signInWithPasskey(assertion(credentialId, ownerId), cookie, meta, { pool: app })).toEqual({ ok: false, error: 'passkey_failed' })
     expect(await markChallengeUsed(challenge, app)).toBe(false)
   })
@@ -89,15 +96,19 @@ describe('registration', () => {
     const sandbox = await createWorkspace(admin)
     const member = await createUser(admin, sandbox, 'owner')
     const sandboxSession: Session = { ...ownerSession(), workspaceId: sandbox, workspaceKind: 'sandbox', userId: member }
+
     expect(await beginRegistration(sandboxSession, { pool: app })).toEqual({ ok: false, error: 'generic' })
     expect(await beginRegistration(ownerSession(new Date(Date.now() - 3_600_000)), { pool: app })).toEqual({ ok: false, error: 'reauth_required' })
   })
 
   it('asks for a discoverable, user-verified passkey bound to the owner and excludes the known ones', async () => {
     const credentialId = `known${crypto.randomUUID().replace(/-/g, '')}`
+
     await addPasskeyRow(credentialId)
+
     const session = ownerSession()
     const result = await beginRegistration(session, { pool: app })
+
     if (!result.ok) throw new Error(result.error)
     expect(result.options.rp.id).toBe('localhost')
     expect(result.options.user.id.replace(/=+$/, '')).toBe(encodeBase64urlNoPadding(handleFromUserId(ownerId)))
@@ -111,8 +122,11 @@ describe('registration', () => {
 describe('removing a passkey', () => {
   it('keeps the last second factor', async () => {
     const saved = (await admin.query<{ enc: string }>('select totp_secret_enc as enc from fa.users where id = $1', [ownerId])).rows[0]!.enc
+
     await admin.query('delete from fa.passkeys where user_id = $1', [ownerId])
+
     const only = await addPasskeyRow(`only${crypto.randomUUID().replace(/-/g, '')}`)
+
     // Changes to the owner row go through schema_owner: the users trigger refuses them from anyone else.
     try {
       await asSchemaOwner(admin, c => c.query('update fa.users set totp_secret_enc = null where id = $1', [ownerId]))
@@ -126,13 +140,16 @@ describe('removing a passkey', () => {
   it('waits for a running change to the owner\'s factors before it counts them', async () => {
     const id = await addPasskeyRow(`wait${crypto.randomUUID().replace(/-/g, '')}`)
     const holder = await admin.connect()
+
     try {
       // Another change holds the owner's row; the removal may count the factors only once that change has ended. The
       // holder's lock lets the activity log's foreign key through, so only the removal's own lock of the row waits.
       await holder.query('begin')
       await holder.query('select 1 from fa.users where id = $1 for no key update', [ownerId])
+
       let settled = false
       const removing = removeOwnPasskey(ownerSession(), id, meta, { pool: app }).finally(() => { settled = true })
+
       await new Promise(resolve => setTimeout(resolve, 500))
       expect(settled).toBe(false)
 
@@ -146,6 +163,7 @@ describe('removing a passkey', () => {
 
   it('needs a recent authentication', async () => {
     const id = await addPasskeyRow(`stale${crypto.randomUUID().replace(/-/g, '')}`)
+
     expect(await removeOwnPasskey(ownerSession(new Date(Date.now() - 3_600_000)), id, meta, { pool: app }))
       .toEqual({ ok: false, error: 'reauth_required' })
   })

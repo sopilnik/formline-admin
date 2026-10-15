@@ -7,6 +7,7 @@ type Server = { url: string; env?: Record<string, string> }
 async function config(ci: string | undefined) {
   vi.resetModules()
   vi.stubEnv('CI', ci)
+
   return (await import('../../playwright.config')).default
 }
 
@@ -31,6 +32,7 @@ describe('the end-to-end config', () => {
     expect(servers.map(server => [server.url, server.env?.SITE_URL, server.env?.DATABASE_URL, server.env?.MEDIA_STORAGE_DIR])).toEqual(
       Array.from({ length: 4 }, (_, index) => {
         const worker = e2eWorker(index)
+
         return [`http://127.0.0.1:${worker.port}/api/health`, worker.baseUrl, worker.appUrl, worker.mediaDir]
       }))
     // A developer's .env, which the build copies beside the server, must not turn the edge check off.

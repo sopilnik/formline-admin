@@ -27,6 +27,7 @@ export function DeleteProduct({ productId, name, variants, hasImage, blocked }: 
   const [pending, startTransition] = useTransition()
   const remove = (): void => startTransition(async () => {
     const result = await send(() => deleteProductAction({ productId }))
+
     if (!result) return
     if (result.ok) {
       setOpen(false)
@@ -40,7 +41,9 @@ export function DeleteProduct({ productId, name, variants, hasImage, blocked }: 
       else toast.error(result.code === 'conflict' ? t('conflict') : t('failed'))
     }
   })
+
   if (blocked) return <p className="text-[13px] text-muted-foreground">{t(`blocked.${blocked}`)}</p>
+
   return (
     <>
       <p className="text-[13px] text-muted-foreground">{t('body')}</p>

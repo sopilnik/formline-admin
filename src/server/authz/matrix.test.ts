@@ -4,6 +4,7 @@ import { authorize, ForbiddenError } from '@/server/authz/authorize'
 
 const ROLES = ['owner', 'admin', 'manager', 'viewer'] as const
 const KINDS = ['sandbox', 'owner', 'template'] as const
+
 type Allowed = Partial<Record<(typeof KINDS)[number], readonly (typeof ROLES)[number][]>>
 
 const EVERYONE = ROLES

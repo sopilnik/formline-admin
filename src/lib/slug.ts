@@ -13,6 +13,7 @@ const RESERVED = new Set(['new'])
 export function slugify(name: string, max: number): string {
   const latin = [...name.toLowerCase()].map(ch => CYRILLIC[ch] ?? ch).join('')
   const slug = latin.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+
   return slug.slice(0, max).replace(/-+$/, '')
 }
 

@@ -14,25 +14,31 @@ export type BuildResult = { rebuilt: boolean; version: number; templateWorkspace
  */
 export async function buildTemplate(client: pg.ClientBase, options: { version?: number; force?: boolean } = {}): Promise<BuildResult> {
   const version = options.version ?? TEMPLATE_VERSION
+
   await client.query('begin')
   try {
     await client.query('set local role schema_owner')
     await client.query('set local search_path = pg_catalog')
 
     await client.query("insert into fa.workspaces (kind) select 'template' where not exists (select 1 from fa.workspaces w where w.kind = 'template')")
+
     const { rows } = await client.query<{ id: string; kind: 'template' | 'owner'; template_version: number | null }>(
       "select id, kind, template_version from fa.workspaces where kind in ('template', 'owner')")
     const template = rows.find(r => r.kind === 'template')!
     const owner = rows.find(r => r.kind === 'owner')
+
     if (!owner) throw new Error('the owner workspace does not exist; the migrations create it')
+
     const result = { version, templateWorkspaceId: template.id, ownerWorkspaceId: owner.id }
 
     if (template.template_version === version && !options.force) {
       await client.query('commit')
+
       return { rebuilt: false, ...result }
     }
 
     const data = generateTemplate(version)
+
     // The order ingest numbers its copies from the template's counter; holding it keeps a copy out of the renumbering below.
     await client.query('select 1 from fa.workspace_counters where workspace_id = $1 for update', [template.id])
 
@@ -64,6 +70,7 @@ export async function buildTemplate(client: pg.ClientBase, options: { version?: 
     await client.query('update fa.workspaces set template_version = $2, template_epoch = $3 where id = $1', [template.id, version, data.epoch])
 
     await client.query('commit')
+
     return { rebuilt: true, ...result }
   } catch (error) {
     await client.query('rollback')
@@ -86,12 +93,14 @@ async function writeUsers(client: pg.ClientBase, workspaceId: string, data: Temp
  */
 async function giveOwnerCatalog(client: pg.ClientBase, workspaceId: string, data: TemplateData): Promise<void> {
   const { rowCount } = await client.query('select 1 from fa.collections where workspace_id = $1 limit 1', [workspaceId])
+
   if (rowCount) return
   await writeCatalog(client, workspaceId, data, 'keep')
 }
 
 async function writeCatalog(client: pg.ClientBase, workspaceId: string, data: TemplateData, mode: 'replace' | 'keep'): Promise<void> {
   const keep = mode === 'keep'
+
   for (const c of data.collections) {
     await client.query(
       `insert into fa.collections (workspace_id, id, slug, name, description, position) values ($1, $2, $3, $4, $5, $6)
@@ -121,22 +130,29 @@ async function writeCatalog(client: pg.ClientBase, workspaceId: string, data: Te
 
 async function writeOrders(client: pg.ClientBase, workspaceId: string, data: TemplateData): Promise<void> {
   const c = data.customers
+
   await client.query(
     `insert into fa.customers (workspace_id, id, email, name, city, country, created_at)
      select $1::uuid, * from unnest($2::uuid[], $3::text[], $4::text[], $5::text[], $6::text[], $7::timestamptz[])`,
     [workspaceId, c.map(x => x.id), c.map(x => x.email), c.map(x => x.name), c.map(x => x.city), c.map(x => x.country), c.map(x => x.createdAt)])
+
   const o = data.orders
+
   await client.query(
     `insert into fa.orders (workspace_id, id, number, customer_id, status, source, delivery, subtotal_cents, shipping_cents, total_cents, shipping_address, placed_at, updated_at)
      select $1::uuid, * from unnest($2::uuid[], $3::integer[], $4::uuid[], $5::text[], $6::text[], $7::text[], $8::integer[], $9::integer[], $10::integer[], $11::jsonb[], $12::timestamptz[], $13::timestamptz[])`,
     [workspaceId, o.map(x => x.id), o.map(x => x.number), o.map(x => x.customerId), o.map(x => x.status), o.map(() => 'seed'), o.map(x => x.delivery),
       o.map(x => x.subtotalCents), o.map(x => x.shippingCents), o.map(x => x.totalCents), o.map(x => JSON.stringify(x.shippingAddress)), o.map(x => x.placedAt), o.map(x => x.updatedAt)])
+
   const l = data.lines
+
   await client.query(
     `insert into fa.order_lines (workspace_id, id, order_id, variant_id, sku, name, unit_cents, qty)
      select $1::uuid, * from unnest($2::uuid[], $3::uuid[], $4::uuid[], $5::text[], $6::text[], $7::integer[], $8::integer[])`,
     [workspaceId, l.map(x => x.id), l.map(x => x.orderId), l.map(x => x.variantId), l.map(x => x.sku), l.map(x => x.name), l.map(x => x.unitCents), l.map(x => x.qty)])
+
   const e = data.events
+
   await client.query(
     `insert into fa.order_events (workspace_id, id, order_id, kind, from_status, to_status, note, actor_user_id, at)
      select $1::uuid, * from unnest($2::uuid[], $3::uuid[], $4::text[], $5::text[], $6::text[], $7::text[], $8::uuid[], $9::timestamptz[])`,

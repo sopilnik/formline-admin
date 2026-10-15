@@ -22,8 +22,10 @@ export async function setupAction(_previous: FormState<SetupField>, form: FormDa
     locale: await getLocale(),
     theme: parseTheme((await cookies()).get(THEME_COOKIE)?.value),
   })
+
   // The token and the password are never sent back into the form.
   if (!result.ok) return failureState(result, { name: formText(form, 'name'), email: formText(form, 'email') })
   await setSessionCookie(result.token, result.expiresAt)
+
   return { status: 'done', recoveryCodes: result.recoveryCodes }
 }

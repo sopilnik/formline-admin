@@ -17,13 +17,16 @@ export type AuthConfig = {
 /** `id:base64,id:base64`: the first key encrypts, every key decrypts, so keys can rotate. */
 export function parseKeyring(value: string): Keyring {
   const keys = new Map<string, Buffer>()
+
   for (const entry of value.split(',')) {
     const [id = '', encoded = ''] = entry.split(':')
     const key = Buffer.from(encoded, 'base64')
+
     if (key.length !== 32) throw new Error(`TOTP key ${id} is not 32 bytes`)
     if (keys.has(id)) throw new Error(`TOTP key id ${id} is repeated`)
     keys.set(id, key)
   }
+
   return { current: [...keys.keys()][0]!, keys }
 }
 
@@ -31,6 +34,7 @@ let cached: AuthConfig | undefined
 
 export function authConfig(source?: EnvSource): AuthConfig {
   if (!source && cached) return cached
+
   const env = readEnv(source)
   const siteUrl = new URL(env.SITE_URL)
   const config: AuthConfig = {
@@ -42,7 +46,9 @@ export function authConfig(source?: EnvSource): AuthConfig {
     rpId: siteUrl.hostname,
     origin: siteUrl.origin,
   }
+
   if (!source) cached = config
+
   return config
 }
 
@@ -59,6 +65,7 @@ let stripeCached: StripeConfig | null | undefined
 
 export function stripeConfig(source?: EnvSource): StripeConfig | null {
   if (!source && stripeCached !== undefined) return stripeCached
+
   const env = readEnv(source)
   const config = env.STRIPE_WEBHOOK_SECRET && env.STRIPE_RESTRICTED_KEY && env.PSEUDONYM_KEY
     ? {
@@ -68,6 +75,8 @@ export function stripeConfig(source?: EnvSource): StripeConfig | null {
         apiBase: env.STRIPE_API_BASE ? new URL(env.STRIPE_API_BASE) : null,
       }
     : null
+
   if (!source) stripeCached = config
+
   return config
 }

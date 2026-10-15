@@ -15,7 +15,9 @@ const workspaces: string[] = []
 
 async function sandbox(): Promise<Actor> {
   const { workspaceId, userId } = await createSandbox(app)
+
   workspaces.push(workspaceId)
+
   return { workspaceId, userId, role: 'owner', ipHash: null }
 }
 
@@ -46,16 +48,21 @@ describe('storeProductImage', () => {
     const product = await productOf(owner, 'hush')
     const poster = await imageRow(owner, product.image_id!)
     const result = await storeProductImage(owner, product.id, webp(), storage, app)
+
     expect(result).toMatchObject({ ok: true, width: 720, height: 1018 })
     if (!result.ok) return
+
     const path = mediaPath(owner.workspaceId, result.imageId)
+
     expect(storage.files.get(path)?.length).toBe(1000)
     expect(storage.files.get(thumbPath(path))?.length).toBe(100)
     expect((await productOf(owner, 'hush')).image_id).toBe(result.imageId)
     expect(await imageRow(owner, result.imageId)).toEqual({ storage_path: path, source: 'upload', width: 720, bytes: 1000 })
     expect(await imageRow(owner, product.image_id!)).toBeUndefined()
     expect(await queued(poster!.storage_path)).toBe(0)
+
     const log = await admin.query<{ action: string }>('select action from fa.activity_log where workspace_id = $1 and entity_id = $2', [owner.workspaceId, product.id])
+
     expect(log.rows.map(r => r.action)).toEqual(['product.image_changed'])
   })
 
@@ -65,6 +72,7 @@ describe('storeProductImage', () => {
     const product = await productOf(owner, 'loud')
     const first = await storeProductImage(owner, product.id, webp(), storage, app)
     const second = await storeProductImage(owner, product.id, webp(), storage, app)
+
     if (!first.ok || !second.ok) throw new Error('upload refused')
     expect(await queued(mediaPath(owner.workspaceId, first.imageId))).toBe(1)
     expect(await removeProductImage(owner, product.id, app)).toEqual({ ok: true })
@@ -81,6 +89,7 @@ describe('storeProductImage', () => {
       "insert into fa.products (workspace_id, slug, name, collection_id, base_price_cents, status) select $1, 'theirs', 'Theirs', id, 1000, 'draft' from fa.collections where workspace_id = $1 limit 1 returning id",
       [other.workspaceId])).rows[0]!
     const storage = memoryStorage()
+
     expect(await storeProductImage(owner, theirs.id, webp(), storage, app)).toEqual({ ok: false, reason: 'not_found' })
     expect(storage.files.size).toBe(0)
   })
@@ -90,6 +99,7 @@ describe('storeProductImage', () => {
     const product = await productOf(owner, 'hush')
     const storage = memoryStorage()
     const put = storage.put.bind(storage)
+
     storage.put = async (path, bytes) => {
       if (path.endsWith('.thumb.webp')) throw new Error(`refused: ${path}`)
       await put(path, bytes)
@@ -99,9 +109,11 @@ describe('storeProductImage', () => {
 
     // Storage refuses the cleanup as well, and the database refuses to queue it: the error is still the small copy's.
     storage.delete = async path => { throw new Error(`cannot delete ${path}`) }
+
     const refusing = new Proxy(app, {
       get(target, key, receiver) {
         if (key !== 'query') return Reflect.get(target, key, receiver)
+
         return (text: unknown, ...rest: unknown[]) => String(text).includes('pending_media_deletions')
           ? Promise.reject(new Error('queue refused'))
           : (target.query as (...args: unknown[]) => Promise<unknown>).call(target, text, ...rest)
@@ -109,6 +121,7 @@ describe('storeProductImage', () => {
     })
     const warn = vi.spyOn(log, 'warn')
     const error = vi.spyOn(log, 'error')
+
     try {
       await expect(storeProductImage(owner, product.id, webp(), storage, refusing)).rejects.toThrow(/refused: .*\.thumb\.webp/)
       expect(warn).toHaveBeenCalledWith(expect.objectContaining({ event: 'media.discard_failed' }))
@@ -123,16 +136,21 @@ describe('storeProductImage', () => {
     const owner = await sandbox()
     const storage = memoryStorage()
     const products = (await admin.query<{ id: string }>('select id from fa.products where workspace_id = $1 order by slug', [owner.workspaceId])).rows
+
     await admin.query(
       `insert into fa.images (workspace_id, id, storage_path, source, width, height, bytes)
        select $1::uuid, gen_random_uuid(), 'ws/' || $1::text || '/' || gen_random_uuid() || '.webp', 'upload', 10, 10, 1000 from generate_series(1, $2::int)`,
       [owner.workspaceId, MEDIA_CAP.images - 1])
+
     const last = await storeProductImage(owner, products[0]!.id, webp(), storage, app)
+
     expect(last.ok).toBe(true)
     expect(await storeProductImage(owner, products[1]!.id, webp(), storage, app)).toEqual({ ok: false, reason: 'cap' })
     expect(await storeProductImage(owner, products[0]!.id, webp(), storage, app)).toMatchObject({ ok: true })
+
     const heavy = await sandbox()
     const big = (await productOf(heavy, 'hush')).id
+
     expect(await storeProductImage(heavy, big, webp(MEDIA_CAP.bytes + 1), storage, app)).toEqual({ ok: false, reason: 'cap' })
     // The cap holds the sum: 500 bytes short of it, a 1000-byte upload crosses it and a 400-byte one fits.
     await admin.query(
@@ -150,6 +168,7 @@ describe('storeProductImage', () => {
     const viewerId = (await admin.query<{ id: string }>("select id from fa.users where workspace_id = $1 and role = 'viewer'", [owner.workspaceId])).rows[0]!.id
     const storage = memoryStorage()
     const product = await productOf(owner, 'hush')
+
     await expect(storeProductImage({ ...owner, userId: viewerId, role: 'viewer' }, product.id, webp(), storage, app)).resolves.toEqual({ ok: false, reason: 'not_found' })
     expect(storage.files.size).toBe(0)
   })

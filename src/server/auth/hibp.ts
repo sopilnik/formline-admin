@@ -16,20 +16,25 @@ export async function isBreachedPassword(password: string, options: { fetcher?: 
   const digest = createHash('sha1').update(normalizePassword(password)).digest('hex').toUpperCase()
   const prefix = digest.slice(0, 5)
   const suffix = digest.slice(5)
+
   try {
     const response = await fetcher(`https://api.pwnedpasswords.com/range/${prefix}`, {
       headers: { 'Add-Padding': 'true', 'User-Agent': 'formline-admin' },
       signal: AbortSignal.timeout(timeoutMs),
       cache: 'no-store',
     })
+
     if (!response.ok) throw new Error(`status ${response.status}`)
     for (const line of (await response.text()).split('\n')) {
       const [candidate, count] = line.trim().split(':')
+
       if (candidate === suffix && Number(count) > 0) return true
     }
+
     return false
   } catch (error) {
     log.warn({ event: 'hibp.unavailable', err: error })
+
     return null
   }
 }

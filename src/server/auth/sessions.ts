@@ -55,10 +55,13 @@ type SessionRow = {
 /** Resolves a raw cookie token; null for anything malformed, unknown, expired or idle. */
 export async function validateSessionToken(token: string, pool: Pool = getPool()): Promise<Session | null> {
   if (!TOKEN_PATTERN.test(token)) return null
+
   const id = hashToken(token)
   const { rows } = await pool.query<SessionRow>('select * from fa.auth_session($1)', [id])
   const row = rows[0]
+
   if (!row) return null
+
   return {
     id,
     workspaceId: row.workspace_id,
@@ -98,6 +101,7 @@ export async function createSession(
     ...(input.signInId ? { signInId: input.signInId } : {}),
     ...(input.signedInAt ? { createdAt: input.signedInAt } : {}),
   }).returning({ expiresAt: sessions.expiresAt, signInId: sessions.signInId })
+
   return { token, id, expiresAt: row!.expiresAt, signInId: row!.signInId }
 }
 
@@ -113,6 +117,7 @@ export async function rotateSession(tx: Tx, session: Session, meta: { userAgentS
   const deleted = await tx.delete(sessions)
     .where(and(eq(sessions.workspaceId, session.workspaceId), eq(sessions.id, session.id)))
     .returning({ createdAt: sessions.createdAt })
+
   if (deleted.length === 0) return null
 
   return createSession(tx, {
@@ -129,6 +134,7 @@ export async function deleteSession(tx: Tx, session: Session): Promise<void> {
 // stops a cross-site POST when a browser sends no Origin.
 export async function setSessionCookie(token: string, expiresAt: Date, options: { demo?: boolean } = {}): Promise<void> {
   const store = await cookies()
+
   store.set(SESSION_COOKIE, token, { ...COOKIE, expires: expiresAt })
   if (options.demo) store.set(DEMO_COOKIE, '1', { ...COOKIE, expires: expiresAt })
   else store.set(DEMO_COOKIE, '', { ...COOKIE, maxAge: 0 })
@@ -136,6 +142,7 @@ export async function setSessionCookie(token: string, expiresAt: Date, options: 
 
 export async function clearSessionCookie(): Promise<void> {
   const store = await cookies()
+
   store.set(SESSION_COOKIE, '', { ...COOKIE, maxAge: 0 })
   store.set(DEMO_COOKIE, '', { ...COOKIE, maxAge: 0 })
 }
@@ -143,6 +150,7 @@ export async function clearSessionCookie(): Promise<void> {
 /** The current request's session, resolved once per request. */
 export const getSession = cache(async (): Promise<Session | null> => {
   const token = (await cookies()).get(SESSION_COOKIE)?.value
+
   return token ? validateSessionToken(token) : null
 })
 
@@ -154,7 +162,9 @@ export const getSession = cache(async (): Promise<Session | null> => {
  */
 export async function requireSession(options: { pending?: boolean } = {}): Promise<Session> {
   const session = await getSession()
+
   if (!session) redirect((await cookies()).has(DEMO_COOKIE) ? '/sign-in?ended=1' : '/sign-in')
   if (!session.secondFactorVerified && !options.pending) redirect('/sign-in/verify')
+
   return session
 }

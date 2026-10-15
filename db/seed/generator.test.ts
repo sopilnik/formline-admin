@@ -26,7 +26,9 @@ describe('generateTemplate', () => {
 
   it('keeps every reference inside the template and every id unique', () => {
     const ids = [...data.users, ...data.collections, ...data.images, ...data.products, ...data.variants, ...data.customers, ...data.orders, ...data.lines, ...data.events].map(r => r.id)
+
     expect(new Set(ids).size).toBe(ids.length)
+
     const collections = new Set(data.collections.map(c => c.id))
     const images = new Set(data.images.map(i => i.id))
     const products = new Set(data.products.map(p => p.id))
@@ -34,6 +36,7 @@ describe('generateTemplate', () => {
     const customers = new Set(data.customers.map(c => c.id))
     const orders = new Set(data.orders.map(o => o.id))
     const staff = new Set(data.users.map(u => u.id))
+
     // Each list names the rows whose reference points nowhere, so a failure says which.
     expect(data.products.filter(p => !collections.has(p.collectionId) || !images.has(p.imageId)).map(p => p.slug)).toEqual([])
     expect(data.variants.filter(v => !products.has(v.productId)).map(v => v.sku)).toEqual([])
@@ -46,14 +49,19 @@ describe('generateTemplate', () => {
 
   it('numbers orders in time order and keeps the money consistent', () => {
     let previous = -Infinity
+
     data.orders.forEach((o, i) => {
       expect(o.number).toBe(FIRST_ORDER_NUMBER + i)
       expect(o.placedAt.getTime()).toBeGreaterThanOrEqual(previous)
       previous = o.placedAt.getTime()
+
       const lines = data.lines.filter(l => l.orderId === o.id)
+
       expect(lines.length).toBeGreaterThanOrEqual(1)
       expect(lines.length).toBeLessThanOrEqual(3)
+
       const subtotal = lines.reduce((sum, l) => sum + l.unitCents * l.qty, 0)
+
       expect(o.subtotalCents).toBe(subtotal)
       expect(o.shippingCents).toBe(o.delivery === 'express' ? 1900 : subtotal >= 15_000 ? 0 : 900)
       expect(o.totalCents).toBe(o.subtotalCents + o.shippingCents)
@@ -62,6 +70,7 @@ describe('generateTemplate', () => {
 
   it('places every order inside the history window with a fresh one near the epoch', () => {
     const times = data.orders.map(o => o.placedAt.getTime())
+
     expect(Math.min(...times)).toBeGreaterThanOrEqual(epoch - HISTORY_DAYS * DAY)
     expect(Math.max(...times)).toBeLessThanOrEqual(epoch)
     expect(epoch - Math.max(...times)).toBeLessThanOrEqual(30 * 60_000)
@@ -77,6 +86,7 @@ describe('generateTemplate', () => {
     }
     for (const o of data.orders) {
       const history = data.events.filter(e => e.orderId === o.id && e.kind === 'status').sort((a, b) => a.at.getTime() - b.at.getTime())
+
       expect(history[0]).toMatchObject({ fromStatus: null, toStatus: 'paid', actorUserId: null })
       expect(history[0]!.at.getTime()).toBe(o.placedAt.getTime())
       expect(history[history.length - 1]!.toStatus).toBe(o.status)

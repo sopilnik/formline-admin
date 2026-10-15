@@ -19,6 +19,7 @@ const describedBy = (id: string, hint?: string, error?: string): string | undefi
  */
 function Messages({ id, hint, error }: { id: string; hint?: string; error?: string }) {
   const answers = useAnsweredSubmits()
+
   return (
     <>
       {hint ? <p id={`${id}-hint`} className="text-xs text-muted-foreground">{hint}</p> : null}
@@ -33,6 +34,7 @@ function Messages({ id, hint, error }: { id: string; hint?: string; error?: stri
  */
 export function TextField({ id, label, hint, error, labelInside = false, ...input }: Common & ComponentProps<'input'> & { labelInside?: boolean }) {
   const field = { id, placeholder: labelInside ? label : undefined, 'aria-invalid': error ? true : undefined, 'aria-describedby': describedBy(id, hint, error), ...input }
+
   return (
     <div className="flex flex-col gap-1.5">
       <Label htmlFor={id} className={labelInside ? 'sr-only' : undefined}>{label}</Label>
@@ -49,6 +51,7 @@ export function TextField({ id, label, hint, error, labelInside = false, ...inpu
 function PasswordInput({ id, className, ...input }: ComponentProps<'input'>) {
   const t = useTranslations('common')
   const [shown, setShown] = useState(false)
+
   return (
     <div className="relative">
       <Input id={id} {...input} type={shown ? 'text' : 'password'} className={cn('pr-9', className)} />

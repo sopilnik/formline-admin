@@ -13,6 +13,7 @@ const idsParam = z.string().transform(value => value.split(',')).pipe(z.array(z.
 
 async function labels(): Promise<ExportLabels> {
   const t = await getTranslations('orders')
+
   return {
     header: [
       t('csv.order'), t('csv.placed'), t('csv.customer'), t('csv.email'), t('csv.items'), t('csv.subtotal'),
@@ -27,18 +28,24 @@ async function labels(): Promise<ExportLabels> {
 /** The CSV of the orders list: every order matching the filters, or the selected ones. */
 export async function GET(request: Request): Promise<Response> {
   const session = await exportSession()
+
   if (session instanceof Response) return session
+
   const params = new URL(request.url).searchParams
   const rawIds = params.get('ids')
   const ids = rawIds === null ? null : idsParam.safeParse(rawIds)
+
   if (ids && !ids.success) return new Response(null, { status: 400 })
+
   const limited = await exportLimited(session)
+
   if (limited) return limited
 
   const ctx = workspaceContext(session)
   const now = new Date()
   const settings = await withWorkspace(ctx, tx => getStoreSettings(tx, session.workspaceId))
   const plan = await planExport(ctx, { query: parseOrdersQuery(params), ids: ids ? ids.data : null, now, timeZone: settings.timezone })
+
   await logExport(session, 'orders.exported', { rows: plan.ids.length, truncated: plan.truncated, selection: ids !== null })
 
   return csvResponse('orders', exportStream(ctx, plan.ids, await labels(), settings.timezone), plan, settings.timezone, now)

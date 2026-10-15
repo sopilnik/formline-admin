@@ -12,7 +12,9 @@ const FORBIDDEN = /^zod(\/|$)/
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir).flatMap(name => {
     const path = join(dir, name)
+
     if (statSync(path).isDirectory()) return sourceFiles(path)
+
     return /\.tsx?$/.test(name) && !/\.test\.tsx?$/.test(name) ? [path] : []
   })
 }
@@ -25,10 +27,12 @@ const ALIASES: [prefix: string, dir: string][] = [['@/', 'src'], ['@seed/', 'db/
 function resolveImport(from: string, specifier: string): string | null {
   const alias = ALIASES.find(([prefix]) => specifier.startsWith(prefix))
   const base = alias ? join(root, alias[1], specifier.slice(alias[0].length)) : specifier.startsWith('.') ? resolve(dirname(from), specifier) : null
+
   if (base === null) return null
   for (const candidate of [base, `${base}.ts`, `${base}.tsx`, join(base, 'index.ts'), join(base, 'index.tsx')]) {
     if (existsSync(candidate) && statSync(candidate).isFile()) return candidate
   }
+
   return null
 }
 
@@ -38,15 +42,23 @@ const IMPORT = /^\s*(?:import|export)\s+(?!type\b)(?:[^'";]*?\sfrom\s+)?['"]([^'
 function forbiddenChain(file: string, seen = new Set<string>()): string[] | null {
   if (seen.has(file)) return null
   seen.add(file)
+
   const source = readFileSync(file, 'utf8')
+
   for (const match of source.matchAll(IMPORT)) {
     const specifier = match[1]!
+
     if (FORBIDDEN.test(specifier)) return [relative(root, file), specifier]
+
     const next = resolveImport(file, specifier)
+
     if (!next || directive(readFileSync(next, 'utf8')) === 'server') continue
+
     const chain = forbiddenChain(next, seen)
+
     if (chain) return [relative(root, file), ...chain]
   }
+
   return null
 }
 

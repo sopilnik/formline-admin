@@ -18,13 +18,18 @@ export function InviteForm() {
   const toast = useToast()
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending, unreached] = useFormAction(inviteMemberAction, IDLE, form)
+
   useLeaveGuard(form, state.status === 'error')
+
   const settle = useEffectEvent((result: InviteState) => {
     if (result.status === 'done') toast.success(t('sent', { email: result.email }))
     if (result.status === 'error') form.current?.querySelector<HTMLElement>('[name="email"]')?.focus()
   })
+
   useEffect(() => settle(state), [state])
+
   const error = state.status === 'error' ? state : null
+
   return (
     <form ref={form} action={action} noValidate className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_12rem_auto] lg:items-start">
       <UnreachedAlert unreached={unreached} className="lg:col-span-full" />

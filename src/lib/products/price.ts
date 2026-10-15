@@ -23,19 +23,24 @@ export function variantPriceCents(baseCents: number, size: SizeId, overrideCents
 /** A price as typed: "29", "29.5", "29.00" or "29,00" (the Russian decimal comma). Null for anything else or outside $0.01–$9,999.99. */
 export function parsePrice(text: string): number | null {
   const match = /^(\d{1,4})(?:[.,](\d{1,2}))?$/.exec(text.trim())
+
   if (!match) return null
+
   const cents = Number(match[1]) * 100 + Number((match[2] ?? '').padEnd(2, '0'))
+
   return cents >= 1 && cents <= MAX_PRICE_CENTS ? cents : null
 }
 
 /** A base price as typed (parsePrice), at most MAX_BASE_PRICE_CENTS. */
 export function parseBasePrice(text: string): number | null {
   const cents = parsePrice(text)
+
   return cents !== null && cents <= MAX_BASE_PRICE_CENTS ? cents : null
 }
 
 /** The text a price field starts with: "29.00" in English, "29,00" in Russian. */
 export function priceField(cents: number, locale: Locale): string {
   const text = (cents / 100).toFixed(2)
+
   return locale === 'ru' ? text.replace('.', ',') : text
 }

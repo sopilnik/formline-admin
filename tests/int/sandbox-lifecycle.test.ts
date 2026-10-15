@@ -17,11 +17,13 @@ const meta = { userAgentSummary: 'Vitest', locale: 'en' as const }
 async function enter(ipHash = randomIpHash()): Promise<{ session: Session; token: string }> {
   const { token } = await createSandbox(app, { ipHash })
   const session = await validateSessionToken(token, app)
+
   return { session: session!, token }
 }
 
 async function count(table: string, workspaceId: string): Promise<number> {
   const { rows } = await admin.query<{ n: string }>(`select count(*) as n from fa.${table} where workspace_id = $1`, [workspaceId])
+
   return Number(rows[0]!.n)
 }
 
@@ -36,6 +38,7 @@ describe('end_sandbox', () => {
   it('removes everything of its own sandbox, queues its uploads and leaves other sandboxes alone', async () => {
     const a = await enter()
     const b = await enter()
+
     await asSchemaOwner(admin, c => c.query(
       "insert into fa.images (workspace_id, storage_path, source, width, height, bytes) values ($1, 'media/a-upload.webp', 'upload', 10, 10, 100)", [a.session.workspaceId]))
     try {
@@ -47,9 +50,13 @@ describe('end_sandbox', () => {
       expect(await validateSessionToken(a.token, app)).toBeNull()
       expect(await validateSessionToken(b.token, app)).not.toBeNull()
       expect(await count('orders', b.session.workspaceId)).toBeGreaterThan(0)
+
       const queued = await admin.query('select 1 from fa.pending_media_deletions where storage_path = $1', ['media/a-upload.webp'])
+
       expect(queued.rowCount).toBe(1)
+
       const posters = await admin.query("select 1 from fa.pending_media_deletions where storage_path like 'posters/%'")
+
       expect(posters.rowCount).toBe(0)
     } finally {
       await admin.query('delete from fa.pending_media_deletions where storage_path = $1', ['media/a-upload.webp'])
@@ -67,18 +74,25 @@ describe('reset_sandbox', () => {
   it('replaces the sandbox with a fresh copy and counts against the address limit', async () => {
     const ip = randomIpHash()
     const a = await enter(ip)
+
     await withWorkspace(workspaceContext(a.session), tx => tx.execute(sql`update fa.collections set name = 'Changed' where slug = 'night'`), app)
+
     const result = await resetSandbox(a.session, { ipHash: ip, ...meta }, app)
+
     expect(result.ok).toBe(true)
     if (!result.ok) return
     try {
       expect(result.workspaceId).not.toBe(a.session.workspaceId)
       expect((await admin.query('select 1 from fa.workspaces where id = $1', [a.session.workspaceId])).rowCount).toBe(0)
+
       const night = await admin.query<{ name: string }>("select name from fa.collections where workspace_id = $1 and slug = 'night'", [result.workspaceId])
+
       expect(night.rows[0]?.name).toBe('Night')
       expect(await validateSessionToken(a.token, app)).toBeNull()
       expect(await validateSessionToken(result.token, app)).toMatchObject({ workspaceId: result.workspaceId, role: 'owner' })
+
       const limit = await admin.query<{ count: number }>("select count from fa.rate_limits where purpose = 'sandbox.create.ip' and subject = $1", [`ip:${ip}`])
+
       expect(limit.rows[0]?.count).toBe(2)
     } finally {
       await admin.query('delete from fa.workspaces where id = $1', [result.workspaceId])
@@ -88,12 +102,18 @@ describe('reset_sandbox', () => {
   it('keeps the sandbox when the address limit refuses the new copy', async () => {
     // create_sandbox counts the entries of an address in fixed hours.
     await roomInWindow(60 * 60, 10)
+
     const ip = randomIpHash()
     const a = await enter(ip)
+
     for (let i = 0; i < 4; i++) await enter(ip)
+
     const result = await resetSandbox(a.session, { ipHash: ip, ...meta }, app)
+
     expect(result).toMatchObject({ ok: false, error: 'demo_rate_limited' })
+
     const kept = await admin.query<{ live: boolean }>('select expires_at > now() as live from fa.workspaces where id = $1', [a.session.workspaceId])
+
     expect(kept.rows[0]?.live).toBe(true)
     expect(await validateSessionToken(a.token, app)).not.toBeNull()
   })

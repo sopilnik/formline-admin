@@ -9,6 +9,7 @@ import type { LetterContent } from '@/lib/letters'
  */
 export async function LetterBody({ content }: { content: LetterContent }) {
   const t = await getTranslations({ locale: content.locale, namespace: 'letters' })
+
   return (
     <div lang={content.locale} className="flex max-w-prose flex-col gap-3 text-sm leading-6">
       {content.name ? <p>{t('greeting', { person: content.name })}</p> : null}

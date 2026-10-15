@@ -12,6 +12,7 @@ let other: WorkspaceContext
 
 async function sandbox(): Promise<WorkspaceContext> {
   const { workspaceId, userId } = await createSandbox(app)
+
   return { workspaceId, userId, role: 'owner' }
 }
 
@@ -31,6 +32,7 @@ describe('searchWorkspace', () => {
       `select o.number, c.name, o.total_cents, o.status from fa.orders o join fa.customers c on c.workspace_id = o.workspace_id and c.id = o.customer_id
         where o.workspace_id = $1 order by o.placed_at limit 1`, [box.workspaceId])).rows
     const plain = await search(box, String(order!.number))
+
     expect(plain.orders).toEqual([{ number: order!.number, customer: order!.name, totalCents: order!.total_cents, status: order!.status }])
     expect((await search(box, `#${order!.number}`)).orders).toEqual(plain.orders)
   })
@@ -45,6 +47,7 @@ describe('searchWorkspace', () => {
       `select o.number from fa.orders o join fa.customers c on c.workspace_id = o.workspace_id and c.id = o.customer_id
         where o.workspace_id = $1 and c.email ilike $2 order by o.placed_at desc, o.id desc limit 5`, [box.workspaceId, `%${part}%`])).rows
     const found = await search(box, part)
+
     expect(found.orders.map(o => o.number)).toEqual(expected.map(o => o.number))
     expect(found.orders).toHaveLength(5)
   })
@@ -57,10 +60,13 @@ describe('searchWorkspace', () => {
     const products = (await admin.query<{ slug: string; name: string; status: string }>(
       `select slug, name, status from fa.products where workspace_id = $1 and (name ilike '%or%' or slug ilike '%or%')
         order by name collate "unicode", id limit 5`, [box.workspaceId])).rows
+
     expect(found.customers).toEqual(customers)
     expect(found.products).toEqual(products)
     expect(found.products.length).toBeGreaterThan(0)
+
     const [bySlug] = (await admin.query<{ slug: string }>("select slug from fa.products where workspace_id = $1 and slug like '%-%' order by slug limit 1", [box.workspaceId])).rows
+
     expect((await search(box, bySlug!.slug)).products.map(p => p.slug)).toContain(bySlug!.slug)
   })
 

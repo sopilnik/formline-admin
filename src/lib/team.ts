@@ -19,6 +19,7 @@ export const MEMBER_NAME_MAX = 120
 export function memberName(raw: string): string | null {
   const name = cleanLine(raw)
   const length = [...name].length
+
   return length >= 1 && length <= MEMBER_NAME_MAX ? name : null
 }
 

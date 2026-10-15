@@ -14,12 +14,16 @@ test.describe('settings', () => {
     await expect(page).toHaveURL(/\/settings\/profile$/)
     await expect(page.getByRole('heading', { level: 1, name: 'Profile' })).toBeVisible()
     await expect(page).toHaveTitle('Profile · Formline Admin')
+
     const tabs = page.getByRole('navigation', { name: 'Settings sections' })
+
     await expect(tabs.getByRole('link')).toHaveText(['Profile', 'Security', 'Store'])
     await expect(tabs.getByRole('link', { name: 'Profile' })).toHaveAttribute('aria-current', 'page')
     await expect(page.getByText('Signed in as dana.ortiz@formline.example. The email cannot be changed.')).toBeVisible()
+
     // Only the address may break inside the sentence, never an ordinary word.
     const account = page.getByText('Signed in as dana.ortiz@formline.example. The email cannot be changed.')
+
     await expect(account).toHaveCSS('word-break', 'normal')
     await expect(account).toHaveCSS('overflow-wrap', 'anywhere')
     await expectNoSeriousA11yViolationsInBothThemes(page)
@@ -44,6 +48,7 @@ test.describe('settings', () => {
 
   test('changes the store settings, keeps them and refuses a negative threshold', async ({ page, context }) => {
     const { workspaceId } = await signInAsSandboxUser(context, 'admin')
+
     await page.goto('/settings/store')
     await expect(page.getByRole('heading', { level: 1, name: 'Store' })).toBeVisible()
     await expect(page.getByLabel('Time zone')).toHaveValue('Europe/Berlin')
@@ -59,8 +64,10 @@ test.describe('settings', () => {
     await page.reload()
     await expect(page.getByLabel('Time zone')).toHaveValue('Asia/Almaty')
     await expect(page.getByLabel('Low-stock threshold')).toHaveValue('5')
+
     const logged = await asSchemaOwner(async c => (await c.query<{ details: { changed: string[] } }>(
       "select details from fa.activity_log where workspace_id = $1 and action = 'settings.store_updated'", [workspaceId])).rows)
+
     expect(logged).toEqual([{ details: { changed: ['timezone', 'lowStockDefault'] } }])
     await expectNoSeriousA11yViolationsInBothThemes(page)
   })

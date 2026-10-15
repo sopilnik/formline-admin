@@ -24,6 +24,7 @@ export function ReauthForm({ intro }: { intro?: string } = {}) {
   const [passkeyPending, setPasskeyPending] = useState(false)
   const errorFor = useErrorText(state)
   const send = useReach()
+
   useFocusOnError(state, 'reauth', 'password')
 
   async function withPasskey() {
@@ -32,6 +33,7 @@ export function ReauthForm({ intro }: { intro?: string } = {}) {
     try {
       const answer = await startAuthentication({ optionsJSON: await passkeyChallenge() })
       const outcome = await send(() => reauthWithPasskeyAction(answer))
+
       if (!outcome) return
       if (outcome.ok) router.refresh()
       else setPasskeyError(outcome.error)

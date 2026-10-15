@@ -16,5 +16,6 @@ export function pseudonymFor(email: string, key: string): Pseudonym {
   const last = LAST_NAMES[digest.readUInt16BE(2) % LAST_NAMES.length]!
   const place = PLACES[digest.readUInt16BE(4) % PLACES.length]!
   const local = `${first}.${last}`.toLowerCase().replace(/[^a-z.]/g, '')
+
   return { name: `${first} ${last}`, email: `${local}.${digest.subarray(6, 10).toString('hex')}@pseudonym.example`, city: place.city, country: place.country }
 }

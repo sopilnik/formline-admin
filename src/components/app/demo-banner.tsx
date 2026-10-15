@@ -22,6 +22,7 @@ export function DemoBanner({ hours, members }: { hours: number; members: SwitchT
   const [switchOpen, setSwitchOpen] = useState(false)
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending, unreached] = useFormAction(resetDemoAction, IDLE as FormState, form)
+
   return (
     <div role="region" aria-label={t('label')} className="flex flex-wrap items-center gap-3 border-b border-border bg-card px-4 py-2 text-sm md:px-6">
       {/* A phone gets the rule in one short line; from 640 px the whole sentence, kept at least 20 rem wide (the actions wrap). */}

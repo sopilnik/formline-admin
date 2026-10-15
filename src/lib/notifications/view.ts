@@ -33,11 +33,13 @@ export type NotificationTarget =
 /** What a stored notification says; null for a kind this version does not know, which the lists leave out. */
 export function notificationView(kind: string, stored: unknown): NotificationView | null {
   const payload = asRecord(stored) ?? {}
+
   switch (kind) {
     case 'order.created':
       return { kind, number: whole(payload, 'number'), customer: text(payload, 'customer'), totalCents: whole(payload, 'totalCents') }
     case 'stock.low': {
       const stock = whole(payload, 'stock') ?? 0
+
       return {
         kind,
         product: text(payload, 'product') ?? '—',
@@ -64,13 +66,16 @@ export function notificationView(kind: string, stored: unknown): NotificationVie
 /** The subject a notification opens; null when the payload names none (the notifications page then stays open). */
 export function notificationTarget(kind: string, stored: unknown): NotificationTarget | null {
   const payload = asRecord(stored) ?? {}
+
   switch (kind) {
     case 'order.created': {
       const number = whole(payload, 'number')
+
       return number !== null && number > 0 ? { type: 'order', number } : null
     }
     case 'stock.low': {
       const productId = text(payload, 'productId')
+
       return productId && UUID_PATTERN.test(productId) ? { type: 'product', productId } : null
     }
     case 'team.invitation_accepted':

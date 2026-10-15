@@ -22,6 +22,7 @@ import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('settings.security')
+
   return { title: t('title') }
 }
 
@@ -31,7 +32,9 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default async function SecurityPage() {
   const session = await requireSession()
+
   authorize(session, 'self.manage')
+
   const locale = await getLocale()
   const owner = session.workspaceKind === 'owner'
   const recent = isRecentAuth(session)
@@ -42,11 +45,14 @@ export default async function SecurityPage() {
     sessions: await listOwnSessions(tx, session.userId),
     timeZone: (await getStoreSettings(tx, session.workspaceId)).timezone,
   }))
+
   if (!self) redirect('/sign-in')
+
   const t = await getTranslations('settings.security')
   const auth = await getTranslations('auth')
   // A new key for every view: it only counts once its first code comes back with the form.
   const secret = generateTotpSecret()
+
   return (
     <div className="flex max-w-3xl flex-col gap-6">
       <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>

@@ -9,6 +9,7 @@ const chooseTheme = (context: BrowserContext, theme: 'light' | 'dark') =>
 const paint = (target: Locator) =>
   target.evaluate(el => {
     const s = getComputedStyle(el)
+
     return { border: s.borderTopColor, background: s.backgroundColor }
   })
 
@@ -30,7 +31,9 @@ test.describe('controls', () => {
     for (const theme of ['light', 'dark'] as const) {
       await chooseTheme(context, theme)
       await page.goto('/overview')
+
       const reset = page.getByRole('region', { name: 'Demo sandbox' }).getByRole('button', { name: 'Reset data' })
+
       expect(await paint(reset)).toEqual(OUTLINE_BUTTON[theme])
 
       await page.goto('/products')
@@ -43,7 +46,9 @@ test.describe('controls', () => {
     await signInAsSandboxUser(context)
     await page.goto('/products')
     await page.locator('main tbody a, main [data-slot=card] a').first().click()
+
     const select = page.locator('#product-collection')
+
     expect(await select.evaluate(el => [getComputedStyle(el).textOverflow, getComputedStyle(el).whiteSpace])).toEqual(['ellipsis', 'nowrap'])
   })
 })

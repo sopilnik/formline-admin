@@ -13,7 +13,9 @@ type Params = { params: Promise<{ token: string }> }
 export async function generateMetadata(): Promise<Metadata> {
   // The owner workspace answers the link with "not found": its tab says so too.
   if ((await requireSession()).workspaceKind !== 'sandbox') return { title: (await getTranslations('notFound'))('title') }
+
   const t = await getTranslations('invite')
+
   return { title: t('title') }
 }
 
@@ -23,13 +25,16 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default async function InvitePage({ params }: Params) {
   const session = await requireSession()
+
   if (session.workspaceKind !== 'sandbox') notFound()
+
   const token = (await params).token
   const invitation = TOKEN_PATTERN.test(token)
     ? await withWorkspace(workspaceContext(session), tx => findInvitation(tx, hashToken(token)))
     : null
   const t = await getTranslations('invite')
   const role = await getTranslations('user.roles')
+
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-5">
       <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>

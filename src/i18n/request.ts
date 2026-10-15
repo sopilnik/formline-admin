@@ -7,6 +7,7 @@ import { LOCALE_COOKIE, parseLocale, TIME_ZONE } from '@/i18n/locale'
 // shown in its recipient's language — wins over the cookie.
 export default getRequestConfig(async ({ locale: requested }) => {
   const locale = parseLocale(requested ?? (await cookies()).get(LOCALE_COOKIE)?.value)
+
   return {
     locale,
     messages: (await import(`../../messages/${locale}.json`)).default,

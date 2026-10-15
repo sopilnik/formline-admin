@@ -5,6 +5,7 @@ import { getTranslations } from 'next-intl/server'
 export default async function AuthNotFound() {
   const t = await getTranslations('notFound')
   const nav = await getTranslations('nav')
+
   return (
     <div className="flex flex-col items-center gap-2 pt-10 text-center">
       <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>

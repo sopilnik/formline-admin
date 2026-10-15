@@ -10,6 +10,7 @@ type LowStockView = { key: string; href: string; product: string; variant: strin
 /** Variants at or below their threshold: sold out first, at most five, then "View all N". */
 export function LowStock({ rows, total }: { rows: LowStockView[]; total: number }) {
   const t = useTranslations('overview.lowStock')
+
   return (
     <section aria-labelledby="low-stock-title" className="flex min-w-0 flex-col rounded-lg border bg-card p-4 sm:p-5">
       <div className="mb-1 flex items-baseline gap-2.5">

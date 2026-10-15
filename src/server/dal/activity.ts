@@ -49,11 +49,15 @@ export type ActivityPage = {
 
 function activityFilters(workspaceId: string, query: ActivityQuery, now: Date, timeZone: string): SQL {
   const parts: SQL[] = [eq(activityLog.workspaceId, workspaceId)]
+
   if (query.actor === SYSTEM_ACTOR) parts.push(isNull(activityLog.actorUserId))
   else if (query.actor) parts.push(eq(activityLog.actorUserId, query.actor))
   if (query.action) parts.push(eq(activityLog.action, query.action))
+
   const range = presetRange(query.when, now, timeZone)
+
   if (range) parts.push(gte(activityLog.at, range.start), lt(activityLog.at, range.end))
+
   return and(...parts)!
 }
 
@@ -91,6 +95,7 @@ export async function listActivity(tx: Tx, workspaceId: string, query: ActivityQ
     .where(and(eq(customers.workspaceId, workspaceId), inArray(customers.id, customerIds)))
 
   const filtered = filteredRow?.n ?? 0
+
   return {
     rows,
     total: totalRow?.n ?? 0, filtered,

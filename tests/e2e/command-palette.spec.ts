@@ -19,6 +19,7 @@ test.describe('command palette', () => {
       `select o.number, c.name from fa.orders o join fa.customers c on c.workspace_id = o.workspace_id and c.id = o.customer_id
         where o.workspace_id = $1 order by o.placed_at limit 1`, [workspaceId]))
     const { number, name } = rows[0]!
+
     await openFramed(page, '/overview')
     await expect(page.getByRole('button', { name: 'Search…' })).toHaveAttribute('aria-keyshortcuts', 'Control+K')
     await page.keyboard.press('Control+k')
@@ -27,7 +28,9 @@ test.describe('command palette', () => {
     await expect(group(page, 'Pages').getByRole('option')).toHaveCount(9)
     await expectNoSeriousA11yViolationsInBothThemes(page, '[role="dialog"][aria-label="Search and commands"]')
     await input(page).fill(`#${number}`)
+
     const order = group(page, 'Orders').getByRole('option', { name: new RegExp(`^#${number} · ${name}`) })
+
     await expect(order).toBeVisible()
     await expect(group(page, 'Pages')).toHaveCount(0)
     await page.keyboard.press('Enter')
@@ -49,6 +52,7 @@ test.describe('command palette', () => {
     const { workspaceId } = await signInAsSandboxUser(context)
     const { rows } = await asSchemaOwner(c => c.query<{ id: string; name: string }>(
       'select id, name from fa.customers where workspace_id = $1 order by name limit 1', [workspaceId]))
+
     await openFramed(page, '/orders')
     await page.getByRole('searchbox').focus()
     await page.keyboard.press('Control+k')
@@ -61,7 +65,9 @@ test.describe('command palette', () => {
     await signInAsSandboxUser(context, 'viewer')
     await openFramed(page, '/overview')
     await page.keyboard.press('Control+k')
+
     const actions = group(page, 'Actions').getByRole('option')
+
     await expect(actions).toHaveText(['Follow the system theme', 'Use the light theme', 'Use the dark theme', 'Switch to Russian', 'Keyboard shortcuts', 'Sign out'])
     await expect(group(page, 'Pages').getByRole('option', { name: 'Team' })).toHaveCount(0)
     await actions.filter({ hasText: 'Sign out' }).click()
@@ -96,7 +102,9 @@ test.describe('command palette', () => {
     await page.getByRole('button', { name: 'Search…' }).click()
     await input(page).fill('zzqx')
     await expect(palette(page).getByText('Nothing found for “zzqx”.')).toBeVisible()
+
     const box = (await palette(page).boundingBox())!
+
     expect(box.x).toBeGreaterThanOrEqual(0)
     expect(box.x + box.width).toBeLessThanOrEqual(375)
     await page.keyboard.press('Escape')

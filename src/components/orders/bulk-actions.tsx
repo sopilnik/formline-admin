@@ -30,14 +30,18 @@ export function BulkActions({ chosen, query, canUpdate, onClear }: Props) {
 
   const apply = (to: OrderStatus): void => startTransition(async () => {
     const result = await send(() => changeStatusesAction({ ids: chosen.map(row => row.id), to }))
+
     if (!result) return
     if (!result.ok) {
       if (result.code === 'forbidden') refused(orders('forbidden'))
       else toast.error(t('failed'))
+
       return
     }
+
     const { changed, skipped } = result.data
     const note = skipped.length > 0 ? t('skipped', { count: skipped.length, numbers: skipped.map(n => `#${n}`).join(', ') }) : undefined
+
     if (changed.length > 0) toast.success(t('changed', { count: changed.length, status: statusLabel(to) }), note)
     else toast.error(t('noneChanged'), note)
     onClear()

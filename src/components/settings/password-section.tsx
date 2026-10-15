@@ -20,11 +20,15 @@ export function PasswordSection({ available, recent }: { available: boolean; rec
   const form = useRef<HTMLFormElement>(null)
   const [state, action, pending, unreached] = useFormAction(changePasswordAction, IDLE as FormState<'password'>, form)
   const errorFor = useErrorText(state)
+
   useFocusOnError(state, 'new', 'password')
+
   const settle = useEffectEvent((result: FormState<'password'>) => {
     if (result.status === 'done') toast.success(t('changed'))
   })
+
   useEffect(() => settle(state), [state])
+
   return (
     <section aria-labelledby="password-title" className="flex flex-col gap-4 rounded-lg border bg-card p-5">
       <div>

@@ -6,8 +6,10 @@ test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip'
 
 test('a password field shows what was typed and hides it again, from a button after it', async ({ page }) => {
   await page.goto('/sign-in')
+
   const password = page.getByLabel('Password', { exact: true })
   const show = page.getByRole('button', { name: 'Show password' })
+
   await hydrated(show)
   await password.fill('correct horse battery')
   await expect(password).toHaveAttribute('type', 'password')

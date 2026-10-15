@@ -42,7 +42,9 @@ test.describe('list results said aloud', () => {
   test('a list marks itself busy while a filter loads', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await openFramed(page, '/orders')
+
     const list = page.getByRole('main').locator('section').filter({ has: page.getByRole('table', { name: 'Orders' }) })
+
     // The next page of results is held back a second, as a slow connection would.
     await page.route('**/orders?*', async route => {
       if (route.request().headers().rsc) await new Promise(resolve => setTimeout(resolve, 1000))
@@ -57,13 +59,17 @@ test.describe('list results said aloud', () => {
     await signInAsSandboxUser(context)
     await openFramed(page, '/overview')
     await page.keyboard.press('Control+k')
+
     const palette = page.getByRole('dialog', { name: 'Search and commands' })
     const input = palette.getByRole('combobox')
+
     await input.fill('qqqzzz')
     await expect(palette.getByRole('status')).toHaveText('Nothing found for “qqqzzz”.')
     await input.fill('orders')
     await expect(palette.getByRole('status')).toHaveText(/^\d+ results?$/)
+
     const highlighted = palette.getByRole('option').first()
+
     await expect(highlighted).toHaveAttribute('aria-selected', 'true')
     await expect(palette.locator('[role="option"][aria-selected="true"]')).toHaveCount(1)
   })

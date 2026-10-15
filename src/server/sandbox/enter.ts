@@ -23,6 +23,7 @@ export type EntryRow = {
 export function entryFromRow(row: EntryRow, token: string): SandboxEntry {
   if (row.outcome === 'created') return { ok: true, token, workspaceId: row.sandbox_id!, userId: row.demo_user_id!, expiresAt: asDate(row.sandbox_expires_at!) }
   if (row.outcome === 'rate_limited') return { ok: false, error: 'demo_rate_limited', retryAfterSeconds: row.retry_after_seconds }
+
   return { ok: false, error: 'demo_full' }
 }
 
@@ -34,5 +35,6 @@ export function entryFromRow(row: EntryRow, token: string): SandboxEntry {
 export async function enterSandbox(input: VisitorMeta, pool: Pool = getPool()): Promise<SandboxEntry> {
   const token = generateToken()
   const { rows } = await pool.query<EntryRow>('select * from fa.create_sandbox($1, $2, $3, $4)', [input.ipHash, hashToken(token), input.userAgentSummary, input.locale])
+
   return entryFromRow(rows[0]!, token)
 }

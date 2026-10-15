@@ -7,13 +7,16 @@
  */
 export function messageOf(error: Error): string {
   if (!(error instanceof AggregateError) || error.message) return error.message
+
   return error.errors.map(e => (e instanceof Error ? e.message : String(e))).join('; ')
 }
 
 /** The innermost reason behind an error: "database unreachable after 5 attempts" may hide a refused password. */
 function causeOf(error: unknown): string | undefined {
   let reason: string | undefined
+
   for (let e = error instanceof Error ? error.cause : undefined; e instanceof Error; e = e.cause) reason = messageOf(e)
+
   return reason
 }
 
@@ -21,8 +24,10 @@ function causeOf(error: unknown): string | undefined {
 function detailOf(error: unknown): string | undefined {
   for (let e: unknown = error; e instanceof Error; e = e.cause) {
     const detail = (e as { detail?: unknown }).detail
+
     if (typeof detail === 'string' && detail !== '') return detail
   }
+
   return undefined
 }
 
@@ -30,6 +35,7 @@ function detailOf(error: unknown): string | undefined {
 export function errorFields(error: unknown): { message: string; cause?: string; detail?: string } {
   const cause = causeOf(error)
   const detail = detailOf(error)
+
   return {
     message: error instanceof Error ? messageOf(error) : String(error),
     ...(cause === undefined ? {} : { cause }),

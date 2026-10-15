@@ -11,11 +11,13 @@ let pool: pg.Pool | undefined
 export function getPool(): pg.Pool {
   if (!pool) {
     const connectionString = process.env.DATABASE_URL
+
     if (!connectionString) throw new Error('DATABASE_URL is not set')
     pool = new pg.Pool({ connectionString, max: 5, idleTimeoutMillis: 10_000, connectionTimeoutMillis: 10_000 })
     // An idle client whose server went away (a suspended compute, a network fault) emits 'error'. The pool drops it and
     // connects anew on the next request; without a listener the event would be an uncaught exception.
     pool.on('error', error => log.warn({ event: 'db.idle_client_failed', err: error }))
   }
+
   return pool
 }

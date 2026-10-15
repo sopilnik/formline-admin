@@ -16,7 +16,9 @@ const SELF = 'tests/unit/reference-rules.test.ts'
 function textFiles(dir = ''): string[] {
   return readdirSync(join(root, dir), { withFileTypes: true }).flatMap(entry => {
     const name = dir ? `${dir}/${entry.name}` : entry.name
+
     if (entry.isDirectory()) return SKIP.has(entry.name) || name === FROZEN ? [] : textFiles(name)
+
     return TEXT.test(entry.name) && !SKIP.has(entry.name) && name !== SELF ? [name] : []
   })
 }

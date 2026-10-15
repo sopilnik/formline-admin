@@ -16,9 +16,13 @@ let viewer: Actor
 beforeAll(async () => {
   admin = adminPool()
   app = appPool()
+
   const { workspaceId, userId } = await createSandbox(app)
+
   owner = { workspaceId, userId, role: 'owner', ipHash: null }
+
   const v = await admin.query<{ id: string }>("select id from fa.users where workspace_id = $1 and role = 'viewer'", [owner.workspaceId])
+
   viewer = { ...owner, userId: v.rows[0]!.id, role: 'viewer' }
 })
 afterAll(closeAll)
@@ -27,6 +31,7 @@ const read = (slug: string) => withWorkspace(owner, tx => getProduct(tx, owner.w
 
 async function inputFor(slug: string): Promise<DetailsInput> {
   const p = (await read(slug))!
+
   return { productId: p.id, version: p.version, name: p.name, slug: p.slug, collectionId: p.collection.id, basePriceCents: p.basePriceCents, tags: p.tags, description: p.description }
 }
 
@@ -36,6 +41,7 @@ const logged = async (productId: string) => (await admin.query<{ action: string;
 describe('getProduct', () => {
   it('reads the product with its collection, image, variants in the store order and whether it has orders', async () => {
     const p = (await read('far-orbit'))!
+
     expect(p.name).toBe('Far Orbit')
     expect(p.collection.slug).toBe('night')
     expect(p.image?.storagePath).toBe('posters/far-orbit.webp')
@@ -54,8 +60,11 @@ describe('saveProductDetails', () => {
   it('saves the fields, bumps the version and logs what changed', async () => {
     const input = await inputFor('low-tide')
     const result = await saveProductDetails(owner, { ...input, name: 'Low Tide II', basePriceCents: 3300, tags: ['calm'] }, app)
+
     expect(result).toEqual({ ok: true, slug: 'low-tide', previousSlug: 'low-tide', changed: ['name', 'basePrice', 'tags'] })
+
     const after = (await read('low-tide'))!
+
     expect(after.name).toBe('Low Tide II')
     expect(after.variants[0]!.priceCents).toBe(3300)
     expect(after.version).not.toBe(input.version)
@@ -64,6 +73,7 @@ describe('saveProductDetails', () => {
 
   it('moves the product to a new slug', async () => {
     const input = await inputFor('sparse')
+
     expect(await saveProductDetails(owner, { ...input, slug: 'sparse-grid' }, app)).toMatchObject({ ok: true, slug: 'sparse-grid', previousSlug: 'sparse' })
     expect(await read('sparse')).toBeNull()
     expect((await read('sparse-grid'))?.id).toBe(input.productId)
@@ -71,6 +81,7 @@ describe('saveProductDetails', () => {
 
   it('reports a conflict instead of overwriting a newer change', async () => {
     const input = await inputFor('hush')
+
     await admin.query("update fa.products set description = 'Changed elsewhere.', updated_at = now() where workspace_id = $1 and id = $2", [owner.workspaceId, input.productId])
     expect(await saveProductDetails(owner, { ...input, name: 'Hush Hush' }, app)).toEqual({ ok: false, reason: 'conflict' })
     expect((await read('hush'))?.name).toBe('Hush')
@@ -78,6 +89,7 @@ describe('saveProductDetails', () => {
 
   it('refuses a slug another product has and a collection the workspace lacks', async () => {
     const input = await inputFor('loud')
+
     expect(await saveProductDetails(owner, { ...input, slug: 'red-corner' }, app)).toEqual({ ok: false, reason: 'slug_taken' })
     expect(await saveProductDetails(owner, { ...input, collectionId: randomUUID() }, app)).toEqual({ ok: false, reason: 'collection_missing' })
   })
@@ -87,13 +99,17 @@ describe('saveProductDetails', () => {
     const done = gate()
     const first = withWorkspace(owner, async tx => {
       const made = await updateProductDetails(tx, owner.workspaceId, { ...(await inputFor('after-dark')), slug: 'midnight' })
+
       changed.open()
       await done.wait
+
       return made
     }, app)
+
     await changed.wait
 
     const second = saveProductDetails(owner, { ...(await inputFor('far-orbit')), slug: 'midnight' }, app)
+
     await Promise.race([lockWaiter(admin), second.catch(() => undefined)])
     done.open()
 
@@ -104,6 +120,7 @@ describe('saveProductDetails', () => {
 
   it('writes nothing when nothing changed', async () => {
     const input = await inputFor('slow')
+
     expect(await saveProductDetails(owner, input, app)).toEqual({ ok: true, slug: 'slow', previousSlug: 'slow', changed: [] })
     expect((await read('slow'))?.version).toBe(input.version)
     expect(await logged(input.productId)).toEqual([])
@@ -111,6 +128,7 @@ describe('saveProductDetails', () => {
 
   it('finds nothing to change for a viewer', async () => {
     const input = await inputFor('ninety-six')
+
     expect(await saveProductDetails(viewer, { ...input, name: 'Viewer was here' }, app)).toEqual({ ok: false, reason: 'not_found' })
     expect((await read('ninety-six'))?.name).toBe('Ninety-Six')
   })

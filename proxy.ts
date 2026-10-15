@@ -36,9 +36,11 @@ function isLiveness(request: NextRequest): boolean {
 // trustworthy for rate limits and keeps the raw endpoint closed.
 function fromEdge(request: NextRequest): boolean {
   if (process.env.NODE_ENV !== 'production' && process.env.ORIGIN_AUTH_DISABLED === '1') return true
+
   const secret = process.env.ORIGIN_AUTH_SECRET ?? ''
   const given = request.headers.get('x-origin-auth') ?? ''
   const ip = request.headers.get('x-client-ip') ?? ''
+
   return secret.length >= 32 && sameSecret(given, secret) && isIP(ip) !== 0
 }
 
@@ -71,12 +73,14 @@ export function proxy(request: NextRequest): NextResponse {
   // A form sent from a page opened with ?lang keeps that address: the language is a navigation's, not the form's. A
   // cookie set in a Server Action's answer would draw the page again at the address it had (a renamed product's).
   const locale = request.method === 'GET' ? knownLocale(lang) : null
+
   // The request that carries ?lang renders in that language already, not only the next one.
   if (locale) request.cookies.set(LOCALE_COOKIE, locale)
 
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
   const csp = buildCsp(nonce, process.env.NODE_ENV === 'development')
   const headers = new Headers(request.headers)
+
   if (locale) headers.set('cookie', request.cookies.toString())
   // Only this proxy says that a link chose the language: a header the browser sent itself is dropped.
   headers.delete(LANG_LINK_HEADER)
@@ -89,14 +93,17 @@ export function proxy(request: NextRequest): NextResponse {
     // Behind the edge the Host header may name bunny's endpoint rather than the panel, and Server Actions compare the
     // browser's Origin with the forwarded host. The request passed the edge check, so the panel's own address stands in.
     const site = new URL(process.env.SITE_URL ?? 'http://localhost:3000')
+
     headers.set('x-forwarded-host', site.host)
     headers.set('x-forwarded-proto', site.protocol.replace(':', ''))
   }
 
   const response = NextResponse.next({ request: { headers } })
+
   response.headers.set('Content-Security-Policy', csp)
   response.headers.set('X-Request-Id', requestId)
   if (locale) response.cookies.set(LOCALE_COOKIE, locale, PREFERENCE_COOKIE_OPTIONS)
+
   return response
 }
 

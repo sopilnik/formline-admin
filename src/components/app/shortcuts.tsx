@@ -27,21 +27,25 @@ export function ShortcutsProvider({ enabled, items, children }: { enabled: boole
     const onKey = (event: KeyboardEvent) => {
       // An open dialog or menu has the keyboard to itself.
       const inOverlay = event.target instanceof Element && event.target.closest('[role="dialog"], [role="alertdialog"], [role="menu"]') !== null
+
       if (event.defaultPrevented || event.repeat || inOverlay) return
 
       const shortcut = read({
         key: event.key, code: event.code, ctrlKey: event.ctrlKey, metaKey: event.metaKey, altKey: event.altKey,
         typing: isTypingTarget(event.target), time: event.timeStamp,
       })
+
       if (!shortcut) return
 
       if (shortcut.type === 'go') {
         const item = items.find(i => i.key === shortcut.page)
+
         if (!item) return
         event.preventDefault()
         router.push(item.href)
       } else if (shortcut.type === 'search') {
         const field = document.querySelector<HTMLInputElement>('main input[type="search"]')
+
         if (!field) return
         event.preventDefault()
         field.focus()
@@ -53,6 +57,7 @@ export function ShortcutsProvider({ enabled, items, children }: { enabled: boole
     }
 
     document.addEventListener('keydown', onKey)
+
     return () => document.removeEventListener('keydown', onKey)
   }, [enabled, items, router])
 
@@ -66,7 +71,9 @@ export function ShortcutsProvider({ enabled, items, children }: { enabled: boole
 
 export function useShortcuts(): { showHelp: () => void } {
   const value = use(ShortcutsContext)
+
   if (!value) throw new Error('useShortcuts needs a ShortcutsProvider above it')
+
   return value
 }
 
@@ -92,6 +99,7 @@ function ShortcutsHelp({ open, onOpenChange, enabled, items }: { open: boolean; 
     ...pages.map(([letter, page]) => ({ keys: ['g', letter], label: t('goTo', { page: nav(page) }) })),
     { keys: ['?'], label: t('help') },
   ]
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md" closeLabel={common('dismiss')}>

@@ -17,7 +17,9 @@ let ids: Record<'owner' | 'admin' | 'manager' | 'viewer', string>
 beforeAll(async () => {
   admin = adminPool()
   app = appPool()
+
   const { workspaceId, userId } = await createSandbox(app)
+
   owner = { workspaceId, userId, role: 'owner', ipHash: 'ip-hash-of-the-test' }
   ids = await memberIds(admin, owner.workspaceId)
 })
@@ -35,10 +37,14 @@ const roleOf = async (userId: string) => (await admin.query<{ role: string; deac
 describe('listTeam', () => {
   it('lists every member, the owner first, with two-factor and the latest activity from the log', async () => {
     await admin.query('update fa.users set totp_secret_enc = $3 where workspace_id = $1 and id = $2', [owner.workspaceId, ids.viewer, 'k.x.y.z'])
+
     const team = await withWorkspace(owner, tx => listTeam(tx, owner.workspaceId), app)
+
     expect(team.map(m => m.role)).toEqual(['owner', 'admin', 'manager', 'viewer'])
     expect(team.map(m => m.twoFactor)).toEqual([false, false, false, true])
+
     const created = (await admin.query<{ at: Date }>("select at from fa.activity_log where workspace_id = $1 and action = 'sandbox.created'", [owner.workspaceId])).rows[0]!.at
+
     expect(team[0]!.lastActiveAt?.getTime()).toBe(created.getTime())
     expect(team.slice(1).map(m => m.lastActiveAt)).toEqual([null, null, null])
   })
@@ -47,6 +53,7 @@ describe('listTeam', () => {
 describe('changeMemberRole', () => {
   it('gives another member a new role and logs the change', async () => {
     const result = await changeMemberRole(owner, ids.manager, 'viewer', app)
+
     expect(result).toEqual({ ok: true, name: 'Priya Nair', from: 'manager', changed: true })
     expect((await roleOf(ids.manager)).role).toBe('viewer')
     expect(await logged(ids.manager)).toEqual([{ action: 'team.role_changed', actor: owner.userId, details: { name: 'Priya Nair', from: 'manager', to: 'viewer' } }])
@@ -72,7 +79,9 @@ describe('changeMemberActive', () => {
       [owner.workspaceId, hashToken(generateToken()), ids.admin])
     expect(await changeMemberActive(owner, ids.admin, false, app)).toEqual({ ok: true, name: 'Noah Becker', from: 'admin', changed: true })
     expect((await roleOf(ids.admin)).deactivated).toBe(true)
+
     const sessions = await admin.query<{ n: number }>('select count(*)::int as n from fa.sessions where workspace_id = $1 and user_id = $2', [owner.workspaceId, ids.admin])
+
     expect(sessions.rows[0]!.n).toBe(0)
     expect(await changeMemberActive(owner, ids.admin, true, app)).toMatchObject({ ok: true, changed: true })
     expect((await roleOf(ids.admin)).deactivated).toBe(false)

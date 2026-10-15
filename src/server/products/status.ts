@@ -11,12 +11,14 @@ import { withWorkspace, workspaceContext } from '@/server/db/with-workspace'
 export async function changeProductStatusWithLog(actor: Actor, productId: string, to: ProductStatus, pool: Pool = getPool()): Promise<ProductStatusChange> {
   return withWorkspace(workspaceContext(actor), async tx => {
     const result = await changeProductStatus(tx, actor.workspaceId, { productId, to })
+
     if (result.ok) {
       await logActivity(tx, actor.workspaceId, {
         actorUserId: actor.userId, action: 'product.status_changed', entityType: 'product', entityId: productId,
         details: { slug: result.slug, from: result.from, to: result.to }, ipHash: actor.ipHash,
       })
     }
+
     return result
   }, pool)
 }
@@ -25,12 +27,14 @@ export async function changeProductStatusWithLog(actor: Actor, productId: string
 export async function deleteProductWithLog(actor: Actor, productId: string, pool: Pool = getPool()): Promise<ProductDeletion> {
   return withWorkspace(workspaceContext(actor), async tx => {
     const result = await deleteProduct(tx, actor.workspaceId, productId)
+
     if (result.ok) {
       await logActivity(tx, actor.workspaceId, {
         actorUserId: actor.userId, action: 'product.deleted', entityType: 'product', entityId: productId,
         details: { slug: result.slug, name: result.name, variants: result.variants }, ipHash: actor.ipHash,
       })
     }
+
     return result
   }, pool)
 }

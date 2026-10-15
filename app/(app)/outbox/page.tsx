@@ -19,25 +19,32 @@ import { letterSubject } from '@/server/mail/subject'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('outbox')
+
   return { title: await titleFor('outbox.read', t('title')) }
 }
 
 /** Every letter the panel wrote, newest first; owners and admins only. */
 export default async function OutboxPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const session = await requireSession()
+
   if (!can(session.role, 'outbox.read', session.workspaceKind)) notFound()
+
   const query = parsePageQuery(await searchParams)
   const { list, timeZone } = await withWorkspace(workspaceContext(session), async tx => ({
     list: await listLetters(tx, session.workspaceId, query),
     timeZone: (await getStoreSettings(tx, session.workspaceId)).timezone,
   }))
+
   if (list.total > 0 && query.page > list.pages) redirect(pageQueryHref('/outbox', query, { page: list.pages }))
+
   const locale = await getLocale()
   const t = await getTranslations('outbox')
   const letters = await Promise.all(list.rows.map(async row => {
     const content = letterContent(row.template, row.payload, timeZone)
+
     return { id: row.id, to: row.to, lang: content.locale, subject: await letterSubject(content), sent: formatDateTime(row.createdAt, locale, timeZone) }
   }))
+
   return (
     <div className="flex flex-col gap-5">
       <div>
