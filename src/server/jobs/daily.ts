@@ -35,7 +35,10 @@ export function msUntilNextRun(nowMs: number, at: { hour: number; minute: number
   const next = new Date(nowMs)
 
   next.setUTCHours(at.hour, at.minute, 0, 0)
-  if (next.getTime() <= nowMs) next.setTime(next.getTime() + DAY_MS)
+
+  if (next.getTime() <= nowMs) {
+    next.setTime(next.getTime() + DAY_MS)
+  }
 
   return next.getTime() - nowMs
 }
@@ -105,7 +108,10 @@ export function scheduleDailyJob(run: () => Promise<unknown> = runDailyJob, nowM
   let cancel: () => void = () => undefined
   const arm = (ms: number) => {
     cancel = timer.after(ms, () => {
-      if (stopped) return
+      if (stopped) {
+        return
+      }
+
       run().catch(error => log.error({ event: 'daily.failed', err: error }))
       arm(DAY_MS)
     })

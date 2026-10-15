@@ -30,18 +30,25 @@ export async function createInvitation(tx: Tx, workspaceId: string, input: {
   const [member] = await tx.select({ id: users.id }).from(users)
     .where(and(eq(users.workspaceId, workspaceId), eq(sql`lower(${users.email})`, email)))
 
-  if (member) return { ok: false, reason: 'member' }
+  if (member) {
+    return { ok: false, reason: 'member' }
+  }
 
   const [open] = await tx.select({ id: invitations.id }).from(invitations)
     .where(and(eq(invitations.workspaceId, workspaceId), eq(sql`lower(${invitations.email})`, email), pending))
 
-  if (open) return { ok: false, reason: 'pending' }
+  if (open) {
+    return { ok: false, reason: 'pending' }
+  }
+
   await lockCap(tx, workspaceId, 'team')
 
   const [members] = await tx.select({ n: count() }).from(users).where(eq(users.workspaceId, workspaceId))
   const [invited] = await tx.select({ n: count() }).from(invitations).where(and(eq(invitations.workspaceId, workspaceId), pending))
 
-  if ((members?.n ?? 0) + (invited?.n ?? 0) >= TEAM_CAP) return { ok: false, reason: 'cap' }
+  if ((members?.n ?? 0) + (invited?.n ?? 0) >= TEAM_CAP) {
+    return { ok: false, reason: 'cap' }
+  }
 
   const [row] = await tx.insert(invitations).values({
     workspaceId, email, role: input.role, tokenHash: input.tokenHash, token: input.token, invitedBy: input.invitedBy, expiresAt: input.expiresAt,

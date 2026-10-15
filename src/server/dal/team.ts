@@ -63,9 +63,15 @@ export async function setMemberRole(
 ): Promise<MemberChange> {
   const member = await target(tx, workspaceId, userId)
 
-  if (!member) return { ok: false, reason: 'not_found' }
-  if (member.role === 'owner' || member.id === actorId || member.deactivatedAt !== null) return { ok: false, reason: 'not_allowed' }
-  if (member.role === role) return { ok: true, name: member.name, from: member.role, changed: false }
+  if (!member) {
+    return { ok: false, reason: 'not_found' }
+  }
+  if (member.role === 'owner' || member.id === actorId || member.deactivatedAt !== null) {
+    return { ok: false, reason: 'not_allowed' }
+  }
+  if (member.role === role) {
+    return { ok: true, name: member.name, from: member.role, changed: false }
+  }
 
   const updated = await tx.update(users).set({ role }).where(and(eq(users.workspaceId, workspaceId), eq(users.id, userId))).returning({ id: users.id })
 
@@ -84,9 +90,15 @@ export async function setMemberActive(
 ): Promise<MemberChange> {
   const member = await target(tx, workspaceId, userId)
 
-  if (!member) return { ok: false, reason: 'not_found' }
-  if (member.role === 'owner' || member.id === actorId) return { ok: false, reason: 'not_allowed' }
-  if ((member.deactivatedAt === null) === active) return { ok: true, name: member.name, from: member.role, changed: false }
+  if (!member) {
+    return { ok: false, reason: 'not_found' }
+  }
+  if (member.role === 'owner' || member.id === actorId) {
+    return { ok: false, reason: 'not_allowed' }
+  }
+  if ((member.deactivatedAt === null) === active) {
+    return { ok: true, name: member.name, from: member.role, changed: false }
+  }
 
   const updated = await tx.update(users).set({ deactivatedAt: active ? null : sql`now()` })
     .where(and(eq(users.workspaceId, workspaceId), eq(users.id, userId))).returning({ id: users.id })

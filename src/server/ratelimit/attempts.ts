@@ -32,6 +32,7 @@ export async function claimAttempt(guard: AttemptGuard, subject: string, pool: P
     return claim
   } catch (error) {
     await client.query('rollback').catch(() => { broken = true })
+
     throw error
   } finally {
     client.release(broken)
@@ -41,7 +42,9 @@ export async function claimAttempt(guard: AttemptGuard, subject: string, pool: P
 async function claimInTransaction(client: PoolClient, guard: AttemptGuard, subject: string): Promise<Claim> {
   const remaining = await lockRemaining(guard.lock, subject, client)
 
-  if (remaining > 0) return { ok: false, retryAfterSeconds: remaining }
+  if (remaining > 0) {
+    return { ok: false, retryAfterSeconds: remaining }
+  }
 
   const counted = await consume(guard.limit, subject, client)
   const seconds = guard.lockSeconds(counted.count)
@@ -57,5 +60,8 @@ export async function giveBack(
   pool: Pool = getPool(),
 ): Promise<void> {
   await release(guard.limit, { subject, windowStart: claim.windowStart }, pool)
-  if (claim.lockStart) await liftLock(guard.lock, { subject, start: claim.lockStart }, pool)
+
+  if (claim.lockStart) {
+    await liftLock(guard.lock, { subject, start: claim.lockStart }, pool)
+  }
 }

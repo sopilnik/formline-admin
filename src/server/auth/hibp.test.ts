@@ -20,6 +20,7 @@ describe('isBreachedPassword', () => {
     const { fetcher, calls } = fake('')
 
     await isBreachedPassword('password', { fetcher })
+
     expect(calls[0]?.url).toBe('https://api.pwnedpasswords.com/range/5BAA6')
     expect(new Headers(calls[0]?.init.headers).get('Add-Padding')).toBe('true')
   })
@@ -37,6 +38,7 @@ describe('isBreachedPassword', () => {
 
   it('answers null, never blocking, when the service cannot be asked', async () => {
     expect(await isBreachedPassword('password', { fetcher: fake('', 503).fetcher })).toBeNull()
+
     expect(await isBreachedPassword('password', { fetcher: async () => { throw new TypeError('fetch failed') } })).toBeNull()
 
     const hanging: Fetcher = (_url, init) => new Promise((_resolve, reject) => {

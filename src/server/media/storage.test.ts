@@ -29,7 +29,10 @@ describe('media paths', () => {
   it('name an upload by its workspace and image', () => {
     expect(PATH).toBe(`ws/${WS}/${IMAGE}.webp`)
     expect(MEDIA_PATH.test(PATH)).toBe(true)
-    for (const bad of ['posters/hush.webp', `ws/${WS}/../x.webp`, `ws/${WS}/${IMAGE}.png`, `/ws/${WS}/${IMAGE}.webp`]) expect(MEDIA_PATH.test(bad), bad).toBe(false)
+
+    for (const bad of ['posters/hush.webp', `ws/${WS}/../x.webp`, `ws/${WS}/${IMAGE}.png`, `/ws/${WS}/${IMAGE}.webp`]) {
+      expect(MEDIA_PATH.test(bad), bad).toBe(false)
+    }
   })
 
   it('keep an upload’s small copy beside it', () => {
@@ -45,6 +48,7 @@ describe('bunnyStorage', () => {
     const bytes = Buffer.from('webp bytes')
 
     await bunnyStorage(zone, fetch).put(PATH, bytes)
+
     expect(calls).toHaveLength(1)
     expect(calls[0]!.url).toBe(`https://storage.bunnycdn.com/formline-admin-media/${PATH}`)
     expect(calls[0]!.method).toBe('PUT')
@@ -87,10 +91,13 @@ describe('directoryStorage', () => {
     const storage = directoryStorage(dir)
 
     await storage.put(PATH, Buffer.from('bytes'))
+
     expect(await readdir(join(dir, 'ws', WS))).toEqual([`${IMAGE}.webp`])
     expect((await storage.get(PATH))?.toString()).toBe('bytes')
+
     await storage.delete(PATH)
     await storage.delete(PATH)
+
     expect(await storage.get(PATH)).toBeNull()
     await expect(storage.put('../escape.webp', Buffer.from('x'))).rejects.toThrow(/not a media path/)
   })

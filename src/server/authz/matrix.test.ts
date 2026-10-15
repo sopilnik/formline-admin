@@ -40,6 +40,7 @@ describe('can', () => {
 describe('authorize', () => {
   it('throws ForbiddenError naming the action', () => {
     expect(() => authorize({ role: 'viewer', workspaceKind: 'sandbox' }, 'orders.update')).toThrow(ForbiddenError)
+
     try { authorize({ role: 'viewer', workspaceKind: 'sandbox' }, 'orders.update') } catch (e) { expect((e as ForbiddenError).action).toBe('orders.update') }
   })
 

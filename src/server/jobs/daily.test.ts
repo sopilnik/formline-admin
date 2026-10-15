@@ -15,14 +15,19 @@ function fakeTimer() {
       return () => {
         const i = queue.indexOf(entry)
 
-        if (i >= 0) queue.splice(i, 1)
+        if (i >= 0) {
+          queue.splice(i, 1)
+        }
       }
     },
   }
   const fire = () => {
     const entry = queue.shift()
 
-    if (!entry) throw new Error('nothing scheduled')
+    if (!entry) {
+      throw new Error('nothing scheduled')
+    }
+
     entry.fn()
   }
 
@@ -46,12 +51,18 @@ describe('scheduleDailyJob', () => {
     const stop = scheduleDailyJob(run, now, timer)
 
     expect(queue.map(q => q.ms)).toEqual([msUntilNextRun(now)])
+
     fire()
+
     expect(run).toHaveBeenCalledTimes(1)
     expect(queue.map(q => q.ms)).toEqual([DAY])
+
     fire()
+
     expect(run).toHaveBeenCalledTimes(2)
+
     stop()
+
     expect(queue).toEqual([])
   })
 
@@ -62,6 +73,7 @@ describe('scheduleDailyJob', () => {
     scheduleDailyJob(run, Date.parse('2026-09-26T10:00:00Z'), timer)
     fire()
     await Promise.resolve()
+
     expect(run).toHaveBeenCalledTimes(1)
     expect(queue.map(q => q.ms)).toEqual([DAY])
   })

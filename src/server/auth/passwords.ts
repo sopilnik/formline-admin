@@ -19,8 +19,12 @@ export function normalizePassword(password: string): string {
 export function checkPasswordShape(password: string): PasswordShape {
   const length = [...normalizePassword(password)].length
 
-  if (length < PASSWORD_MIN) return 'too_short'
-  if (length > PASSWORD_MAX) return 'too_long'
+  if (length < PASSWORD_MIN) {
+    return 'too_short'
+  }
+  if (length > PASSWORD_MAX) {
+    return 'too_long'
+  }
 
   return 'ok'
 }

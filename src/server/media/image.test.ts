@@ -18,7 +18,9 @@ async function pngClaiming(width: number, height: number): Promise<Buffer> {
 }
 
 const processed = (result: Processed | string): Processed => {
-  if (typeof result === 'string') throw new Error(result)
+  if (typeof result === 'string') {
+    throw new Error(result)
+  }
 
   return result
 }

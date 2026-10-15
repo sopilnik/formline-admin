@@ -30,7 +30,9 @@ export async function getSelf(tx: Tx, who: Who): Promise<Self | null> {
     totpSecretEnc: users.totpSecretEnc,
   }).from(users).where(isUser(who))
 
-  if (!row) return null
+  if (!row) {
+    return null
+  }
 
   const { totpSecretEnc, ...self } = row
 
@@ -39,7 +41,10 @@ export async function getSelf(tx: Tx, who: Who): Promise<Self | null> {
 
 /** The preferences a member carries between users: the language, the theme and the single-key shortcuts. */
 export async function updateSelfPreferences(tx: Tx, who: Who, preferences: { locale?: Locale; theme?: Theme; shortcutsEnabled?: boolean }): Promise<void> {
-  if (preferences.locale === undefined && preferences.theme === undefined && preferences.shortcutsEnabled === undefined) return
+  if (preferences.locale === undefined && preferences.theme === undefined && preferences.shortcutsEnabled === undefined) {
+    return
+  }
+
   await tx.update(users).set(preferences).where(isUser(who))
 }
 
@@ -82,7 +87,9 @@ export async function updateProfile(
   const [current] = await tx.select({ name: users.name, locale: users.locale, theme: users.theme, shortcuts: users.shortcutsEnabled })
     .from(users).where(isUser(who))
 
-  if (!current) return null
+  if (!current) {
+    return null
+  }
 
   const changed = (['name', 'locale', 'theme', 'shortcuts'] as const).filter(field => current[field] !== profile[field])
 

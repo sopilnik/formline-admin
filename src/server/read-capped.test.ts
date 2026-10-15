@@ -4,7 +4,10 @@ import { readCapped } from '@/server/read-capped'
 function streamOf(...chunks: number[]): ReadableStream<Uint8Array> {
   return new ReadableStream({
     start(controller) {
-      for (const size of chunks) controller.enqueue(new Uint8Array(size).fill(1))
+      for (const size of chunks) {
+        controller.enqueue(new Uint8Array(size).fill(1))
+      }
+
       controller.close()
     },
   })

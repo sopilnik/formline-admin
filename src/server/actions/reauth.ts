@@ -26,6 +26,7 @@ export async function reauthAction(_previous: FormState<ReauthField>, form: Form
 
     return failureState(result)
   }
+
   await setSessionCookie(result.token, result.expiresAt)
 
   return { status: 'done' }

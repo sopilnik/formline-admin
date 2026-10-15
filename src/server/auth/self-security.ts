@@ -25,12 +25,18 @@ export async function changeOwnPassword(
 ): Promise<{ ok: true; signedOut: number } | AuthFailure<'password'>> {
   const deps = authDeps(overrides)
 
-  if (session.workspaceKind !== 'owner') return { ok: false, error: 'generic' }
-  if (!isRecentAuth(session, deps.now())) return { ok: false, error: 'reauth_required' }
+  if (session.workspaceKind !== 'owner') {
+    return { ok: false, error: 'generic' }
+  }
+  if (!isRecentAuth(session, deps.now())) {
+    return { ok: false, error: 'reauth_required' }
+  }
 
   const refused = await checkNewPassword(input.password, deps)
 
-  if (refused) return refused
+  if (refused) {
+    return refused
+  }
 
   const passwordHash = await hashPassword(input.password)
   const signedOut = await withWorkspace(workspaceContext(session), async tx => {
@@ -60,7 +66,10 @@ export async function revokeOwnSession(
   return withWorkspace(workspaceContext(session), async tx => {
     const ended = await deleteOwnSession(tx, { userId: session.userId, currentId: session.id, id })
 
-    if (!ended) return false
+    if (!ended) {
+      return false
+    }
+
     await logActivity(tx, session.workspaceId, {
       actorUserId: session.userId, action: 'auth.session_revoked', entityType: 'user', entityId: session.userId,
       details: { device: ended.device }, ipHash: hashIp(meta.ip, deps.config.ipHashKey),

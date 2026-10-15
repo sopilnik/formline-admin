@@ -23,6 +23,7 @@ export async function refuseTaken<T, R extends string>(
   tx: Tx, refusals: Readonly<Record<string, R>>, write: () => Promise<T>,
 ): Promise<T | { ok: false; reason: R }> {
   await tx.execute(sql`savepoint refuse_taken`)
+
   try {
     const result = await write()
 
@@ -32,7 +33,9 @@ export async function refuseTaken<T, R extends string>(
   } catch (error) {
     const reason = refusals[uniqueConstraintOf(error) ?? '']
 
-    if (!reason) throw error
+    if (!reason) {
+      throw error
+    }
 
     await tx.execute(sql`rollback to savepoint refuse_taken`)
 

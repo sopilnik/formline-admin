@@ -12,5 +12,7 @@ export class ForbiddenError extends Error {
 }
 
 export function authorize(ctx: { role: Role; workspaceKind: WorkspaceKind }, action: Action): void {
-  if (!can(ctx.role, action, ctx.workspaceKind)) throw new ForbiddenError(action)
+  if (!can(ctx.role, action, ctx.workspaceKind)) {
+    throw new ForbiddenError(action)
+  }
 }

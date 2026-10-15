@@ -54,8 +54,11 @@ export function batchedCsvStream<R extends { id: string }>(
       for (const id of slice) {
         const row = byId.get(id)
 
-        if (row) text += csvRecord(rows.cells(row))
+        if (row) {
+          text += csvRecord(rows.cells(row))
+        }
       }
+
       controller.enqueue(encoder.encode(text))
     },
   })
@@ -81,8 +84,12 @@ export function csvResponse(
 export async function exportSession(): Promise<Session | Response> {
   const session = await getSession()
 
-  if (!session?.secondFactorVerified) return new Response(null, { status: 401 })
-  if (!can(session.role, 'csv.export', session.workspaceKind)) return new Response(null, { status: 403 })
+  if (!session?.secondFactorVerified) {
+    return new Response(null, { status: 401 })
+  }
+  if (!can(session.role, 'csv.export', session.workspaceKind)) {
+    return new Response(null, { status: 403 })
+  }
 
   return session
 }

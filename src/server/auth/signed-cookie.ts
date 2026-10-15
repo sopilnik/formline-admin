@@ -15,12 +15,17 @@ export function signValue(payload: object, key: string): string {
 export function verifySignedValue(value: string, key: string): unknown {
   const [body, signature, extra] = value.split('.')
 
-  if (!body || !signature || extra !== undefined) return null
+  if (!body || !signature || extra !== undefined) {
+    return null
+  }
+
   try {
     const given = decodeBase64urlIgnorePadding(signature)
     const expected = mac(body, key)
 
-    if (given.length !== expected.length || !timingSafeEqual(given, expected)) return null
+    if (given.length !== expected.length || !timingSafeEqual(given, expected)) {
+      return null
+    }
 
     return JSON.parse(new TextDecoder().decode(decodeBase64urlIgnorePadding(body))) as unknown
   } catch {

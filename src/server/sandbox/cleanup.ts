@@ -9,7 +9,9 @@ export async function cleanupExpiredSandboxes(pool: Pool = getPool()): Promise<n
     const { rows } = await pool.query<{ n: number }>('select fa.delete_expired_sandboxes() as n')
     const deleted = rows[0]?.n ?? 0
 
-    if (deleted > 0) log.info({ event: 'sandbox.cleanup', deleted })
+    if (deleted > 0) {
+      log.info({ event: 'sandbox.cleanup', deleted })
+    }
 
     return deleted
   } catch (error) {

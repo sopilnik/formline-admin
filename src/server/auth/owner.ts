@@ -9,12 +9,17 @@ let ownerWorkspace: string | undefined
 
 /** The owner workspace never changes once the migrations ran, so its id is read once per process. */
 export async function ownerWorkspaceId(pool: Pool = getPool()): Promise<string> {
-  if (ownerWorkspace) return ownerWorkspace
+  if (ownerWorkspace) {
+    return ownerWorkspace
+  }
 
   const { rows } = await pool.query<{ id: string | null }>('select fa.owner_workspace_id() as id')
   const id = rows[0]?.id
 
-  if (!id) throw new Error('the owner workspace does not exist; run the migrations')
+  if (!id) {
+    throw new Error('the owner workspace does not exist; run the migrations')
+  }
+
   ownerWorkspace = id
 
   return id

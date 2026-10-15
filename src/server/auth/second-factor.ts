@@ -25,12 +25,16 @@ async function checkCode(tx: Tx, { session, code }: { session: Session; code: st
   if (isTotpShape(digits)) {
     const [row] = await tx.select({ secret: users.totpSecretEnc, lastStep: users.totpLastStep }).from(users).where(isUser(session))
 
-    if (!row?.secret) return { ok: false }
+    if (!row?.secret) {
+      return { ok: false }
+    }
 
     const secret = decryptTotpSecret(row.secret, { workspaceId: session.workspaceId, userId: session.userId }, deps.config.totpKeys)
     const result = verifyTotp(secret, { code: digits, lastStep: row.lastStep }, deps.now())
 
-    if (!result.ok) return { ok: false }
+    if (!result.ok) {
+      return { ok: false }
+    }
 
     // Conditional on the stored step, so two requests with the same code cannot both pass.
     const stored = await tx.update(users)
@@ -43,14 +47,18 @@ async function checkCode(tx: Tx, { session, code }: { session: Session; code: st
 
   const normalized = normalizeRecoveryCode(code)
 
-  if (!normalized) return { ok: false }
+  if (!normalized) {
+    return { ok: false }
+  }
 
   const used = await tx.update(recoveryCodes)
     .set({ usedAt: sql`now()` })
     .where(and(ownCodes(session), eq(recoveryCodes.codeHash, hashRecoveryCode(normalized)), isNull(recoveryCodes.usedAt)))
     .returning({ id: recoveryCodes.id })
 
-  if (used.length !== 1) return { ok: false }
+  if (used.length !== 1) {
+    return { ok: false }
+  }
 
   return { ok: true, method: 'recovery_code', remaining: await countUnusedRecoveryCodes(tx, session) }
 }
@@ -110,6 +118,7 @@ export async function attemptSecondFactor(
 
     return { ok: false, error: 'second_factor_locked' }
   }
+
   await withWorkspace(ctx, tx => logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.second_factor_failed', ipHash }), pool)
 
   return { ok: false, error: 'code_invalid', field: 'code' }
@@ -124,7 +133,9 @@ export async function verifySecondFactor(
   const deps = authDeps(overrides)
   const attempt = await attemptSecondFactor(session, input, deps)
 
-  if (!attempt.ok) return attempt
+  if (!attempt.ok) {
+    return attempt
+  }
 
   const signedIn = await withWorkspace(workspaceContext(session), tx => finishSignIn(tx, {
     workspaceId: session.workspaceId,
@@ -137,7 +148,9 @@ export async function verifySecondFactor(
   }), deps.pool)
 
   // The pending session ended while its code was checked (the lock of a parallel attempt, its expiry): no sign-in.
-  if (!signedIn) return { ok: false, error: 'session_expired' }
+  if (!signedIn) {
+    return { ok: false, error: 'session_expired' }
+  }
 
   return { ok: true, ...signedIn }
 }

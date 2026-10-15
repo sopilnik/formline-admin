@@ -72,6 +72,7 @@ export async function withWorkspaces<T>(fn: (enter: (ctx: WorkspaceContext) => P
     return result
   } catch (error) {
     await client.query('rollback').catch(() => { broken = true })
+
     throw error
   } finally {
     client.release(broken)

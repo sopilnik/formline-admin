@@ -26,7 +26,9 @@ export async function assertAppRole(pool: Pool): Promise<void> {
     from pg_catalog.pg_roles r where r.rolname = current_user`)
   const role = rows[0]
 
-  if (!role) throw new AppRoleError('the current database role was not found')
+  if (!role) {
+    throw new AppRoleError('the current database role was not found')
+  }
 
   const problems = [
     role.rolsuper && 'superuser',

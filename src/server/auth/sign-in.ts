@@ -39,7 +39,9 @@ export async function claimPasswordAttempt(input: PasswordAttempt, deps: AuthDep
   const addressSubject = ipSubject(input.ip, config.ipHashKey)
   const address = await consume(LIMITS.signInFailIp, addressSubject, pool)
 
-  if (!address.allowed) return { ok: false, retryAfterSeconds: address.retryAfterSeconds }
+  if (!address.allowed) {
+    return { ok: false, retryAfterSeconds: address.retryAfterSeconds }
+  }
 
   const account = await claimAttempt(GUARDS.password, accountSubject(input.email, config.ipHashKey), pool)
 
@@ -69,12 +71,18 @@ export async function signInWithPassword(input: SignInInput, overrides: Partial<
   const deps = authDeps(overrides)
   const { pool, config } = deps
 
-  if (!input.email.trim()) return { ok: false, error: 'email_required', field: 'email' }
-  if (!input.password) return { ok: false, error: 'password_required', field: 'password' }
+  if (!input.email.trim()) {
+    return { ok: false, error: 'email_required', field: 'email' }
+  }
+  if (!input.password) {
+    return { ok: false, error: 'password_required', field: 'password' }
+  }
 
   const claim = await claimPasswordAttempt(input, deps)
 
-  if (!claim.ok) return { ok: false, error: 'rate_limited', retryAfterSeconds: claim.retryAfterSeconds }
+  if (!claim.ok) {
+    return { ok: false, error: 'rate_limited', retryAfterSeconds: claim.retryAfterSeconds }
+  }
 
   const workspaceId = await ownerWorkspaceId(pool)
   const system = { workspaceId, userId: null, role: 'system' } as const
@@ -104,7 +112,9 @@ export async function signInWithPassword(input: SignInInput, overrides: Partial<
 
   const successes = await consume(LIMITS.signInSuccessAccount, accountSubject(input.email, config.ipHashKey), pool)
 
-  if (!successes.allowed) return { ok: false, error: 'rate_limited', retryAfterSeconds: successes.retryAfterSeconds }
+  if (!successes.allowed) {
+    return { ok: false, error: 'rate_limited', retryAfterSeconds: successes.retryAfterSeconds }
+  }
 
   const session = await withWorkspace({ workspaceId, userId: user.id, role: 'system' }, tx => createSession(tx, {
     workspaceId,
@@ -133,13 +143,16 @@ type Finish = {
  */
 export async function finishSignIn(tx: Tx, input: Finish & { pending: Session }): Promise<SignedIn | null>
 export async function finishSignIn(tx: Tx, input: Finish): Promise<SignedIn>
+
 export async function finishSignIn(tx: Tx, input: Finish & { pending?: Session }): Promise<SignedIn | null> {
   const meta = { userAgentSummary: summarizeUserAgent(input.userAgent), ipHash: input.ipHash }
   const fresh: CreatedSession | null = input.pending
     ? await rotateSession(tx, input.pending, meta)
     : await createSession(tx, { workspaceId: input.workspaceId, userId: input.userId, verified: true, ...meta })
 
-  if (!fresh) return null
+  if (!fresh) {
+    return null
+  }
 
   const self = (await getSelf(tx, input))!
 

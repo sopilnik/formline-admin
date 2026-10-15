@@ -14,6 +14,7 @@ describe('getPool', () => {
 
     expect(pool.options.connectionTimeoutMillis).toBe(10_000)
     expect(pool.listenerCount('error')).toBe(1)
+
     await pool.end()
   })
 })

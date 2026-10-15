@@ -54,13 +54,17 @@ type SessionRow = {
 
 /** Resolves a raw cookie token; null for anything malformed, unknown, expired or idle. */
 export async function validateSessionToken(token: string, pool: Pool = getPool()): Promise<Session | null> {
-  if (!TOKEN_PATTERN.test(token)) return null
+  if (!TOKEN_PATTERN.test(token)) {
+    return null
+  }
 
   const id = hashToken(token)
   const { rows } = await pool.query<SessionRow>('select * from fa.auth_session($1)', [id])
   const row = rows[0]
 
-  if (!row) return null
+  if (!row) {
+    return null
+  }
 
   return {
     id,
@@ -118,7 +122,9 @@ export async function rotateSession(tx: Tx, session: Session, meta: { userAgentS
     .where(and(eq(sessions.workspaceId, session.workspaceId), eq(sessions.id, session.id)))
     .returning({ createdAt: sessions.createdAt })
 
-  if (deleted.length === 0) return null
+  if (deleted.length === 0) {
+    return null
+  }
 
   return createSession(tx, {
     workspaceId: session.workspaceId, userId: session.userId, verified: true, ...meta, ...(signInId ? { signInId } : {}), signedInAt: deleted[0]!.createdAt,
@@ -136,8 +142,12 @@ export async function setSessionCookie(token: string, expiresAt: Date, options: 
   const store = await cookies()
 
   store.set(SESSION_COOKIE, token, { ...COOKIE, expires: expiresAt })
-  if (options.demo) store.set(DEMO_COOKIE, '1', { ...COOKIE, expires: expiresAt })
-  else store.set(DEMO_COOKIE, '', { ...COOKIE, maxAge: 0 })
+
+  if (options.demo) {
+    store.set(DEMO_COOKIE, '1', { ...COOKIE, expires: expiresAt })
+  } else {
+    store.set(DEMO_COOKIE, '', { ...COOKIE, maxAge: 0 })
+  }
 }
 
 export async function clearSessionCookie(): Promise<void> {
@@ -163,8 +173,12 @@ export const getSession = cache(async (): Promise<Session | null> => {
 export async function requireSession(options: { pending?: boolean } = {}): Promise<Session> {
   const session = await getSession()
 
-  if (!session) redirect((await cookies()).has(DEMO_COOKIE) ? '/sign-in?ended=1' : '/sign-in')
-  if (!session.secondFactorVerified && !options.pending) redirect('/sign-in/verify')
+  if (!session) {
+    redirect((await cookies()).has(DEMO_COOKIE) ? '/sign-in?ended=1' : '/sign-in')
+  }
+  if (!session.secondFactorVerified && !options.pending) {
+    redirect('/sign-in/verify')
+  }
 
   return session
 }

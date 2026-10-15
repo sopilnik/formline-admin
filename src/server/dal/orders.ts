@@ -28,7 +28,9 @@ function searchCondition(term: string): SQL {
   const number = orderNumberOf(term)
   const byNumber = number !== null ? eq(orders.number, number) : sql`false`
 
-  if (WHOLE_EMAIL.test(term)) return or(byNumber, sql`lower(${customers.email}) = lower(${term})`)!
+  if (WHOLE_EMAIL.test(term)) {
+    return or(byNumber, sql`lower(${customers.email}) = lower(${term})`)!
+  }
 
   const pattern = containsPattern(term)
 
@@ -41,16 +43,24 @@ export type OrdersRequest = { query: OrdersQuery; now: Date; timeZone: string }
 export function orderFilters(workspaceId: string, { query, now, timeZone }: OrdersRequest, withStatus = true): SQL {
   const parts: SQL[] = [eq(orders.workspaceId, workspaceId)]
 
-  if (withStatus && query.status.length > 0) parts.push(inArray(orders.status, query.status))
+  if (withStatus && query.status.length > 0) {
+    parts.push(inArray(orders.status, query.status))
+  }
 
   const term = query.q.trim()
 
-  if (term) parts.push(searchCondition(term))
+  if (term) {
+    parts.push(searchCondition(term))
+  }
 
   const range = presetRange(query.placed, now, timeZone)
 
-  if (range) parts.push(gte(orders.placedAt, range.start), lt(orders.placedAt, range.end))
-  if (query.source !== 'any') parts.push(eq(orders.source, query.source))
+  if (range) {
+    parts.push(gte(orders.placedAt, range.start), lt(orders.placedAt, range.end))
+  }
+  if (query.source !== 'any') {
+    parts.push(eq(orders.source, query.source))
+  }
 
   return and(...parts)!
 }
@@ -81,7 +91,9 @@ export async function listOrders(tx: Tx, workspaceId: string, request: OrdersReq
     .where(orderFilters(workspaceId, request, false)).groupBy(orders.status)
   const statusCounts = Object.fromEntries(ORDER_STATUSES.map(status => [status, 0])) as Record<OrderStatus, number>
 
-  for (const row of byStatus) statusCounts[row.status] = row.n
+  for (const row of byStatus) {
+    statusCounts[row.status] = row.n
+  }
 
   const filtered = filteredRow?.n ?? 0
 
@@ -110,18 +122,26 @@ export async function changeOrderStatus(tx: Tx, ctx: { workspaceId: string; user
   const [row] = await tx.select({ number: orders.number, status: orders.status }).from(orders)
     .where(and(eq(orders.workspaceId, ctx.workspaceId), eq(orders.id, input.orderId))).for('update')
 
-  if (!row) return { ok: false, reason: 'not_found' }
+  if (!row) {
+    return { ok: false, reason: 'not_found' }
+  }
 
   const from = row.status
 
-  if (!canTransition(from, input.to)) return { ok: false, reason: 'invalid_transition', number: row.number, from, to: input.to }
+  if (!canTransition(from, input.to)) {
+    return { ok: false, reason: 'invalid_transition', number: row.number, from, to: input.to }
+  }
 
   const updated = await tx.update(orders).set({ status: input.to, updatedAt: sql`now()` }).where(and(eq(orders.workspaceId, ctx.workspaceId), eq(orders.id, input.orderId)))
 
   // The locking read already filtered out a role the update policy refuses; should a policy ever
   // disagree with it, a silent no-op must not be reported as a status change.
-  if (!updated.rowCount) throw new Error('the order status update was refused')
+  if (!updated.rowCount) {
+    throw new Error('the order status update was refused')
+  }
+
   await tx.insert(orderEvents).values({ workspaceId: ctx.workspaceId, orderId: input.orderId, kind: 'status', fromStatus: from, toStatus: input.to, actorUserId: ctx.userId })
+
   if (returnsStock(from, input.to)) {
     await tx.execute(sql`
       update fa.product_variants v set stock = v.stock + l.qty
@@ -169,8 +189,13 @@ function toEventDetail(event: EventRow): OrderEventDetail {
   const common = { id: event.id, actorName: event.actorName, at: event.at }
   const to = asStatus(event.to)
 
-  if (event.kind === 'status' && to !== null) return { ...common, kind: 'status', from: asStatus(event.from), to }
-  if (event.kind === 'note' && event.note !== null) return { ...common, kind: 'note', note: event.note }
+  if (event.kind === 'status' && to !== null) {
+    return { ...common, kind: 'status', from: asStatus(event.from), to }
+  }
+  if (event.kind === 'note' && event.note !== null) {
+    return { ...common, kind: 'note', note: event.note }
+  }
+
   throw new Error(`order event ${event.id} breaks order_events_shape`)
 }
 
@@ -193,7 +218,9 @@ export async function getOrder(tx: Tx, workspaceId: string, number: number): Pro
     .from(orders).innerJoin(customers, orderCustomer)
     .where(and(eq(orders.workspaceId, workspaceId), eq(orders.number, number)))
 
-  if (!order) return null
+  if (!order) {
+    return null
+  }
 
   const lines = await tx.select().from(orderLines)
     .where(and(eq(orderLines.workspaceId, workspaceId), eq(orderLines.orderId, order.id)))
@@ -237,7 +264,10 @@ export async function addOrderNote(tx: Tx, ctx: { workspaceId: string; userId: s
   const [row] = await tx.select({ number: orders.number }).from(orders)
     .where(and(eq(orders.workspaceId, ctx.workspaceId), eq(orders.id, input.orderId)))
 
-  if (!row) return null
+  if (!row) {
+    return null
+  }
+
   await tx.insert(orderEvents).values({ workspaceId: ctx.workspaceId, orderId: input.orderId, kind: 'note', note: input.note, actorUserId: ctx.userId })
 
   return { number: row.number }

@@ -33,10 +33,15 @@ function valueText(error: Error): string | null {
 export function serializeError(error: Error): pino.SerializedError {
   const serialized = pino.stdSerializers.err(error)
 
-  for (const key of QUERY_VALUES) delete serialized[key]
+  for (const key of QUERY_VALUES) {
+    delete serialized[key]
+  }
 
   for (const text of chain(error).map(valueText)) {
-    if (text === null) continue
+    if (text === null) {
+      continue
+    }
+
     serialized.message = serialized.message.replaceAll(text, '')
     serialized.stack = serialized.stack.replaceAll(text, '')
   }
@@ -49,16 +54,23 @@ export function serializeError(error: Error): pino.SerializedError {
  * a request ended in once more, on its own, after onRequestError (instrumentation.ts) has returned.
  */
 export function scrubError(error: unknown): void {
-  if (!(error instanceof Error)) return
+  if (!(error instanceof Error)) {
+    return
+  }
 
   for (const link of chain(error)) {
     const text = valueText(link)
 
     if (text !== null) {
       link.message = link.message.replaceAll(text, '')
-      if (link.stack) link.stack = link.stack.replaceAll(text, '')
+
+      if (link.stack) {
+        link.stack = link.stack.replaceAll(text, '')
+      }
     }
-    for (const key of QUERY_VALUES) delete (link as Error & Record<string, unknown>)[key]
+    for (const key of QUERY_VALUES) {
+      delete (link as Error & Record<string, unknown>)[key]
+    }
   }
 }
 
@@ -70,8 +82,11 @@ function logMethod(this: Logger, args: Parameters<LogFn>, method: LogFn): void {
   const [merging] = args
   const holdsError = args.length === 1 && typeof merging === 'object' && merging !== null && 'err' in merging && merging.err instanceof Error
 
-  if (holdsError) method.call(this, merging, serializeError(merging.err as Error).message)
-  else method.apply(this, args)
+  if (holdsError) {
+    method.call(this, merging, serializeError(merging.err as Error).message)
+  } else {
+    method.apply(this, args)
+  }
 }
 
 /** A request's path without its query string, which can carry a search for an email or an invitation's token. */

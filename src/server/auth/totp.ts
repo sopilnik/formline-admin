@@ -52,13 +52,19 @@ export function verifyTotp(
 ): { ok: true; step: number } | { ok: false } {
   const otp = code.replace(/\s+/g, '')
 
-  if (!isTotpShape(otp)) return { ok: false }
+  if (!isTotpShape(otp)) {
+    return { ok: false }
+  }
 
   const current = Math.floor(nowMs / 1000 / PERIOD)
 
   for (const step of [current - 1, current, current + 1]) {
-    if (lastStep !== null && step <= lastStep) continue
-    if (verifyHOTP({ key: secret, counter: BigInt(step), digits: DIGITS }, otp)) return { ok: true, step }
+    if (lastStep !== null && step <= lastStep) {
+      continue
+    }
+    if (verifyHOTP({ key: secret, counter: BigInt(step), digits: DIGITS }, otp)) {
+      return { ok: true, step }
+    }
   }
 
   return { ok: false }
@@ -87,7 +93,9 @@ export function decryptTotpSecret(value: string, binding: TotpBinding, keys: Key
   const [keyId = '', iv = '', ciphertext = '', tag = ''] = value.split('.')
   const key = keys.keys.get(keyId)
 
-  if (!key) throw new Error('unknown TOTP key id')
+  if (!key) {
+    throw new Error('unknown TOTP key id')
+  }
 
   const decipher = createDecipheriv('aes-256-gcm', key, decodeBase64urlIgnorePadding(iv), { authTagLength: 16 })
 

@@ -45,24 +45,36 @@ export async function setupOwner(
   const deps = authDeps(overrides)
   const { config, pool } = deps
 
-  if (!config.setupToken) return { ok: false, error: 'unavailable' }
+  if (!config.setupToken) {
+    return { ok: false, error: 'unavailable' }
+  }
 
   const attempt = await consume(LIMITS.setupIp, ipSubject(input.ip, config.ipHashKey), pool)
 
-  if (!attempt.allowed) return { ok: false, error: 'rate_limited', retryAfterSeconds: attempt.retryAfterSeconds }
-  if (!sameSecret(input.token.trim(), config.setupToken)) return { ok: false, error: 'token_invalid', field: 'token' }
+  if (!attempt.allowed) {
+    return { ok: false, error: 'rate_limited', retryAfterSeconds: attempt.retryAfterSeconds }
+  }
+  if (!sameSecret(input.token.trim(), config.setupToken)) {
+    return { ok: false, error: 'token_invalid', field: 'token' }
+  }
 
   const name = memberName(input.name)
 
-  if (!name) return { ok: false, error: 'name_required', field: 'name' }
+  if (!name) {
+    return { ok: false, error: 'name_required', field: 'name' }
+  }
 
   const email = input.email.trim()
 
-  if (!z.email().max(EMAIL_MAX).safeParse(email).success) return { ok: false, error: 'email_invalid', field: 'email' }
+  if (!z.email().max(EMAIL_MAX).safeParse(email).success) {
+    return { ok: false, error: 'email_invalid', field: 'email' }
+  }
 
   const checked = await checkNewCredentials(input, deps)
 
-  if (!checked.ok) return checked
+  if (!checked.ok) {
+    return checked
+  }
 
   const workspaceId = await ownerWorkspaceId(pool)
   const userId = randomUUID()
@@ -78,9 +90,13 @@ export async function setupOwner(
 
     expiresAt = rows[0]!.expires
   } catch (error) {
-    if (isUniqueViolation(error)) return { ok: false, error: 'owner_exists' }
+    if (isUniqueViolation(error)) {
+      return { ok: false, error: 'owner_exists' }
+    }
+
     throw error
   }
+
   await withWorkspace({ workspaceId, userId, role: 'owner' }, async tx => {
     await updateSelfPreferences(tx, { workspaceId, userId }, { locale: input.locale, theme: input.theme })
     await logActivity(tx, workspaceId, { actorUserId: userId, action: 'auth.owner_created', entityType: 'user', entityId: userId, ipHash })

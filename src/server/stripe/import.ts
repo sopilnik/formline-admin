@@ -21,7 +21,9 @@ async function importSession(session: Session, deps: ImportDeps, pool: Pool): Pr
   try {
     const reading = readCheckout(session, await deps.gateway.lineItems(session.id))
 
-    if (!reading.ok) return { kind: 'skipped' }
+    if (!reading.ok) {
+      return { kind: 'skipped' }
+    }
 
     const result = await ingestOrder(reading.order, { eventId: null, pseudonymKey: deps.pseudonymKey }, pool)
 
@@ -62,8 +64,11 @@ export async function importMissedOrders(deps: ImportDeps): Promise<ImportSummar
 
     const outcome = await importSession(session, deps, pool)
 
-    if (outcome.kind === 'imported') summary.imported.push(outcome.number)
-    else summary[outcome.kind] += 1
+    if (outcome.kind === 'imported') {
+      summary.imported.push(outcome.number)
+    } else {
+      summary[outcome.kind] += 1
+    }
   }
 
   return summary

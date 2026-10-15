@@ -20,11 +20,15 @@ const oneStatusInput = z.strictObject({ orderId: z.uuid(), to: z.enum(ORDER_STAT
 export async function changeStatusesAction(input: unknown): Promise<ActionResult<StatusOutcome>> {
   const session = await requireSession()
 
-  if (!can(session.role, 'orders.update', session.workspaceKind)) return fail('forbidden')
+  if (!can(session.role, 'orders.update', session.workspaceKind)) {
+    return fail('forbidden')
+  }
 
   const parsed = statusInput.safeParse(input)
 
-  if (!parsed.success) return fail('invalid')
+  if (!parsed.success) {
+    return fail('invalid')
+  }
 
   const outcome = await changeStatuses(await actorOf(session), { orderIds: parsed.data.ids, to: parsed.data.to })
 
@@ -38,16 +42,23 @@ export async function changeStatusesAction(input: unknown): Promise<ActionResult
 export async function changeOrderStatusAction(input: unknown): Promise<ActionResult<{ number: number; to: OrderStatus }>> {
   const session = await requireSession()
 
-  if (!can(session.role, 'orders.update', session.workspaceKind)) return fail('forbidden')
+  if (!can(session.role, 'orders.update', session.workspaceKind)) {
+    return fail('forbidden')
+  }
 
   const parsed = oneStatusInput.safeParse(input)
 
-  if (!parsed.success) return fail('invalid')
+  if (!parsed.success) {
+    return fail('invalid')
+  }
 
   const outcome = await changeStatuses(await actorOf(session), { orderIds: [parsed.data.orderId], to: parsed.data.to })
 
   refresh()
-  if (outcome.changed.length === 1) return ok({ number: outcome.changed[0]!, to: parsed.data.to })
+
+  if (outcome.changed.length === 1) {
+    return ok({ number: outcome.changed[0]!, to: parsed.data.to })
+  }
 
   return fail(outcome.skipped.length === 1 ? 'conflict' : 'not_found')
 }
@@ -62,19 +73,28 @@ export async function addOrderNoteAction(previous: NoteState, form: FormData): P
   const session = await requireSession()
   const text = formText(form, 'note')
 
-  if (!can(session.role, 'orders.update', session.workspaceKind)) return { status: 'error', error: 'forbidden', note: text }
+  if (!can(session.role, 'orders.update', session.workspaceKind)) {
+    return { status: 'error', error: 'forbidden', note: text }
+  }
 
   const orderId = z.uuid().safeParse(formText(form, 'orderId'))
 
-  if (!orderId.success) return { status: 'error', error: 'not_found', note: text }
+  if (!orderId.success) {
+    return { status: 'error', error: 'not_found', note: text }
+  }
 
   const parsed = parseNote(text)
 
-  if (!parsed.ok) return { status: 'error', error: parsed.error, note: text }
+  if (!parsed.ok) {
+    return { status: 'error', error: parsed.error, note: text }
+  }
 
   const number = await addNote(await actorOf(session), { orderId: orderId.data, note: parsed.note })
 
-  if (number === null) return { status: 'error', error: 'not_found', note: text }
+  if (number === null) {
+    return { status: 'error', error: 'not_found', note: text }
+  }
+
   refresh()
 
   return { status: 'done', count: previous.status === 'done' ? previous.count + 1 : 1 }

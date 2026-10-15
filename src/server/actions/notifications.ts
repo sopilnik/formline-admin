@@ -17,7 +17,9 @@ export async function openNotificationAction(form: FormData): Promise<void> {
   const session = await requireSession()
   const id = z.uuid().safeParse(formText(form, 'id'))
 
-  if (!id.success) redirect('/notifications')
+  if (!id.success) {
+    redirect('/notifications')
+  }
 
   const href = await withWorkspace(workspaceContext(session), async tx => {
     const opened = await markNotificationRead(tx, await readerOf(tx, session), id.data)

@@ -21,6 +21,7 @@ export async function signOutAction(): Promise<void> {
       await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.sign_out', ipHash })
     })
   }
+
   await clearSessionCookie()
   redirect('/sign-in')
 }

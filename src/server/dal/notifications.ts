@@ -78,7 +78,10 @@ export async function markNotificationRead(tx: Tx, reader: NotificationReader, i
   const [row] = await tx.select({ id: notifications.id, kind: notifications.kind, payload: notifications.payload })
     .from(notifications).where(and(visible(reader), eq(notifications.id, id)))
 
-  if (!row) return null
+  if (!row) {
+    return null
+  }
+
   await tx.insert(notificationReads).values({ workspaceId: reader.workspaceId, notificationId: row.id, userId: reader.userId }).onConflictDoNothing()
 
   return { kind: row.kind, payload: row.payload }
@@ -109,8 +112,12 @@ export async function notificationHref(
 ): Promise<string> {
   const target = notificationTarget(kind, payload)
 
-  if (!target) return '/notifications'
-  if (target.type === 'order') return orderHref(target.number)
+  if (!target) {
+    return '/notifications'
+  }
+  if (target.type === 'order') {
+    return orderHref(target.number)
+  }
   if (target.type === 'page') {
     const action = PAGE_ACTIONS[target.href]
 

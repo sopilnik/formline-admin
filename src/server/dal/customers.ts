@@ -40,8 +40,12 @@ export function customerSort(query: CustomersQuery): SQL[] {
   const direction = query.dir === 'asc' ? asc : desc
   const tail = [direction(nameSql), direction(customers.id)]
 
-  if (query.sort === 'name') return tail
-  if (query.sort === 'last') return [query.dir === 'asc' ? sql`${lastSql} asc nulls last` : sql`${lastSql} desc nulls last`, ...tail]
+  if (query.sort === 'name') {
+    return tail
+  }
+  if (query.sort === 'last') {
+    return [query.dir === 'asc' ? sql`${lastSql} asc nulls last` : sql`${lastSql} desc nulls last`, ...tail]
+  }
 
   return [direction(query.sort === 'orders' ? ordersSql : spentSql), ...tail]
 }
@@ -89,7 +93,9 @@ export async function getCustomer(tx: Tx, workspaceId: string, id: string): Prom
     notes: customers.notes, createdAt: customers.createdAt,
   }).from(customers).where(and(eq(customers.workspaceId, workspaceId), eq(customers.id, id)))
 
-  if (!customer) return null
+  if (!customer) {
+    return null
+  }
 
   const own = and(eq(orders.workspaceId, workspaceId), eq(orders.customerId, id))
   const [figures] = await tx.select({
@@ -119,8 +125,12 @@ export async function updateCustomerNotes(
   const [current] = await tx.select({ name: customers.name, notes: customers.notes }).from(customers)
     .where(and(eq(customers.workspaceId, workspaceId), eq(customers.id, id)))
 
-  if (!current) return null
-  if (current.notes === notes) return { name: current.name, changed: false }
+  if (!current) {
+    return null
+  }
+  if (current.notes === notes) {
+    return { name: current.name, changed: false }
+  }
 
   // A role that may not write customers updates nothing under row-level security: that is not a save.
   const updated = await tx.update(customers).set({ notes }).where(and(eq(customers.workspaceId, workspaceId), eq(customers.id, id)))

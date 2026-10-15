@@ -113,6 +113,7 @@ describe('readEnv', () => {
       const published = publishedSecrets()
 
       expect(published.length).toBeGreaterThanOrEqual(16)
+
       for (const { setting, value } of published) {
         expect(() => readEnv({ ...container, [setting]: value }), setting).toThrow(/a placeholder this repository publishes/)
       }

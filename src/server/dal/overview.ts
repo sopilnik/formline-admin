@@ -68,7 +68,9 @@ export async function collectionRevenue(tx: Tx, workspaceId: string, range: Rang
     // A store line the catalog does not know stays out of every collection; collectionShares reports it as "other".
     const collectionId = row.variant_id === null ? undefined : collectionOf.get(row.variant_id)
 
-    if (!collectionId) continue
+    if (!collectionId) {
+      continue
+    }
 
     const sum = byCollection.get(collectionId) ?? { posters: 0, cents: 0 }
 

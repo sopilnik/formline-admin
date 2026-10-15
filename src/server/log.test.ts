@@ -12,7 +12,10 @@ describe('log', () => {
 
     const line = lines.join('')
 
-    for (const value of ['"p"', '"t"', '"s"', '"123456"', '"c"', '"a"']) expect(line).not.toContain(value)
+    for (const value of ['"p"', '"t"', '"s"', '"123456"', '"c"', '"a"']) {
+      expect(line).not.toContain(value)
+    }
+
     expect(line).toContain('[redacted]')
   })
 
@@ -42,7 +45,9 @@ describe('log', () => {
 
     const line = lines.join('')
 
-    for (const value of ['mia.novak', 'Mia Novak', 'Berlin']) expect(line).not.toContain(value)
+    for (const value of ['mia.novak', 'Mia Novak', 'Berlin']) {
+      expect(line).not.toContain(value)
+    }
 
     const entry = JSON.parse(line) as { err: { message: string; stack: string } }
 

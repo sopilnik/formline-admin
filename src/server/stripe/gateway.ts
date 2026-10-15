@@ -24,7 +24,9 @@ export function stripeGateway(config: StripeConfig): StripeGateway {
     async lineItems(sessionId) {
       const items: LineItemLike[] = []
 
-      for await (const item of stripe.checkout.sessions.listLineItems(sessionId, { limit: 100 })) items.push(item)
+      for await (const item of stripe.checkout.sessions.listLineItems(sessionId, { limit: 100 })) {
+        items.push(item)
+      }
 
       return items
     },
@@ -32,7 +34,10 @@ export function stripeGateway(config: StripeConfig): StripeGateway {
       const sessions: CheckoutSessionLike[] = []
 
       for await (const session of stripe.checkout.sessions.list({ status: 'complete', created: { gte: Math.floor(since.getTime() / 1000) }, limit: 100 })) {
-        if (sessions.length === max) return { sessions, more: true }
+        if (sessions.length === max) {
+          return { sessions, more: true }
+        }
+
         sessions.push(session)
       }
 

@@ -52,13 +52,20 @@ export type ActivityRequest = { query: ActivityQuery; now: Date; timeZone: strin
 function activityFilters(workspaceId: string, { query, now, timeZone }: ActivityRequest): SQL {
   const parts: SQL[] = [eq(activityLog.workspaceId, workspaceId)]
 
-  if (query.actor === SYSTEM_ACTOR) parts.push(isNull(activityLog.actorUserId))
-  else if (query.actor) parts.push(eq(activityLog.actorUserId, query.actor))
-  if (query.action) parts.push(eq(activityLog.action, query.action))
+  if (query.actor === SYSTEM_ACTOR) {
+    parts.push(isNull(activityLog.actorUserId))
+  } else if (query.actor) {
+    parts.push(eq(activityLog.actorUserId, query.actor))
+  }
+  if (query.action) {
+    parts.push(eq(activityLog.action, query.action))
+  }
 
   const range = presetRange(query.when, now, timeZone)
 
-  if (range) parts.push(gte(activityLog.at, range.start), lt(activityLog.at, range.end))
+  if (range) {
+    parts.push(gte(activityLog.at, range.start), lt(activityLog.at, range.end))
+  }
 
   return and(...parts)!
 }

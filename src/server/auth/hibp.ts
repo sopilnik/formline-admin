@@ -24,11 +24,16 @@ export async function isBreachedPassword(password: string, options: { fetcher?: 
       cache: 'no-store',
     })
 
-    if (!response.ok) throw new Error(`status ${response.status}`)
+    if (!response.ok) {
+      throw new Error(`status ${response.status}`)
+    }
+
     for (const line of (await response.text()).split('\n')) {
       const [candidate, count] = line.trim().split(':')
 
-      if (candidate === suffix && Number(count) > 0) return true
+      if (candidate === suffix && Number(count) > 0) {
+        return true
+      }
     }
 
     return false

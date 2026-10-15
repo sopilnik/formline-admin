@@ -5,7 +5,9 @@ import 'server-only'
  * and of the Stripe webhook, which both take a raw body.
  */
 export async function readCapped(body: ReadableStream<Uint8Array> | null, max: number): Promise<Buffer | 'too_large'> {
-  if (!body) return Buffer.alloc(0)
+  if (!body) {
+    return Buffer.alloc(0)
+  }
 
   const reader = body.getReader()
   const chunks: Uint8Array[] = []
@@ -14,13 +16,18 @@ export async function readCapped(body: ReadableStream<Uint8Array> | null, max: n
   for (;;) {
     const { done, value } = await reader.read()
 
-    if (done) break
+    if (done) {
+      break
+    }
+
     size += value.byteLength
+
     if (size > max) {
       await reader.cancel().catch(() => undefined)
 
       return 'too_large'
     }
+
     chunks.push(value)
   }
 

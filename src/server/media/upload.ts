@@ -45,12 +45,16 @@ export async function storeProductImage(
     const [product] = await tx.select({ imageId: products.imageId }).from(products)
       .where(and(eq(products.workspaceId, actor.workspaceId), eq(products.id, productId)))
 
-    if (!product) return 'not_found' as const
+    if (!product) {
+      return 'not_found' as const
+    }
 
     return (await fits(tx, actor.workspaceId, { productImageId: product.imageId, bytes: image.bytes.length })) ? 'fits' as const : 'cap' as const
   }, pool)
 
-  if (before !== 'fits') return { ok: false, reason: before }
+  if (before !== 'fits') {
+    return { ok: false, reason: before }
+  }
 
   const imageId = randomUUID()
   const path = mediaPath(actor.workspaceId, imageId)
@@ -76,14 +80,21 @@ export async function storeProductImage(
       const [product] = await tx.select({ slug: products.slug, imageId: products.imageId }).from(products)
         .where(and(eq(products.workspaceId, actor.workspaceId), eq(products.id, productId))).for('update')
 
-      if (!product) return { ok: false, reason: 'not_found' }
-      if (!(await fits(tx, actor.workspaceId, { productImageId: product.imageId, bytes: image.bytes.length }))) return { ok: false, reason: 'cap' }
+      if (!product) {
+        return { ok: false, reason: 'not_found' }
+      }
+      if (!(await fits(tx, actor.workspaceId, { productImageId: product.imageId, bytes: image.bytes.length }))) {
+        return { ok: false, reason: 'cap' }
+      }
 
       await tx.insert(images).values({
         workspaceId: actor.workspaceId, id: imageId, storagePath: path, source: 'upload', width: image.width, height: image.height, bytes: image.bytes.length,
       })
       await tx.update(products).set({ imageId, updatedAt: sql`now()` }).where(and(eq(products.workspaceId, actor.workspaceId), eq(products.id, productId)))
-      if (product.imageId) await releaseImage(tx, actor.workspaceId, product.imageId)
+
+      if (product.imageId) {
+        await releaseImage(tx, actor.workspaceId, product.imageId)
+      }
 
       await logActivity(tx, actor.workspaceId, {
         actorUserId: actor.userId, action: 'product.image_changed', entityType: 'product', entityId: productId,
@@ -93,11 +104,14 @@ export async function storeProductImage(
       return { ok: true, imageId, width: image.width, height: image.height }
     }, pool)
 
-    if (!result.ok) await discard()
+    if (!result.ok) {
+      await discard()
+    }
 
     return result
   } catch (error) {
     await discard()
+
     throw error
   }
 }
@@ -108,8 +122,13 @@ export async function removeProductImage(actor: Actor, productId: string, pool: 
     const [product] = await tx.select({ slug: products.slug, imageId: products.imageId }).from(products)
       .where(and(eq(products.workspaceId, actor.workspaceId), eq(products.id, productId))).for('update')
 
-    if (!product) return { ok: false, reason: 'not_found' }
-    if (!product.imageId) return { ok: true }
+    if (!product) {
+      return { ok: false, reason: 'not_found' }
+    }
+    if (!product.imageId) {
+      return { ok: true }
+    }
+
     await tx.update(products).set({ imageId: null, updatedAt: sql`now()` }).where(and(eq(products.workspaceId, actor.workspaceId), eq(products.id, productId)))
     await releaseImage(tx, actor.workspaceId, product.imageId)
     await logActivity(tx, actor.workspaceId, {

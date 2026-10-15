@@ -27,22 +27,33 @@ export async function saveCollectionAction(previous: CollectionState, form: Form
   const fail = (error: 'invalid' | 'forbidden' | 'not_found' | 'cap', fieldErrors: Partial<Record<CollectionField, CollectionIssue>> = {}): CollectionState =>
     ({ status: 'error', error, fieldErrors, values })
 
-  if (!can(session.role, 'catalog.write', session.workspaceKind)) return fail('forbidden')
+  if (!can(session.role, 'catalog.write', session.workspaceKind)) {
+    return fail('forbidden')
+  }
 
   const rawId = formText(form, 'collectionId')
   const id = rawId === '' ? null : z.uuid().safeParse(rawId)
 
-  if (id && !id.success) return fail('not_found')
+  if (id && !id.success) {
+    return fail('not_found')
+  }
 
   const parsed = parseCollection(values)
 
-  if (!parsed.ok) return fail('invalid', parsed.fieldErrors)
+  if (!parsed.ok) {
+    return fail('invalid', parsed.fieldErrors)
+  }
 
   const actor = await actorOf(session)
   const result = id ? await updateCollectionWithLog(actor, { id: id.data, ...parsed.data }) : await createCollectionWithLog(actor, parsed.data)
 
-  if (!result.ok) return result.reason === 'slug_taken' ? fail('invalid', { slug: 'slug_taken' }) : fail(result.reason)
-  if (id && result.slug === result.previousSlug) refresh()
+  if (!result.ok) {
+    return result.reason === 'slug_taken' ? fail('invalid', { slug: 'slug_taken' }) : fail(result.reason)
+  }
+
+  if (id && result.slug === result.previousSlug) {
+    refresh()
+  }
 
   return { status: 'done', slug: result.slug, count: previous.status === 'done' ? previous.count + 1 : 1 }
 }
@@ -53,11 +64,15 @@ const moveInput = z.strictObject({ id: z.uuid(), direction: z.enum(['up', 'down'
 export async function moveCollectionAction(input: unknown): Promise<ActionResult<{ position: number; of: number }>> {
   const session = await requireSession()
 
-  if (!can(session.role, 'catalog.write', session.workspaceKind)) return refused('forbidden')
+  if (!can(session.role, 'catalog.write', session.workspaceKind)) {
+    return refused('forbidden')
+  }
 
   const parsed = moveInput.safeParse(input)
 
-  if (!parsed.success) return refused('invalid')
+  if (!parsed.success) {
+    return refused('invalid')
+  }
 
   const result = await moveCollectionWithLog(await actorOf(session), parsed.data)
 
@@ -72,16 +87,23 @@ const deleteInput = z.strictObject({ id: z.uuid() })
 export async function deleteCollectionAction(input: unknown): Promise<ActionResult<{ name: string }>> {
   const session = await requireSession()
 
-  if (!can(session.role, 'catalog.delete', session.workspaceKind)) return refused('forbidden')
+  if (!can(session.role, 'catalog.delete', session.workspaceKind)) {
+    return refused('forbidden')
+  }
 
   const parsed = deleteInput.safeParse(input)
 
-  if (!parsed.success) return refused('invalid')
+  if (!parsed.success) {
+    return refused('invalid')
+  }
 
   const result = await deleteCollectionWithLog(await actorOf(session), parsed.data.id)
 
   // On success the dialog goes to the list, which renders afresh; a refresh here would render the deleted page again.
-  if (result.ok) return ok({ name: result.name })
+  if (result.ok) {
+    return ok({ name: result.name })
+  }
+
   refresh()
 
   return refused(result.reason === 'not_empty' ? 'conflict' : 'not_found')

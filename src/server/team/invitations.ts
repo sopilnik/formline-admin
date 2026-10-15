@@ -19,7 +19,10 @@ import { mail } from '@/server/mail/outbox'
 async function sendInvitation(tx: Tx, actor: Actor, invitation: { email: string; role: string; token: string }): Promise<void> {
   const inviter = await getSelf(tx, actor)
 
-  if (!inviter) throw new Error(`the inviter ${actor.userId} is not a member of workspace ${actor.workspaceId}`)
+  if (!inviter) {
+    throw new Error(`the inviter ${actor.userId} is not a member of workspace ${actor.workspaceId}`)
+  }
+
   await mail.send(tx, actor.workspaceId, {
     to: invitation.email, template: 'team.invitation', locale: inviter.locale,
     payload: { inviter: inviter.name, role: invitation.role, token: invitation.token },
@@ -33,7 +36,10 @@ export async function inviteMember(actor: Actor, input: { email: string; role: A
   return withWorkspace(workspaceContext(actor), async tx => {
     const created = await createInvitation(tx, actor.workspaceId, { ...input, invitedBy: actor.userId, token, tokenHash: hashToken(token) })
 
-    if (!created.ok) return created
+    if (!created.ok) {
+      return created
+    }
+
     await sendInvitation(tx, actor, { email: input.email.toLowerCase(), role: input.role, token })
     await logActivity(tx, actor.workspaceId, {
       actorUserId: actor.userId, action: 'team.invited', entityType: 'invitation', entityId: created.id,
@@ -49,7 +55,10 @@ export async function resendInvitation(actor: Actor, id: string, pool: Pool = ge
   return withWorkspace(workspaceContext(actor), async tx => {
     const invitation = await getPendingInvitation(tx, actor.workspaceId, id)
 
-    if (!invitation) return null
+    if (!invitation) {
+      return null
+    }
+
     await sendInvitation(tx, actor, invitation)
     await logActivity(tx, actor.workspaceId, {
       actorUserId: actor.userId, action: 'team.invitation_resent', entityType: 'invitation', entityId: id,
@@ -65,7 +74,10 @@ export async function revokeMemberInvitation(actor: Actor, id: string, pool: Poo
   return withWorkspace(workspaceContext(actor), async tx => {
     const revoked = await revokeInvitation(tx, actor.workspaceId, id)
 
-    if (!revoked) return null
+    if (!revoked) {
+      return null
+    }
+
     await logActivity(tx, actor.workspaceId, {
       actorUserId: actor.userId, action: 'team.invitation_revoked', entityType: 'invitation', entityId: id, details: { email: revoked.email }, ipHash: actor.ipHash,
     })
@@ -87,7 +99,9 @@ export async function acceptInvitation(
   input: { token: string; name: string; userAgentSummary: string | null; ipHash: string | null; preferences: { locale: Locale; theme: Theme } },
   pool: Pool = getPool(),
 ): Promise<Acceptance> {
-  if (session.workspaceKind !== 'sandbox') return { ok: false, reason: 'invalid' }
+  if (session.workspaceKind !== 'sandbox') {
+    return { ok: false, reason: 'invalid' }
+  }
 
   const token = generateToken()
   const id = hashToken(token)
@@ -101,8 +115,12 @@ export async function acceptInvitation(
     return result.rows[0]!
   }, pool)
 
-  if (row.outcome !== 'accepted') return { ok: false, reason: row.outcome }
-  if (!row.sandbox_expires_at) throw new Error('accept_invitation accepted without the sandbox\'s expiry')
+  if (row.outcome !== 'accepted') {
+    return { ok: false, reason: row.outcome }
+  }
+  if (!row.sandbox_expires_at) {
+    throw new Error('accept_invitation accepted without the sandbox\'s expiry')
+  }
 
   return { ok: true, token, id, expiresAt: asDate(row.sandbox_expires_at) }
 }

@@ -29,7 +29,9 @@ export async function notificationItems(rows: NotificationRow[], locale: Locale,
   return rows.flatMap(row => {
     const view = notificationView(row.kind, row.payload)
 
-    if (!view) return []
+    if (!view) {
+      return []
+    }
 
     const message = notificationMessage(view, locale, roleName)
 

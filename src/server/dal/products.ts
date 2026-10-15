@@ -55,23 +55,33 @@ const nameSql = unicodeName(products.name)
 function productFilters(workspaceId: string, { query, collectionId }: { query: ProductsQuery; collectionId: string | null }, withStatus = true): SQL {
   const parts: SQL[] = [eq(products.workspaceId, workspaceId)]
 
-  if (withStatus && query.status.length > 0) parts.push(inArray(products.status, query.status))
+  if (withStatus && query.status.length > 0) {
+    parts.push(inArray(products.status, query.status))
+  }
   if (query.q) {
     const pattern = containsPattern(query.q)
 
     parts.push(or(ilike(products.name, pattern), ilike(products.slug, pattern))!)
   }
   // A collection slug the workspace does not have keeps no product.
-  if (query.collection) parts.push(collectionId ? eq(products.collectionId, collectionId) : sql`false`)
-  if (query.stock !== 'any') parts.push(ne(products.status, 'archived'))
+  if (query.collection) {
+    parts.push(collectionId ? eq(products.collectionId, collectionId) : sql`false`)
+  }
+  if (query.stock !== 'any') {
+    parts.push(ne(products.status, 'archived'))
+  }
 
   return and(...parts)!
 }
 
 /** The stock filters test the product's variants, so they apply to the grouped rows. */
 function stockFilter(query: ProductsQuery): SQL | undefined {
-  if (query.stock === 'out') return sql`${soldOutSql} > 0`
-  if (query.stock === 'low') return sql`${lowSql} > 0`
+  if (query.stock === 'out') {
+    return sql`${soldOutSql} > 0`
+  }
+  if (query.stock === 'low') {
+    return sql`${lowSql} > 0`
+  }
 
   return undefined
 }
@@ -107,7 +117,9 @@ export async function listProducts(tx: Tx, workspaceId: string, query: ProductsQ
   const byStatus = await tx.select({ status: sql<ProductStatus>`${kept.status}`, n: count() }).from(kept).groupBy(kept.status)
   const statusCounts = Object.fromEntries(PRODUCT_STATUSES.map(s => [s, 0])) as Record<ProductStatus, number>
 
-  for (const row of byStatus) statusCounts[row.status] = row.n
+  for (const row of byStatus) {
+    statusCounts[row.status] = row.n
+  }
 
   const shown: readonly ProductStatus[] = query.status.length > 0 ? query.status : PRODUCT_STATUSES
   const filtered = shown.reduce((sum, s) => sum + statusCounts[s], 0)
@@ -172,7 +184,9 @@ export async function getProduct(tx: Tx, workspaceId: string, slug: string): Pro
     createdAt: products.createdAt, updatedAt: products.updatedAt, version: versionSql,
   }).from(products).where(and(eq(products.workspaceId, workspaceId), eq(products.slug, slug)))
 
-  if (!product) return null
+  if (!product) {
+    return null
+  }
 
   const [collection] = await tx.select({ id: collections.id, slug: collections.slug, name: collections.name }).from(collections)
     .where(and(eq(collections.workspaceId, workspaceId), eq(collections.id, product.collectionId)))
@@ -217,17 +231,26 @@ export async function updateProductDetails(tx: Tx, workspaceId: string, input: D
     tags: products.tags, description: products.description, version: versionSql,
   }).from(products).where(and(eq(products.workspaceId, workspaceId), eq(products.id, input.productId))).for('update')
 
-  if (!row) return { ok: false, reason: 'not_found' }
-  if (row.version !== input.version) return { ok: false, reason: 'conflict' }
+  if (!row) {
+    return { ok: false, reason: 'not_found' }
+  }
+  if (row.version !== input.version) {
+    return { ok: false, reason: 'conflict' }
+  }
 
   const [collection] = await tx.select({ id: collections.id }).from(collections)
     .where(and(eq(collections.workspaceId, workspaceId), eq(collections.id, input.collectionId)))
 
-  if (!collection) return { ok: false, reason: 'collection_missing' }
+  if (!collection) {
+    return { ok: false, reason: 'collection_missing' }
+  }
+
   if (input.slug !== row.slug) {
     const [other] = await tx.select({ id: products.id }).from(products).where(and(eq(products.workspaceId, workspaceId), eq(products.slug, input.slug)))
 
-    if (other) return { ok: false, reason: 'slug_taken' }
+    if (other) {
+      return { ok: false, reason: 'slug_taken' }
+    }
   }
 
   const changed = [
@@ -237,7 +260,9 @@ export async function updateProductDetails(tx: Tx, workspaceId: string, input: D
   ].filter((field): field is string => typeof field === 'string')
   const saved = { ok: true as const, slug: input.slug, previousSlug: row.slug, changed }
 
-  if (changed.length === 0) return saved
+  if (changed.length === 0) {
+    return saved
+  }
 
   return refuseTaken(tx, SLUG_TAKEN, async () => {
     await tx.update(products).set({
@@ -268,22 +293,30 @@ export async function createProduct(tx: Tx, workspaceId: string, input: NewProdu
 
   const [counted] = await tx.select({ n: count() }).from(products).where(eq(products.workspaceId, workspaceId))
 
-  if ((counted?.n ?? 0) >= PRODUCT_CAP) return { ok: false, reason: 'cap' }
+  if ((counted?.n ?? 0) >= PRODUCT_CAP) {
+    return { ok: false, reason: 'cap' }
+  }
 
   const [collection] = await tx.select({ id: collections.id }).from(collections)
     .where(and(eq(collections.workspaceId, workspaceId), eq(collections.id, input.collectionId)))
 
-  if (!collection) return { ok: false, reason: 'collection_missing' }
+  if (!collection) {
+    return { ok: false, reason: 'collection_missing' }
+  }
 
   const [other] = await tx.select({ id: products.id }).from(products).where(and(eq(products.workspaceId, workspaceId), eq(products.slug, input.slug)))
 
-  if (other) return { ok: false, reason: 'slug_taken' }
+  if (other) {
+    return { ok: false, reason: 'slug_taken' }
+  }
 
   const variants = input.palettes.flatMap(palette => SIZE_IDS.map(size => ({ size, palette, sku: `${input.slug}-${size}-${palette}` })))
   const [taken] = await tx.select({ id: productVariants.id }).from(productVariants)
     .where(and(eq(productVariants.workspaceId, workspaceId), inArray(productVariants.sku, variants.map(v => v.sku))))
 
-  if (taken) return { ok: false, reason: 'sku_taken' }
+  if (taken) {
+    return { ok: false, reason: 'sku_taken' }
+  }
 
   return refuseTaken(tx, SLUG_OR_SKU_TAKEN, async () => {
     const [created] = await tx.insert(products).values({
@@ -321,7 +354,9 @@ export async function saveVariants(
   const [product] = await tx.select({ slug: products.slug }).from(products)
     .where(and(eq(products.workspaceId, workspaceId), eq(products.id, productId))).for('update')
 
-  if (!product) return { ok: false, reason: 'not_found' }
+  if (!product) {
+    return { ok: false, reason: 'not_found' }
+  }
 
   const stored = await tx.select({
     id: productVariants.id, sku: productVariants.sku, priceOverrideCents: productVariants.priceOverrideCents,
@@ -331,11 +366,15 @@ export async function saveVariants(
     .orderBy(asc(productVariants.id)).for('update')
   const byId = new Map(stored.map(v => [v.id, v]))
 
-  if (rows.some(row => !byId.has(row.id))) return { ok: false, reason: 'not_found' }
+  if (rows.some(row => !byId.has(row.id))) {
+    return { ok: false, reason: 'not_found' }
+  }
 
   const conflicts = rows.filter(row => row.stock !== row.stockWas && byId.get(row.id)!.stock !== row.stockWas).map(row => byId.get(row.id)!.sku)
 
-  if (conflicts.length > 0) return { ok: false, reason: 'stock_conflict', skus: conflicts.sort() }
+  if (conflicts.length > 0) {
+    return { ok: false, reason: 'stock_conflict', skus: conflicts.sort() }
+  }
 
   const changes: VariantChange[] = []
 
@@ -343,10 +382,20 @@ export async function saveVariants(
     const current = byId.get(row.id)!
     const change: VariantChange = { sku: current.sku }
 
-    if (row.priceOverrideCents !== current.priceOverrideCents) change.price = [current.priceOverrideCents, row.priceOverrideCents]
-    if (row.stock !== row.stockWas && row.stock !== current.stock) change.stock = [current.stock, row.stock]
-    if (row.lowStockThreshold !== current.lowStockThreshold) change.threshold = [current.lowStockThreshold, row.lowStockThreshold]
-    if (!change.price && !change.stock && !change.threshold) continue
+    if (row.priceOverrideCents !== current.priceOverrideCents) {
+      change.price = [current.priceOverrideCents, row.priceOverrideCents]
+    }
+    if (row.stock !== row.stockWas && row.stock !== current.stock) {
+      change.stock = [current.stock, row.stock]
+    }
+    if (row.lowStockThreshold !== current.lowStockThreshold) {
+      change.threshold = [current.lowStockThreshold, row.lowStockThreshold]
+    }
+
+    if (!change.price && !change.stock && !change.threshold) {
+      continue
+    }
+
     await tx.update(productVariants).set({
       priceOverrideCents: row.priceOverrideCents,
       lowStockThreshold: row.lowStockThreshold,
@@ -368,8 +417,13 @@ export async function changeProductStatus(tx: Tx, workspaceId: string, input: { 
   const [row] = await tx.select({ slug: products.slug, status: products.status }).from(products)
     .where(and(eq(products.workspaceId, workspaceId), eq(products.id, input.productId))).for('update')
 
-  if (!row) return { ok: false, reason: 'not_found' }
-  if (!canTransitionProduct(row.status, input.to)) return { ok: false, reason: 'invalid_transition', from: row.status }
+  if (!row) {
+    return { ok: false, reason: 'not_found' }
+  }
+  if (!canTransitionProduct(row.status, input.to)) {
+    return { ok: false, reason: 'invalid_transition', from: row.status }
+  }
+
   await tx.update(products).set({ status: input.to, updatedAt: sql`now()` })
     .where(and(eq(products.workspaceId, workspaceId), eq(products.id, input.productId)))
 
@@ -388,7 +442,9 @@ export async function deleteProduct(tx: Tx, workspaceId: string, productId: stri
   const [row] = await tx.select({ slug: products.slug, name: products.name, status: products.status, imageId: products.imageId }).from(products)
     .where(and(eq(products.workspaceId, workspaceId), eq(products.id, productId))).for('update')
 
-  if (!row) return { ok: false, reason: 'not_found' }
+  if (!row) {
+    return { ok: false, reason: 'not_found' }
+  }
 
   const variantRows = await tx.select({ id: productVariants.id }).from(productVariants)
     .where(and(eq(productVariants.workspaceId, workspaceId), eq(productVariants.productId, productId)))
@@ -397,7 +453,10 @@ export async function deleteProduct(tx: Tx, workspaceId: string, productId: stri
     .where(and(eq(orderLines.workspaceId, workspaceId), inArray(orderLines.variantId, ids))).limit(1)
   const blocker = deleteBlocker(row.status, ordered !== undefined)
 
-  if (blocker) return { ok: false, reason: blocker }
+  if (blocker) {
+    return { ok: false, reason: blocker }
+  }
+
   await tx.delete(products).where(and(eq(products.workspaceId, workspaceId), eq(products.id, productId)))
 
   const queued = row.imageId ? await releaseImage(tx, workspaceId, row.imageId) : null

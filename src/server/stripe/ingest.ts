@@ -36,12 +36,17 @@ let templateWorkspace: string | undefined
 
 /** The template never changes once the migrations ran, so its id is read once per process. */
 async function templateWorkspaceId(pool: Pool): Promise<string> {
-  if (templateWorkspace) return templateWorkspace
+  if (templateWorkspace) {
+    return templateWorkspace
+  }
 
   const { rows } = await pool.query<{ id: string | null }>('select fa.template_workspace_id() as id')
   const id = rows[0]?.id
 
-  if (!id) throw new Error('the template workspace does not exist; run the migrations')
+  if (!id) {
+    throw new Error('the template workspace does not exist; run the migrations')
+  }
+
   templateWorkspace = id
 
   return id
@@ -63,7 +68,10 @@ async function customerFor(
     .limit(1)
   const [existing] = await found()
 
-  if (existing) return existing.id
+  if (existing) {
+    return existing.id
+  }
+
   // Two orders of a new customer at once: the second insert meets the first one's row and reads it.
   await tx.execute(sql`
     insert into fa.customers (workspace_id, email, name, city, country, pseudonymised_at)
@@ -72,7 +80,9 @@ async function customerFor(
 
   const [made] = await found()
 
-  if (!made) throw new Error(`workspace ${workspaceId} neither has nor took the order's customer`)
+  if (!made) {
+    throw new Error(`workspace ${workspaceId} neither has nor took the order's customer`)
+  }
 
   return made.id
 }
@@ -84,14 +94,18 @@ async function nextOrderNumber(tx: Tx, workspaceId: string): Promise<number> {
     where workspace_id = ${workspaceId} returning next_order_number - 1 as number`)
   const [row] = rows
 
-  if (!row) throw new Error(`workspace ${workspaceId} has no order counter in fa.workspace_counters`)
+  if (!row) {
+    throw new Error(`workspace ${workspaceId} has no order counter in fa.workspace_counters`)
+  }
 
   return row.number
 }
 
 /** The matched variants, locked so two orders of the same poster take stock one after the other, with their products' names. */
 async function lockVariants(tx: Tx, workspaceId: string, skus: string[]): Promise<Map<string, Variant>> {
-  if (skus.length === 0) return new Map()
+  if (skus.length === 0) {
+    return new Map()
+  }
 
   const locked = await tx
     .select({
@@ -103,7 +117,9 @@ async function lockVariants(tx: Tx, workspaceId: string, skus: string[]): Promis
     .orderBy(productVariants.id)
     .for('update')
 
-  if (locked.length === 0) return new Map()
+  if (locked.length === 0) {
+    return new Map()
+  }
 
   const names = await tx.select({ id: products.id, name: products.name }).from(products)
     .where(and(eq(products.workspaceId, workspaceId), inArray(products.id, [...new Set(locked.map(v => v.productId))])))
@@ -146,6 +162,7 @@ async function writeCopy(
 
     return { workspaceId, orderId: copy!.id, variantId: variantId ?? null, sku: variantId ? line.variant!.sku : null, name: line.name, unitCents: line.unitCents, qty: line.qty, unmatched: !variantId }
   }))
+
   await tx.insert(orderEvents).values({ workspaceId, orderId: copy!.id, kind: 'status', fromStatus: null, toStatus: 'paid', actorUserId: null, at: order.placedAt })
 }
 
@@ -159,12 +176,16 @@ async function claim(
     // A second delivery of the same event waits here until the first one commits, then finds its row.
     const recorded = await tx.insert(stripeEvents).values({ eventId, outcome: 'order' }).onConflictDoNothing().returning({ id: stripeEvents.eventId })
 
-    if (recorded.length === 0) throw new Duplicate()
+    if (recorded.length === 0) {
+      throw new Duplicate()
+    }
   }
 
   const [seen] = await tx.select({ id: orders.id }).from(orders).where(and(eq(orders.workspaceId, owner), eq(orders.stripeSessionId, order.sessionId))).limit(1)
 
-  if (seen) throw new Duplicate()
+  if (seen) {
+    throw new Duplicate()
+  }
 }
 
 /** The owner's customer and the order itself, under the next number. */
@@ -185,7 +206,9 @@ async function writeOrder(
   }).onConflictDoNothing({ target: [orders.workspaceId, orders.stripeSessionId] }).returning({ id: orders.id })
 
   // The import and a webhook delivery of the same session at once: the second waits for the first and stops here.
-  if (!created) throw new Duplicate()
+  if (!created) {
+    throw new Duplicate()
+  }
 
   return { orderId: created.id, number, customerId }
 }
@@ -201,6 +224,7 @@ async function writeLines(
 
     return { workspaceId: owner, orderId, variantId: variant?.id ?? null, sku: variant?.sku ?? null, name: line.name, unitCents: line.unitCents, qty: line.qty, unmatched: !variant }
   }))
+
   await tx.insert(orderEvents).values({ workspaceId: owner, orderId, kind: 'status', fromStatus: null, toStatus: 'paid', actorUserId: null, at: order.placedAt })
 }
 
@@ -213,7 +237,9 @@ async function takeStock(
   const sold = new Map<string, number>()
 
   for (const line of order.lines) {
-    if (line.variant && variants.has(line.variant.sku)) sold.set(line.variant.sku, (sold.get(line.variant.sku) ?? 0) + line.qty)
+    if (line.variant && variants.has(line.variant.sku)) {
+      sold.set(line.variant.sku, (sold.get(line.variant.sku) ?? 0) + line.qty)
+    }
   }
 
   const oversold: Oversold[] = []
@@ -224,7 +250,10 @@ async function takeStock(
     const short = Math.max(qty - variant.stock, 0)
 
     await tx.update(productVariants).set({ stock }).where(and(eq(productVariants.workspaceId, owner), eq(productVariants.id, variant.id)))
-    if (short > 0) oversold.push({ label: `${variant.product} · ${variantLabel(variant.size, variant.palette)}`, count: short })
+
+    if (short > 0) {
+      oversold.push({ label: `${variant.product} · ${variantLabel(variant.size, variant.palette)}`, count: short })
+    }
     // "Low stock" when this sale takes the variant across its threshold from above, or sells more than there was.
     if (short > 0 || (variant.stock > variant.threshold && stock <= variant.threshold)) {
       await notify(tx, owner, {
@@ -250,7 +279,9 @@ async function writeOversoldNote(
   owner: string,
   { orderId, order, oversold }: { orderId: string; order: IncomingOrder; oversold: Oversold[] },
 ): Promise<void> {
-  if (oversold.length === 0) return
+  if (oversold.length === 0) {
+    return
+  }
 
   const locale = await ownerLocale(tx, owner)
   const t = createTranslator({ locale, messages: locale === 'ru' ? ru : en, namespace: 'ingest' })
@@ -314,7 +345,10 @@ export async function ingestOrder(order: IncomingOrder, options: { eventId: stri
 
     return result
   } catch (error) {
-    if (error instanceof Duplicate) return { status: 'duplicate' }
+    if (error instanceof Duplicate) {
+      return { status: 'duplicate' }
+    }
+
     throw error
   }
 }

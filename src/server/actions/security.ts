@@ -15,11 +15,16 @@ import { getClientIp } from '@/server/request'
 export async function changePasswordAction(_previous: FormState<'password'>, form: FormData): Promise<FormState<'password'>> {
   const session = await requireSession()
 
-  if (!can(session.role, 'self.manage', session.workspaceKind)) return { status: 'error', error: 'generic' }
+  if (!can(session.role, 'self.manage', session.workspaceKind)) {
+    return { status: 'error', error: 'generic' }
+  }
 
   const result = await changeOwnPassword(session, { password: formText(form, 'password'), ip: await getClientIp() })
 
-  if (!result.ok) return failureState(result)
+  if (!result.ok) {
+    return failureState(result)
+  }
+
   refresh()
 
   return { status: 'done' }
@@ -31,12 +36,19 @@ const sessionInput = z.strictObject({ id: z.string().regex(/^[0-9a-f]{64}$/) })
 export async function revokeSessionAction(input: unknown): Promise<ActionResult<null>> {
   const session = await requireSession()
 
-  if (!can(session.role, 'self.manage', session.workspaceKind)) return fail('forbidden')
+  if (!can(session.role, 'self.manage', session.workspaceKind)) {
+    return fail('forbidden')
+  }
 
   const parsed = sessionInput.safeParse(input)
 
-  if (!parsed.success) return fail('invalid')
-  if (!(await revokeOwnSession(session, { id: parsed.data.id, meta: { ip: await getClientIp() } }))) return fail('not_found')
+  if (!parsed.success) {
+    return fail('invalid')
+  }
+  if (!(await revokeOwnSession(session, { id: parsed.data.id, meta: { ip: await getClientIp() } }))) {
+    return fail('not_found')
+  }
+
   refresh()
 
   return ok(null)
@@ -46,7 +58,9 @@ export async function revokeSessionAction(input: unknown): Promise<ActionResult<
 export async function revokeOtherSessionsAction(): Promise<ActionResult<{ count: number }>> {
   const session = await requireSession()
 
-  if (!can(session.role, 'self.manage', session.workspaceKind)) return fail('forbidden')
+  if (!can(session.role, 'self.manage', session.workspaceKind)) {
+    return fail('forbidden')
+  }
 
   const count = await revokeOtherSessions(session, { ip: await getClientIp() })
 
@@ -59,11 +73,16 @@ export async function revokeOtherSessionsAction(): Promise<ActionResult<{ count:
 export async function enableTotpAction(_previous: FormState<'code'>, form: FormData): Promise<FormState<'code'>> {
   const session = await requireSession()
 
-  if (!can(session.role, 'self.manage', session.workspaceKind)) return { status: 'error', error: 'generic' }
+  if (!can(session.role, 'self.manage', session.workspaceKind)) {
+    return { status: 'error', error: 'generic' }
+  }
 
   const result = await enableOwnTotp(session, { secret: formText(form, 'totpSecret'), code: formText(form, 'code'), ip: await getClientIp() })
 
-  if (!result.ok) return failureState(result)
+  if (!result.ok) {
+    return failureState(result)
+  }
+
   refresh()
 
   return { status: 'done', recoveryCodes: result.recoveryCodes ?? undefined }
@@ -73,11 +92,16 @@ export async function enableTotpAction(_previous: FormState<'code'>, form: FormD
 export async function disableTotpAction(): Promise<{ ok: true } | { ok: false; error: AuthError }> {
   const session = await requireSession()
 
-  if (!can(session.role, 'self.manage', session.workspaceKind)) return { ok: false, error: 'generic' }
+  if (!can(session.role, 'self.manage', session.workspaceKind)) {
+    return { ok: false, error: 'generic' }
+  }
 
   const result = await disableOwnTotp(session, { ip: await getClientIp() })
 
-  if (!result.ok) return { ok: false, error: result.error }
+  if (!result.ok) {
+    return { ok: false, error: result.error }
+  }
+
   refresh()
 
   return { ok: true }
@@ -87,11 +111,16 @@ export async function disableTotpAction(): Promise<{ ok: true } | { ok: false; e
 export async function regenerateRecoveryCodesAction(_previous: FormState, _form: FormData): Promise<FormState> {
   const session = await requireSession()
 
-  if (!can(session.role, 'self.manage', session.workspaceKind)) return { status: 'error', error: 'generic' }
+  if (!can(session.role, 'self.manage', session.workspaceKind)) {
+    return { status: 'error', error: 'generic' }
+  }
 
   const result = await regenerateOwnRecoveryCodes(session, { ip: await getClientIp() })
 
-  if (!result.ok) return failureState(result)
+  if (!result.ok) {
+    return failureState(result)
+  }
+
   refresh()
 
   return { status: 'done', recoveryCodes: result.recoveryCodes }

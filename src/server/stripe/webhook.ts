@@ -25,7 +25,9 @@ export async function handleWebhook(
   delivery: { body: Buffer; signature: string | null },
   deps: { config: StripeConfig; gateway: StripeGateway; pool?: Pool },
 ): Promise<WebhookAnswer> {
-  if (!delivery.signature) return { status: 400, body: { received: false, error: 'signature' } }
+  if (!delivery.signature) {
+    return { status: 400, body: { received: false, error: 'signature' } }
+  }
 
   let event: Stripe.Event
 
@@ -36,11 +38,16 @@ export async function handleWebhook(
 
     return { status: 400, body: { received: false, error: 'signature' } }
   }
-  if (event.type !== 'checkout.session.completed') return received
+
+  if (event.type !== 'checkout.session.completed') {
+    return received
+  }
 
   const session: CheckoutSessionLike = event.data.object
 
-  if (session.payment_status !== 'paid') return received
+  if (session.payment_status !== 'paid') {
+    return received
+  }
 
   const pool = deps.pool ?? getPool()
 

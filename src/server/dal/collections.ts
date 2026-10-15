@@ -33,7 +33,9 @@ export async function getCollection(tx: Tx, workspaceId: string, slug: string): 
   const [row] = await tx.select({ id: collections.id, slug: collections.slug, name: collections.name, description: collections.description })
     .from(collections).where(and(eq(collections.workspaceId, workspaceId), eq(collections.slug, slug)))
 
-  if (!row) return null
+  if (!row) {
+    return null
+  }
 
   const members = await tx.select({ id: products.id, slug: products.slug, name: products.name, status: products.status, imageId: products.imageId })
     .from(products).where(and(eq(products.workspaceId, workspaceId), eq(products.collectionId, row.id))).orderBy(asc(products.name), asc(products.id))
@@ -56,8 +58,12 @@ export async function createCollection(tx: Tx, workspaceId: string, input: { nam
 
   const all = await tx.select({ slug: collections.slug, position: collections.position }).from(collections).where(eq(collections.workspaceId, workspaceId))
 
-  if (all.length >= COLLECTION_CAP) return { ok: false, reason: 'cap' }
-  if (all.some(c => c.slug === input.slug)) return { ok: false, reason: 'slug_taken' }
+  if (all.length >= COLLECTION_CAP) {
+    return { ok: false, reason: 'cap' }
+  }
+  if (all.some(c => c.slug === input.slug)) {
+    return { ok: false, reason: 'slug_taken' }
+  }
 
   return refuseTaken(tx, SLUG_TAKEN, async () => {
     const [created] = await tx.insert(collections).values({
@@ -73,12 +79,16 @@ export async function updateCollection(tx: Tx, workspaceId: string, input: { id:
   const [row] = await tx.select({ slug: collections.slug }).from(collections)
     .where(and(eq(collections.workspaceId, workspaceId), eq(collections.id, input.id))).for('update')
 
-  if (!row) return { ok: false, reason: 'not_found' }
+  if (!row) {
+    return { ok: false, reason: 'not_found' }
+  }
 
   const [other] = await tx.select({ id: collections.id }).from(collections)
     .where(and(eq(collections.workspaceId, workspaceId), eq(collections.slug, input.slug), ne(collections.id, input.id)))
 
-  if (other) return { ok: false, reason: 'slug_taken' }
+  if (other) {
+    return { ok: false, reason: 'slug_taken' }
+  }
 
   return refuseTaken(tx, SLUG_TAKEN, async () => {
     await tx.update(collections).set({ name: input.name, slug: input.slug, description: input.description })
@@ -108,12 +118,17 @@ export async function moveCollection(tx: Tx, workspaceId: string, input: { id: s
   const order = await lockedOrder(tx, workspaceId)
   const index = order.findIndex(c => c.id === input.id)
 
-  if (index === -1) return { ok: false, reason: 'not_found' }
+  if (index === -1) {
+    return { ok: false, reason: 'not_found' }
+  }
 
   const target = input.direction === 'up' ? index - 1 : index + 1
   const ids = order.map(c => c.id)
 
-  if (target >= 0 && target < ids.length) [ids[index], ids[target]] = [ids[target]!, ids[index]!]
+  if (target >= 0 && target < ids.length) {
+    [ids[index], ids[target]] = [ids[target]!, ids[index]!]
+  }
+
   await renumber(tx, workspaceId, ids)
 
   return { ok: true, slug: order[index]!.slug, from: index + 1, to: ids.indexOf(input.id) + 1, of: ids.length }
@@ -126,12 +141,17 @@ export async function deleteCollection(tx: Tx, workspaceId: string, id: string):
   const order = await lockedOrder(tx, workspaceId)
   const row = order.find(c => c.id === id)
 
-  if (!row) return { ok: false, reason: 'not_found' }
+  if (!row) {
+    return { ok: false, reason: 'not_found' }
+  }
 
   const [member] = await tx.select({ id: products.id }).from(products)
     .where(and(eq(products.workspaceId, workspaceId), eq(products.collectionId, id))).limit(1)
 
-  if (member) return { ok: false, reason: 'not_empty' }
+  if (member) {
+    return { ok: false, reason: 'not_empty' }
+  }
+
   await tx.delete(collections).where(and(eq(collections.workspaceId, workspaceId), eq(collections.id, id)))
   await renumber(tx, workspaceId, order.filter(c => c.id !== id).map(c => c.id))
 

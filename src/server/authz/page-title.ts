@@ -7,7 +7,9 @@ import { can, type Action } from '@/server/authz/matrix'
 export async function titleFor(action: Action, title: string): Promise<string> {
   const session = await requireSession()
 
-  if (can(session.role, action, session.workspaceKind)) return title
+  if (can(session.role, action, session.workspaceKind)) {
+    return title
+  }
 
   return (await getTranslations('notFound'))('title')
 }

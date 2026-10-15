@@ -21,8 +21,12 @@ export type EntryRow = {
 }
 
 export function entryFromRow(row: EntryRow, token: string): SandboxEntry {
-  if (row.outcome === 'created') return { ok: true, token, workspaceId: row.sandbox_id!, userId: row.demo_user_id!, expiresAt: asDate(row.sandbox_expires_at!) }
-  if (row.outcome === 'rate_limited') return { ok: false, error: 'demo_rate_limited', retryAfterSeconds: row.retry_after_seconds }
+  if (row.outcome === 'created') {
+    return { ok: true, token, workspaceId: row.sandbox_id!, userId: row.demo_user_id!, expiresAt: asDate(row.sandbox_expires_at!) }
+  }
+  if (row.outcome === 'rate_limited') {
+    return { ok: false, error: 'demo_rate_limited', retryAfterSeconds: row.retry_after_seconds }
+  }
 
   return { ok: false, error: 'demo_full' }
 }

@@ -21,7 +21,9 @@ export type ReauthField = 'password' | 'code'
  * sandboxes skip it, their demo users have no password.
  */
 export function isRecentAuth(session: Pick<Session, 'workspaceKind' | 'reauthAt'>, nowMs: number = Date.now()): boolean {
-  if (session.workspaceKind === 'sandbox') return true
+  if (session.workspaceKind === 'sandbox') {
+    return true
+  }
 
   return session.reauthAt !== null && nowMs - session.reauthAt.getTime() < REAUTH_WINDOW_MS
 }
@@ -40,31 +42,45 @@ export async function reauthenticate(
     .from(users)
     .where(isUser(session)), pool)
 
-  if (!input.password) return { ok: false, error: 'password_required', field: 'password' }
-  if (!self?.passwordHash) return { ok: false, error: 'password_incorrect', field: 'password' }
+  if (!input.password) {
+    return { ok: false, error: 'password_required', field: 'password' }
+  }
+  if (!self?.passwordHash) {
+    return { ok: false, error: 'password_incorrect', field: 'password' }
+  }
 
   const attempt = { email: self.email, ip: input.ip }
   const claim = await claimPasswordAttempt(attempt, deps)
 
-  if (!claim.ok) return { ok: false, error: 'rate_limited', retryAfterSeconds: claim.retryAfterSeconds }
-  if (!(await verifyPassword(self.passwordHash, input.password))) return { ok: false, error: 'password_incorrect', field: 'password' }
+  if (!claim.ok) {
+    return { ok: false, error: 'rate_limited', retryAfterSeconds: claim.retryAfterSeconds }
+  }
+  if (!(await verifyPassword(self.passwordHash, input.password))) {
+    return { ok: false, error: 'password_incorrect', field: 'password' }
+  }
 
   await passwordAccepted(attempt, claim, deps)
 
   const factor = await attemptSecondFactor(session, input, deps)
 
-  if (!factor.ok) return factor
+  if (!factor.ok) {
+    return factor
+  }
 
   const ipHash = hashIp(input.ip, config.ipHashKey)
   const fresh = await withWorkspace(ctx, async tx => {
     const rotated = await rotateSession(tx, session, { userAgentSummary: summarizeUserAgent(input.userAgent), ipHash })
 
-    if (rotated) await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.reauthenticated', details: { method: 'password' }, ipHash })
+    if (rotated) {
+      await logActivity(tx, session.workspaceId, { actorUserId: session.userId, action: 'auth.reauthenticated', details: { method: 'password' }, ipHash })
+    }
 
     return rotated
   }, pool)
 
-  if (!fresh) return { ok: false, error: 'session_expired' }
+  if (!fresh) {
+    return { ok: false, error: 'session_expired' }
+  }
 
   return { ok: true, ...fresh }
 }

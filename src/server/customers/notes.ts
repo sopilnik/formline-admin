@@ -15,8 +15,13 @@ export async function saveCustomerNotes(
   return withWorkspace(workspaceContext(actor), async tx => {
     const result = await updateCustomerNotes(tx, actor.workspaceId, { id: customerId, notes })
 
-    if (!result) return 'not_found'
-    if (!result.changed) return 'unchanged'
+    if (!result) {
+      return 'not_found'
+    }
+    if (!result.changed) {
+      return 'unchanged'
+    }
+
     await logActivity(tx, actor.workspaceId, {
       actorUserId: actor.userId, action: 'customer.notes_updated', entityType: 'customer', entityId: customerId, details: { name: result.name }, ipHash: actor.ipHash,
     })

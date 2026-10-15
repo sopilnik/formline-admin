@@ -26,7 +26,9 @@ export function thumbPath(path: string): string {
 }
 
 function checked(path: string): string {
-  if (!MEDIA_PATH.test(path)) throw new Error(`not a media path: ${path}`)
+  if (!MEDIA_PATH.test(path)) {
+    throw new Error(`not a media path: ${path}`)
+  }
 
   return path
 }
@@ -59,20 +61,28 @@ export function bunnyStorage(zone: BunnyZone, fetchImpl: typeof fetch = fetch): 
       const checksum = createHash('sha256').update(bytes).digest('hex').toUpperCase()
       const response = await request(path, { method: 'PUT', body: new Uint8Array(bytes), headers: { 'Content-Type': 'application/octet-stream', Checksum: checksum } })
 
-      if (!response.ok) throw new Error(`media storage refused the upload: ${response.status}`)
+      if (!response.ok) {
+        throw new Error(`media storage refused the upload: ${response.status}`)
+      }
     },
     async get(path) {
       const response = await request(path, { method: 'GET' })
 
-      if (response.status === 404) return null
-      if (!response.ok) throw new Error(`media storage refused the read: ${response.status}`)
+      if (response.status === 404) {
+        return null
+      }
+      if (!response.ok) {
+        throw new Error(`media storage refused the read: ${response.status}`)
+      }
 
       return Buffer.from(await response.arrayBuffer())
     },
     async delete(path) {
       const response = await request(path, { method: 'DELETE' })
 
-      if (!response.ok && response.status !== 404) throw new Error(`media storage refused the deletion: ${response.status}`)
+      if (!response.ok && response.status !== 404) {
+        throw new Error(`media storage refused the deletion: ${response.status}`)
+      }
     },
   }
 }
@@ -93,13 +103,18 @@ export function directoryStorage(dir: string): MediaStorage {
       try {
         return await readFile(file(path))
       } catch (error) {
-        if (missing(error)) return null
+        if (missing(error)) {
+          return null
+        }
+
         throw error
       }
     },
     async delete(path) {
       await unlink(file(path)).catch((error: unknown) => {
-        if (!missing(error)) throw error
+        if (!missing(error)) {
+          throw error
+        }
       })
     },
   }
@@ -118,11 +133,15 @@ let cached: MediaStorage | null | undefined
 
 /** The configured storage: the bunny zone when its variables are set, else the local folder, else null. */
 export function mediaStorage(source?: EnvSource): MediaStorage | null {
-  if (!source && cached !== undefined) return cached
+  if (!source && cached !== undefined) {
+    return cached
+  }
 
   const storage = storageFrom(readEnv(source))
 
-  if (!source) cached = storage
+  if (!source) {
+    cached = storage
+  }
 
   return storage
 }

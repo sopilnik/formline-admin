@@ -10,8 +10,12 @@ import { encryptTotpSecret, parseTotpSecret, verifyTotp } from '@/server/auth/to
 export async function checkNewPassword(password: string, deps: Pick<AuthDeps, 'isBreached'>): Promise<AuthFailure<'password'> | null> {
   const shape = checkPasswordShape(password)
 
-  if (shape !== 'ok') return { ok: false, error: shape === 'too_short' ? 'password_too_short' : 'password_too_long', field: 'password' }
-  if (await deps.isBreached(password)) return { ok: false, error: 'password_breached', field: 'password' }
+  if (shape !== 'ok') {
+    return { ok: false, error: shape === 'too_short' ? 'password_too_short' : 'password_too_long', field: 'password' }
+  }
+  if (await deps.isBreached(password)) {
+    return { ok: false, error: 'password_breached', field: 'password' }
+  }
 
   return null
 }
@@ -23,12 +27,16 @@ export async function checkNewCredentials(
 ): Promise<{ ok: true; secret: Uint8Array; step: number } | AuthFailure<'password' | 'code'>> {
   const refused = await checkNewPassword(input.password, deps)
 
-  if (refused) return refused
+  if (refused) {
+    return refused
+  }
 
   const secret = parseTotpSecret(input.totpSecret)
   const totp = secret ? verifyTotp(secret, { code: input.code, lastStep: null }, deps.now()) : null
 
-  if (!secret || !totp?.ok) return { ok: false, error: 'code_invalid', field: 'code' }
+  if (!secret || !totp?.ok) {
+    return { ok: false, error: 'code_invalid', field: 'code' }
+  }
 
   return { ok: true, secret, step: totp.step }
 }

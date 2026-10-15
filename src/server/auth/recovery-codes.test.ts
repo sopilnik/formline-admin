@@ -7,7 +7,10 @@ describe('recovery codes', () => {
 
     expect(codes).toHaveLength(10)
     expect(new Set(codes).size).toBe(10)
-    for (const code of codes) expect(code).toMatch(/^[a-z2-7]{5}-[a-z2-7]{5}$/)
+
+    for (const code of codes) {
+      expect(code).toMatch(/^[a-z2-7]{5}-[a-z2-7]{5}$/)
+    }
   })
 
   it('accept the typed forms of a code', () => {

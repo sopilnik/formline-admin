@@ -17,9 +17,15 @@ const starts = (bytes: Uint8Array, signature: readonly number[], offset = 0): bo
 
 /** The format by its magic bytes: JPEG, PNG and WebP only; anything else, SVG and GIF included, is null. */
 export function sniff(bytes: Uint8Array): ImageKind | null {
-  if (starts(bytes, [0xff, 0xd8, 0xff])) return 'jpeg'
-  if (starts(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) return 'png'
-  if (starts(bytes, [0x52, 0x49, 0x46, 0x46]) && starts(bytes, [0x57, 0x45, 0x42, 0x50], 8)) return 'webp'
+  if (starts(bytes, [0xff, 0xd8, 0xff])) {
+    return 'jpeg'
+  }
+  if (starts(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) {
+    return 'png'
+  }
+  if (starts(bytes, [0x52, 0x49, 0x46, 0x46]) && starts(bytes, [0x57, 0x45, 0x42, 0x50], 8)) {
+    return 'webp'
+  }
 
   return null
 }
@@ -47,15 +53,21 @@ function oneAtATime<T>(work: () => Promise<T>): Promise<T> {
 export function processImage(bytes: Buffer): Promise<Processed | ImageProblem> {
   const kind = sniff(bytes)
 
-  if (!kind) return Promise.resolve('type')
+  if (!kind) {
+    return Promise.resolve('type')
+  }
 
   return oneAtATime(async () => {
     try {
       const input = sharp(bytes, { limitInputPixels: MAX_PIXELS, failOn: 'error', pages: 1, autoOrient: true })
       const meta = await input.metadata()
 
-      if (meta.format !== kind) return 'type'
-      if ((meta.width ?? 0) * (meta.pageHeight ?? meta.height ?? 0) > MAX_PIXELS) return 'pixels'
+      if (meta.format !== kind) {
+        return 'type'
+      }
+      if ((meta.width ?? 0) * (meta.pageHeight ?? meta.height ?? 0) > MAX_PIXELS) {
+        return 'pixels'
+      }
 
       const { data, info } = await input.clone()
         .resize({ width: LONGEST_SIDE, height: LONGEST_SIDE, fit: 'inside', withoutEnlargement: true })

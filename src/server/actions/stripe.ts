@@ -22,16 +22,24 @@ import { importMissedOrders } from '@/server/stripe/import'
 export async function importStripeOrdersAction(_previous: ImportState, _form: FormData): Promise<ImportState> {
   const session = await requireSession()
 
-  if (!can(session.role, 'stripe.import', session.workspaceKind)) return { status: 'error', error: 'forbidden' }
-  if (!isRecentAuth(session)) return { status: 'error', error: 'reauth_required' }
+  if (!can(session.role, 'stripe.import', session.workspaceKind)) {
+    return { status: 'error', error: 'forbidden' }
+  }
+  if (!isRecentAuth(session)) {
+    return { status: 'error', error: 'reauth_required' }
+  }
 
   const config = stripeConfig()
 
-  if (!config) return { status: 'error', error: 'unavailable' }
+  if (!config) {
+    return { status: 'error', error: 'unavailable' }
+  }
 
   const verdict = await consume(LIMITS.stripeImport, userSubject(session.workspaceId, session.userId))
 
-  if (!verdict.allowed) return { status: 'error', error: 'rate_limited', retryAfterMinutes: retryMinutes(verdict.retryAfterSeconds) }
+  if (!verdict.allowed) {
+    return { status: 'error', error: 'rate_limited', retryAfterMinutes: retryMinutes(verdict.retryAfterSeconds) }
+  }
 
   let summary: ImportSummary
 

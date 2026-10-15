@@ -31,7 +31,9 @@ const PASSWORD_LOCK_MAX_SECONDS = 60 * 60
 export function passwordLockSeconds(failures: number): number {
   const beyond = failures - LIMITS.signInFailAccount.limit
 
-  if (beyond < 0) return 0
+  if (beyond < 0) {
+    return 0
+  }
 
   return Math.min(PASSWORD_LOCK_FIRST_SECONDS * 2 ** beyond, PASSWORD_LOCK_MAX_SECONDS)
 }

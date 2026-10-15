@@ -15,7 +15,10 @@ export async function addNote(
   return withWorkspace(workspaceContext(actor), async tx => {
     const added = await addOrderNote(tx, { workspaceId: actor.workspaceId, userId: actor.userId }, { orderId, note })
 
-    if (!added) return null
+    if (!added) {
+      return null
+    }
+
     await logActivity(tx, actor.workspaceId, {
       actorUserId: actor.userId, action: 'order.note_added', entityType: 'order', entityId: orderId, details: { number: added.number }, ipHash: actor.ipHash,
     })

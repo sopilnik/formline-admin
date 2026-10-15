@@ -22,8 +22,13 @@ export function parseKeyring(value: string): Keyring {
     const [id = '', encoded = ''] = entry.split(':')
     const key = Buffer.from(encoded, 'base64')
 
-    if (key.length !== 32) throw new Error(`TOTP key ${id} is not 32 bytes`)
-    if (keys.has(id)) throw new Error(`TOTP key id ${id} is repeated`)
+    if (key.length !== 32) {
+      throw new Error(`TOTP key ${id} is not 32 bytes`)
+    }
+    if (keys.has(id)) {
+      throw new Error(`TOTP key id ${id} is repeated`)
+    }
+
     keys.set(id, key)
   }
 
@@ -33,7 +38,9 @@ export function parseKeyring(value: string): Keyring {
 let cached: AuthConfig | undefined
 
 export function authConfig(source?: EnvSource): AuthConfig {
-  if (!source && cached) return cached
+  if (!source && cached) {
+    return cached
+  }
 
   const env = readEnv(source)
   const siteUrl = new URL(env.SITE_URL)
@@ -47,7 +54,9 @@ export function authConfig(source?: EnvSource): AuthConfig {
     origin: siteUrl.origin,
   }
 
-  if (!source) cached = config
+  if (!source) {
+    cached = config
+  }
 
   return config
 }
@@ -64,7 +73,9 @@ export type StripeConfig = {
 let stripeCached: StripeConfig | null | undefined
 
 export function stripeConfig(source?: EnvSource): StripeConfig | null {
-  if (!source && stripeCached !== undefined) return stripeCached
+  if (!source && stripeCached !== undefined) {
+    return stripeCached
+  }
 
   const env = readEnv(source)
   const config = env.STRIPE_WEBHOOK_SECRET && env.STRIPE_RESTRICTED_KEY && env.PSEUDONYM_KEY
@@ -76,7 +87,9 @@ export function stripeConfig(source?: EnvSource): StripeConfig | null {
       }
     : null
 
-  if (!source) stripeCached = config
+  if (!source) {
+    stripeCached = config
+  }
 
   return config
 }

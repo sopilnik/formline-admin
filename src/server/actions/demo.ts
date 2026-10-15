@@ -28,7 +28,10 @@ async function visitorMeta(): Promise<VisitorMeta> {
 export async function enterDemoAction(_previous: FormState, _form: FormData): Promise<FormState> {
   const entry = await enterSandbox(await visitorMeta())
 
-  if (!entry.ok) return failureState(entry)
+  if (!entry.ok) {
+    return failureState(entry)
+  }
+
   await setSessionCookie(entry.token, entry.expiresAt, { demo: true })
   after(() => cleanupExpiredSandboxes())
   redirect('/overview')
@@ -38,11 +41,16 @@ export async function enterDemoAction(_previous: FormState, _form: FormData): Pr
 export async function resetDemoAction(_previous: FormState, _form: FormData): Promise<FormState> {
   const session = await requireSession()
 
-  if (session.workspaceKind !== 'sandbox') redirect('/overview')
+  if (session.workspaceKind !== 'sandbox') {
+    redirect('/overview')
+  }
 
   const entry = await resetSandbox(session, await visitorMeta())
 
-  if (!entry.ok) return failureState(entry)
+  if (!entry.ok) {
+    return failureState(entry)
+  }
+
   await setSessionCookie(entry.token, entry.expiresAt, { demo: true })
   redirect('/overview')
 }
@@ -51,11 +59,15 @@ export async function resetDemoAction(_previous: FormState, _form: FormData): Pr
 export async function switchUserAction(_previous: FormState<'code'>, form: FormData): Promise<FormState<'code'>> {
   const session = await requireSession()
 
-  if (session.workspaceKind !== 'sandbox') redirect('/overview')
+  if (session.workspaceKind !== 'sandbox') {
+    redirect('/overview')
+  }
 
   const target = z.uuid().safeParse(formText(form, 'user'))
 
-  if (!target.success) return { status: 'error', error: 'generic' }
+  if (!target.success) {
+    return { status: 'error', error: 'generic' }
+  }
 
   const meta = await visitorMeta()
   const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value)
@@ -64,7 +76,10 @@ export async function switchUserAction(_previous: FormState<'code'>, form: FormD
     preferences: { locale: meta.locale, theme },
   })
 
-  if (!result.ok) return failureState(result)
+  if (!result.ok) {
+    return failureState(result)
+  }
+
   await setSessionCookie(result.token, result.expiresAt, { demo: true })
   redirect('/overview')
 }

@@ -40,26 +40,39 @@ export async function updateProductDetailsAction(previous: DetailsState, form: F
   const fail = (error: 'invalid' | 'forbidden' | 'not_found' | 'conflict', fieldErrors: Partial<Record<DetailField, DetailIssue>> = {}): DetailsState =>
     ({ status: 'error', error, fieldErrors, values })
 
-  if (!can(session.role, 'catalog.write', session.workspaceKind)) return fail('forbidden')
+  if (!can(session.role, 'catalog.write', session.workspaceKind)) {
+    return fail('forbidden')
+  }
 
   const productId = z.uuid().safeParse(formText(form, 'productId'))
   const version = formText(form, 'version')
 
-  if (!productId.success || !VERSION.test(version)) return fail('not_found')
+  if (!productId.success || !VERSION.test(version)) {
+    return fail('not_found')
+  }
 
   const parsed = parseProductDetails(values)
 
-  if (!parsed.ok) return fail('invalid', parsed.fieldErrors)
+  if (!parsed.ok) {
+    return fail('invalid', parsed.fieldErrors)
+  }
 
   const result = await saveProductDetails(await actorOf(session), { productId: productId.data, version, ...parsed.data })
 
   if (!result.ok) {
-    if (result.reason === 'slug_taken') return fail('invalid', { slug: 'slug_taken' })
-    if (result.reason === 'collection_missing') return fail('invalid', { collection: 'collection_missing' })
+    if (result.reason === 'slug_taken') {
+      return fail('invalid', { slug: 'slug_taken' })
+    }
+    if (result.reason === 'collection_missing') {
+      return fail('invalid', { collection: 'collection_missing' })
+    }
 
     return fail(result.reason)
   }
-  if (result.slug === result.previousSlug) refresh()
+
+  if (result.slug === result.previousSlug) {
+    refresh()
+  }
 
   return { status: 'done', slug: result.slug, count: previous.status === 'done' ? previous.count + 1 : 1 }
 }
@@ -80,20 +93,31 @@ export async function createProductAction(_previous: CreateState, form: FormData
   const fail = (error: 'invalid' | 'forbidden' | 'cap', fieldErrors: Partial<Record<NewProductField, NewProductIssue>> = {}): CreateState =>
     ({ status: 'error', error, fieldErrors, values, palettes: ticked })
 
-  if (!can(session.role, 'catalog.write', session.workspaceKind)) return fail('forbidden')
+  if (!can(session.role, 'catalog.write', session.workspaceKind)) {
+    return fail('forbidden')
+  }
 
   const parsed = parseProductDetails(values)
   const palettes = parsePalettes(ticked)
   const fieldErrors: Partial<Record<NewProductField, NewProductIssue>> = parsed.ok ? {} : { ...parsed.fieldErrors }
 
-  if (!palettes) fieldErrors.palettes = 'palettes_missing'
-  if (!parsed.ok || !palettes) return fail('invalid', fieldErrors)
+  if (!palettes) {
+    fieldErrors.palettes = 'palettes_missing'
+  }
+
+  if (!parsed.ok || !palettes) {
+    return fail('invalid', fieldErrors)
+  }
 
   const result = await createProductWithLog(await actorOf(session), { ...parsed.data, palettes })
 
   if (!result.ok) {
-    if (result.reason === 'cap') return fail('cap')
-    if (result.reason === 'collection_missing') return fail('invalid', { collection: 'collection_missing' })
+    if (result.reason === 'cap') {
+      return fail('cap')
+    }
+    if (result.reason === 'collection_missing') {
+      return fail('invalid', { collection: 'collection_missing' })
+    }
 
     return fail('invalid', { slug: result.reason === 'slug_taken' ? 'slug_taken' : 'sku_taken' })
   }
@@ -124,17 +148,26 @@ export async function saveVariantsAction(previous: VariantsState, form: FormData
   const fail = (error: 'invalid' | 'forbidden' | 'not_found' | 'stock_conflict', errors: VariantErrors = {}, skus: string[] = []): VariantsState =>
     ({ status: 'error', error, errors, skus, values })
 
-  if (!can(session.role, 'catalog.write', session.workspaceKind)) return fail('forbidden')
+  if (!can(session.role, 'catalog.write', session.workspaceKind)) {
+    return fail('forbidden')
+  }
 
   const productId = z.uuid().safeParse(formText(form, 'productId'))
   const parsed = parseVariants(variantIds, name => formText(form, name))
 
-  if (!productId.success || parsed === null) return fail('not_found')
-  if (!parsed.ok) return fail('invalid', parsed.errors)
+  if (!productId.success || parsed === null) {
+    return fail('not_found')
+  }
+  if (!parsed.ok) {
+    return fail('invalid', parsed.errors)
+  }
 
   const result = await saveVariantsWithLog(await actorOf(session), { productId: productId.data, rows: parsed.rows })
 
-  if (!result.ok) return result.reason === 'stock_conflict' ? fail('stock_conflict', {}, result.skus) : fail('not_found')
+  if (!result.ok) {
+    return result.reason === 'stock_conflict' ? fail('stock_conflict', {}, result.skus) : fail('not_found')
+  }
+
   refresh()
 
   return { status: 'done', count: previous.status === 'done' ? previous.count + 1 : 1 }
@@ -146,16 +179,23 @@ const statusInput = z.strictObject({ productId: z.uuid(), to: z.enum(PRODUCT_STA
 export async function changeProductStatusAction(input: unknown): Promise<ActionResult<{ to: ProductStatus }>> {
   const session = await requireSession()
 
-  if (!can(session.role, 'catalog.write', session.workspaceKind)) return refused('forbidden')
+  if (!can(session.role, 'catalog.write', session.workspaceKind)) {
+    return refused('forbidden')
+  }
 
   const parsed = statusInput.safeParse(input)
 
-  if (!parsed.success) return refused('invalid')
+  if (!parsed.success) {
+    return refused('invalid')
+  }
 
   const result = await changeProductStatusWithLog(await actorOf(session), { productId: parsed.data.productId, to: parsed.data.to })
 
   refresh()
-  if (result.ok) return ok({ to: result.to })
+
+  if (result.ok) {
+    return ok({ to: result.to })
+  }
 
   return refused(result.reason === 'invalid_transition' ? 'conflict' : 'not_found')
 }
@@ -166,16 +206,23 @@ const deleteInput = z.strictObject({ productId: z.uuid() })
 export async function deleteProductAction(input: unknown): Promise<ActionResult<{ name: string }>> {
   const session = await requireSession()
 
-  if (!can(session.role, 'catalog.delete', session.workspaceKind)) return refused('forbidden')
+  if (!can(session.role, 'catalog.delete', session.workspaceKind)) {
+    return refused('forbidden')
+  }
 
   const parsed = deleteInput.safeParse(input)
 
-  if (!parsed.success) return refused('invalid')
+  if (!parsed.success) {
+    return refused('invalid')
+  }
 
   const result = await deleteProductWithLog(await actorOf(session), parsed.data.productId)
 
   // On success the dialog goes to the list, which renders afresh; a refresh here would render the deleted page again.
-  if (result.ok) return ok({ name: result.name })
+  if (result.ok) {
+    return ok({ name: result.name })
+  }
+
   refresh()
 
   return refused(result.reason === 'not_found' ? 'not_found' : 'conflict')
@@ -187,11 +234,15 @@ const imageInput = z.strictObject({ productId: z.uuid() })
 export async function removeProductImageAction(input: unknown): Promise<ActionResult<null>> {
   const session = await requireSession()
 
-  if (!can(session.role, 'catalog.write', session.workspaceKind)) return refused('forbidden')
+  if (!can(session.role, 'catalog.write', session.workspaceKind)) {
+    return refused('forbidden')
+  }
 
   const parsed = imageInput.safeParse(input)
 
-  if (!parsed.success) return refused('invalid')
+  if (!parsed.success) {
+    return refused('invalid')
+  }
 
   const result = await removeProductImage(await actorOf(session), parsed.data.productId)
 
