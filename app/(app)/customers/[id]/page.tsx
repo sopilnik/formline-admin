@@ -53,11 +53,15 @@ export default async function CustomerPage({ params }: Params) {
 
   const id = parseId((await params).id)
 
-  if (id === null) notFound()
+  if (id === null) {
+    notFound()
+  }
 
   const { customer, timeZone } = await load(id)
 
-  if (!customer) notFound()
+  if (!customer) {
+    notFound()
+  }
 
   const locale = await getLocale()
   const t = await getTranslations('customers')

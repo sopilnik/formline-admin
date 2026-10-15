@@ -30,13 +30,20 @@ export function ReauthForm({ intro }: { intro?: string } = {}) {
   async function withPasskey() {
     setPasskeyError(null)
     setPasskeyPending(true)
+
     try {
       const answer = await startAuthentication({ optionsJSON: await passkeyChallenge() })
       const outcome = await send(() => reauthWithPasskeyAction(answer))
 
-      if (!outcome) return
-      if (outcome.ok) router.refresh()
-      else setPasskeyError(outcome.error)
+      if (!outcome) {
+        return
+      }
+
+      if (outcome.ok) {
+        router.refresh()
+      } else {
+        setPasskeyError(outcome.error)
+      }
     } catch {
       setPasskeyError('passkey_cancelled')
     } finally {

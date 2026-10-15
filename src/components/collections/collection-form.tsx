@@ -40,6 +40,7 @@ export function CollectionForm({ collection }: Props) {
   const settle = useEffectEvent((result: CollectionState) => {
     if (result.status === 'done') {
       toast.success(collection ? t('saved') : t('created'))
+
       // The refresh after a move clears the pages the browser keeps for a minute, so the list shows the change.
       // The action refreshes only when the address stays: refreshing there would draw the old address again.
       if (!collection) {

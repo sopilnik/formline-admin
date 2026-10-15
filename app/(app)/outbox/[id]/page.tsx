@@ -27,12 +27,16 @@ const parseId = (value: string): string | null => {
 const load = cache(async (id: string) => {
   const session = await requireSession()
 
-  if (!can(session.role, 'outbox.read', session.workspaceKind)) return null
+  if (!can(session.role, 'outbox.read', session.workspaceKind)) {
+    return null
+  }
 
   return withWorkspace(workspaceContext(session), async tx => {
     const letter = await getLetter(tx, session.workspaceId, id)
 
-    if (!letter) return null
+    if (!letter) {
+      return null
+    }
 
     return { letter, settings: await getStoreSettings(tx, session.workspaceId) }
   })
@@ -52,7 +56,9 @@ export default async function LetterPage({ params }: Params) {
   const id = parseId((await params).id)
   const found = id === null ? null : await load(id)
 
-  if (!found) notFound()
+  if (!found) {
+    notFound()
+  }
 
   const { letter, settings } = found
   const locale = await getLocale()

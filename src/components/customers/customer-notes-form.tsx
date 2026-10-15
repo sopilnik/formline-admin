@@ -26,8 +26,12 @@ export function CustomerNotesForm({ customerId, notes }: { customerId: string; n
 
   // Once per result, with the latest translations.
   const settle = useEffectEvent((result: CustomerNotesState) => {
-    if (result.status === 'done') toast.success(t('notesSaved'))
-    if (result.status === 'error') field.current?.focus()
+    if (result.status === 'done') {
+      toast.success(t('notesSaved'))
+    }
+    if (result.status === 'error') {
+      field.current?.focus()
+    }
   })
 
   useEffect(() => settle(state), [state])

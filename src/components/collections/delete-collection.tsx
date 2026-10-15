@@ -22,20 +22,27 @@ export function DeleteCollection({ id, name, products }: { id: string; name: str
   const remove = (): void => startTransition(async () => {
     const result = await send(() => deleteCollectionAction({ id }))
 
-    if (!result) return
+    if (!result) {
+      return
+    }
+
     setOpen(false)
+
     if (result.ok) {
       toast.success(t('done', { name }))
       router.push('/collections')
       // The refresh after the move clears the pages the browser keeps for a minute, so the list drops the deleted one.
       router.refresh()
+    } else if (result.code === 'forbidden') {
+      refused(failed('forbidden'))
     } else {
-      if (result.code === 'forbidden') refused(failed('forbidden'))
-      else toast.error(result.code === 'conflict' ? t('conflict') : t('failed'))
+      toast.error(result.code === 'conflict' ? t('conflict') : t('failed'))
     }
   })
 
-  if (products > 0) return <p className="text-[13px] text-muted-foreground">{t('blocked', { count: products })}</p>
+  if (products > 0) {
+    return <p className="text-[13px] text-muted-foreground">{t('blocked', { count: products })}</p>
+  }
 
   return (
     <>

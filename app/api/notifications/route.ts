@@ -11,7 +11,9 @@ export const dynamic = 'force-dynamic'
 export async function GET(): Promise<Response> {
   const session = await getSession()
 
-  if (!session?.secondFactorVerified) return new Response(null, { status: 401 })
+  if (!session?.secondFactorVerified) {
+    return new Response(null, { status: 401 })
+  }
 
   const { list, timeZone } = await withWorkspace(workspaceContext(session), async tx => ({
     list: await listNotifications(tx, await readerOf(tx, session), { page: 1, size: BELL_SIZE }),

@@ -19,7 +19,9 @@ export async function GET(request: Request): Promise<Response> {
 
   const result = await readiness(getPool())
 
-  if (result.status !== 'ok') log.warn({ event: 'health.not_ready', failed: result.failed })
+  if (result.status !== 'ok') {
+    log.warn({ event: 'health.not_ready', failed: result.failed })
+  }
 
   return Response.json(result, { status: result.status === 'ok' ? 200 : 503, headers: NO_STORE })
 }

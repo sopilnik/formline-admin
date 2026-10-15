@@ -19,7 +19,10 @@ export function SetupForm({ completed, secret, qr }: { completed: boolean; secre
   const errorFor = useErrorText(state)
 
   useFocusOnError(state, 'setup', 'token')
-  if (state.status === 'done') return <RecoveryCodesView codes={state.recoveryCodes ?? []} />
+
+  if (state.status === 'done') {
+    return <RecoveryCodesView codes={state.recoveryCodes ?? []} />
+  }
   if (completed) {
     return (
       <div className="flex flex-col gap-4">

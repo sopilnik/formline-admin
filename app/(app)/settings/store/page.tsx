@@ -25,7 +25,9 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function StoreSettingsPage() {
   const session = await requireSession()
 
-  if (!can(session.role, 'settings.store', session.workspaceKind)) notFound()
+  if (!can(session.role, 'settings.store', session.workspaceKind)) {
+    notFound()
+  }
 
   const settings = await withWorkspace(workspaceContext(session), tx => getStoreSettings(tx, session.workspaceId))
   const t = await getTranslations('settings.store')

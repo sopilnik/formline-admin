@@ -27,7 +27,9 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function TeamPage() {
   const session = await requireSession()
 
-  if (!can(session.role, 'team.read', session.workspaceKind)) notFound()
+  if (!can(session.role, 'team.read', session.workspaceKind)) {
+    notFound()
+  }
 
   const manage = can(session.role, 'team.manage', session.workspaceKind)
   const { members, invitations, timeZone } = await withWorkspace(workspaceContext(session), async tx => ({

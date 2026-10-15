@@ -25,7 +25,10 @@ export function SwitchUserDialog({ open, onOpenChange, members }: { open: boolea
 
   const handleOpenChange = (next: boolean): void => {
     onOpenChange(next)
-    if (!next) setSelected(null)
+
+    if (!next) {
+      setSelected(null)
+    }
   }
 
   return (

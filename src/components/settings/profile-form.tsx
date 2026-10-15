@@ -26,7 +26,9 @@ export function ProfileForm({ profile }: { profile: Record<ProfileField, string>
   useLeaveGuard(form, state.status === 'error')
 
   const settle = useEffectEvent((result: ProfileState) => {
-    if (result.status === 'done') toast.success(t('saved'))
+    if (result.status === 'done') {
+      toast.success(t('saved'))
+    }
     if (result.status === 'error') {
       const first = PROFILE_FIELDS.find(field => result.fieldErrors[field])
 

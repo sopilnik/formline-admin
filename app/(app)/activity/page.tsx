@@ -27,7 +27,9 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function ActivityPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const session = await requireSession()
 
-  if (!can(session.role, 'activity.read', session.workspaceKind)) notFound()
+  if (!can(session.role, 'activity.read', session.workspaceKind)) {
+    notFound()
+  }
 
   const query = parseActivityQuery(await searchParams)
   const { log, timeZone } = await withWorkspace(workspaceContext(session), async tx => {
@@ -36,7 +38,9 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
     return { log: await listActivity(tx, session.workspaceId, { query, now: new Date(), timeZone: zone }), timeZone: zone }
   })
 
-  if (log.filtered > 0 && query.page > log.pages) redirect(activityHref(query, { page: log.pages }))
+  if (log.filtered > 0 && query.page > log.pages) {
+    redirect(activityHref(query, { page: log.pages }))
+  }
 
   const locale = await getLocale()
   const t = await getTranslations('activity')

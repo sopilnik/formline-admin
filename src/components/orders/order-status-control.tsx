@@ -32,10 +32,17 @@ export function OrderStatusControl({ orderId, number, status, canUpdate }: Props
 
     const result = await send(() => changeOrderStatusAction({ orderId, to }))
 
-    if (!result) return
-    if (result.ok) toast.success(t('changed', { number, status: statusLabel(to) }))
-    else if (result.code === 'forbidden') refused(orders('forbidden'))
-    else toast.error(result.code === 'conflict' ? t('conflict') : t('failed'))
+    if (!result) {
+      return
+    }
+
+    if (result.ok) {
+      toast.success(t('changed', { number, status: statusLabel(to) }))
+    } else if (result.code === 'forbidden') {
+      refused(orders('forbidden'))
+    } else {
+      toast.error(result.code === 'conflict' ? t('conflict') : t('failed'))
+    }
   })
 
   return (

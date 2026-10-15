@@ -15,7 +15,9 @@ export async function generateMetadata(): Promise<Metadata> {
 
 // Without a session cookie this page does not touch the database.
 export default async function SignInPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  if ((await getSession())?.secondFactorVerified) redirect('/overview')
+  if ((await getSession())?.secondFactorVerified) {
+    redirect('/overview')
+  }
 
   const params = await searchParams
   const ended = params.ended === '1'

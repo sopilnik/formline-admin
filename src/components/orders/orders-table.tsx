@@ -33,8 +33,11 @@ export function OrdersTable({ rows, query, canUpdate, pager }: Props) {
   const toggle = (id: string, on: boolean): void => setSelected(current => {
     const next = new Set(current)
 
-    if (on) next.add(id)
-    else next.delete(id)
+    if (on) {
+      next.add(id)
+    } else {
+      next.delete(id)
+    }
 
     return next
   })

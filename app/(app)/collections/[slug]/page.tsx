@@ -43,11 +43,15 @@ export default async function CollectionPage({ params }: Params) {
 
   const slug = (await params).slug
 
-  if (!SLUG_PATTERN.test(slug)) notFound()
+  if (!SLUG_PATTERN.test(slug)) {
+    notFound()
+  }
 
   const collection = await load(slug)
 
-  if (!collection) notFound()
+  if (!collection) {
+    notFound()
+  }
 
   const t = await getTranslations('collections')
   const canWrite = can(session.role, 'catalog.write', session.workspaceKind)

@@ -48,7 +48,9 @@ export function SignOutProvider({ kind, children }: { kind: WorkspaceKind; child
 export function useSignOut(): SignOut {
   const value = use(SignOutContext)
 
-  if (!value) throw new Error('useSignOut needs a SignOutProvider above it')
+  if (!value) {
+    throw new Error('useSignOut needs a SignOutProvider above it')
+  }
 
   return value
 }

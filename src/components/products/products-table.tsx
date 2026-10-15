@@ -18,7 +18,9 @@ const TD = 'border-b px-3 py-2 group-last/row:border-b-0'
 function StockNote({ row, stacked = false }: { row: ProductRowView; stacked?: boolean }) {
   const t = useTranslations('products.stockNote')
 
-  if (row.soldOut === 0 && row.low === 0) return null
+  if (row.soldOut === 0 && row.low === 0) {
+    return null
+  }
 
   return (
     <span className="block text-xs whitespace-nowrap">

@@ -21,32 +21,44 @@ export function ShortcutsProvider({ enabled, items, children }: { enabled: boole
   const [help, setHelp] = useState(false)
 
   useEffect(() => {
-    if (!enabled) return
+    if (!enabled) {
+      return
+    }
 
     const read = createShortcutReader()
     const onKey = (event: KeyboardEvent) => {
       // An open dialog or menu has the keyboard to itself.
       const inOverlay = event.target instanceof Element && event.target.closest('[role="dialog"], [role="alertdialog"], [role="menu"]') !== null
 
-      if (event.defaultPrevented || event.repeat || inOverlay) return
+      if (event.defaultPrevented || event.repeat || inOverlay) {
+        return
+      }
 
       const shortcut = read({
         key: event.key, code: event.code, ctrlKey: event.ctrlKey, metaKey: event.metaKey, altKey: event.altKey,
         typing: isTypingTarget(event.target), time: event.timeStamp,
       })
 
-      if (!shortcut) return
+      if (!shortcut) {
+        return
+      }
 
       if (shortcut.type === 'go') {
         const item = items.find(i => i.key === shortcut.page)
 
-        if (!item) return
+        if (!item) {
+          return
+        }
+
         event.preventDefault()
         router.push(item.href)
       } else if (shortcut.type === 'search') {
         const field = document.querySelector<HTMLInputElement>('main input[type="search"]')
 
-        if (!field) return
+        if (!field) {
+          return
+        }
+
         event.preventDefault()
         field.focus()
         field.select()
@@ -72,7 +84,9 @@ export function ShortcutsProvider({ enabled, items, children }: { enabled: boole
 export function useShortcuts(): { showHelp: () => void } {
   const value = use(ShortcutsContext)
 
-  if (!value) throw new Error('useShortcuts needs a ShortcutsProvider above it')
+  if (!value) {
+    throw new Error('useShortcuts needs a ShortcutsProvider above it')
+  }
 
   return value
 }

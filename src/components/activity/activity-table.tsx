@@ -11,7 +11,9 @@ const TD = 'h-11 border-b px-3 py-2.5 align-top group-last/row:border-b-0'
 const LINK = 'font-medium underline decoration-border-strong underline-offset-3 hover:decoration-current'
 
 function SubjectText({ subject }: { subject: Subject | null }) {
-  if (!subject) return null
+  if (!subject) {
+    return null
+  }
 
   return subject.href ? <Link href={subject.href} prefetch={false} className={LINK}>{subject.text}</Link> : <span>{subject.text}</span>
 }
@@ -34,7 +36,9 @@ function DetailText({ detail }: { detail: Detail | null }) {
   const role = useTranslations('user.roles')
   const field = useTranslations('activity.fields')
 
-  if (!detail) return null
+  if (!detail) {
+    return null
+  }
 
   switch (detail.kind) {
     case 'orderStatus':

@@ -40,8 +40,12 @@ export function VariantsForm({ productId, rows }: Props) {
   // The conflict whose stock was loaded: its alert goes, and its stock fields show the stored stock.
   const [reloadedAfter, setReloadedAfter] = useState<VariantsState | null>(null)
   const settle = useEffectEvent((result: VariantsState) => {
-    if (result.status === 'done') toast.success(t('saved'))
-    if (result.status === 'error') form.current?.querySelector<HTMLElement>('[aria-invalid="true"], [role="alert"]')?.focus()
+    if (result.status === 'done') {
+      toast.success(t('saved'))
+    }
+    if (result.status === 'error') {
+      form.current?.querySelector<HTMLElement>('[aria-invalid="true"], [role="alert"]')?.focus()
+    }
   })
 
   useEffect(() => settle(state), [state])
@@ -50,11 +54,16 @@ export function VariantsForm({ productId, rows }: Props) {
   const loaded = reloadedAfter !== null && state === reloadedAfter && !reloading
 
   useEffect(() => {
-    if (!loaded) return
+    if (!loaded) {
+      return
+    }
+
     for (const row of rows) {
       const input = form.current?.elements.namedItem(variantFieldName('stock', row.id))
 
-      if (input instanceof HTMLInputElement) input.value = String(row.stock)
+      if (input instanceof HTMLInputElement) {
+        input.value = String(row.stock)
+      }
     }
   }, [loaded, rows])
 

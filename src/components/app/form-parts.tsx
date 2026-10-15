@@ -39,7 +39,9 @@ export function ErrorAlert({ children, className }: { children: ReactNode; class
 export function useAnswers(pending: boolean): number {
   const [seen, setSeen] = useState({ pending, answers: 0 })
 
-  if (seen.pending !== pending) setSeen({ pending, answers: pending ? seen.answers : seen.answers + 1 })
+  if (seen.pending !== pending) {
+    setSeen({ pending, answers: pending ? seen.answers : seen.answers + 1 })
+  }
 
   return seen.answers
 }
@@ -60,7 +62,9 @@ export function FormAlert({ state, answers }: { state: FormState; answers?: numb
   const message = useErrorMessage()
   const own = useAnsweredSubmits()
 
-  if (state.status !== 'error' || state.field) return null
+  if (state.status !== 'error' || state.field) {
+    return null
+  }
 
   return <ErrorAlert key={answers ?? own}>{message(state)}</ErrorAlert>
 }
@@ -68,7 +72,10 @@ export function FormAlert({ state, answers }: { state: FormState; answers?: numb
 /** After a failed submit, focus goes to the field in error, or to the first field. */
 export function useFocusOnError(state: FormState, prefix: string, firstField: string): void {
   useEffect(() => {
-    if (state.status !== 'error') return
+    if (state.status !== 'error') {
+      return
+    }
+
     document.getElementById(`${prefix}-${state.field ?? firstField}`)?.focus()
   }, [state, prefix, firstField])
 }
@@ -79,10 +86,18 @@ export type Unreached = { sent: FormData; count: number }
 /** Writes what a form sent back into its fields after React reset them: the passwords stay empty. */
 function refill(form: HTMLFormElement, sent: FormData): void {
   for (const field of form.elements) {
-    if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement) || !field.name) continue
-    if (field.type === 'hidden' || field.type === 'file' || field.type === 'password') continue
-    if (field.type === 'checkbox' || field.type === 'radio') (field as HTMLInputElement).checked = sent.getAll(field.name).includes(field.value)
-    else if (typeof sent.get(field.name) === 'string') field.value = sent.get(field.name) as string
+    if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement) || !field.name) {
+      continue
+    }
+    if (field.type === 'hidden' || field.type === 'file' || field.type === 'password') {
+      continue
+    }
+
+    if (field.type === 'checkbox' || field.type === 'radio') {
+      (field as HTMLInputElement).checked = sent.getAll(field.name).includes(field.value)
+    } else if (typeof sent.get(field.name) === 'string') {
+      field.value = sent.get(field.name) as string
+    }
   }
 }
 
@@ -106,7 +121,9 @@ export function useFormAction<S>(
 
   // React resets a form in the commit that ends its action, the one that turns `pending` off: the fields are filled after it.
   useEffect(() => {
-    if (!pending && unreached && form.current) refill(form.current, unreached.sent)
+    if (!pending && unreached && form.current) {
+      refill(form.current, unreached.sent)
+    }
   }, [pending, unreached, form])
 
   return [state, run, pending, unreached]
@@ -116,7 +133,9 @@ export function useFormAction<S>(
 export function UnreachedAlert({ unreached, className }: { unreached: Unreached | null; className?: string }) {
   const t = useTranslations('common')
 
-  if (!unreached) return null
+  if (!unreached) {
+    return null
+  }
 
   return <ErrorAlert key={unreached.count} className={className}>{t('unreached')}</ErrorAlert>
 }
@@ -124,10 +143,18 @@ export function UnreachedAlert({ unreached, className }: { unreached: Unreached 
 /** Whether a field of the form holds something other than what the page brought: typed, and not saved yet. */
 function unsaved(form: HTMLFormElement): boolean {
   for (const field of form.elements) {
-    if (field instanceof HTMLSelectElement && [...field.options].some(option => option.selected !== option.defaultSelected)) return true
-    if (field instanceof HTMLTextAreaElement && field.value !== field.defaultValue) return true
-    if (!(field instanceof HTMLInputElement) || ['hidden', 'file', 'submit', 'button'].includes(field.type)) continue
-    if (field.type === 'checkbox' || field.type === 'radio' ? field.checked !== field.defaultChecked : field.value !== field.defaultValue) return true
+    if (field instanceof HTMLSelectElement && [...field.options].some(option => option.selected !== option.defaultSelected)) {
+      return true
+    }
+    if (field instanceof HTMLTextAreaElement && field.value !== field.defaultValue) {
+      return true
+    }
+    if (!(field instanceof HTMLInputElement) || ['hidden', 'file', 'submit', 'button'].includes(field.type)) {
+      continue
+    }
+    if (field.type === 'checkbox' || field.type === 'radio' ? field.checked !== field.defaultChecked : field.value !== field.defaultValue) {
+      return true
+    }
   }
 
   return false
@@ -141,7 +168,9 @@ function unsaved(form: HTMLFormElement): boolean {
 export function useLeaveGuard(form: RefObject<HTMLFormElement | null>, refused: boolean): void {
   useEffect(() => {
     const warn = (event: BeforeUnloadEvent): void => {
-      if (refused || (form.current && unsaved(form.current))) event.preventDefault()
+      if (refused || (form.current && unsaved(form.current))) {
+        event.preventDefault()
+      }
     }
 
     window.addEventListener('beforeunload', warn)

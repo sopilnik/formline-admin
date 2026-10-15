@@ -46,7 +46,9 @@ export default async function SecurityPage() {
     timeZone: (await getStoreSettings(tx, session.workspaceId)).timezone,
   }))
 
-  if (!self) redirect('/sign-in')
+  if (!self) {
+    redirect('/sign-in')
+  }
 
   const t = await getTranslations('settings.security')
   const auth = await getTranslations('auth')

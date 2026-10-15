@@ -27,7 +27,9 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function OutboxPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const session = await requireSession()
 
-  if (!can(session.role, 'outbox.read', session.workspaceKind)) notFound()
+  if (!can(session.role, 'outbox.read', session.workspaceKind)) {
+    notFound()
+  }
 
   const query = parsePageQuery(await searchParams)
   const { list, timeZone } = await withWorkspace(workspaceContext(session), async tx => ({
@@ -35,7 +37,9 @@ export default async function OutboxPage({ searchParams }: { searchParams: Promi
     timeZone: (await getStoreSettings(tx, session.workspaceId)).timezone,
   }))
 
-  if (list.total > 0 && query.page > list.pages) redirect(pageQueryHref('/outbox', query, { page: list.pages }))
+  if (list.total > 0 && query.page > list.pages) {
+    redirect(pageQueryHref('/outbox', query, { page: list.pages }))
+  }
 
   const locale = await getLocale()
   const t = await getTranslations('outbox')

@@ -28,7 +28,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     })),
   ])
 
-  if (!self) redirect('/sign-in')
+  if (!self) {
+    redirect('/sign-in')
+  }
 
   const store = await cookies()
 

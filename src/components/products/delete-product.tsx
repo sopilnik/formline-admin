@@ -28,7 +28,10 @@ export function DeleteProduct({ productId, name, variants, hasImage, blocked }: 
   const remove = (): void => startTransition(async () => {
     const result = await send(() => deleteProductAction({ productId }))
 
-    if (!result) return
+    if (!result) {
+      return
+    }
+
     if (result.ok) {
       setOpen(false)
       toast.success(t('done', { name }))
@@ -37,12 +40,18 @@ export function DeleteProduct({ productId, name, variants, hasImage, blocked }: 
       router.refresh()
     } else {
       setOpen(false)
-      if (result.code === 'forbidden') refused(failed('forbidden'))
-      else toast.error(result.code === 'conflict' ? t('conflict') : t('failed'))
+
+      if (result.code === 'forbidden') {
+        refused(failed('forbidden'))
+      } else {
+        toast.error(result.code === 'conflict' ? t('conflict') : t('failed'))
+      }
     }
   })
 
-  if (blocked) return <p className="text-[13px] text-muted-foreground">{t(`blocked.${blocked}`)}</p>
+  if (blocked) {
+    return <p className="text-[13px] text-muted-foreground">{t(`blocked.${blocked}`)}</p>
+  }
 
   return (
     <>

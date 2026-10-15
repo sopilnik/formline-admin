@@ -11,11 +11,15 @@ export const dynamic = 'force-dynamic'
 export async function GET(request: Request): Promise<Response> {
   const session = await exportSession()
 
-  if (session instanceof Response) return session
+  if (session instanceof Response) {
+    return session
+  }
 
   const limited = await exportLimited(session)
 
-  if (limited) return limited
+  if (limited) {
+    return limited
+  }
 
   const ctx = workspaceContext(session)
   const settings = await withWorkspace(ctx, tx => getStoreSettings(tx, session.workspaceId))

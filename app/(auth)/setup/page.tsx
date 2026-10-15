@@ -16,7 +16,9 @@ import { authConfig } from '@/server/config'
  * it received. The title and the page ask once per request.
  */
 const setupState = cache(async () => {
-  if (!authConfig().setupToken) return { owner: null, gone: true }
+  if (!authConfig().setupToken) {
+    return { owner: null, gone: true }
+  }
 
   const owner = await findOwner()
 
@@ -24,7 +26,9 @@ const setupState = cache(async () => {
 })
 
 export async function generateMetadata(): Promise<Metadata> {
-  if ((await setupState()).gone) return { title: (await getTranslations('notFound'))('title') }
+  if ((await setupState()).gone) {
+    return { title: (await getTranslations('notFound'))('title') }
+  }
 
   const t = await getTranslations('auth.setup')
 
@@ -34,7 +38,9 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function SetupPage() {
   const { owner, gone } = await setupState()
 
-  if (gone) notFound()
+  if (gone) {
+    notFound()
+  }
 
   const t = await getTranslations('auth')
   const secret = generateTotpSecret()

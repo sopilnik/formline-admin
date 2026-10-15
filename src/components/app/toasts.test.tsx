@@ -11,8 +11,10 @@ describe('toasts', () => {
 
       return null
     }
+
     renderToStaticMarkup(<ToastProvider closeLabel="Dismiss" regionLabel="Messages"><Probe /><Probe /></ToastProvider>)
     renderToStaticMarkup(<ToastProvider closeLabel="Dismiss" regionLabel="Messages"><Probe /></ToastProvider>)
+
     expect(seen).toHaveLength(3)
     expect(new Set(seen).size).toBe(1)
   })

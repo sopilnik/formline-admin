@@ -23,8 +23,12 @@ export function OrderNoteForm({ orderId }: { orderId: string }) {
 
   // Once per result, with the latest translations.
   const settle = useEffectEvent((result: NoteState) => {
-    if (result.status === 'done') toast.success(t('noteAdded'))
-    if (result.status === 'error') field.current?.focus()
+    if (result.status === 'done') {
+      toast.success(t('noteAdded'))
+    }
+    if (result.status === 'error') {
+      field.current?.focus()
+    }
   })
 
   useEffect(() => settle(state), [state])

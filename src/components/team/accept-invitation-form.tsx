@@ -18,7 +18,9 @@ export function AcceptInvitationForm({ token }: { token: string }) {
   const error = state.status === 'error' ? state : null
 
   useEffect(() => {
-    if (state.status === 'error' && state.error === 'name_required') document.getElementById('invite-name')?.focus()
+    if (state.status === 'error' && state.error === 'name_required') {
+      document.getElementById('invite-name')?.focus()
+    }
   }, [state])
 
   return (

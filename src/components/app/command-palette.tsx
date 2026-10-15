@@ -34,8 +34,11 @@ function focusOnArrival(id: string): void {
   const look = (): void => {
     const field = document.getElementById(id)
 
-    if (field) field.focus()
-    else if (performance.now() - started < 5000) requestAnimationFrame(look)
+    if (field) {
+      field.focus()
+    } else if (performance.now() - started < 5000) {
+      requestAnimationFrame(look)
+    }
   }
 
   requestAnimationFrame(look)
@@ -61,6 +64,7 @@ export function CommandPalette({ items, access }: { items: NavItem[]; access: Pa
 
   const openChange = (next: boolean) => {
     setOpen(next)
+
     if (next) {
       toForm.current = false
       setOpened(count => count + 1)
@@ -70,9 +74,14 @@ export function CommandPalette({ items, access }: { items: NavItem[]; access: Pa
   // ⌘K is no single-character shortcut, so it stays on even when the profile turns shortcuts off (WCAG 2.1.4).
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() !== 'k' || event.altKey || event.shiftKey || !(event.metaKey || event.ctrlKey)) return
+      if (event.key.toLowerCase() !== 'k' || event.altKey || event.shiftKey || !(event.metaKey || event.ctrlKey)) {
+        return
+      }
       // An open dialog or sheet has the keyboard to itself: the palette would stack on it, and it would stay open behind.
-      if (event.target instanceof Element && event.target.closest('[data-slot="dialog-content"], [data-slot="sheet-content"]')) return
+      if (event.target instanceof Element && event.target.closest('[data-slot="dialog-content"], [data-slot="sheet-content"]')) {
+        return
+      }
+
       event.preventDefault()
       toForm.current = false
       setOpened(count => count + 1)
@@ -128,6 +137,57 @@ function noticeKey(searching: boolean, failed: boolean, empty: boolean): 'search
   return empty ? 'empty' : null
 }
 
+/** The debounced search behind the palette: what it found for the last term, and whether it is under way or failed. */
+function useLiveSearch() {
+  const [found, setFound] = useState<{ term: string; results: SearchResults } | null>(null)
+  const [searching, setSearching] = useState(false)
+  const [failed, setFailed] = useState(false)
+  const timer = useRef<number | undefined>(undefined)
+  const request = useRef<AbortController | null>(null)
+
+  useEffect(() => () => {
+    window.clearTimeout(timer.current)
+    request.current?.abort()
+  }, [])
+
+  const search = (next: string) => {
+    window.clearTimeout(timer.current)
+    request.current?.abort()
+
+    const term = searchTerm(next)
+
+    setFailed(false)
+    setSearching(term !== null)
+
+    if (!term) {
+      return
+    }
+
+    timer.current = window.setTimeout(() => {
+      const controller = new AbortController()
+
+      request.current = controller
+
+      fetch(`/api/search?q=${encodeURIComponent(term)}`, { signal: controller.signal, cache: 'no-store' })
+        .then(response => (response.ok ? (response.json() as Promise<SearchResults>) : Promise.reject(new Error(String(response.status)))))
+        .then(results => {
+          setFound({ term, results })
+          setSearching(false)
+        })
+        .catch(() => {
+          if (controller.signal.aborted) {
+            return
+          }
+
+          setSearching(false)
+          setFailed(true)
+        })
+    }, DEBOUNCE_MS)
+  }
+
+  return { found, searching, failed, search }
+}
+
 function PaletteSearch({ items, access, close }: { items: NavItem[]; access: PaletteAccess; close: (opensForm: boolean) => void }) {
   const t = useTranslations('palette')
   const nav = useTranslations('nav')
@@ -140,44 +200,12 @@ function PaletteSearch({ items, access, close }: { items: NavItem[]; access: Pal
   const [, startTransition] = useTransition()
   const send = useReach()
   const [query, setQuery] = useState('')
-  const [found, setFound] = useState<{ term: string; results: SearchResults } | null>(null)
-  const [searching, setSearching] = useState(false)
-  const [failed, setFailed] = useState(false)
-  const timer = useRef<number | undefined>(undefined)
-  const request = useRef<AbortController | null>(null)
+  const { found, searching, failed, search } = useLiveSearch()
   const { contains } = Autocomplete.useFilter()
-
-  useEffect(() => () => {
-    window.clearTimeout(timer.current)
-    request.current?.abort()
-  }, [])
 
   const change = (next: string) => {
     setQuery(next)
-    window.clearTimeout(timer.current)
-    request.current?.abort()
-
-    const term = searchTerm(next)
-
-    setFailed(false)
-    setSearching(term !== null)
-    if (!term) return
-    timer.current = window.setTimeout(() => {
-      const controller = new AbortController()
-
-      request.current = controller
-      fetch(`/api/search?q=${encodeURIComponent(term)}`, { signal: controller.signal, cache: 'no-store' })
-        .then(response => (response.ok ? (response.json() as Promise<SearchResults>) : Promise.reject(new Error(String(response.status)))))
-        .then(results => {
-          setFound({ term, results })
-          setSearching(false)
-        })
-        .catch(() => {
-          if (controller.signal.aborted) return
-          setSearching(false)
-          setFailed(true)
-        })
-    }, DEBOUNCE_MS)
+    search(next)
   }
 
   const go = (href: string) => () => router.push(href)
@@ -264,7 +292,10 @@ function PaletteSearch({ items, access, close }: { items: NavItem[]; access: Pal
                     onClick={() => {
                       close(entry.field !== undefined)
                       entry.run()
-                      if (entry.field) focusOnArrival(entry.field)
+
+                      if (entry.field) {
+                        focusOnArrival(entry.field)
+                      }
                     }}
                     className="flex min-h-9 flex-col items-start gap-x-3 rounded-md px-3 py-1.5 text-sm outline-none select-none data-highlighted:bg-secondary data-highlighted:outline-2 data-highlighted:-outline-offset-2 data-highlighted:outline-solid data-highlighted:outline-ring sm:flex-row sm:items-center"
                   >

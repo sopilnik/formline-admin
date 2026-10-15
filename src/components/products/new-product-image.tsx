@@ -26,23 +26,33 @@ export function NewProductImage({ file, onChange, disabled = false }: Props) {
   const preview = useMemo(() => (file ? URL.createObjectURL(file) : null), [file])
 
   useEffect(() => () => {
-    if (preview) URL.revokeObjectURL(preview)
+    if (preview) {
+      URL.revokeObjectURL(preview)
+    }
   }, [preview])
 
   // A refused file is named in the alert and leaves the image chosen before it in place.
   const take = (chosen: File | undefined): void => {
-    if (!chosen) return
+    if (!chosen) {
+      return
+    }
 
     const problem = precheckUpload(chosen)
 
     setRefused(problem)
-    if (!problem) onChange(chosen)
+
+    if (!problem) {
+      onChange(chosen)
+    }
   }
 
   const drop = (event: DragEvent<HTMLDivElement>): void => {
     event.preventDefault()
     setOver(false)
-    if (!disabled) take(event.dataTransfer.files[0])
+
+    if (!disabled) {
+      take(event.dataTransfer.files[0])
+    }
   }
 
   return (
@@ -52,7 +62,10 @@ export function NewProductImage({ file, onChange, disabled = false }: Props) {
         onDragOver={event => {
           // Always a drop target, so the browser never opens a dropped file itself; while the form is busy it takes none.
           event.preventDefault()
-          if (!disabled) setOver(true)
+
+          if (!disabled) {
+            setOver(true)
+          }
         }}
         onDragLeave={() => setOver(false)}
         onDrop={drop}

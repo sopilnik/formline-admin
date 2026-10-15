@@ -5,7 +5,9 @@ const ALL = ['overview', 'orders', 'products', 'collections', 'customers', 'team
 
 describe('navItems', () => {
   it('shows owners and admins every module', () => {
-    for (const role of ['owner', 'admin'] as const) expect(navItems(role, 'sandbox').map(i => i.key)).toEqual(ALL)
+    for (const role of ['owner', 'admin'] as const) {
+      expect(navItems(role, 'sandbox').map(i => i.key)).toEqual(ALL)
+    }
   })
 
   it('leaves the team, the activity log and the outbox out for managers and viewers', () => {

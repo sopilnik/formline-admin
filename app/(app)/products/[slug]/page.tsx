@@ -54,11 +54,15 @@ export default async function ProductPage({ params }: Params) {
 
   const slug = parseSlug((await params).slug)
 
-  if (slug === null) notFound()
+  if (slug === null) {
+    notFound()
+  }
 
   const { product, collections, timeZone } = await load(slug)
 
-  if (!product) notFound()
+  if (!product) {
+    notFound()
+  }
 
   const locale = await getLocale()
   const t = await getTranslations('products')

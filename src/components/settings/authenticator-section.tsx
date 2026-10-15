@@ -67,7 +67,9 @@ export function AuthenticatorSection({ enabled, recent, canDisable, secret, qr }
   useFocusOnError(state, 'totp', 'code')
 
   const settle = useEffectEvent((result: FormState<'code'>) => {
-    if (result.status === 'done') toast.success(result.recoveryCodes ? t('enabled') : t('replaced'))
+    if (result.status === 'done') {
+      toast.success(result.recoveryCodes ? t('enabled') : t('replaced'))
+    }
   })
 
   useEffect(() => settle(state), [state])
@@ -75,13 +77,19 @@ export function AuthenticatorSection({ enabled, recent, canDisable, secret, qr }
   const disable = (): void => startTransition(async () => {
     const result = await send(() => disableTotpAction())
 
-    if (!result) return
+    if (!result) {
+      return
+    }
+
     setConfirming(false)
+
     if (result.ok) {
       setClosed(state)
       setReplacingAfter(null)
       toast.success(t('disabled'))
-    } else toast.error(errors(result.error, { minutes: 1 }))
+    } else {
+      toast.error(errors(result.error, { minutes: 1 }))
+    }
   })
 
   const replacing = replacingAfter !== null && (state === replacingAfter || state.status === 'error')

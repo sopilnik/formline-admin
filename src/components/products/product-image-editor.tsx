@@ -61,7 +61,10 @@ export function ProductImageEditor({ productId, name, image }: Props) {
     const file = event.target.files?.[0]
 
     event.target.value = ''
-    if (!file) return
+
+    if (!file) {
+      return
+    }
 
     const refused = precheckUpload(file)
 
@@ -73,11 +76,16 @@ export function ProductImageEditor({ productId, name, image }: Props) {
 
     setProblem(null)
     setUploading(true)
+
     void sendProductImage(productId, file).then(failed => {
       setUploading(false)
+
       if (failed) {
-        if (here.current) setProblem(failed)
-        else toast.error(say(failed))
+        if (here.current) {
+          setProblem(failed)
+        } else {
+          toast.error(say(failed))
+        }
 
         return
       }
@@ -90,13 +98,19 @@ export function ProductImageEditor({ productId, name, image }: Props) {
   const remove = (): void => startRemove(async () => {
     const result = await send(() => removeProductImageAction({ productId }))
 
-    if (!result) return
+    if (!result) {
+      return
+    }
+
     removed.current = result.ok
     setConfirming(false)
+
     if (result.ok) {
       setProblem(null)
       toast.success(t('removed'))
-    } else toast.error(t('removeFailed'))
+    } else {
+      toast.error(t('removeFailed'))
+    }
   })
 
   return (

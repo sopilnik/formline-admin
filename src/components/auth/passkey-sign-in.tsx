@@ -46,9 +46,15 @@ export function PasskeySignIn() {
     browserSupportsWebAuthnAutofill()
       .then(supported => (supported && active ? attempt(true, action => action()) : null))
       .then(outcome => {
-        if (!outcome || !active) return
-        if (outcome.ok) enter()
-        else setError({ code: outcome.error, minutes: outcome.retryAfterMinutes ?? 1 })
+        if (!outcome || !active) {
+          return
+        }
+
+        if (outcome.ok) {
+          enter()
+        } else {
+          setError({ code: outcome.error, minutes: outcome.retryAfterMinutes ?? 1 })
+        }
       })
       // Cancelled when the button starts its own request or the page is left.
       .catch(() => undefined)
@@ -61,12 +67,19 @@ export function PasskeySignIn() {
   async function onClick() {
     setPending(true)
     setError(null)
+
     try {
       const outcome = await attempt(false, send)
 
-      if (!outcome) return
-      if (outcome.ok) enter()
-      else setError({ code: outcome.error, minutes: outcome.retryAfterMinutes ?? 1 })
+      if (!outcome) {
+        return
+      }
+
+      if (outcome.ok) {
+        enter()
+      } else {
+        setError({ code: outcome.error, minutes: outcome.retryAfterMinutes ?? 1 })
+      }
     } catch {
       setError({ code: 'passkey_cancelled', minutes: 1 })
     } finally {

@@ -19,7 +19,9 @@ export default async function ProfilePage() {
 
   const self = await currentSelf()
 
-  if (!self) redirect('/sign-in')
+  if (!self) {
+    redirect('/sign-in')
+  }
 
   const t = await getTranslations('settings.profile')
 

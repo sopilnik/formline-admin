@@ -29,17 +29,23 @@ async function labels(): Promise<ExportLabels> {
 export async function GET(request: Request): Promise<Response> {
   const session = await exportSession()
 
-  if (session instanceof Response) return session
+  if (session instanceof Response) {
+    return session
+  }
 
   const params = new URL(request.url).searchParams
   const rawIds = params.get('ids')
   const ids = rawIds === null ? null : idsParam.safeParse(rawIds)
 
-  if (ids && !ids.success) return new Response(null, { status: 400 })
+  if (ids && !ids.success) {
+    return new Response(null, { status: 400 })
+  }
 
   const limited = await exportLimited(session)
 
-  if (limited) return limited
+  if (limited) {
+    return limited
+  }
 
   const ctx = workspaceContext(session)
   const now = new Date()

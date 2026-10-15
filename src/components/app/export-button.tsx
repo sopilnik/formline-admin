@@ -42,6 +42,7 @@ export function ExportButton({ href, label, size = 'default', namespace, cap }: 
     const fetched = await fetchFile(href)
 
     setPending(false)
+
     if (!fetched) {
       toast.error(t('failed'))
 
@@ -69,7 +70,10 @@ export function ExportButton({ href, label, size = 'default', namespace, cap }: 
     link.download = name
     link.click()
     setTimeout(() => URL.revokeObjectURL(url), 1_000)
-    if (response.headers.get('X-Export-Truncated') === 'true') toast.success(t('truncated', { count: cap }))
+
+    if (response.headers.get('X-Export-Truncated') === 'true') {
+      toast.success(t('truncated', { count: cap }))
+    }
   }
 
   return (

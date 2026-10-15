@@ -28,7 +28,9 @@ export default async function NotificationsPage({ searchParams }: { searchParams
     timeZone: (await getStoreSettings(tx, session.workspaceId)).timezone,
   }))
 
-  if (list.total > 0 && query.page > list.pages) redirect(pageQueryHref('/notifications', query, { page: list.pages }))
+  if (list.total > 0 && query.page > list.pages) {
+    redirect(pageQueryHref('/notifications', query, { page: list.pages }))
+  }
 
   const items = await notificationItems(list.rows, await getLocale(), timeZone)
   const t = await getTranslations('notifications')

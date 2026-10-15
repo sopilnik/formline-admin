@@ -31,10 +31,17 @@ export function ProductStatusControl({ productId, name, status, canWrite }: Prop
 
     const result = await send(() => changeProductStatusAction({ productId, to }))
 
-    if (!result) return
-    if (result.ok) toast.success(t(`done.${to}`, { name }))
-    else if (result.code === 'forbidden') refused(failed('forbidden'))
-    else toast.error(result.code === 'conflict' ? t('conflict') : t('failed'))
+    if (!result) {
+      return
+    }
+
+    if (result.ok) {
+      toast.success(t(`done.${to}`, { name }))
+    } else if (result.code === 'forbidden') {
+      refused(failed('forbidden'))
+    } else {
+      toast.error(result.code === 'conflict' ? t('conflict') : t('failed'))
+    }
   })
 
   return (

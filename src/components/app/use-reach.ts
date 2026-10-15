@@ -16,7 +16,9 @@ export function useReach(): <T>(call: () => Promise<T>) => Promise<T | null> {
   return async call => {
     const answer = await reach(call)
 
-    if (answer === null) toast.error(t('unreached'))
+    if (answer === null) {
+      toast.error(t('unreached'))
+    }
 
     return answer
   }

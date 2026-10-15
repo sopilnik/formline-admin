@@ -12,7 +12,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 export function SourceLabel({ source }: { source: 'seed' | 'stripe' }) {
   const t = useTranslations('orders.source')
 
-  if (source === 'seed') return <span className="text-xs text-muted-foreground">{t('seed')}</span>
+  if (source === 'seed') {
+    return <span className="text-xs text-muted-foreground">{t('seed')}</span>
+  }
 
   return (
     <Tooltip>

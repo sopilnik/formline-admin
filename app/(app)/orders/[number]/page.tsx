@@ -48,11 +48,15 @@ export default async function OrderPage({ params }: Params) {
 
   const number = parseNumber((await params).number)
 
-  if (number === null) notFound()
+  if (number === null) {
+    notFound()
+  }
 
   const { order, timeZone } = await load(number)
 
-  if (!order) notFound()
+  if (!order) {
+    notFound()
+  }
 
   const locale = await getLocale()
   const t = await getTranslations('orders')
@@ -60,8 +64,12 @@ export default async function OrderPage({ params }: Params) {
   const money = (cents: number): string => formatMoney(cents, locale)
   const location = locationOf(order.customer.city, order.customer.country, locale)
   const describe = (event: OrderEventDetail): string => {
-    if (event.kind === 'note') return event.note
-    if (event.from === null) return t('detail.statusSet', { status: t(`status.${event.to}`) })
+    if (event.kind === 'note') {
+      return event.note
+    }
+    if (event.from === null) {
+      return t('detail.statusSet', { status: t(`status.${event.to}`) })
+    }
 
     return t('detail.statusChanged', { from: t(`status.${event.from}`), to: t(`status.${event.to}`) })
   }

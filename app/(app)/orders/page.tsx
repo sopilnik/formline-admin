@@ -39,7 +39,9 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   })
 
   // A page number past the end (an old link, a narrower filter) lands on the last page.
-  if (page.filtered > 0 && query.page > page.pages) redirect(ordersHref(query, { page: page.pages }))
+  if (page.filtered > 0 && query.page > page.pages) {
+    redirect(ordersHref(query, { page: page.pages }))
+  }
 
   const locale = await getLocale()
   const t = await getTranslations('orders')

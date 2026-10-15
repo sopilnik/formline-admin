@@ -26,10 +26,13 @@ export function PasskeysSection({ available, recent, passkeys }: Props) {
 
   async function add() {
     setAdding(true)
+
     try {
       const begun = await send(() => beginPasskeyRegistrationAction())
 
-      if (!begun) return
+      if (!begun) {
+        return
+      }
       if (!begun.ok) {
         toast.error(errors(begun.error, { minutes: 1 }))
 
@@ -39,9 +42,15 @@ export function PasskeysSection({ available, recent, passkeys }: Props) {
       const answer = await startRegistration({ optionsJSON: begun.options })
       const finished = await send(() => finishPasskeyRegistrationAction(answer))
 
-      if (!finished) return
-      if (finished.ok) toast.success(t('addedToast'))
-      else toast.error(errors(finished.error, { minutes: 1 }))
+      if (!finished) {
+        return
+      }
+
+      if (finished.ok) {
+        toast.success(t('addedToast'))
+      } else {
+        toast.error(errors(finished.error, { minutes: 1 }))
+      }
     } catch {
       // The browser dialog was cancelled, or the authenticator refused.
       toast.error(errors('passkey_cancelled'))
@@ -99,12 +108,15 @@ function PasskeyItem({ passkey, canRemove }: { passkey: PasskeyView; canRemove: 
     startTransition(async () => {
       const result = await send(() => renamePasskeyAction(passkey.id, name))
 
-      if (!result) return
+      if (!result) {
+        return
+      }
       if (!result.ok) {
         toast.error(errors(result.error, { minutes: 1 }))
 
         return
       }
+
       setRenaming(false)
       toast.success(t('renamedToast'))
     })
@@ -114,10 +126,17 @@ function PasskeyItem({ passkey, canRemove }: { passkey: PasskeyView; canRemove: 
     startTransition(async () => {
       const result = await send(() => removePasskeyAction(passkey.id))
 
-      if (!result) return
+      if (!result) {
+        return
+      }
+
       setRemoving(false)
-      if (result.ok) toast.success(t('removedToast'))
-      else toast.error(errors(result.error, { minutes: 1 }))
+
+      if (result.ok) {
+        toast.success(t('removedToast'))
+      } else {
+        toast.error(errors(result.error, { minutes: 1 }))
+      }
     })
   }
 

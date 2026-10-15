@@ -33,7 +33,9 @@ export function PasswordSection({ available, recent }: { available: boolean; rec
   useFocusOnError(state, 'new', 'password')
 
   const settle = useEffectEvent((result: FormState<'password'>) => {
-    if (result.status === 'done') toast.success(t('changed'))
+    if (result.status === 'done') {
+      toast.success(t('changed'))
+    }
   })
 
   useEffect(() => settle(state), [state])

@@ -15,12 +15,18 @@ const NO_STORE = { 'Cache-Control': 'no-store' }
 export async function POST(request: Request): Promise<Response> {
   const config = stripeConfig()
 
-  if (!config) return Response.json({ received: false, error: 'unavailable' }, { status: 503, headers: NO_STORE })
-  if (Number(request.headers.get('content-length') ?? 0) > WEBHOOK_MAX_BYTES) return Response.json({ received: false, error: 'too_large' }, { status: 413, headers: NO_STORE })
+  if (!config) {
+    return Response.json({ received: false, error: 'unavailable' }, { status: 503, headers: NO_STORE })
+  }
+  if (Number(request.headers.get('content-length') ?? 0) > WEBHOOK_MAX_BYTES) {
+    return Response.json({ received: false, error: 'too_large' }, { status: 413, headers: NO_STORE })
+  }
 
   const body = await readCapped(request.body, WEBHOOK_MAX_BYTES)
 
-  if (body === 'too_large') return Response.json({ received: false, error: 'too_large' }, { status: 413, headers: NO_STORE })
+  if (body === 'too_large') {
+    return Response.json({ received: false, error: 'too_large' }, { status: 413, headers: NO_STORE })
+  }
 
   const answer = await handleWebhook({ body, signature: request.headers.get('stripe-signature') }, { config, gateway: stripeGateway(config) })
 

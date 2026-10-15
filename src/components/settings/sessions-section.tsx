@@ -19,16 +19,28 @@ export function SessionsSection({ sessions }: { sessions: SessionView[] }) {
   const revoke = (id: string): void => startTransition(async () => {
     const result = await send(() => revokeSessionAction({ id }))
 
-    if (!result) return
-    if (result.ok) toast.success(t('revoked'))
-    else toast.error(t('failed'))
+    if (!result) {
+      return
+    }
+
+    if (result.ok) {
+      toast.success(t('revoked'))
+    } else {
+      toast.error(t('failed'))
+    }
   })
   const revokeOthers = (): void => startTransition(async () => {
     const result = await send(() => revokeOtherSessionsAction())
 
-    if (!result) return
-    if (result.ok) toast.success(t('revokedOthers', { count: result.data.count }))
-    else toast.error(t('failed'))
+    if (!result) {
+      return
+    }
+
+    if (result.ok) {
+      toast.success(t('revokedOthers', { count: result.data.count }))
+    } else {
+      toast.error(t('failed'))
+    }
   })
 
   return (

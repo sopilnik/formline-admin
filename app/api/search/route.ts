@@ -10,8 +10,12 @@ export const dynamic = 'force-dynamic'
 export async function GET(request: Request): Promise<Response> {
   const session = await getSession()
 
-  if (!session?.secondFactorVerified) return new Response(null, { status: 401 })
-  if (!can(session.role, 'data.read', session.workspaceKind)) return new Response(null, { status: 403 })
+  if (!session?.secondFactorVerified) {
+    return new Response(null, { status: 401 })
+  }
+  if (!can(session.role, 'data.read', session.workspaceKind)) {
+    return new Response(null, { status: 403 })
+  }
 
   const term = searchTerm(new URL(request.url).searchParams.get('q'))
   const results = term ? await withWorkspace(workspaceContext(session), tx => searchWorkspace(tx, session.workspaceId, term)) : NO_RESULTS

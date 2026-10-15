@@ -66,7 +66,10 @@ export function NewProductForm({ collections }: Props) {
       // The refresh clears the pages the browser keeps for a minute, so the list shows the product; an owner who
       // went elsewhere while the image uploaded stays there.
       const moveOn = (): void => {
-        if (!left.current) router.push(productHref(result.slug))
+        if (!left.current) {
+          router.push(productHref(result.slug))
+        }
+
         router.refresh()
       }
 
@@ -79,8 +82,12 @@ export function NewProductForm({ collections }: Props) {
 
       // A plain promise, not a transition: React would hold every navigation until a transition's upload ends.
       void sendProductImage(result.id, image).then(failed => {
-        if (!failed) toast.success(t('created'))
-        else toast.error(t('imageFailed', { reason: failed.error === 'rate_limited' ? imageErrors('rate_limited', { minutes: failed.minutes }) : imageErrors(failed.error) }))
+        if (!failed) {
+          toast.success(t('created'))
+        } else {
+          toast.error(t('imageFailed', { reason: failed.error === 'rate_limited' ? imageErrors('rate_limited', { minutes: failed.minutes }) : imageErrors(failed.error) }))
+        }
+
         moveOn()
       })
     }

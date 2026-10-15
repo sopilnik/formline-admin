@@ -11,7 +11,9 @@ import { can } from '@/server/authz/matrix'
 export default async function LetterNotFound() {
   const session = await getSession()
 
-  if (!session || !can(session.role, 'outbox.read', session.workspaceKind)) return <PageNotFound />
+  if (!session || !can(session.role, 'outbox.read', session.workspaceKind)) {
+    return <PageNotFound />
+  }
 
   const t = await getTranslations('outbox.detail')
 

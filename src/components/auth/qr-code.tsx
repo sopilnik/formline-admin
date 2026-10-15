@@ -9,7 +9,9 @@ export function QrCode({ value, label }: { value: string; label: string }) {
   let path = ''
 
   data.forEach((row, y) => row.forEach((dark, x) => {
-    if (dark) path += `M${x} ${y}h1v1h-1z`
+    if (dark) {
+      path += `M${x} ${y}h1v1h-1z`
+    }
   }))
 
   return (

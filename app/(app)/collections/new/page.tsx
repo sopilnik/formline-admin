@@ -17,7 +17,9 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function NewCollectionPage() {
   const session = await requireSession()
 
-  if (!can(session.role, 'catalog.write', session.workspaceKind)) notFound()
+  if (!can(session.role, 'catalog.write', session.workspaceKind)) {
+    notFound()
+  }
 
   const t = await getTranslations('collections')
 

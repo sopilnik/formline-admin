@@ -37,7 +37,9 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
   }))
 
   // A page number past the end (an old link, a narrower search) lands on the last page, as on the other lists.
-  if (list.filtered > 0 && query.page > list.pages) redirect(customersHref(query, { page: list.pages }))
+  if (list.filtered > 0 && query.page > list.pages) {
+    redirect(customersHref(query, { page: list.pages }))
+  }
 
   const locale = await getLocale()
   const t = await getTranslations('customers')

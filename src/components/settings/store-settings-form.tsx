@@ -21,7 +21,9 @@ export function StoreSettingsForm({ settings, zones }: { settings: Record<StoreF
   useLeaveGuard(form, state.status === 'error')
 
   const settle = useEffectEvent((result: StoreSettingsState) => {
-    if (result.status === 'done') toast.success(t('saved'))
+    if (result.status === 'done') {
+      toast.success(t('saved'))
+    }
     if (result.status === 'error') {
       const first = STORE_FIELDS.find(field => result.fieldErrors[field])
 

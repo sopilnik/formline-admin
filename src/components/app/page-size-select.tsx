@@ -26,7 +26,10 @@ export function PageSizeSelect({ id, label, value, options }: Props) {
       onChange={event => {
         const next = options.find(option => String(option.size) === event.target.value)
 
-        if (!next) return
+        if (!next) {
+          return
+        }
+
         startTransition(() => {
           setSize(next.size)
           router.push(next.href)

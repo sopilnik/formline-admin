@@ -63,7 +63,9 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
         setFailed(false)
       })
       .catch(() => {
-        if (!controller.signal.aborted) setFailed(true)
+        if (!controller.signal.aborted) {
+          setFailed(true)
+        }
       })
 
     return () => controller.abort()
@@ -71,14 +73,20 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
 
   const openChange = (next: boolean) => {
     setOpen(next)
-    if (next) setOpened(count => count + 1)
+
+    if (next) {
+      setOpened(count => count + 1)
+    }
   }
 
   // The entry's form marks it read on the server and opens its subject; the bell shows the mark at once.
   const markOpened = (id: string) => {
     setOpen(false)
+
     setFeed(current => {
-      if (!current) return current
+      if (!current) {
+        return current
+      }
 
       const item = current.items.find(i => i.id === id)
       const counted = item && !item.read && !item.thisDevice
@@ -91,9 +99,12 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
     const before = feed
 
     setFeed(current => (current ? { ...current, unread: 0, items: current.items.map(i => ({ ...i, read: true })) } : current))
+
     startTransition(async () => {
       // No answer: nothing was marked, so the bell shows the entries unread again.
-      if ((await send(() => markAllNotificationsReadAction())) === null) setFeed(before)
+      if ((await send(() => markAllNotificationsReadAction())) === null) {
+        setFeed(before)
+      }
     })
   }
 

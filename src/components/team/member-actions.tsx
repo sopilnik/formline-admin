@@ -24,18 +24,26 @@ export function MemberActions({ userId, person, role, active }: Props) {
   const [confirming, setConfirming] = useState(false)
   const [pending, startTransition] = useTransition()
   const report = (result: { ok: boolean; code?: string }, done: string): void => {
-    if (result.ok) toast.success(done)
-    else toast.error(result.code === 'forbidden' ? t('notAllowed') : t('failed'))
+    if (result.ok) {
+      toast.success(done)
+    } else {
+      toast.error(result.code === 'forbidden' ? t('notAllowed') : t('failed'))
+    }
   }
   const makeRole = (next: AssignableRole): void => startTransition(async () => {
     const result = await send(() => changeMemberRoleAction({ userId, role: next }))
 
-    if (result) report(result, t(`roleChanged.${next}`, { person }))
+    if (result) {
+      report(result, t(`roleChanged.${next}`, { person }))
+    }
   })
   const setActive = (next: boolean): void => startTransition(async () => {
     const result = await send(() => changeMemberActiveAction({ userId, active: next }))
 
-    if (!result) return
+    if (!result) {
+      return
+    }
+
     setConfirming(false)
     report(result, next ? t('reactivated', { person }) : t('deactivated', { person }))
   })

@@ -22,8 +22,12 @@ export function InviteForm() {
   useLeaveGuard(form, state.status === 'error')
 
   const settle = useEffectEvent((result: InviteState) => {
-    if (result.status === 'done') toast.success(t('sent', { email: result.email }))
-    if (result.status === 'error') form.current?.querySelector<HTMLElement>('[name="email"]')?.focus()
+    if (result.status === 'done') {
+      toast.success(t('sent', { email: result.email }))
+    }
+    if (result.status === 'error') {
+      form.current?.querySelector<HTMLElement>('[name="email"]')?.focus()
+    }
   })
 
   useEffect(() => settle(state), [state])

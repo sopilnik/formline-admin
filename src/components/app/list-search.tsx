@@ -35,7 +35,9 @@ export function ListSearch({ id, action, label, placeholder, q, restHref, onSear
   const search = useEffectEvent((text: string) => send(text.trim()))
 
   useEffect(() => {
-    if (draft === null) return
+    if (draft === null) {
+      return
+    }
 
     const timer = setTimeout(() => search(draft.text), SEARCH_DELAY_MS)
 
@@ -45,7 +47,10 @@ export function ListSearch({ id, action, label, placeholder, q, restHref, onSear
   useEffect(() => {
     // A search changed from outside the field (Back, "Clear filters") is written into it; the
     // field's own searches are not, so text typed while a search loads is never overwritten.
-    if (q !== sentQ.current && input.current) input.current.value = q
+    if (q !== sentQ.current && input.current) {
+      input.current.value = q
+    }
+
     sentQ.current = q
   }, [q])
 

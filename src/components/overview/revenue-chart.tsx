@@ -16,10 +16,13 @@ function segments(bars: readonly ChartBar[], max: number): string[] {
 
   bars.forEach((bar, i) => {
     if (bar.previous === null) {
-      if (lists.at(-1)!.length > 0) lists.push([])
+      if (lists.at(-1)!.length > 0) {
+        lists.push([])
+      }
 
       return
     }
+
     lists.at(-1)!.push(`${i + 0.5},${(100 - (Math.min(bar.previous, max) / max) * 100).toFixed(3)}`)
   })
 

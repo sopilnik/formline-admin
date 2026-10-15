@@ -19,7 +19,9 @@ function moved(rows: CollectionItem[], move: { id: string; direction: Direction 
   const index = rows.findIndex(row => row.id === move.id)
   const target = move.direction === 'up' ? index - 1 : index + 1
 
-  if (index === -1 || target < 0 || target >= rows.length) return rows
+  if (index === -1 || target < 0 || target >= rows.length) {
+    return rows
+  }
 
   const next = [...rows]
 
@@ -46,7 +48,9 @@ export function CollectionsList({ rows, canWrite }: { rows: CollectionItem[]; ca
   const list = useRef<HTMLUListElement>(null)
 
   useEffect(() => {
-    if (!focus) return
+    if (!focus) {
+      return
+    }
 
     const button = (direction: Direction) => list.current?.querySelector<HTMLButtonElement>(`[data-move="${focus.id}:${direction}"]`)
     const wanted = button(focus.direction)
@@ -58,15 +62,23 @@ export function CollectionsList({ rows, canWrite }: { rows: CollectionItem[]; ca
 
   const run = (row: CollectionItem, direction: Direction): void => {
     setFocus({ id: row.id, direction })
+
     startTransition(async () => {
       move({ id: row.id, direction })
 
       const result = await send(() => moveCollectionAction({ id: row.id, direction }))
 
-      if (!result) return
-      if (result.ok) setAnnouncement(t('moved', { name: row.name, position: result.data.position, count: result.data.of }))
-      else if (result.code === 'forbidden') refused(failed('forbidden'))
-      else toast.error(t('moveFailed'))
+      if (!result) {
+        return
+      }
+
+      if (result.ok) {
+        setAnnouncement(t('moved', { name: row.name, position: result.data.position, count: result.data.of }))
+      } else if (result.code === 'forbidden') {
+        refused(failed('forbidden'))
+      } else {
+        toast.error(t('moveFailed'))
+      }
     })
   }
 
