@@ -29,11 +29,13 @@ beforeAll(async () => {
   ownerId = await ensureOwner(admin, app)
   ownerWorkspace = await ownerWorkspaceId(app)
 })
+
 // Every test starts without counters or locks on the owner.
 beforeEach(async () => {
   await clearSubject(account, app)
   await clearSubject(userSubject(ownerWorkspace, ownerId), app)
 })
+
 afterAll(async () => {
   await clearSubject(account, app)
   await clearSubject(userSubject(ownerWorkspace, ownerId), app)
@@ -46,7 +48,9 @@ const correct = (overrides: Partial<SignInInput> = {}): SignInInput =>
 async function pendingSession(): Promise<Session> {
   const result = await signInWithPassword(correct(), { pool: app })
 
-  if (!result.ok) throw new Error(result.error)
+  if (!result.ok) {
+    throw new Error(result.error)
+  }
 
   return (await validateSessionToken(result.token, app))!
 }
@@ -85,17 +89,26 @@ describe('password step', () => {
   it('finds the account whatever the case of the email, and gives a pending session only', async () => {
     const result = await signInWithPassword(correct({ email: ' OWNER@Formline.test ' }), { pool: app })
 
-    if (!result.ok) throw new Error(result.error)
+    if (!result.ok) {
+      throw new Error(result.error)
+    }
+
     expect(await validateSessionToken(result.token, app)).toMatchObject({ userId: ownerId, secondFactorVerified: false })
   })
 
   it('locks the account for 15 minutes after five failures, from any address', async () => {
     await roomInWindow(LIMITS.signInFailAccount.windowSeconds, 10)
-    for (let i = 0; i < 5; i++) await signInWithPassword(correct({ password: `wrong-password-${i}` }), { pool: app })
+
+    for (let i = 0; i < 5; i++) {
+      await signInWithPassword(correct({ password: `wrong-password-${i}` }), { pool: app })
+    }
 
     const locked = await signInWithPassword(correct(), { pool: app })
 
-    if (locked.ok) throw new Error('not locked')
+    if (locked.ok) {
+      throw new Error('not locked')
+    }
+
     expect(locked.error).toBe('rate_limited')
     expect(locked.retryAfterSeconds).toBeGreaterThan(890)
     expect(locked.retryAfterSeconds).toBeLessThanOrEqual(900)
@@ -109,7 +122,10 @@ describe('password step', () => {
 
     const locked = await signInWithPassword(correct(), { pool: app })
 
-    if (locked.ok) throw new Error('not locked')
+    if (locked.ok) {
+      throw new Error('not locked')
+    }
+
     expect(locked.error).toBe('rate_limited')
     expect(locked.retryAfterSeconds).toBeGreaterThan(590)
     expect(locked.retryAfterSeconds).toBeLessThanOrEqual(600)
@@ -117,7 +133,11 @@ describe('password step', () => {
 
   it('allows ten successful passwords an hour per account', async () => {
     await roomInWindow(LIMITS.signInSuccessAccount.windowSeconds, 10)
-    for (let i = 0; i < 10; i++) expect((await signInWithPassword(correct(), { pool: app })).ok).toBe(true)
+
+    for (let i = 0; i < 10; i++) {
+      expect((await signInWithPassword(correct(), { pool: app })).ok).toBe(true)
+    }
+
     expect(await signInWithPassword(correct(), { pool: app })).toMatchObject({ ok: false, error: 'rate_limited' })
   })
 
@@ -137,7 +157,11 @@ describe('password step', () => {
 
   it('a right password neither counts as a failure nor keeps the lock its claim set', async () => {
     await roomInWindow(LIMITS.signInFailAccount.windowSeconds, 20)
-    for (let i = 0; i < 4; i++) await signInWithPassword(correct({ password: `wrong-password-${i}` }), { pool: app })
+
+    for (let i = 0; i < 4; i++) {
+      await signInWithPassword(correct({ password: `wrong-password-${i}` }), { pool: app })
+    }
+
     expect((await signInWithPassword(correct(), { pool: app })).ok).toBe(true)
 
     expect(await signInWithPassword(correct({ password: 'wrong-password-4' }), { pool: app })).toEqual({ ok: false, error: 'credentials_invalid' })
@@ -159,7 +183,10 @@ describe('password step', () => {
 
     const ip = nextIp()
 
-    for (let i = 0; i < 20; i++) await signInWithPassword(correct({ email: `nobody.${i}@formline.test`, ip }), { pool: app })
+    for (let i = 0; i < 20; i++) {
+      await signInWithPassword(correct({ email: `nobody.${i}@formline.test`, ip }), { pool: app })
+    }
+
     expect(await signInWithPassword(correct({ ip }), { pool: app })).toMatchObject({ ok: false, error: 'rate_limited' })
   })
 })
@@ -171,7 +198,10 @@ describe('second-factor step', () => {
     const totp = await nextTotp(admin)
     const done = await verifySecondFactor(pending, { code: totp.code, ip: nextIp(), userAgent: null }, { pool: app, now: totp.now })
 
-    if (!done.ok) throw new Error(done.error)
+    if (!done.ok) {
+      throw new Error(done.error)
+    }
+
     expect(await validateSessionToken(done.token, app)).toMatchObject({ userId: ownerId, secondFactorVerified: true })
     expect(await sessionExists(pending)).toBe(false)
     expect(await letters('auth.new_sign_in')).toBe(lettersBefore + 1)
@@ -211,7 +241,10 @@ describe('second-factor step', () => {
     const pending = await pendingSession()
     const results = []
 
-    for (let i = 0; i < 10; i++) results.push(await verifySecondFactor(pending, { code: '12345', ip: nextIp(), userAgent: null }, { pool: app }))
+    for (let i = 0; i < 10; i++) {
+      results.push(await verifySecondFactor(pending, { code: '12345', ip: nextIp(), userAgent: null }, { pool: app }))
+    }
+
     expect(results.slice(0, 9).every(r => !r.ok && r.error === 'code_invalid')).toBe(true)
     expect(results[9]).toEqual({ ok: false, error: 'second_factor_locked' })
     expect(await sessionExists(pending)).toBe(false)
@@ -263,7 +296,9 @@ describe('re-authentication', () => {
     const totp = await nextTotp(admin)
     const done = await verifySecondFactor(await pendingSession(), { code: totp.code, ip: nextIp(), userAgent: null }, { pool: app, now: totp.now })
 
-    if (!done.ok) throw new Error(done.error)
+    if (!done.ok) {
+      throw new Error(done.error)
+    }
 
     return (await validateSessionToken(done.token, app))!
   }
@@ -277,7 +312,10 @@ describe('re-authentication', () => {
     const totp = await nextTotp(admin)
     const result = await reauthenticate(old, { password: OWNER.password, code: totp.code, ip: nextIp(), userAgent: null }, { pool: app, now: totp.now })
 
-    if (!result.ok) throw new Error(result.error)
+    if (!result.ok) {
+      throw new Error(result.error)
+    }
+
     expect(await sessionExists(session)).toBe(false)
 
     const fresh = await validateSessionToken(result.token, app)

@@ -32,6 +32,7 @@ beforeAll(async () => {
   app = appPool()
   ownerWorkspace = (await admin.query<{ id: string }>("select id from fa.workspaces where kind = 'owner'")).rows[0]!.id
 })
+
 afterAll(closeAll)
 
 describe('end_sandbox', () => {
@@ -41,12 +42,15 @@ describe('end_sandbox', () => {
 
     await asSchemaOwner(admin, c => c.query(
       "insert into fa.images (workspace_id, storage_path, source, width, height, bytes) values ($1, 'media/a-upload.webp', 'upload', 10, 10, 100)", [a.session.workspaceId]))
+
     try {
       expect(await endSandbox(a.session, app)).toBe(1)
       expect((await admin.query('select 1 from fa.workspaces where id = $1', [a.session.workspaceId])).rowCount).toBe(0)
+
       for (const table of ['users', 'sessions', 'images', 'customers', 'orders', 'order_lines', 'order_events', 'activity_log', 'store_settings']) {
         expect(await count(table, a.session.workspaceId), table).toBe(0)
       }
+
       expect(await validateSessionToken(a.token, app)).toBeNull()
       expect(await validateSessionToken(b.token, app)).not.toBeNull()
       expect(await count('orders', b.session.workspaceId)).toBeGreaterThan(0)
@@ -80,7 +84,11 @@ describe('reset_sandbox', () => {
     const result = await resetSandbox(a.session, { ipHash: ip, ...meta }, app)
 
     expect(result.ok).toBe(true)
-    if (!result.ok) return
+
+    if (!result.ok) {
+      return
+    }
+
     try {
       expect(result.workspaceId).not.toBe(a.session.workspaceId)
       expect((await admin.query('select 1 from fa.workspaces where id = $1', [a.session.workspaceId])).rowCount).toBe(0)
@@ -106,7 +114,9 @@ describe('reset_sandbox', () => {
     const ip = randomIpHash()
     const a = await enter(ip)
 
-    for (let i = 0; i < 4; i++) await enter(ip)
+    for (let i = 0; i < 4; i++) {
+      await enter(ip)
+    }
 
     const result = await resetSandbox(a.session, { ipHash: ip, ...meta }, app)
 

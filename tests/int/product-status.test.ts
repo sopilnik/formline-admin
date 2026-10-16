@@ -23,6 +23,7 @@ beforeAll(async () => {
   owner = { workspaceId, userId, role: 'owner', ipHash: null }
   collectionId = (await admin.query<{ id: string }>("select id from fa.collections where workspace_id = $1 and slug = 'night'", [owner.workspaceId])).rows[0]!.id
 })
+
 afterAll(async () => {
   // The deletion queue is global: housekeeping.test.ts drains it and counts what it finds.
   await admin.query("delete from fa.pending_media_deletions where storage_path like 'ws/' || $1 || '/%'", [owner.workspaceId])
@@ -35,7 +36,9 @@ const idOf = async (slug: string) => (await read(slug))!.id
 const newDraft = async (slug: string) => {
   const result = await createProductWithLog(owner, { name: slug, slug, collectionId, basePriceCents: 2500, tags: [], description: '', palettes: ['ink'] }, app)
 
-  if (!result.ok) throw new Error(result.reason)
+  if (!result.ok) {
+    throw new Error(result.reason)
+  }
 
   return result.id
 }
@@ -77,6 +80,7 @@ describe('deleteProductWithLog', () => {
     const published = await newDraft('never-sold')
 
     await changeProductStatusWithLog(owner, { productId: published, to: 'published' }, app)
+
     expect(await deleteProductWithLog(owner, published, app)).toEqual({ ok: false, reason: 'not_draft' })
     expect(await read('after-dark')).not.toBeNull()
     expect(await read('never-sold')).not.toBeNull()
@@ -89,6 +93,7 @@ describe('deleteProductWithLog', () => {
 
     await admin.query("insert into fa.images (workspace_id, id, storage_path, source, width, height, bytes) values ($1, $2, $3, 'upload', 10, 14, 100)", [owner.workspaceId, imageId, path])
     await admin.query('update fa.products set image_id = $3 where workspace_id = $1 and id = $2', [owner.workspaceId, id, imageId])
+
     expect(await deleteProductWithLog(owner, id, app)).toEqual({ ok: true, slug: 'short-lived', name: 'short-lived', variants: 3, queued: path })
     expect(await read('short-lived')).toBeNull()
 
@@ -104,6 +109,7 @@ describe('deleteProductWithLog', () => {
     const poster = (await admin.query<{ id: string; storage_path: string }>("select id, storage_path from fa.images where workspace_id = $1 and storage_path = 'posters/hush.webp'", [owner.workspaceId])).rows[0]!
 
     await admin.query('update fa.products set image_id = $3 where workspace_id = $1 and id = $2', [owner.workspaceId, id, poster.id])
+
     expect(await deleteProductWithLog(owner, id, app)).toMatchObject({ ok: true, queued: null })
     expect((await read('hush'))!.image?.id).toBe(poster.id)
 
@@ -111,6 +117,7 @@ describe('deleteProductWithLog', () => {
 
     await admin.query("update fa.products set image_id = null where workspace_id = $1 and slug = 'hush'", [owner.workspaceId])
     await admin.query('update fa.products set image_id = $3 where workspace_id = $1 and id = $2', [owner.workspaceId, orphan, poster.id])
+
     expect(await deleteProductWithLog(owner, orphan, app)).toMatchObject({ ok: true, queued: null })
     expect((await admin.query('select 1 from fa.images where workspace_id = $1 and id = $2', [owner.workspaceId, poster.id])).rowCount).toBe(0)
     expect((await admin.query('select 1 from fa.pending_media_deletions where storage_path = $1', [poster.storage_path])).rowCount).toBe(0)

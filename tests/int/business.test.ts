@@ -12,6 +12,7 @@ beforeAll(async () => {
   wsA = await createWorkspace(admin)
   wsB = await createWorkspace(admin)
 })
+
 afterAll(closeAll)
 
 async function seedCatalog(c: pg.PoolClient, ws: string): Promise<{ collection: string; product: string; variant: string; customer: string; order: string; image: string }> {
@@ -33,6 +34,7 @@ describe('business schema', () => {
 
       await expect(c.query("insert into fa.orders (workspace_id, number, customer_id, status, source, delivery, subtotal_cents, shipping_cents, total_cents, placed_at) values ($1, 2001, $2, 'paid', 'seed', 'standard', 100, 0, 100, now())", [wsB, a.customer])).rejects.toThrow(/foreign key/)
     })
+
     await inRollback(admin, async c => {
       const a = await seedCatalog(c, wsA)
 
@@ -46,6 +48,7 @@ describe('business schema', () => {
 
       await expect(c.query('update fa.product_variants set stock = -1 where id = $1', [a.variant])).rejects.toThrow(/check constraint/)
     })
+
     await inRollback(admin, async c => {
       const a = await seedCatalog(c, wsA)
 
@@ -59,6 +62,7 @@ describe('business schema', () => {
       const b = await seedCatalog(c, wsB)
 
       await c.query("update fa.orders set stripe_session_id = 'cs_test_1', source = 'stripe' where id in ($1, $2)", [a.order, b.order])
+
       await expect(c.query("insert into fa.orders (workspace_id, number, customer_id, status, source, delivery, subtotal_cents, shipping_cents, total_cents, placed_at) values ($1, 1001, $2, 'paid', 'seed', 'standard', 100, 0, 100, now())", [wsA, a.customer])).rejects.toThrow(/orders_workspace_id_number_key/)
     })
   })
@@ -81,6 +85,7 @@ describe('business schema', () => {
 
       await expect(c.query("update fa.orders set status = 'lost' where id = $1", [a.order])).rejects.toThrow(/check constraint/)
     })
+
     await inRollback(admin, async c => {
       const a = await seedCatalog(c, wsA)
 

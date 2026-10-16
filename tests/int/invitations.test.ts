@@ -40,6 +40,7 @@ beforeAll(async () => {
   owner = box.actor
   expiresAt = box.expiresAt
 })
+
 afterAll(closeAll)
 
 describe('inviteMember', () => {
@@ -69,13 +70,16 @@ describe('inviteMember', () => {
   it('refuses a member’s email, a second open invitation and a full team', async () => {
     expect(await inviteMember(owner, { email: 'NOAH.BECKER@formline.example', role: 'viewer', expiresAt }, app)).toEqual({ ok: false, reason: 'member' })
     expect(await inviteMember(owner, { email: 'alex.kim@example.test', role: 'viewer', expiresAt }, app)).toEqual({ ok: false, reason: 'pending' })
+
     // Four members and one open invitation: fifteen more fill the team.
     for (let i = 0; i < 15; i++) {
       await admin.query(
         "insert into fa.invitations (workspace_id, email, role, token_hash, invited_by, expires_at) values ($1, $2, 'viewer', $3, $4, now() + interval '1 hour')",
         [owner.workspaceId, `filler${i}@example.test`, hashToken(generateToken()), owner.userId])
     }
+
     expect(await inviteMember(owner, { email: 'one.more@example.test', role: 'viewer', expiresAt }, app)).toEqual({ ok: false, reason: 'cap' })
+
     await admin.query("update fa.invitations set revoked_at = now() where workspace_id = $1 and email like 'filler%'", [owner.workspaceId])
   })
 
@@ -94,7 +98,11 @@ describe('acceptInvitation', () => {
     const result = await acceptInvitation(caller, { token, name: 'Alex Kim', ...meta }, app)
 
     expect(result.ok).toBe(true)
-    if (!result.ok) return
+
+    if (!result.ok) {
+      return
+    }
+
     expect(result.expiresAt.getTime()).toBe(expiresAt.getTime())
 
     const member = (await admin.query<{ id: string; role: string; name: string; locale: string }>(

@@ -20,6 +20,7 @@ beforeAll(async () => {
   sandbox = await createWorkspace(admin)
   member = await createUser(admin, { workspaceId: sandbox, role: 'admin' })
 })
+
 afterAll(closeAll)
 
 function newSession(workspaceId: string, userId: string, verified = true) {
@@ -45,8 +46,11 @@ describe('auth_session', () => {
 
     expect(session).toMatchObject({ workspaceId: sandbox, workspaceKind: 'sandbox', userId: member, role: 'admin', secondFactorVerified: true })
     expect(session?.reauthAt).toBeInstanceOf(Date)
+
     await asSchemaOwner(admin, c => c.query("update fa.users set role = 'viewer' where id = $1", [member]))
+
     expect((await validateSessionToken(token, app))?.role).toBe('viewer')
+
     await asSchemaOwner(admin, c => c.query("update fa.users set role = 'admin' where id = $1", [member]))
   })
 
@@ -67,6 +71,7 @@ describe('auth_session', () => {
     const { token, id } = await newSession(sandbox, member)
 
     await admin.query("update fa.sessions set expires_at = now() - interval '1 second' where id = $1", [id])
+
     expect(await validateSessionToken(token, app)).toBeNull()
   })
 
@@ -79,7 +84,9 @@ describe('auth_session', () => {
       const { token, id } = await newSession(ownerWorkspace, user)
 
       expect(await validateSessionToken(token, app)).not.toBeNull()
+
       await admin.query("update fa.sessions set last_seen_at = now() - interval '12 hours 1 minute' where id = $1", [id])
+
       expect(await validateSessionToken(token, app)).toBeNull()
     } finally {
       await admin.query('delete from fa.users where workspace_id = $1 and id = $2', [ownerWorkspace, user])
@@ -92,10 +99,15 @@ describe('auth_session', () => {
     const { token } = await newSession(ws, user)
 
     await admin.query("update fa.workspaces set last_active_at = now() - interval '2 hours 1 minute' where id = $1", [ws])
+
     expect(await validateSessionToken(token, app)).toBeNull()
+
     await admin.query("update fa.workspaces set last_active_at = now(), expires_at = now() - interval '1 second' where id = $1", [ws])
+
     expect(await validateSessionToken(token, app)).toBeNull()
+
     await admin.query("update fa.workspaces set expires_at = now() + interval '1 hour' where id = $1", [ws])
+
     expect(await validateSessionToken(token, app)).not.toBeNull()
   })
 
@@ -104,6 +116,7 @@ describe('auth_session', () => {
     const { token } = await newSession(sandbox, user)
 
     await asSchemaOwner(admin, c => c.query('update fa.users set deactivated_at = now() where id = $1', [user]))
+
     expect(await validateSessionToken(token, app)).toBeNull()
   })
 
@@ -120,7 +133,9 @@ describe('auth_session', () => {
 
     expect(Date.now() - first.s.getTime()).toBeLessThan(10_000)
     expect(Date.now() - first.w.getTime()).toBeLessThan(10_000)
+
     await validateSessionToken(token, app)
+
     expect((await seen()).s.getTime()).toBe(first.s.getTime())
   })
 
@@ -170,6 +185,7 @@ describe('session changes', () => {
     const current = (await validateSessionToken(a.token, app))!
 
     await withWorkspace({ workspaceId: sandbox, userId: member, role: 'admin' }, tx => deleteOtherOwnSessions(tx, current), app)
+
     expect(await validateSessionToken(a.token, app)).not.toBeNull()
     expect(await validateSessionToken(b.token, app)).toBeNull()
     expect(await validateSessionToken(c.token, app)).not.toBeNull()

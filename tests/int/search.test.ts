@@ -24,6 +24,7 @@ beforeAll(async () => {
   box = await sandbox()
   other = await sandbox()
 })
+
 afterAll(closeAll)
 
 describe('searchWorkspace', () => {
@@ -73,7 +74,9 @@ describe('searchWorkspace', () => {
   it('takes %, _ and \\ literally and stays inside its workspace', async () => {
     expect(await search(box, '%%')).toEqual({ orders: [], customers: [], products: [] })
     expect(await search(box, '__')).toEqual({ orders: [], customers: [], products: [] })
+
     await admin.query("update fa.customers set name = 'Zephyrine Quillfeather' where workspace_id = $1 and id = (select id from fa.customers where workspace_id = $1 order by id limit 1)", [other.workspaceId])
+
     expect((await search(other, 'Quillfeather')).customers).toHaveLength(1)
     expect((await search(box, 'Quillfeather')).customers).toEqual([])
   })

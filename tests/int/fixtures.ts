@@ -10,7 +10,9 @@ export class Rollback extends Error {}
 export function errorText(error: unknown): string {
   const parts: string[] = []
 
-  for (let e: unknown = error; e instanceof Error; e = e.cause) parts.push(e.message)
+  for (let e: unknown = error; e instanceof Error; e = e.cause) {
+    parts.push(e.message)
+  }
 
   return parts.length > 0 ? parts.join(' | ') : String(error)
 }
@@ -29,9 +31,13 @@ export async function lockWaiter(admin: pg.Pool): Promise<void> {
     const { rows } = await admin.query<{ n: number }>(
       "select count(*)::int as n from pg_stat_activity where datname = current_database() and wait_event_type = 'Lock'")
 
-    if (rows[0]!.n > 0) return
+    if (rows[0]!.n > 0) {
+      return
+    }
+
     await sleep(25)
   }
+
   throw new Error('no save waited for a lock')
 }
 
@@ -64,6 +70,7 @@ export async function asSchemaOwner<T>(pool: pg.Pool, fn: (c: pg.PoolClient) => 
     return result
   } catch (error) {
     await client.query('rollback')
+
     throw error
   } finally {
     client.release()
@@ -104,7 +111,9 @@ export async function createSandbox(app: pg.Pool, { locale = 'en', ipHash = rand
     'select outcome, sandbox_id, demo_user_id, sandbox_expires_at from fa.create_sandbox($1, $2, $3, $4)', [ipHash, hashToken(token), 'Vitest', locale])
   const row = rows[0]
 
-  if (row?.outcome !== 'created') throw new Error(`create_sandbox answered ${row?.outcome ?? 'nothing'}`)
+  if (row?.outcome !== 'created') {
+    throw new Error(`create_sandbox answered ${row?.outcome ?? 'nothing'}`)
+  }
 
   return { workspaceId: row.sandbox_id, userId: row.demo_user_id, token, expiresAt: row.sandbox_expires_at }
 }

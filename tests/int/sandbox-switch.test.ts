@@ -37,6 +37,7 @@ beforeAll(() => {
   admin = adminPool()
   app = appPool()
 })
+
 afterAll(closeAll)
 
 describe('switchUser', () => {
@@ -56,6 +57,7 @@ describe('switchUser', () => {
     const { session, users } = await enter()
 
     await asSchemaOwner(admin, c => c.query('update fa.users set shortcuts_enabled = false where workspace_id = $1 and id = $2', [session.workspaceId, session.userId]))
+
     expect((await switchUser(session, { targetUserId: users.manager!, code: '', ...meta }, { pool: app })).ok).toBe(true)
 
     const rows = await admin.query<{ role: string; on: boolean }>('select role, shortcuts_enabled as on from fa.users where workspace_id = $1', [session.workspaceId])
@@ -68,7 +70,11 @@ describe('switchUser', () => {
     const result = await switchUser(session, { targetUserId: users.viewer!, code: '', ...meta }, { pool: app })
 
     expect(result.ok).toBe(true)
-    if (!result.ok) return
+
+    if (!result.ok) {
+      return
+    }
+
     expect(await validateSessionToken(token, app)).toBeNull()
 
     const next = await validateSessionToken(result.token, app)
@@ -102,7 +108,11 @@ describe('switchUser', () => {
     const right = await switchUser(session, { targetUserId: users.admin!, code, ...meta }, { pool: app, now })
 
     expect(right.ok).toBe(true)
-    if (!right.ok) return
+
+    if (!right.ok) {
+      return
+    }
+
     expect((await validateSessionToken(right.token, app))?.role).toBe('admin')
 
     const stored = await admin.query<{ step: string }>('select totp_last_step as step from fa.users where workspace_id = $1 and id = $2', [session.workspaceId, users.admin])
@@ -114,7 +124,10 @@ describe('switchUser', () => {
     const replay = await switchUser(admin2, { targetUserId: users.viewer!, code: '', ...meta }, { pool: app, now })
 
     expect(replay.ok).toBe(true)
-    if (!replay.ok) return
+
+    if (!replay.ok) {
+      return
+    }
 
     const viewer = (await validateSessionToken(replay.token, app))!
 
@@ -157,7 +170,10 @@ describe('switchUser', () => {
 
     const wrong = () => switchUser(a.session, { targetUserId: a.users.admin!, code: '000000', ...meta }, { pool: app })
 
-    for (let i = 1; i < LIMITS.secondFactorFail.limit; i++) expect(await wrong()).toMatchObject({ ok: false, error: 'code_invalid' })
+    for (let i = 1; i < LIMITS.secondFactorFail.limit; i++) {
+      expect(await wrong()).toMatchObject({ ok: false, error: 'code_invalid' })
+    }
+
     expect(await wrong()).toMatchObject({ ok: false, error: 'member_locked', retryAfterSeconds: SECOND_FACTOR_LOCK_SECONDS })
 
     const log = await admin.query("select actor_user_id from fa.activity_log where workspace_id = $1 and action = 'auth.second_factor_locked'", [a.session.workspaceId])
@@ -201,6 +217,7 @@ describe('switchUser', () => {
     const b = await enter()
 
     await asSchemaOwner(admin, c => c.query('update fa.users set deactivated_at = now() where workspace_id = $1 and id = $2', [a.session.workspaceId, a.users.manager]))
+
     expect(await switchUser(a.session, { targetUserId: a.users.manager!, code: '', ...meta }, { pool: app })).toMatchObject({ ok: false, error: 'generic' })
     expect(await switchUser(a.session, { targetUserId: a.session.userId, code: '', ...meta }, { pool: app })).toMatchObject({ ok: false, error: 'generic' })
     expect(await switchUser(a.session, { targetUserId: randomUUID(), code: '', ...meta }, { pool: app })).toMatchObject({ ok: false, error: 'generic' })
@@ -212,7 +229,11 @@ describe('switchUser', () => {
     const crossed = await switchUser(a.session, { targetUserId: b.users.viewer!, code: '', ...meta }, { pool: app })
 
     expect(crossed.ok).toBe(true)
-    if (!crossed.ok) return
+
+    if (!crossed.ok) {
+      return
+    }
+
     expect(await validateSessionToken(crossed.token, app)).toMatchObject({ workspaceId: a.session.workspaceId, userId: a.users.viewer })
     expect(await validateSessionToken(b.token, app)).toMatchObject({ workspaceId: b.session.workspaceId, userId: b.session.userId })
 

@@ -47,7 +47,9 @@ const ingest = (order: IncomingOrder, eventId: string | null = `evt_${TAG}_${cou
 
 /** The id of the order an ingest created; any other answer fails here, with the status it had. */
 function createdId(result: IngestResult): string {
-  if (result.status !== 'created') throw new Error(`the ingest answered ${result.status}, not created`)
+  if (result.status !== 'created') {
+    throw new Error(`the ingest answered ${result.status}, not created`)
+  }
 
   return result.orderId
 }
@@ -97,7 +99,11 @@ afterAll(async () => {
   await admin.query("delete from fa.notifications where workspace_id = $1 and kind in ('order.created', 'stock.low')", [owner])
   await admin.query('delete from fa.stripe_events where event_id like $1', [`evt_${TAG}_%`])
   await admin.query('update fa.workspace_counters set next_order_number = $2 where workspace_id = $1', [owner, startNumber])
-  for (const v of stocks) await admin.query('update fa.product_variants set stock = $3, low_stock_threshold = $4 where workspace_id = $1 and id = $2', [owner, v.id, v.stock, v.low_stock_threshold])
+
+  for (const v of stocks) {
+    await admin.query('update fa.product_variants set stock = $3, low_stock_threshold = $4 where workspace_id = $1 and id = $2', [owner, v.id, v.stock, v.low_stock_threshold])
+  }
+
   await closeAll()
 })
 
@@ -109,7 +115,10 @@ describe('the Stripe ingest', () => {
     const result = await ingest(order)
 
     expect(result).toEqual({ status: 'created', orderId: expect.any(String), number: startNumber })
-    if (result.status !== 'created') return
+
+    if (result.status !== 'created') {
+      return
+    }
 
     const kept = await admin.query(
       `select o.number, o.status, o.source, o.stripe_session_id, o.external_ref, o.delivery, o.subtotal_cents, o.shipping_cents, o.total_cents,
@@ -161,7 +170,9 @@ describe('the Stripe ingest', () => {
 
     expect(farOrbit.stock).toBe(3)
     expect(await notificationsOf('stock.low')).toEqual([{ productId: farOrbit.product_id, product: 'Far Orbit', size: 'a2', palette: 'ink', stock: 3, threshold: 3 }])
+
     await ingest(storeOrder({ lines: [line('Far Orbit · A2 · Ink', 1, 4700)] }))
+
     expect((await variant('far-orbit-a2-ink')).stock).toBe(2)
     expect(await notificationsOf('stock.low')).toHaveLength(1)
   })
@@ -170,6 +181,7 @@ describe('the Stripe ingest', () => {
     await admin.query("delete from fa.notifications where workspace_id = $1 and kind = 'stock.low'", [owner])
     await setStock('far-orbit-a2-ink', 1, 3)
     await setOwnerLocale('ru')
+
     try {
       const result = await ingest(storeOrder({ lines: [line('Far Orbit · A2 · Ink', 3, 4700)] }))
       const farOrbit = await variant('far-orbit-a2-ink')
@@ -191,13 +203,16 @@ describe('the Stripe ingest', () => {
       `select v.sku, p.name, v.size, v.palette from fa.product_variants v join fa.products p on p.workspace_id = v.workspace_id and p.id = v.product_id
         where v.workspace_id = $1 order by v.sku limit 20`, [owner])
 
-    for (const r of rows) await setStock(r.sku, 0, 3)
+    for (const r of rows) {
+      await setStock(r.sku, 0, 3)
+    }
 
     const lines = rows.map(r => line(`${r.name} · ${variantLabel(r.size, r.palette)}`, 10, 4700))
     const last = { en: /^…and \d+ more variants\.$/, ru: /^…и ещё \d+ вариант(а|ов)?\.$/ }
 
     for (const locale of ['en', 'ru'] as const) {
       await setOwnerLocale(locale)
+
       try {
         const result = await ingest(storeOrder({ lines }))
         const notes = await admin.query<{ note: string }>("select note from fa.order_events where workspace_id = $1 and order_id = $2 and kind = 'note'",
@@ -325,11 +340,13 @@ describe('the copy in the template', () => {
 
     // Without its counter the template cannot number the copy, and the copy is the last step of the transaction.
     await admin.query('delete from fa.workspace_counters where workspace_id = $1', [template])
+
     try {
       await expect(ingest(order, eventId)).rejects.toThrow(/has no order counter/)
     } finally {
       await admin.query('insert into fa.workspace_counters (workspace_id, next_order_number) values ($1, $2)', [template, templateNumber + 100])
     }
+
     expect((await admin.query('select 1 from fa.orders where workspace_id = $1 and stripe_session_id = $2', [owner, order.sessionId])).rowCount).toBe(0)
     expect((await admin.query('select 1 from fa.stripe_events where event_id = $1', [eventId])).rowCount).toBe(0)
     expect((await variant('far-orbit-a2-ink')).stock).toBe(6)
@@ -360,6 +377,7 @@ describe('the daily pseudonymisation', () => {
 
     await admin.query("update fa.customers set created_at = now() - interval '31 days' where workspace_id = $1 and email = $2", [owner, email])
     await admin.query("update fa.customers set created_at = now() - interval '29 days' where workspace_id = $1 and email = $2", [owner, `young.${TAG}@ingest.test`])
+
     expect(await pseudonymiseOldCustomers(PSEUDONYM_KEY, app)).toBeGreaterThanOrEqual(1)
 
     const person = pseudonymFor(email, PSEUDONYM_KEY)

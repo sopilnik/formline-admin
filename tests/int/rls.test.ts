@@ -49,6 +49,7 @@ async function seed(): Promise<Seeded> {
     for (const role of ['owner', 'admin', 'manager', 'viewer'] as const) {
       await c.query("insert into fa.sessions (workspace_id, id, user_id, expires_at) values ($1, encode(sha256(gen_random_uuid()::text::bytea), 'hex'), $2, now() + interval '1 hour')", [ws, users[role]])
     }
+
     out.passkey = await one("insert into fa.passkeys (workspace_id, user_id, credential_id, public_key, name) values ($1, $2, replace(gen_random_uuid()::text, '-', ''), 'pk', 'Laptop') returning id", [ws, users.owner])
     out.recovery = await one("insert into fa.recovery_codes (workspace_id, user_id, code_hash) values ($1, $2, encode(sha256(gen_random_uuid()::text::bytea), 'hex')) returning id", [ws, users.owner])
 
@@ -67,11 +68,15 @@ async function probe(ctx: WorkspaceContext, fn: Parameters<typeof withWorkspace>
       this.value = value
     }
   }
+
   try {
     await withWorkspace(ctx, async tx => { throw new Undo(await fn(tx)) }, app)
+
     throw new Error('unreachable')
   } catch (error) {
-    if (error instanceof Undo) return { ok: true, value: error.value }
+    if (error instanceof Undo) {
+      return { ok: true, value: error.value }
+    }
 
     return { ok: false, message: errorText(error) }
   }
@@ -89,6 +94,7 @@ beforeAll(async () => {
   A = await seed()
   B = await seed()
 })
+
 afterAll(closeAll)
 
 const ACTORS: Actor[] = ['owner', 'admin', 'manager', 'viewer', 'system']
@@ -243,6 +249,7 @@ describe('write rights follow the matrix', () => {
 
       expect(r).toMatchObject({ ok: false, message: expect.stringMatching(/permission denied/) })
     }
+
     expect(await attempt(A, { actor: 'viewer', statement: sql`insert into fa.activity_log (workspace_id, action) values (${A.ws}, 'viewed')`, op: 'insert' })).toBe(true)
     expect(await attempt(A, { actor: 'viewer', statement: sql`insert into fa.order_events (workspace_id, order_id, kind, note) values (${A.ws}, ${A.ids.order}, 'note', 'n')`, op: 'insert' })).toBe(false)
   })

@@ -24,6 +24,7 @@ beforeAll(async () => {
     "insert into fa.customers (workspace_id, email, name, city) values ($1, 'formula@example.test', '=HYPERLINK(\"x\")', 'Zürich, Altstadt'), ($1, 'olga@example.ru', 'Ольга Смирнова', null)",
     [ctx.workspaceId])
 })
+
 afterAll(closeAll)
 
 const read = async (stream: ReadableStream<Uint8Array>): Promise<{ bom: boolean; lines: string[] }> => {

@@ -52,6 +52,7 @@ beforeAll(async () => {
   template = rows.find(r => r.kind === 'template')!.id
   owner = rows.find(r => r.kind === 'owner')!.id
 })
+
 afterAll(closeAll)
 
 describe('create_sandbox', () => {
@@ -141,6 +142,7 @@ describe('create_sandbox', () => {
 
   it('never reads the owner workspace', async () => {
     await asSchemaOwner(admin, c => c.query("insert into fa.collections (workspace_id, slug, name) values ($1, 'owner-only', 'Owner only')", [owner]))
+
     try {
       const entry = await create(randomIpHash())
       const { rowCount } = await admin.query("select 1 from fa.collections where workspace_id = $1 and slug = 'owner-only'", [entry.sandbox_id])
@@ -157,7 +159,9 @@ describe('create_sandbox', () => {
 
     const ip = randomIpHash()
 
-    for (let i = 0; i < 5; i++) expect((await create(ip)).outcome).toBe('created')
+    for (let i = 0; i < 5; i++) {
+      expect((await create(ip)).outcome).toBe('created')
+    }
 
     const sixth = await create(ip)
 
@@ -211,6 +215,7 @@ describe('create_sandbox', () => {
       const [a, b] = await Promise.all([create(randomIpHash()), create(randomIpHash())])
 
       made.push(...[a.sandbox_id, b.sandbox_id].filter((id): id is string => id !== null))
+
       expect([a.outcome, b.outcome]).toEqual(['created', 'created'])
       expect((await admin.query('select 1 from fa.workspaces where id = any($1::uuid[])', [idle])).rowCount).toBe(0)
       expect((await admin.query('select 1 from fa.workspaces where id = any($1::uuid[])', [active])).rowCount).toBe(active.length)

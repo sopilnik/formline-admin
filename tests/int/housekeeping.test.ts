@@ -27,6 +27,7 @@ beforeAll(() => {
   admin = adminPool()
   app = appPool()
 })
+
 afterAll(closeAll)
 
 describe('delete_expired_sandboxes', () => {
@@ -39,6 +40,7 @@ describe('delete_expired_sandboxes', () => {
     await admin.query("update fa.workspaces set last_active_at = now() - interval '2 hours 1 minute' where id = $1", [idle.workspaceId])
     await asSchemaOwner(admin, c => c.query(
       "insert into fa.images (workspace_id, storage_path, source, width, height, bytes) values ($1, 'media/expired-upload.webp', 'upload', 10, 10, 100)", [expired.workspaceId]))
+
     try {
       const { rows } = await app.query<{ n: number }>('select fa.delete_expired_sandboxes() as n')
 
@@ -79,10 +81,12 @@ describe('purge_housekeeping', () => {
 
     await admin.query("insert into fa.rate_limits (purpose, subject, window_start, count) values ('t', $1, now() - interval '2 days', 1), ('t', $2, now(), 1)", [old, fresh])
     await admin.query("insert into fa.used_challenges (challenge_hash, used_at) values ($1, now() - interval '2 days'), ($2, now())", [hash(old), hash(fresh)])
+
     await asSchemaOwner(admin, async c => {
       await c.query("insert into fa.sessions (workspace_id, id, user_id, expires_at) values ($1, $2, $3, now() - interval '1 second'), ($1, $4, $3, now() + interval '1 hour')", [workspaceId, hash(`s-${old}`), userId, hash(`s-${fresh}`)])
       await c.query("insert into fa.activity_log (workspace_id, actor_user_id, action, at) values ($1, $2, 'auth.sign_in_failed', now() - interval '91 days'), ($1, $2, 'auth.sign_in_failed', now() - interval '1 day')", [workspaceId, userId])
     })
+
     try {
       const { rows } = await app.query<{ purged_rate_limits: number; purged_challenges: number; purged_sessions: number; purged_failed_sign_ins: number }>('select * from fa.purge_housekeeping()')
 
@@ -116,6 +120,7 @@ describe('drainPendingDeletions', () => {
     const storage = memoryStorage(['media/ok.webp', 'media/bad.webp', 'media/later.webp'])
 
     storage.failing.add('media/bad.webp')
+
     try {
       expect(await drainPendingDeletions(storage, app)).toEqual({ deleted: 1, retried: 1 })
       expect(storage.paths.has('media/ok.webp')).toBe(false)
@@ -128,7 +133,9 @@ describe('drainPendingDeletions', () => {
       expect(first.rows[0]?.attempts).toBe(1)
       expect(first.rows[0]!.minutes).toBeGreaterThan(58)
       expect(first.rows[0]!.minutes).toBeLessThanOrEqual(60)
+
       await admin.query("update fa.pending_media_deletions set next_attempt_at = now() where storage_path = 'media/bad.webp'")
+
       expect(await drainPendingDeletions(storage, app)).toEqual({ deleted: 0, retried: 1 })
 
       const second = await admin.query<{ attempts: number; minutes: number }>(
@@ -152,6 +159,7 @@ describe('drainPendingDeletions', () => {
 
     try {
       await drainPendingDeletions(storage, app)
+
       expect([storage.paths.has(path), storage.paths.has(thumb)]).toEqual([false, false])
     } finally {
       await admin.query('delete from fa.pending_media_deletions where storage_path = $1', [path])
@@ -168,11 +176,16 @@ describe('drainPendingDeletions', () => {
     const remove = storage.delete.bind(storage)
 
     storage.delete = async target => {
-      if (!MEDIA_PATH.test(target)) throw new Error(`not a media path: ${target}`)
+      if (!MEDIA_PATH.test(target)) {
+        throw new Error(`not a media path: ${target}`)
+      }
+
       await remove(target)
     }
+
     try {
       await drainPendingDeletions(storage, app)
+
       expect(storage.paths.has(path)).toBe(false)
       expect((await admin.query('select 1 from fa.pending_media_deletions where storage_path = $1', [path])).rowCount).toBe(0)
     } finally {
@@ -221,7 +234,9 @@ describe('drainPendingDeletions', () => {
   it('runDailyJob goes on past a failing step and names it in the report and the log', async () => {
     const refusing = new Proxy(app, {
       get(target, key, receiver) {
-        if (key !== 'query') return Reflect.get(target, key, receiver)
+        if (key !== 'query') {
+          return Reflect.get(target, key, receiver)
+        }
 
         return (text: unknown, ...rest: unknown[]) => String(text).includes('purge_housekeeping')
           ? Promise.reject(new Error('purge refused'))

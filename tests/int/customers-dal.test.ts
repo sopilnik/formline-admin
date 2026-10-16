@@ -47,6 +47,7 @@ beforeAll(async () => {
   await admin.query("insert into fa.customers (workspace_id, email, name, city, country) values ($1, 'olga.smirnova@example.ru', 'Ольга Смирнова', 'Riga', 'LV')", [owner.workspaceId])
   await admin.query("insert into fa.customers (workspace_id, email, name) values ($1, 'only.there@example.test', 'Only There')", [other.workspaceId])
 })
+
 afterAll(closeAll)
 
 const list = (query: Partial<CustomersQuery>, ctx = owner) => withWorkspace(ctx, tx => listCustomers(tx, ctx.workspaceId, { ...DEFAULT_CUSTOMERS_QUERY, ...query }), app)
@@ -56,7 +57,9 @@ async function allPages(query: Partial<CustomersQuery>): Promise<string[]> {
   const first = await list({ ...query, size: 25 })
   const ids = first.rows.map(r => r.id)
 
-  for (let page = 2; page <= first.pages; page++) ids.push(...(await list({ ...query, size: 25, page })).rows.map(r => r.id))
+  for (let page = 2; page <= first.pages; page++) {
+    ids.push(...(await list({ ...query, size: 25, page })).rows.map(r => r.id))
+  }
 
   return ids
 }
@@ -69,6 +72,7 @@ describe('listCustomers', () => {
     expect(page.total).toBe(expected.size)
     expect(page.filtered).toBe(expected.size)
     expect(page.pages).toBe(Math.ceil(expected.size / 100))
+
     for (const row of page.rows) {
       const fact = expected.get(row.id)!
 
@@ -86,6 +90,7 @@ describe('listCustomers', () => {
     const withoutOrders = [...(await facts(owner.workspaceId)).values()].filter(f => f.orders === 0).length
 
     expect(withoutOrders).toBeGreaterThan(1)
+
     for (const dir of ['asc', 'desc'] as const) {
       const ids = await allPages({ sort: 'last', dir })
       const tail = ids.slice(-withoutOrders)

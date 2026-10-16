@@ -27,6 +27,7 @@ beforeAll(async () => {
 
   viewer = { workspaceId: owner.workspaceId, userId: v.rows[0]!.id, role: 'viewer' }
 })
+
 afterAll(closeAll)
 
 const list = (query: Partial<ProductsQuery>, ctx = owner) => withWorkspace(ctx, tx => listProducts(tx, ctx.workspaceId, { ...DEFAULT_PRODUCTS_QUERY, ...query }), app)
@@ -71,6 +72,7 @@ describe('listProducts', () => {
       expect(row.stock, row.slug).toBe(own.reduce((sum, v) => sum + v.stock, 0))
       expect(row.variants, row.slug).toBe(own.length)
     }
+
     expect(page.collections.map(c => c.slug)).toEqual(['monochrome', 'primary', 'pastel', 'night'])
   })
 
@@ -105,6 +107,7 @@ describe('listProducts', () => {
     const ws = await sandbox()
 
     await admin.query("update fa.products set name = 'Тихая гавань' where workspace_id = $1 and slug = 'hush'", [ws.workspaceId])
+
     expect((await list({ q: 'ГАВАНЬ' }, ws)).rows.map(r => r.slug)).toEqual(['hush'])
   })
 
@@ -128,6 +131,7 @@ describe('listProducts', () => {
     expect(second.statusCounts.draft).toBe(30)
     expect((await list({ q: 'paged', page: 3 }, ws)).rows).toEqual([])
     expect((await list({ q: 'paged', size: 50 }, ws)).pages).toBe(1)
+
     // Equal keys (the same moment, no stock) fall back to the name and the id, so pages never overlap.
     for (const sort of ['updated', 'stock', 'price'] as const) {
       const whole = (await list({ q: 'paged', sort, dir: 'desc', size: 100 }, ws)).rows.map(r => r.id)
@@ -180,6 +184,7 @@ describe('listProducts', () => {
     const other = await sandbox()
 
     await admin.query("update fa.products set name = 'Renamed elsewhere' where workspace_id = $1 and slug = 'hush'", [other.workspaceId])
+
     expect((await list({ q: 'Renamed elsewhere' })).rows).toEqual([])
     expect((await list({ q: 'Renamed elsewhere' }, other)).rows.map(r => r.slug)).toEqual(['hush'])
   })

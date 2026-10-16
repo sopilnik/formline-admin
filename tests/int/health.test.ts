@@ -31,7 +31,10 @@ describe('readiness', () => {
       expect(await readiness(pool, 300)).toEqual({ status: 'unavailable', failed: 'db' })
       expect(Date.now() - started).toBeLessThan(2_000)
     } finally {
-      for (const socket of sockets) socket.destroy()
+      for (const socket of sockets) {
+        socket.destroy()
+      }
+
       await pool.end().catch(() => undefined)
       await new Promise(resolve => silent.close(resolve))
     }

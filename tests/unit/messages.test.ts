@@ -24,11 +24,15 @@ describe('messages', () => {
   })
 
   it('have no empty strings', () => {
-    for (const [key, value] of [...english, ...russian]) expect(value.trim(), key).not.toBe('')
+    for (const [key, value] of [...english, ...russian]) {
+      expect(value.trim(), key).not.toBe('')
+    }
   })
 
   it('use the same arguments in both languages', () => {
-    for (const [key, value] of english) expect(argumentNames(russian.get(key) ?? ''), key).toEqual(argumentNames(value))
+    for (const [key, value] of english) {
+      expect(argumentNames(russian.get(key) ?? ''), key).toEqual(argumentNames(value))
+    }
   })
 
   it('put a given name in quotes inside a Russian sentence', () => {
@@ -36,7 +40,9 @@ describe('messages', () => {
     const bare = new Set(['theme.label', 'language.label', 'user.menu'])
 
     for (const [key, value] of russian) {
-      if (value.includes('{name}') && !bare.has(key)) expect(value, key).toContain('«{name}»')
+      if (value.includes('{name}') && !bare.has(key)) {
+        expect(value, key).toContain('«{name}»')
+      }
     }
   })
 })

@@ -27,6 +27,7 @@ beforeAll(async () => {
 
   viewer = { workspaceId: owner.workspaceId, userId: v.rows[0]!.id, role: 'viewer' }
 })
+
 afterAll(closeAll)
 
 const list = (query: Partial<OrdersQuery>, ctx = owner) => withWorkspace(ctx, tx => listOrders(tx, ctx.workspaceId, { query: { ...DEFAULT_ORDERS_QUERY, ...query }, now, timeZone: tz }), app)
@@ -42,7 +43,11 @@ describe('listOrders', () => {
     expect(page.total).toBe(await countWhere('true'))
     expect(page.filtered).toBe(page.total)
     expect(page.pages).toBe(Math.ceil(page.total / 25))
-    for (let i = 1; i < page.rows.length; i++) expect(page.rows[i - 1]!.placedAt.getTime()).toBeGreaterThanOrEqual(page.rows[i]!.placedAt.getTime())
+
+    for (let i = 1; i < page.rows.length; i++) {
+      expect(page.rows[i - 1]!.placedAt.getTime()).toBeGreaterThanOrEqual(page.rows[i]!.placedAt.getTime())
+    }
+
     expect(Object.values(page.statusCounts).reduce((a, b) => a + b, 0)).toBe(page.total)
 
     const first = page.rows[0]!
@@ -125,6 +130,7 @@ describe('listOrders', () => {
 
     await placeOrder(admin, owner.workspaceId, { number: 91004, customerId: ann, status: 'paid', subtotalCents: 3000, placedAt: now })
     await placeOrder(admin, owner.workspaceId, { number: 91005, customerId: joann, status: 'paid', subtotalCents: 3000, placedAt: now })
+
     expect((await list({ q: 'ann@qa2-mail.test' })).rows.map(r => r.number)).toEqual([91004])
     expect((await list({ q: 'ANN@QA2-mail.test' })).rows.map(r => r.number)).toEqual([91004])
     expect((await list({ q: 'qa2-mail' })).rows.map(r => r.number).sort((a, b) => a - b)).toEqual([91004, 91005])
@@ -156,7 +162,9 @@ describe('changeOrderStatus', () => {
 
     const after = await stockOf(order.id)
 
-    for (const [i, line] of after.entries()) expect(line.stock).toBe(before[i]!.stock + line.qty)
+    for (const [i, line] of after.entries()) {
+      expect(line.stock).toBe(before[i]!.stock + line.qty)
+    }
 
     const updated = await admin.query<{ status: string; moved: boolean }>('select status, updated_at > placed_at as moved from fa.orders where workspace_id = $1 and id = $2', [owner.workspaceId, order.id])
 

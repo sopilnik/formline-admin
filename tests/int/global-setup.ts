@@ -13,7 +13,10 @@ async function waitForDatabase(url: string): Promise<void> {
 
       return
     } catch (error) {
-      if (attempt >= 30) throw new Error(`database not reachable at ${url}; run pnpm db:up`, { cause: error })
+      if (attempt >= 30) {
+        throw new Error(`database not reachable at ${url}; run pnpm db:up`, { cause: error })
+      }
+
       await sleep(1000)
     } finally {
       await client.end().catch(() => undefined)
@@ -27,6 +30,7 @@ export default async function setup(): Promise<void> {
   const admin = new pg.Client({ connectionString: ADMIN_URL })
 
   await admin.connect()
+
   try {
     // FORCE ends PgBouncer's server connections left from the previous run.
     await admin.query(`drop database if exists ${TEST_DB} with (force)`)
@@ -34,5 +38,6 @@ export default async function setup(): Promise<void> {
   } finally {
     await admin.end()
   }
+
   await migrate({ migratorUrl: MIGRATOR_URL, appUrl: APP_POOLED_URL })
 }

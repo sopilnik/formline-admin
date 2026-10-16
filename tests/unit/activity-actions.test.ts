@@ -8,7 +8,9 @@ function files(dir: string, ext: RegExp): string[] {
   return readdirSync(dir).flatMap(name => {
     const path = join(dir, name)
 
-    if (statSync(path).isDirectory()) return files(path, ext)
+    if (statSync(path).isDirectory()) {
+      return files(path, ext)
+    }
 
     return ext.test(name) ? [path] : []
   })
@@ -21,15 +23,25 @@ function writtenActions(): Set<string> {
   for (const file of [...files('src/server', /\.ts$/), ...files('app', /\.tsx?$/)]) {
     const source = readFileSync(file, 'utf8')
 
-    if (!source.includes('logActivity(') && !source.includes('logExport(')) continue
+    if (!source.includes('logActivity(') && !source.includes('logExport(')) {
+      continue
+    }
+
     for (const match of source.matchAll(/action: (?:[a-z]+ \? )?'([a-z_]+\.[a-z_]+)'(?: : '([a-z_]+\.[a-z_]+)')?/g)) {
       found.add(match[1]!)
-      if (match[2]) found.add(match[2])
+
+      if (match[2]) {
+        found.add(match[2])
+      }
     }
-    for (const match of source.matchAll(/logExport\(\w+, '([a-z_]+\.[a-z_]+)'/g)) found.add(match[1]!)
+    for (const match of source.matchAll(/logExport\(\w+, '([a-z_]+\.[a-z_]+)'/g)) {
+      found.add(match[1]!)
+    }
   }
   for (const file of files('src/server/db/migrations', /\.sql$/)) {
-    for (const match of readFileSync(file, 'utf8').matchAll(/insert into fa\.activity_log[^;]*?'([a-z_]+\.[a-z_]+)'/g)) found.add(match[1]!)
+    for (const match of readFileSync(file, 'utf8').matchAll(/insert into fa\.activity_log[^;]*?'([a-z_]+\.[a-z_]+)'/g)) {
+      found.add(match[1]!)
+    }
   }
 
   return found

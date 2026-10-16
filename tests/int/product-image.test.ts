@@ -25,6 +25,7 @@ beforeAll(() => {
   admin = adminPool()
   app = appPool()
 })
+
 afterAll(async () => {
   // The deletion queue is global: housekeeping.test.ts drains it and counts what it finds.
   await admin.query("delete from fa.pending_media_deletions where split_part(storage_path, '/', 2) = any($1::text[])", [workspaces])
@@ -50,7 +51,10 @@ describe('storeProductImage', () => {
     const result = await storeProductImage(owner, { productId: product.id, image: webp(), storage }, app)
 
     expect(result).toMatchObject({ ok: true, width: 720, height: 1018 })
-    if (!result.ok) return
+
+    if (!result.ok) {
+      return
+    }
 
     const path = mediaPath(owner.workspaceId, result.imageId)
 
@@ -73,7 +77,10 @@ describe('storeProductImage', () => {
     const first = await storeProductImage(owner, { productId: product.id, image: webp(), storage }, app)
     const second = await storeProductImage(owner, { productId: product.id, image: webp(), storage }, app)
 
-    if (!first.ok || !second.ok) throw new Error('upload refused')
+    if (!first.ok || !second.ok) {
+      throw new Error('upload refused')
+    }
+
     expect(await queued(mediaPath(owner.workspaceId, first.imageId))).toBe(1)
     expect(await removeProductImage(owner, product.id, app)).toEqual({ ok: true })
     expect((await productOf(owner, 'loud')).image_id).toBeNull()
@@ -101,9 +108,13 @@ describe('storeProductImage', () => {
     const put = storage.put.bind(storage)
 
     storage.put = async (path, bytes) => {
-      if (path.endsWith('.thumb.webp')) throw new Error(`refused: ${path}`)
+      if (path.endsWith('.thumb.webp')) {
+        throw new Error(`refused: ${path}`)
+      }
+
       await put(path, bytes)
     }
+
     await expect(storeProductImage(owner, { productId: product.id, image: webp(), storage }, app)).rejects.toThrow('refused')
     expect(storage.files.size).toBe(0)
 
@@ -112,7 +123,9 @@ describe('storeProductImage', () => {
 
     const refusing = new Proxy(app, {
       get(target, key, receiver) {
-        if (key !== 'query') return Reflect.get(target, key, receiver)
+        if (key !== 'query') {
+          return Reflect.get(target, key, receiver)
+        }
 
         return (text: unknown, ...rest: unknown[]) => String(text).includes('pending_media_deletions')
           ? Promise.reject(new Error('queue refused'))
@@ -152,11 +165,13 @@ describe('storeProductImage', () => {
     const big = (await productOf(heavy, 'hush')).id
 
     expect(await storeProductImage(heavy, { productId: big, image: webp(MEDIA_CAP.bytes + 1), storage }, app)).toEqual({ ok: false, reason: 'cap' })
+
     // The cap holds the sum: 500 bytes short of it, a 1000-byte upload crosses it and a 400-byte one fits.
     await admin.query(
       `insert into fa.images (workspace_id, id, storage_path, source, width, height, bytes)
        values ($1::uuid, gen_random_uuid(), 'ws/' || $1::text || '/' || gen_random_uuid() || '.webp', 'upload', 10, 10, $2)`,
       [heavy.workspaceId, MEDIA_CAP.bytes - 500])
+
     expect(await storeProductImage(heavy, { productId: big, image: webp(1000), storage }, app)).toEqual({ ok: false, reason: 'cap' })
     expect(await storeProductImage(heavy, { productId: big, image: webp(400), storage }, app)).toMatchObject({ ok: true })
     // Three uploads went through, each with its small copy.

@@ -14,6 +14,7 @@ beforeAll(() => {
   admin = adminPool()
   app = appPool()
 })
+
 afterAll(closeAll)
 
 describe('fixed windows', () => {
@@ -23,9 +24,13 @@ describe('fixed windows', () => {
     const s = subject()
     const verdicts = []
 
-    for (let i = 0; i < 4; i++) verdicts.push(await consume(LIMIT, s, app))
+    for (let i = 0; i < 4; i++) {
+      verdicts.push(await consume(LIMIT, s, app))
+    }
+
     expect(verdicts.map(v => v.count)).toEqual([1, 2, 3, 4])
     expect(verdicts.map(v => v.allowed)).toEqual([true, true, true, false])
+
     for (const v of verdicts) {
       expect(v.retryAfterSeconds).toBeGreaterThanOrEqual(1)
       expect(v.retryAfterSeconds).toBeLessThanOrEqual(60)
@@ -38,7 +43,11 @@ describe('fixed windows', () => {
     const s = subject()
 
     expect(await peek(LIMIT, s, app)).toMatchObject({ count: 0, allowed: true })
-    for (let i = 0; i < 3; i++) await consume(LIMIT, s, app)
+
+    for (let i = 0; i < 3; i++) {
+      await consume(LIMIT, s, app)
+    }
+
     expect(await peek(LIMIT, s, app)).toMatchObject({ count: 3, allowed: false })
     expect((await peek(LIMIT, s, app)).count).toBe(3)
   })
@@ -47,6 +56,7 @@ describe('fixed windows', () => {
     const s = subject()
 
     await admin.query("insert into fa.rate_limits (purpose, subject, window_start, count) values ($1, $2, now() - interval '5 minutes', 99)", [LIMIT.purpose, s])
+
     expect((await consume(LIMIT, s, app)).count).toBe(1)
   })
 
@@ -65,6 +75,7 @@ describe('locks', () => {
     const s = subject()
 
     expect(await lockRemaining('test.lock', s, app)).toBe(0)
+
     await setLock('test.lock', { subject: s, seconds: 900 }, app)
 
     const left = await lockRemaining('test.lock', s, app)
@@ -78,6 +89,7 @@ describe('locks', () => {
 
     await setLock('test.lock', { subject: s, seconds: 3600 }, app)
     await admin.query("insert into fa.rate_limits (purpose, subject, window_start, count) values ('test.lock', $1, now() - interval '1 minute', 900)", [s])
+
     expect(await lockRemaining('test.lock', s, app)).toBeGreaterThan(3590)
   })
 
@@ -85,6 +97,7 @@ describe('locks', () => {
     const s = subject()
 
     await admin.query("insert into fa.rate_limits (purpose, subject, window_start, count) values ('test.lock', $1, now() - interval '2 hours', 3600)", [s])
+
     expect(await lockRemaining('test.lock', s, app)).toBe(0)
 
     // Set 50 minutes ago for an hour: ten minutes are left, whatever window the clock is in now.
@@ -104,6 +117,7 @@ describe('locks', () => {
     await setLock('test.lock', { subject: s, seconds: 3600 }, app)
     await consume(LIMIT, s, app)
     await clearSubject(s, app)
+
     expect(await lockRemaining('test.lock', s, app)).toBe(0)
     expect((await peek(LIMIT, s, app)).count).toBe(0)
   })
@@ -142,8 +156,12 @@ describe('claimed attempts', () => {
 
     const claim = await claimAttempt(GUARD, s, app)
 
-    if (!claim.ok) throw new Error('refused')
+    if (!claim.ok) {
+      throw new Error('refused')
+    }
+
     expect(claim.lockStart).toEqual(expect.any(String))
+
     await giveBack(GUARD, { subject: s, claim }, app)
 
     expect(await lockRemaining(GUARD.lock, s, app)).toBe(0)
@@ -155,8 +173,11 @@ describe('claimed attempts', () => {
     const counted = await consume(LIMIT, s, app)
 
     await release(LIMIT, { subject: s, windowStart: new Date(counted.windowStart.getTime() - LIMIT.windowSeconds * 1000) }, app)
+
     expect((await peek(LIMIT, s, app)).count).toBe(1)
+
     await release(LIMIT, { subject: s, windowStart: counted.windowStart }, app)
+
     expect((await peek(LIMIT, s, app)).count).toBe(0)
   })
 })

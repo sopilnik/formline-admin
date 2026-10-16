@@ -34,6 +34,7 @@ beforeAll(async () => {
   owner = await sandbox()
   other = await sandbox()
 })
+
 afterAll(closeAll)
 
 describe('saveProfile', () => {

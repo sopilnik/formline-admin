@@ -20,7 +20,9 @@ describe('vendored ui primitives', () => {
 
   it.each(files)('%s pairs every focus style with the solid outline', name => {
     for (const value of classStrings(read(name))) {
-      if (/\bfocus(-visible)?:/.test(value)) expect(value).toMatch(/focus-visible:outline-ring/)
+      if (/\bfocus(-visible)?:/.test(value)) {
+        expect(value).toMatch(/focus-visible:outline-ring/)
+      }
     }
   })
 

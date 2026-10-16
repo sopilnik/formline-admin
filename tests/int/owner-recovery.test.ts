@@ -27,10 +27,12 @@ beforeAll(async () => {
   ownerId = await ensureOwner(admin, app)
   ownerWorkspace = (await admin.query<{ id: string }>("select id from fa.workspaces where kind = 'owner'")).rows[0]!.id
 })
+
 afterAll(async () => {
   // The owner is shared by every auth test file: a recovery with the shared values puts the password and the authenticator
   // back, whatever a test below left.
   expect((await recover(await issue())).ok).toBe(true)
+
   await closeAll()
 })
 
@@ -77,7 +79,10 @@ describe('owner recovery', () => {
 
     const result = await recover(await issue(), { password: 'brand-new-password-5582' })
 
-    if (!result.ok) throw new Error(result.error)
+    if (!result.ok) {
+      throw new Error(result.error)
+    }
+
     expect(result.recoveryCodes).toHaveLength(10)
     expect(await validateSessionToken(old.token, app)).toBeNull()
     expect(await count('select count(*)::int as n from fa.passkeys where user_id = $1', [ownerId])).toBe(0)
@@ -100,6 +105,7 @@ describe('owner recovery', () => {
     const code = await issue()
 
     await admin.query("update fa.owner_recovery_codes set expires_at = now() - interval '1 second' where code_hash = $1", [hashToken(code)])
+
     expect(await recover(code)).toEqual({ ok: false, error: 'recovery_invalid', field: 'recoveryCode' })
   })
 
@@ -130,6 +136,7 @@ describe('owner recovery', () => {
 
       results.push(await recoverOwner({ recoveryCode: 'a'.repeat(32), password: OWNER.password, totpSecret: formatTotpSecret(OWNER_TOTP_SECRET), code: totp.code, ip: '203.0.113.250', userAgent: null }, { pool: app, now: totp.now, isBreached: noBreach }))
     }
+
     expect(results[5]).toMatchObject({ ok: false, error: 'rate_limited' })
   })
 })

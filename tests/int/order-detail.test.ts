@@ -19,6 +19,7 @@ beforeAll(async () => {
   workspaceId = (await createSandbox(app)).workspaceId
   users = await memberIds(admin, workspaceId)
 })
+
 afterAll(closeAll)
 
 const ctx = (role: 'owner' | 'manager' | 'viewer'): WorkspaceContext => ({ workspaceId, userId: users[role]!, role })
@@ -39,14 +40,20 @@ describe('getOrder', () => {
     const lines = await admin.query('select 1 from fa.order_lines where workspace_id = $1 and order_id = $2', [workspaceId, row!.id])
 
     expect(order.lines).toHaveLength(lines.rowCount!)
-    for (const line of order.lines) expect(line.product?.imageSrc).toMatch(/^\/posters\/[a-z-]+\.webp$/)
+
+    for (const line of order.lines) {
+      expect(line.product?.imageSrc).toMatch(/^\/posters\/[a-z-]+\.webp$/)
+    }
 
     const statuses = order.history.filter(e => e.kind === 'status')
 
     expect(statuses[0]).toMatchObject({ from: null, to: 'paid', actorName: null })
     expect(statuses.at(-1)).toMatchObject({ from: 'shipped', to: 'delivered' })
     expect(statuses.at(-1)!.actorName).toMatch(/^(Noah Becker|Priya Nair)$/)
-    for (let i = 1; i < order.history.length; i++) expect(order.history[i]!.at.getTime()).toBeGreaterThanOrEqual(order.history[i - 1]!.at.getTime())
+
+    for (let i = 1; i < order.history.length; i++) {
+      expect(order.history[i]!.at.getTime()).toBeGreaterThanOrEqual(order.history[i - 1]!.at.getTime())
+    }
   })
 
   it('flags a line the catalog does not know, and knows no order it does not hold', async () => {

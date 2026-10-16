@@ -10,6 +10,7 @@ let app: pg.Pool
 beforeAll(() => {
   app = appPool()
 })
+
 afterAll(closeAll)
 
 describe('withWorkspace', () => {

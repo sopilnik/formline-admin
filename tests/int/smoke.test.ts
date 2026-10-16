@@ -16,6 +16,7 @@ describe('local database stack', () => {
     const pooled = new pg.Client({ connectionString: `postgres://postgres:postgres@127.0.0.1:56432/${TEST_DB}` })
 
     await pooled.connect()
+
     try {
       const { rows } = await pooled.query<{ db: string }>('select current_database() as db')
 

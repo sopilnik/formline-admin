@@ -14,5 +14,7 @@ export function waitForRoom(nowMs: number, windowSeconds: number, seconds: numbe
 export async function roomInWindow(windowSeconds: number, seconds: number): Promise<void> {
   const ms = waitForRoom(Date.now(), windowSeconds, seconds)
 
-  if (ms > 0) await new Promise(resolve => setTimeout(resolve, ms))
+  if (ms > 0) {
+    await new Promise(resolve => setTimeout(resolve, ms))
+  }
 }

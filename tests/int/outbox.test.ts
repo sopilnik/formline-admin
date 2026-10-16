@@ -29,6 +29,7 @@ beforeAll(async () => {
 
   manager = { workspaceId: owner.workspaceId, userId: m.rows[0]!.id, role: 'manager' }
 })
+
 afterAll(closeAll)
 
 describe('securityNotice', () => {

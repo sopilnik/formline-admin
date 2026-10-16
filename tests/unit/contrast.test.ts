@@ -12,13 +12,17 @@ function readTokens(): Map<string, Pair> {
   for (const m of root.matchAll(/--([\w-]+):\s*light-dark\((#[0-9A-Fa-f]{6}),\s*(#[0-9A-Fa-f]{6})\);/g)) {
     tokens.set(m[1]!, { light: m[2]!, dark: m[3]! })
   }
-  for (const m of root.matchAll(/--([\w-]+):\s*(#[0-9A-Fa-f]{6});/g)) tokens.set(m[1]!, { light: m[2]!, dark: m[2]! })
+  for (const m of root.matchAll(/--([\w-]+):\s*(#[0-9A-Fa-f]{6});/g)) {
+    tokens.set(m[1]!, { light: m[2]!, dark: m[2]! })
+  }
 
   // The sidebar surface is the one fixed token that follows the page theme.
   const darkSidebar = /:root\.dark\s*\{\s*--sidebar:\s*(#[0-9A-Fa-f]{6});/.exec(css)?.[1]
   const sidebar = tokens.get('sidebar')
 
-  if (sidebar && darkSidebar) tokens.set('sidebar', { light: sidebar.light, dark: darkSidebar })
+  if (sidebar && darkSidebar) {
+    tokens.set('sidebar', { light: sidebar.light, dark: darkSidebar })
+  }
 
   return tokens
 }
@@ -44,6 +48,7 @@ function expectContrast(fg: string, bg: string, min: number): void {
 
   expect(f, fg).toBeDefined()
   expect(b, bg).toBeDefined()
+
   for (const theme of ['light', 'dark'] as const) {
     const ratio = contrast(f![theme], b![theme])
 

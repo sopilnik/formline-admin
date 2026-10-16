@@ -38,6 +38,7 @@ beforeAll(async () => {
   await entry({ actor: ids.admin, action: 'product.deleted', entityType: 'product', entityId: randomUUID(), details: { slug: 'gone', name: 'Gone Poster', variants: 3 }, daysAgo: 2 })
   await entry({ actor: null, action: 'order.status_changed', entityType: 'order', entityId: order.id, details: { number: order.number, from: 'processing', to: 'shipped' }, daysAgo: 1 })
 })
+
 afterAll(closeAll)
 
 const list = (query: Partial<ActivityQuery>, ctx = owner) =>
@@ -67,7 +68,9 @@ describe('listActivity', () => {
   })
 
   it('pages the log', async () => {
-    for (let i = 0; i < 26; i++) await entry({ actor: ids.owner, action: 'auth.sign_in', details: { method: 'password' }, daysAgo: 20 })
+    for (let i = 0; i < 26; i++) {
+      await entry({ actor: ids.owner, action: 'auth.sign_in', details: { method: 'password' }, daysAgo: 20 })
+    }
 
     const first = await list({})
 

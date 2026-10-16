@@ -13,7 +13,9 @@ function sourceFiles(dir: string): string[] {
   return readdirSync(dir).flatMap(name => {
     const path = join(dir, name)
 
-    if (statSync(path).isDirectory()) return sourceFiles(path)
+    if (statSync(path).isDirectory()) {
+      return sourceFiles(path)
+    }
 
     return /\.tsx?$/.test(name) && !/\.test\.tsx?$/.test(name) ? [path] : []
   })
@@ -38,9 +40,14 @@ function importBase(from: string, specifier: string): string | null {
 function resolveImport(from: string, specifier: string): string | null {
   const base = importBase(from, specifier)
 
-  if (base === null) return null
+  if (base === null) {
+    return null
+  }
+
   for (const candidate of [base, `${base}.ts`, `${base}.tsx`, join(base, 'index.ts'), join(base, 'index.tsx')]) {
-    if (existsSync(candidate) && statSync(candidate).isFile()) return candidate
+    if (existsSync(candidate) && statSync(candidate).isFile()) {
+      return candidate
+    }
   }
 
   return null
@@ -50,7 +57,10 @@ const IMPORT = /^\s*(?:import|export)\s+(?!type\b)(?:[^'";]*?\sfrom\s+)?['"]([^'
 
 /** The chain of files from `file` to a forbidden package, or null. A server action module ends the walk: the browser gets a reference to it. */
 function forbiddenChain(file: string, seen = new Set<string>()): string[] | null {
-  if (seen.has(file)) return null
+  if (seen.has(file)) {
+    return null
+  }
+
   seen.add(file)
 
   const source = readFileSync(file, 'utf8')
@@ -58,15 +68,21 @@ function forbiddenChain(file: string, seen = new Set<string>()): string[] | null
   for (const match of source.matchAll(IMPORT)) {
     const specifier = match[1]!
 
-    if (FORBIDDEN.test(specifier)) return [relative(root, file), specifier]
+    if (FORBIDDEN.test(specifier)) {
+      return [relative(root, file), specifier]
+    }
 
     const next = resolveImport(file, specifier)
 
-    if (!next || directive(readFileSync(next, 'utf8')) === 'server') continue
+    if (!next || directive(readFileSync(next, 'utf8')) === 'server') {
+      continue
+    }
 
     const chain = forbiddenChain(next, seen)
 
-    if (chain) return [relative(root, file), ...chain]
+    if (chain) {
+      return [relative(root, file), ...chain]
+    }
   }
 
   return null

@@ -22,6 +22,7 @@ beforeAll(async () => {
 
   ctx = { workspaceId, userId, role: 'viewer' }
 })
+
 afterAll(closeAll)
 
 const read = <T>(fn: Parameters<typeof withWorkspace<T>>[1]) => withWorkspace(ctx, fn, app)

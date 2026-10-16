@@ -44,6 +44,7 @@ beforeAll(async () => {
   current = await device(workspaceId, userId, null)
   other = await device(workspaceId, userId, null)
 })
+
 afterAll(closeAll)
 
 describe('the authenticator app', () => {
@@ -56,7 +57,11 @@ describe('the authenticator app', () => {
     const result = await enableOwnTotp(current, { secret: formatTotpSecret(SECRET), code: codeAt(SECRET), ip: null }, { pool: app, now })
 
     expect(result.ok).toBe(true)
-    if (!result.ok) return
+
+    if (!result.ok) {
+      return
+    }
+
     expect(result.recoveryCodes).toHaveLength(10)
 
     const stored = await self()
@@ -110,6 +115,7 @@ describe('in the owner workspace', () => {
 
     // The authenticator is the owner's only factor here, whatever another file left behind.
     await admin.query('delete from fa.passkeys where workspace_id = $1 and user_id = $2', [ownerWorkspace, ownerId])
+
     expect(await disableOwnTotp(fresh, { ip: null }, { pool: app })).toEqual({ ok: false, error: 'last_factor' })
 
     const stillThere = await admin.query<{ on: boolean }>('select totp_secret_enc is not null as on from fa.users where workspace_id = $1 and id = $2', [ownerWorkspace, ownerId])

@@ -32,6 +32,7 @@ describe('notification messages', () => {
     }))
 
     expect(keys.size).toBe(20)
+
     for (const key of keys) {
       expect(typeof lookup(en, `notifications.kinds.${key}`), key).toBe('string')
       expect(typeof lookup(ru, `notifications.kinds.${key}`), key).toBe('string')

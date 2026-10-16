@@ -20,6 +20,7 @@ beforeAll(async () => {
   // Start without an owner; the successful test below creates it again with the shared values.
   await admin.query("delete from fa.users u using fa.workspaces w where w.id = u.workspace_id and w.kind = 'owner'")
 })
+
 afterAll(closeAll)
 
 async function attempt(overrides: Partial<SetupInput> = {}, isBreached = noBreach) {
@@ -86,6 +87,7 @@ describe('setupOwner before the owner exists', () => {
 
       results.push(await setupOwner(input, { pool: app, now: totp.now, isBreached: noBreach }))
     }
+
     expect(results.slice(0, 5).every(r => !r.ok && r.error === 'token_invalid')).toBe(true)
     expect(results[5]).toMatchObject({ ok: false, error: 'rate_limited' })
   })
@@ -107,7 +109,10 @@ describe('setupOwner', () => {
   it('creates the owner with an encrypted factor, ten recovery codes and a verified session', async () => {
     const result = await attempt()
 
-    if (!result.ok) throw new Error(result.error)
+    if (!result.ok) {
+      throw new Error(result.error)
+    }
+
     expect(result.recoveryCodes).toHaveLength(10)
 
     const { rows } = await admin.query(
@@ -131,6 +136,7 @@ describe('setupOwner', () => {
 
   it('refuses a second owner', async () => {
     await ensureOwner(admin, app)
+
     expect(await attempt({ email: 'second@formline.test' })).toEqual({ ok: false, error: 'owner_exists' })
     expect(await owners()).toBe(1)
   })

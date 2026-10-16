@@ -21,6 +21,7 @@ beforeAll(async () => {
   ownerId = await ensureOwner(admin, app)
   ownerWorkspace = (await admin.query<{ id: string }>("select id from fa.workspaces where kind = 'owner'")).rows[0]!.id
 })
+
 afterAll(async () => {
   // The owner is shared by every auth test file: the password goes back to the one they sign in with.
   const passwordHash = await hashPassword(OWNER.password)
@@ -61,7 +62,10 @@ describe('changeOwnPassword', () => {
     const other = await device(ownerWorkspace, { userId: ownerId, userAgent: 'Safari, iOS' })
     const result = await changeOwnPassword(current, { password: 'lantern-harbor-quiet-9083', ip: '192.0.2.10' }, { pool: app, isBreached: noBreach })
 
-    if (!result.ok) throw new Error(result.error)
+    if (!result.ok) {
+      throw new Error(result.error)
+    }
+
     // At least the other device; earlier test files may have left more of the owner's sessions.
     expect(result.signedOut).toBeGreaterThanOrEqual(1)
     expect(await verifyPassword(await passwordHashOf(), 'lantern-harbor-quiet-9083')).toBe(true)

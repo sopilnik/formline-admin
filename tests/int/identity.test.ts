@@ -20,6 +20,7 @@ beforeAll(async () => {
   managerA = await createUser(admin, { workspaceId: wsA, role: 'manager' })
   viewerA = await createUser(admin, { workspaceId: wsA, role: 'viewer' })
 })
+
 afterAll(closeAll)
 
 /** Sets the request identity the way withWorkspace will, inside the current transaction. */
@@ -32,6 +33,7 @@ describe('workspaces', () => {
     await inRollback(admin, async c => {
       await expect(c.query("insert into fa.workspaces (kind) values ('sandbox')")).rejects.toThrow(/check constraint/)
     })
+
     await inRollback(admin, async c => {
       await expect(c.query("insert into fa.workspaces (kind, expires_at) values ('owner', now())")).rejects.toThrow(/check constraint/)
     })
@@ -41,6 +43,7 @@ describe('workspaces', () => {
     await inRollback(admin, async c => {
       await expect(c.query("insert into fa.workspaces (kind) values ('template')")).rejects.toThrow(/workspaces_one_template/)
     })
+
     await inRollback(admin, async c => {
       // The migrations create the owner workspace (0005_sessions.sql).
       await expect(c.query("insert into fa.workspaces (kind) values ('owner')")).rejects.toThrow(/workspaces_one_owner/)
@@ -73,6 +76,7 @@ describe('users', () => {
   it('holds one owner per workspace', async () => {
     await inRollback(admin, async c => {
       await c.query('set local role schema_owner')
+
       await expect(c.query("insert into fa.users (workspace_id, email, name, role) values ($1, 'second.owner@example.test', 'Second', 'owner')", [wsA])).rejects.toThrow(/users_one_owner/)
     })
   })
@@ -80,6 +84,7 @@ describe('users', () => {
   it('treats emails case-insensitively within a workspace', async () => {
     await inRollback(admin, async c => {
       await c.query("insert into fa.users (workspace_id, email, name, role) values ($1, 'Same@Example.test', 'One', 'viewer')", [wsB])
+
       await expect(c.query("insert into fa.users (workspace_id, email, name, role) values ($1, 'same@example.test', 'Two', 'viewer')", [wsB])).rejects.toThrow(/users_email/)
     })
   })
@@ -87,10 +92,13 @@ describe('users', () => {
   it('never lets the application grant the owner role', async () => {
     await inRollback(admin, async c => {
       await actAs(c, { workspaceId: wsB, userId: null, role: 'system' })
+
       await expect(c.query("insert into fa.users (workspace_id, email, name, role) values ($1, 'x@example.test', 'X', 'owner')", [wsB])).rejects.toThrow(/owner role cannot be granted/)
     })
+
     await inRollback(admin, async c => {
       await actAs(c, { workspaceId: wsA, userId: ownerA, role: 'owner' })
+
       await expect(c.query("update fa.users set role = 'owner' where id = $1", [adminA])).rejects.toThrow(/owner role cannot be granted/)
     })
   })
@@ -98,6 +106,7 @@ describe('users', () => {
   it('stops anyone changing their own role', async () => {
     await inRollback(admin, async c => {
       await actAs(c, { workspaceId: wsA, userId: adminA, role: 'admin' })
+
       await expect(c.query("update fa.users set role = 'viewer' where id = $1", [adminA])).rejects.toThrow(/own role/)
     })
   })
@@ -105,8 +114,10 @@ describe('users', () => {
   it('protects the owner row from everyone else', async () => {
     await inRollback(admin, async c => {
       await actAs(c, { workspaceId: wsA, userId: adminA, role: 'admin' })
+
       await expect(c.query("update fa.users set name = 'Renamed' where id = $1", [ownerA])).rejects.toThrow(/owner row/)
     })
+
     await inRollback(admin, async c => {
       await actAs(c, { workspaceId: wsA, userId: ownerA, role: 'owner' })
       await c.query("update fa.users set name = 'Renamed' where id = $1", [ownerA])
@@ -118,8 +129,10 @@ describe('users', () => {
       await actAs(c, { workspaceId: wsA, userId: adminA, role: 'admin' })
       await c.query("update fa.users set role = 'viewer' where id = $1", [managerA])
     })
+
     await inRollback(admin, async c => {
       await actAs(c, { workspaceId: wsA, userId: managerA, role: 'manager' })
+
       await expect(c.query("update fa.users set role = 'manager' where id = $1", [viewerA])).rejects.toThrow(/only owners and admins/)
     })
   })
@@ -127,12 +140,16 @@ describe('users', () => {
   it('blocks email and identity changes and self-deactivation', async () => {
     await inRollback(admin, async c => {
       await actAs(c, { workspaceId: wsA, userId: viewerA, role: 'viewer' })
+
       await expect(c.query("update fa.users set email = 'new@example.test' where id = $1", [viewerA])).rejects.toThrow(/email/)
     })
+
     await inRollback(admin, async c => {
       await actAs(c, { workspaceId: wsA, userId: adminA, role: 'admin' })
+
       await expect(c.query('update fa.users set deactivated_at = now() where id = $1', [adminA])).rejects.toThrow(/deactivates themselves/)
     })
+
     await inRollback(admin, async c => {
       await actAs(c, { workspaceId: wsA, userId: adminA, role: 'admin' })
       await c.query('update fa.users set deactivated_at = now() where id = $1', [viewerA])

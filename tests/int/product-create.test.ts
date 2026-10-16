@@ -25,6 +25,7 @@ beforeAll(async () => {
   owner = await sandbox()
   pastel = (await admin.query<{ id: string }>("select id from fa.collections where workspace_id = $1 and slug = 'pastel'", [owner.workspaceId])).rows[0]!.id
 })
+
 afterAll(closeAll)
 
 const draft = (slug: string, palettes = ['sage', 'sand']) => ({
@@ -56,7 +57,9 @@ describe('createProductWithLog', () => {
 
   it('refuses a slug in use and SKUs another product kept from its old slug', async () => {
     expect(await createProductWithLog(owner, draft('far-orbit'), app)).toEqual({ ok: false, reason: 'slug_taken' })
+
     await admin.query("update fa.products set slug = 'slow-days' where workspace_id = $1 and slug = 'slow'", [owner.workspaceId])
+
     expect(await createProductWithLog(owner, draft('slow', ['sage']), app)).toEqual({ ok: false, reason: 'sku_taken' })
     expect(await createProductWithLog(owner, draft('slow', ['ink']), app)).toMatchObject({ ok: true, slug: 'slow' })
   })
@@ -94,6 +97,7 @@ describe('createProductWithLog', () => {
       `insert into fa.products (workspace_id, slug, name, collection_id, base_price_cents, status)
        select $1, 'filler-' || n, 'Filler ' || n, $2, 1000, 'draft' from generate_series(1, $3::int) n`,
       [full.workspaceId, collection, PRODUCT_CAP - 16])
+
     expect(await createProductWithLog(full, { ...draft('one-more'), collectionId: collection }, app)).toEqual({ ok: false, reason: 'cap' })
   })
 

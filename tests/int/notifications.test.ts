@@ -36,6 +36,7 @@ beforeAll(async () => {
   box = await sandbox()
   other = await sandbox()
 })
+
 afterAll(closeAll)
 
 describe('a new sandbox', () => {
@@ -65,9 +66,16 @@ describe('a new sandbox', () => {
     expect(stock.map(r => r.payload)).toEqual(low.rows.map(v => ({
       productId: v.product_id, product: v.name, size: v.size, palette: v.palette, stock: v.stock, threshold: v.low_stock_threshold,
     })))
-    for (const row of stock) expect(row.created_at.getTime()).toBeLessThan(latest.rows[0]!.placed_at.getTime())
-    for (const row of rows) expect(row.created_at.getTime()).toBeLessThanOrEqual(Date.now())
-    for (const role of ['owner', 'admin', 'manager', 'viewer'] as const) expect(await unread(box, role)).toBe(8)
+
+    for (const row of stock) {
+      expect(row.created_at.getTime()).toBeLessThan(latest.rows[0]!.placed_at.getTime())
+    }
+    for (const row of rows) {
+      expect(row.created_at.getTime()).toBeLessThanOrEqual(Date.now())
+    }
+    for (const role of ['owner', 'admin', 'manager', 'viewer'] as const) {
+      expect(await unread(box, role)).toBe(8)
+    }
   })
 })
 
@@ -85,7 +93,9 @@ describe('the notifications of a member', () => {
 
     const all = [...first.rows, ...last.rows]
 
-    for (let i = 1; i < all.length; i++) expect(all[i - 1]!.createdAt.getTime()).toBeGreaterThanOrEqual(all[i]!.createdAt.getTime())
+    for (let i = 1; i < all.length; i++) {
+      expect(all[i - 1]!.createdAt.getTime()).toBeGreaterThanOrEqual(all[i]!.createdAt.getTime())
+    }
   })
 
   it('are marked read one at a time for that member only, harmlessly twice, and never across members or workspaces', async () => {
@@ -94,7 +104,9 @@ describe('the notifications of a member', () => {
     const opened = await withWorkspace(ctx(box, 'owner'), tx => markNotificationRead(tx, reader(box, 'owner'), id), app)
 
     expect(opened).toEqual({ kind: rows[0]!.kind, payload: rows[0]!.payload })
+
     await withWorkspace(ctx(box, 'owner'), tx => markNotificationRead(tx, reader(box, 'owner'), id), app)
+
     expect(await unread(box, 'owner')).toBe(7)
     expect(await unread(box, 'admin')).toBe(8)
 
@@ -122,6 +134,7 @@ describe('the notifications of a member', () => {
     const owner = await unread(box, 'owner')
 
     await withWorkspace(ctx(box, 'admin'), tx => notify(tx, box.workspaceId, { userId: box.users.admin, kind: 'auth.recovery_code_used', payload: { remaining: 9 } }), app)
+
     expect(await unread(box, 'admin')).toBe(9)
     expect(await unread(box, 'owner')).toBe(owner)
 
@@ -146,6 +159,7 @@ describe('a new sign-in', () => {
     const there = await signIn(other)
 
     expect(here.signInId).not.toBe(there.signInId)
+
     await withWorkspace(ctx(other, 'owner'), async tx => {
       const self = (await getSelf(tx, { workspaceId: other.workspaceId, userId: other.users.owner }))!
 
@@ -201,7 +215,9 @@ describe('notificationHref', () => {
     const [product] = (await admin.query<{ id: string; slug: string }>('select id, slug from fa.products where workspace_id = $1 order by slug limit 1', [other.workspaceId])).rows
 
     expect(await href('stock.low', { productId: product!.id })).toBe(`/products/${product!.slug}`)
+
     await admin.query("update fa.products set slug = slug || '-renamed' where workspace_id = $1 and id = $2", [other.workspaceId, product!.id])
+
     expect(await href('stock.low', { productId: product!.id })).toBe(`/products/${product!.slug}-renamed`)
     expect(await href('stock.low', { productId: randomUUID() })).toBe('/products')
     expect(await href('team.invitation_accepted', {})).toBe('/team')

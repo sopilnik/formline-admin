@@ -19,7 +19,10 @@ describe('the end-to-end config', () => {
   it('gives each of the four workers its own port, database and media folder', () => {
     const workers = Array.from({ length: 4 }, (_, index) => e2eWorker(index))
 
-    for (const key of ['port', 'database', 'mediaDir'] as const) expect(new Set(workers.map(worker => worker[key])).size).toBe(4)
+    for (const key of ['port', 'database', 'mediaDir'] as const) {
+      expect(new Set(workers.map(worker => worker[key])).size).toBe(4)
+    }
+
     expect(workers.map(worker => worker.port)).not.toContain(4334)
   })
 
@@ -29,12 +32,14 @@ describe('the end-to-end config', () => {
 
     expect(workers).toBe(4)
     expect((webServer as Server[])[0]!.url).toBe('http://127.0.0.1:4334/health')
+
     expect(servers.map(server => [server.url, server.env?.SITE_URL, server.env?.DATABASE_URL, server.env?.MEDIA_STORAGE_DIR])).toEqual(
       Array.from({ length: 4 }, (_, index) => {
         const worker = e2eWorker(index)
 
         return [`http://127.0.0.1:${worker.port}/api/health`, worker.baseUrl, worker.appUrl, worker.mediaDir]
       }))
+
     // A developer's .env, which the build copies beside the server, must not turn the edge check off.
     expect(servers.map(server => server.env?.ORIGIN_AUTH_DISABLED)).toEqual(Array(4).fill('0'))
   })

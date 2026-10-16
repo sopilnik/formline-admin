@@ -12,6 +12,7 @@ async function admin<T>(fn: (c: pg.Client) => Promise<T>, url = ADMIN_URL): Prom
   const c = new pg.Client({ connectionString: url })
 
   await c.connect()
+
   try { return await fn(c) } finally { await c.end() }
 }
 
@@ -21,6 +22,7 @@ beforeAll(async () => {
     await c.query(`create database ${DB}`)
   })
 })
+
 afterAll(async () => {
   await admin(c => c.query(`drop database if exists ${DB} with (force)`))
 })
@@ -58,8 +60,10 @@ describe('migrate', () => {
     const client = new pg.Client({ connectionString: appUrl })
 
     await client.connect()
+
     await expect(client.query('set role schema_owner')).rejects.toThrow(/permission denied/)
     await expect(client.query('create table fa.t_app (id integer)')).rejects.toThrow(/permission denied/)
+
     await client.end()
   })
 

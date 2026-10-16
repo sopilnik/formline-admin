@@ -23,6 +23,7 @@ beforeAll(async () => {
   owner = { workspaceId, userId, role: 'owner', ipHash: 'ip-hash-of-the-test' }
   ids = await memberIds(admin, owner.workspaceId)
 })
+
 afterAll(closeAll)
 
 const as = (role: keyof typeof ids): Actor => ({ ...owner, userId: ids[role], role })
@@ -59,7 +60,9 @@ describe('changeMemberRole', () => {
     expect(await logged(ids.manager)).toEqual([{ action: 'team.role_changed', actor: owner.userId, details: { name: 'Priya Nair', from: 'manager', to: 'viewer' } }])
     expect(await changeMemberRole(as('admin'), { userId: ids.manager, role: 'viewer' }, app)).toMatchObject({ ok: true, changed: false })
     expect(await logged(ids.manager)).toHaveLength(1)
+
     await changeMemberRole(as('admin'), { userId: ids.manager, role: 'manager' }, app)
+
     expect((await roleOf(ids.manager)).role).toBe('manager')
   })
 
@@ -77,6 +80,7 @@ describe('changeMemberActive', () => {
     await admin.query(
       "insert into fa.sessions (workspace_id, id, user_id, expires_at, second_factor_verified) values ($1, $2, $3, now() + interval '1 hour', true)",
       [owner.workspaceId, hashToken(generateToken()), ids.admin])
+
     expect(await changeMemberActive(owner, { userId: ids.admin, active: false }, app)).toEqual({ ok: true, name: 'Noah Becker', from: 'admin', changed: true })
     expect((await roleOf(ids.admin)).deactivated).toBe(true)
 

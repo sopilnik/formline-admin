@@ -42,6 +42,7 @@ beforeAll(async () => {
   template = rows.find(r => r.kind === 'template')!.id
   owner = rows.find(r => r.kind === 'owner')!.id
 })
+
 afterAll(closeAll)
 
 describe('the template build', () => {

@@ -26,6 +26,7 @@ beforeAll(() => {
   admin = adminPool()
   app = appPool()
 })
+
 afterAll(closeAll)
 
 describe('changeStatuses', () => {
@@ -45,6 +46,7 @@ describe('changeStatuses', () => {
       "select entity_id, actor_user_id, details from fa.activity_log where workspace_id = $1 and action = 'order.status_changed' order by entity_id", [workspaceId])
 
     expect(log.rows).toHaveLength(2)
+
     for (const row of log.rows) {
       const order = paid.find(o => o.id === row.entity_id)!
 

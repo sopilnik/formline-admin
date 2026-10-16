@@ -14,7 +14,9 @@ export const noBreach = async (): Promise<boolean> => false
 export async function ensureOwner(admin: pg.Pool, app: pg.Pool): Promise<string> {
   const existing = await findOwner(app)
 
-  if (existing) return existing.id
+  if (existing) {
+    return existing.id
+  }
 
   const totp = await nextTotp(admin)
   const result = await setupOwner({
@@ -28,7 +30,9 @@ export async function ensureOwner(admin: pg.Pool, app: pg.Pool): Promise<string>
     theme: 'system',
   }, { pool: app, now: totp.now, isBreached: noBreach })
 
-  if (!result.ok) throw new Error(`owner setup failed: ${result.error}`)
+  if (!result.ok) {
+    throw new Error(`owner setup failed: ${result.error}`)
+  }
 
   return (await findOwner(app))!.id
 }

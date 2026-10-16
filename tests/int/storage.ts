@@ -18,7 +18,10 @@ export function memoryStorage(initial: Iterable<string> = []): MediaStorage & { 
       return files.get(path) ?? null
     },
     async delete(path) {
-      if (failing.has(path)) throw new Error(`refused: ${path}`)
+      if (failing.has(path)) {
+        throw new Error(`refused: ${path}`)
+      }
+
       files.delete(path)
     },
   }

@@ -19,6 +19,7 @@ beforeAll(async () => {
 
   owner = { workspaceId, userId, role: 'owner', ipHash: null }
 })
+
 afterAll(closeAll)
 
 const read = async (slug: string) => (await withWorkspace(owner, tx => getProduct(tx, owner.workspaceId, slug), app))!
@@ -85,6 +86,7 @@ describe('saveVariantsWithLog', () => {
     const { product, rows } = await formFor('loud', { 'loud-a3-signal': { stock: 30 }, 'loud-a1-ocean': { lowStockThreshold: 9 } })
 
     await setStock('loud-a3-signal', 7)
+
     expect(await saveVariantsWithLog(owner, { productId: product.id, rows }, app)).toEqual({ ok: false, reason: 'stock_conflict', skus: ['loud-a3-signal'] })
 
     const after = await read('loud')

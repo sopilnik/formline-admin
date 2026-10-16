@@ -20,6 +20,7 @@ beforeAll(async () => {
   ownerId = await ensureOwner(admin, app)
   ownerWorkspace = (await admin.query<{ id: string }>("select id from fa.workspaces where kind = 'owner'")).rows[0]!.id
 })
+
 // The owner is shared by every file: the passkeys these tests leave behind go with them.
 afterAll(async () => {
   await admin.query('delete from fa.passkeys where workspace_id = $1 and user_id = $2', [ownerWorkspace, ownerId])
@@ -74,6 +75,7 @@ describe('signInWithPasskey', () => {
     const credentialId = `known${crypto.randomUUID().replace(/-/g, '')}`
 
     await addPasskeyRow(credentialId)
+
     expect(await signInWithPasskey({ response: assertion(credentialId, ownerId), cookie: undefined, meta }, { pool: app })).toEqual({ ok: false, error: 'passkey_failed' })
     expect(await signInWithPasskey({ response: assertion(credentialId, ownerId), cookie: 'forged.value', meta }, { pool: app })).toEqual({ ok: false, error: 'passkey_failed' })
   })
@@ -109,7 +111,10 @@ describe('registration', () => {
     const session = ownerSession()
     const result = await beginRegistration(session, { pool: app })
 
-    if (!result.ok) throw new Error(result.error)
+    if (!result.ok) {
+      throw new Error(result.error)
+    }
+
     expect(result.options.rp.id).toBe('localhost')
     expect(result.options.user.id.replace(/=+$/, '')).toBe(encodeBase64urlNoPadding(handleFromUserId(ownerId)))
     expect(result.options.attestation).toBe('none')
@@ -130,10 +135,12 @@ describe('removing a passkey', () => {
     // Changes to the owner row go through schema_owner: the users trigger refuses them from anyone else.
     try {
       await asSchemaOwner(admin, c => c.query('update fa.users set totp_secret_enc = null where id = $1', [ownerId]))
+
       expect(await removeOwnPasskey(ownerSession(), { passkeyId: only, meta }, { pool: app })).toEqual({ ok: false, error: 'last_factor' })
     } finally {
       await asSchemaOwner(admin, c => c.query('update fa.users set totp_secret_enc = $2 where id = $1', [ownerId, saved]))
     }
+
     expect(await removeOwnPasskey(ownerSession(), { passkeyId: only, meta }, { pool: app })).toEqual({ ok: true })
   })
 
@@ -151,9 +158,11 @@ describe('removing a passkey', () => {
       const removing = removeOwnPasskey(ownerSession(), { passkeyId: id, meta }, { pool: app }).finally(() => { settled = true })
 
       await new Promise(resolve => setTimeout(resolve, 500))
+
       expect(settled).toBe(false)
 
       await holder.query('commit')
+
       expect(await removing).toEqual({ ok: true })
     } finally {
       await holder.query('rollback').catch(() => undefined)

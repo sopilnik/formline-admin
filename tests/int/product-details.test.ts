@@ -25,6 +25,7 @@ beforeAll(async () => {
 
   viewer = { ...owner, userId: v.rows[0]!.id, role: 'viewer' }
 })
+
 afterAll(closeAll)
 
 const read = (slug: string) => withWorkspace(owner, tx => getProduct(tx, owner.workspaceId, slug), app)
@@ -83,6 +84,7 @@ describe('saveProductDetails', () => {
     const input = await inputFor('hush')
 
     await admin.query("update fa.products set description = 'Changed elsewhere.', updated_at = now() where workspace_id = $1 and id = $2", [owner.workspaceId, input.productId])
+
     expect(await saveProductDetails(owner, { ...input, name: 'Hush Hush' }, app)).toEqual({ ok: false, reason: 'conflict' })
     expect((await read('hush'))?.name).toBe('Hush')
   })

@@ -21,6 +21,7 @@ beforeAll(async () => {
   app = appPool()
   restore = await keepStoreState(admin)
 })
+
 afterAll(async () => {
   await restore()
   await closeAll()

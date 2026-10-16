@@ -46,7 +46,9 @@ export function fakeGateway(known: { session: CheckoutSessionLike; items: LineIt
 
       const found = known.find(k => k.session.id === sessionId)
 
-      if (!found) throw new Error(`No such checkout.session: ${sessionId}`)
+      if (!found) {
+        throw new Error(`No such checkout.session: ${sessionId}`)
+      }
 
       return found.items
     },
@@ -90,7 +92,12 @@ export async function keepStoreState(admin: pg.Pool): Promise<() => Promise<void
     await admin.query('delete from fa.customers where workspace_id = any($1::uuid[]) and not (id = any($2::uuid[]))', [[owner, template], customers])
     await admin.query('delete from fa.notifications where workspace_id = $1 and not (id = any($2::uuid[]))', [owner, notifications])
     await admin.query('delete from fa.stripe_events where not (event_id = any($1::text[]))', [events])
-    for (const c of counters) await admin.query('update fa.workspace_counters set next_order_number = $2 where workspace_id = $1', [c.workspace_id, c.next_order_number])
-    for (const v of stocks) await admin.query('update fa.product_variants set stock = $3, low_stock_threshold = $4 where workspace_id = $1 and id = $2', [owner, v.id, v.stock, v.low_stock_threshold])
+
+    for (const c of counters) {
+      await admin.query('update fa.workspace_counters set next_order_number = $2 where workspace_id = $1', [c.workspace_id, c.next_order_number])
+    }
+    for (const v of stocks) {
+      await admin.query('update fa.product_variants set stock = $3, low_stock_threshold = $4 where workspace_id = $1 and id = $2', [owner, v.id, v.stock, v.low_stock_threshold])
+    }
   }
 }

@@ -30,6 +30,7 @@ async function twins(): Promise<{ a: string; b: string; userId: string }> {
 beforeAll(() => {
   admin = adminPool()
 })
+
 afterAll(closeAll)
 
 describe('user, passkey and recovery-code queries', () => {

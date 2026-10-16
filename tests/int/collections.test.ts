@@ -20,6 +20,7 @@ beforeAll(() => {
   admin = adminPool()
   app = appPool()
 })
+
 afterAll(closeAll)
 
 const list = (actor: Actor) => withWorkspace(actor, tx => listCollections(tx, actor.workspaceId), app)
@@ -79,7 +80,9 @@ describe('collections', () => {
     const owner = await sandbox()
 
     expect(await deleteCollectionWithLog(owner, await idOf(owner, 'primary'), app)).toEqual({ ok: false, reason: 'not_empty' })
+
     await admin.query("update fa.products set collection_id = (select id from fa.collections where workspace_id = $1 and slug = 'night') where workspace_id = $1 and collection_id = (select id from fa.collections where workspace_id = $1 and slug = 'primary')", [owner.workspaceId])
+
     expect(await deleteCollectionWithLog(owner, await idOf(owner, 'primary'), app)).toEqual({ ok: true, slug: 'primary', name: 'Primary' })
     expect(await order(owner)).toEqual(['1:monochrome', '2:pastel', '3:night'])
   })
@@ -88,6 +91,7 @@ describe('collections', () => {
     const owner = await sandbox()
 
     await admin.query("insert into fa.collections (workspace_id, slug, name, position) select $1, 'filler-' || n, 'Filler ' || n, 10 + n from generate_series(1, $2::int) n", [owner.workspaceId, COLLECTION_CAP - 4])
+
     expect(await createCollectionWithLog(owner, { name: 'One more', slug: 'one-more', description: '' }, app)).toEqual({ ok: false, reason: 'cap' })
 
     const viewerId = (await admin.query<{ id: string }>("select id from fa.users where workspace_id = $1 and role = 'viewer'", [owner.workspaceId])).rows[0]!.id

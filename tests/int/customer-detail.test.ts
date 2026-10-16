@@ -45,6 +45,7 @@ beforeAll(async () => {
   manager = await member(owner, 'manager')
   viewer = await member(owner, 'viewer')
 })
+
 afterAll(closeAll)
 
 const read = (id: string, actor: Actor = owner) => withWorkspace(actor, tx => getCustomer(tx, actor.workspaceId, id), app)
@@ -103,6 +104,7 @@ describe('saveCustomerNotes', () => {
     const before = (await logged(id)).length
 
     await saveCustomerNotes(owner, { customerId: id, notes: 'Same text' }, app)
+
     expect(await saveCustomerNotes(owner, { customerId: id, notes: 'Same text' }, app)).toBe('unchanged')
     expect((await logged(id)).length).toBe(before + 1)
   })
