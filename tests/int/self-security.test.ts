@@ -75,7 +75,7 @@ describe('changeOwnPassword', () => {
 
   it('is not offered in a sandbox, where members have no password', async () => {
     const { workspaceId, userId } = await createSandbox(app)
-    const session = await device(workspaceId, { userId: userId, userAgent: 'Chrome, Linux' })
+    const session = await device(workspaceId, { userId, userAgent: 'Chrome, Linux' })
 
     expect(await changeOwnPassword(session, { password: 'lantern-harbor-quiet-9083', ip: null }, { pool: app, isBreached: noBreach })).toEqual({ ok: false, error: 'generic' })
   })

@@ -67,7 +67,7 @@ describe('signInWithPasskey', () => {
     const cookie = challengeCookie({ challenge: `c-${crypto.randomUUID()}`, purpose: 'auth' }, config(), Date.now())
     const credentialId = `unknown${crypto.randomUUID().replace(/-/g, '')}`
 
-    expect(await signInWithPasskey({ response: assertion(credentialId, ownerId), cookie: cookie, meta }, { pool: app }))
+    expect(await signInWithPasskey({ response: assertion(credentialId, ownerId), cookie, meta }, { pool: app }))
       .toEqual({ ok: false, error: 'passkey_unknown', credentialId })
   })
 
@@ -86,9 +86,9 @@ describe('signInWithPasskey', () => {
     await addPasskeyRow(credentialId)
 
     const challenge = `c-${crypto.randomUUID()}`
-    const cookie = challengeCookie({ challenge: challenge, purpose: 'auth' }, config(), Date.now())
+    const cookie = challengeCookie({ challenge, purpose: 'auth' }, config(), Date.now())
 
-    expect(await signInWithPasskey({ response: assertion(credentialId, ownerId), cookie: cookie, meta }, { pool: app })).toEqual({ ok: false, error: 'passkey_failed' })
+    expect(await signInWithPasskey({ response: assertion(credentialId, ownerId), cookie, meta }, { pool: app })).toEqual({ ok: false, error: 'passkey_failed' })
     expect(await markChallengeUsed(challenge, app)).toBe(false)
   })
 })
