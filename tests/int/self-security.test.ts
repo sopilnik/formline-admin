@@ -30,9 +30,9 @@ afterAll(async () => {
   await closeAll()
 })
 
-/** A verified session row of a user, as a signed-in device would have it. */
 type Device = { userId: string; userAgent: string; reauthAt?: Date | null }
 
+/** A verified session row of a user, as a signed-in device would have it. */
 const device = (workspaceId: string, { userId, userAgent, reauthAt = new Date() }: Device): Promise<Session> =>
   insertSession(admin, { workspaceId, userId, reauthAt, userAgent })
 

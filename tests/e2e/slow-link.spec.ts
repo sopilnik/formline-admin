@@ -9,9 +9,9 @@ test.use({ extraHTTPHeaders: { 'x-origin-auth': E2E_ORIGIN_SECRET, 'x-client-ip'
 
 const sidebar = (page: Page) => page.getByRole('navigation', { name: 'Main menu' })
 
-/** Holds the requests a matcher picks for a while, as a slow connection would. */
 type Hold = { url: string | RegExp; ms: number; pick?: (headers: Record<string, string>) => boolean }
 
+/** Holds the requests a matcher picks for a while, as a slow connection would. */
 async function hold(page: Page, { url, ms, pick = () => true }: Hold): Promise<void> {
   await page.route(url, async route => {
     if (pick(route.request().headers())) {

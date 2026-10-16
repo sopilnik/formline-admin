@@ -127,12 +127,12 @@ export async function memberIds(admin: pg.Pool, workspaceId: string): Promise<Re
   return Object.fromEntries(rows.map(row => [row.role, row.id])) as Record<MemberRole, string>
 }
 
+export type SessionRow = { workspaceId: string; userId: string; reauthAt?: Date | null; userAgent?: string | null }
+
 /**
  * A verified session of a member, as the cookie of a signed-in visitor carries it: it ends with its sandbox, or in a day
  * in the owner workspace. Returns the session as the server reads it.
  */
-export type SessionRow = { workspaceId: string; userId: string; reauthAt?: Date | null; userAgent?: string | null }
-
 export async function insertSession(admin: pg.Pool, { workspaceId, userId, reauthAt = new Date(), userAgent = null }: SessionRow): Promise<Session> {
   const id = hashToken(generateToken())
   const { rows } = await admin.query<{ role: Session['role']; kind: Session['workspaceKind']; expires_at: Date }>(

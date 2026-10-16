@@ -52,12 +52,12 @@ async function templateWorkspaceId(pool: Pool): Promise<string> {
   return id
 }
 
+type FreshCustomer = { email: string; name: string; city: string | null; country: string | null; pseudonymised: boolean }
+
 /**
  * The customer with one of the emails, or a new one. An owner-workspace customer the daily job has pseudonymised is
  * found by the pseudonym's email, so a returning customer stays one customer.
  */
-type FreshCustomer = { email: string; name: string; city: string | null; country: string | null; pseudonymised: boolean }
-
 async function customerFor(
   tx: Tx,
   workspaceId: string,

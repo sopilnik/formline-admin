@@ -213,9 +213,9 @@ const business: Record<string, { rights: Rights; insert: (s: Seeded) => ReturnTy
   },
 }
 
-/** An insert either succeeds or fails on row-level security; an update or delete changes one row or none. */
 type Attempt = { actor: Actor; statement: ReturnType<typeof sql>; op: 'insert' | 'update' | 'delete' }
 
+/** An insert either succeeds or fails on row-level security; an update or delete changes one row or none. */
 async function attempt(s: Seeded, { actor, statement, op }: Attempt): Promise<boolean> {
   const r = await probe(ctx(s, actor), tx => tx.execute(statement))
 
