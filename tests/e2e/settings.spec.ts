@@ -11,6 +11,7 @@ test.describe('settings', () => {
     await signInAsSandboxUser(context)
     await page.goto('/overview')
     await page.getByRole('link', { name: 'Settings', exact: true }).click()
+
     await expect(page).toHaveURL(/\/settings\/profile$/)
     await expect(page.getByRole('heading', { level: 1, name: 'Profile' })).toBeVisible()
     await expect(page).toHaveTitle('Profile · Formline Admin')
@@ -34,14 +35,19 @@ test.describe('settings', () => {
     await page.goto('/settings/profile')
     await page.getByLabel('Name').fill('Dana Ortiz-Weber')
     await page.getByRole('button', { name: 'Save profile' }).click()
+
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('Profile saved.')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Account menu: Dana Ortiz-Weber, Owner' })).toBeVisible()
+
     await page.getByLabel('Language', { exact: true }).selectOption('ru')
     await page.getByRole('button', { name: 'Save profile' }).click()
+
     await expect(page.getByRole('heading', { level: 1, name: 'Профиль' })).toBeVisible()
     await expect(page.locator('html')).toHaveAttribute('lang', 'ru')
+
     await page.getByLabel('Имя').fill('')
     await page.getByRole('button', { name: 'Сохранить профиль' }).click()
+
     await expect(page.getByText('Введите имя.')).toBeVisible()
     await expect(page.getByLabel('Имя')).toBeFocused()
   })
@@ -50,18 +56,25 @@ test.describe('settings', () => {
     const { workspaceId } = await signInAsSandboxUser(context, 'admin')
 
     await page.goto('/settings/store')
+
     await expect(page.getByRole('heading', { level: 1, name: 'Store' })).toBeVisible()
     await expect(page.getByLabel('Time zone')).toHaveValue('Europe/Berlin')
+
     await page.getByLabel('Time zone').selectOption('Asia/Almaty')
     await page.getByLabel('Low-stock threshold').fill('-1')
     await page.getByRole('button', { name: 'Save settings' }).click()
+
     await expect(page.getByText('Enter a whole number from 0 to 999.')).toBeVisible()
     await expect(page.getByLabel('Low-stock threshold')).toBeFocused()
     await expect(page.getByLabel('Time zone')).toHaveValue('Asia/Almaty')
+
     await page.getByLabel('Low-stock threshold').fill('5')
     await page.getByRole('button', { name: 'Save settings' }).click()
+
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('Store settings saved.')).toBeVisible()
+
     await page.reload()
+
     await expect(page.getByLabel('Time zone')).toHaveValue('Asia/Almaty')
     await expect(page.getByLabel('Low-stock threshold')).toHaveValue('5')
 
@@ -75,8 +88,11 @@ test.describe('settings', () => {
   test('keeps the store settings from a manager', async ({ page, context }) => {
     await signInAsSandboxUser(context, 'manager')
     await page.goto('/settings/profile')
+
     await expect(page.getByRole('navigation', { name: 'Settings sections' }).getByRole('link')).toHaveText(['Profile', 'Security'])
+
     await page.goto('/settings/store')
+
     await expect(page.getByRole('heading', { level: 1, name: /not found/ })).toBeVisible()
   })
 })

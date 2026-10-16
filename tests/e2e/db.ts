@@ -10,6 +10,7 @@ export async function asSchemaOwner<T>(fn: (client: pg.Client) => Promise<T>): P
   const client = new pg.Client({ connectionString: E2E_MIGRATOR_URL })
 
   await client.connect()
+
   try {
     await client.query('begin')
     await client.query('set local role schema_owner')
@@ -21,6 +22,7 @@ export async function asSchemaOwner<T>(fn: (client: pg.Client) => Promise<T>): P
     return result
   } catch (error) {
     await client.query('rollback')
+
     throw error
   } finally {
     await client.end()
@@ -55,8 +57,12 @@ export function createSandboxSession(role: Role = 'owner'): Promise<{ token: str
       'select * from fa.create_sandbox($1, $2, $3, $4)', [sha256(randomUUID()), sha256(entryToken), 'Playwright', 'en'])
     const row = entry.rows[0]
 
-    if (row?.outcome !== 'created') throw new Error(`create_sandbox: ${row?.outcome ?? 'no row'}`)
-    if (role === 'owner') return { token: entryToken, workspaceId: row.sandbox_id, userId: row.demo_user_id }
+    if (row?.outcome !== 'created') {
+      throw new Error(`create_sandbox: ${row?.outcome ?? 'no row'}`)
+    }
+    if (role === 'owner') {
+      return { token: entryToken, workspaceId: row.sandbox_id, userId: row.demo_user_id }
+    }
 
     const user = await client.query<{ id: string }>('select id from fa.users where workspace_id = $1 and role = $2', [row.sandbox_id, role])
     const token = encodeBase32LowerCaseNoPadding(randomBytes(20))

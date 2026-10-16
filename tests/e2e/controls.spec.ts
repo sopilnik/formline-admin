@@ -28,6 +28,7 @@ test.describe('controls', () => {
   test('outline buttons and fields draw the input border over the card color, in both themes', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.setViewportSize({ width: 1280, height: 800 })
+
     for (const theme of ['light', 'dark'] as const) {
       await chooseTheme(context, theme)
       await page.goto('/overview')
@@ -38,6 +39,7 @@ test.describe('controls', () => {
 
       await page.goto('/products')
       await page.locator('main tbody a, main [data-slot=card] a').first().click()
+
       expect(await paint(page.locator('#product-collection'))).toEqual(FIELD[theme])
     }
   })

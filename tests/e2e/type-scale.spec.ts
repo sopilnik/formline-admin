@@ -25,17 +25,21 @@ const unshippedWeights = (page: Page) =>
 test.describe('type scale', () => {
   test('Space Grotesk only ever renders at the two weights the panel loads', async ({ page, context }) => {
     await page.goto('/sign-in')
+
     expect(await unshippedWeights(page)).toEqual([])
 
     await signInAsSandboxUser(context)
     await page.setViewportSize({ width: 1280, height: 800 })
     await page.goto('/overview')
     await page.getByRole('region', { name: 'Demo sandbox' }).getByRole('button', { name: 'Reset data' }).click()
+
     await expect(page.getByRole('dialog', { name: 'Reset the sandbox?' })).toBeVisible()
     expect(await unshippedWeights(page)).toEqual([])
+
     await page.getByRole('button', { name: 'Cancel' }).click()
 
     await page.goto('/settings/security')
+
     expect(await unshippedWeights(page)).toEqual([])
   })
 
@@ -51,6 +55,7 @@ test.describe('type scale', () => {
     const store = await scale()
 
     await page.goto('/settings/security')
+
     expect(store).toEqual(['15px 600'])
     expect(await scale()).toEqual(store)
   })
@@ -58,6 +63,7 @@ test.describe('type scale', () => {
   test('the intro of a settings card keeps to 65 characters a line', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.setViewportSize({ width: 1920, height: 1000 })
+
     for (const path of ['/settings/store', '/settings/security']) {
       await page.goto(path)
 

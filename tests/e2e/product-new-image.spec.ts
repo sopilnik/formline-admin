@@ -42,10 +42,12 @@ test.describe('new product image', () => {
     await signInAsSandboxUser(context)
     await fillProduct(page, 'Salt Flat')
     await field(page).locator('input[type="file"]').setInputFiles(await poster())
+
     await expect(field(page).locator('img')).toHaveAttribute('src', /^blob:/)
     await expect(field(page)).toContainText('salt-flat.png')
 
     await page.getByRole('button', { name: 'Create product' }).click()
+
     await expect(page).toHaveURL(/\/products\/salt-flat$/)
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('Product created.')).toBeVisible()
 
@@ -69,10 +71,12 @@ test.describe('new product image', () => {
     }, bytes)
 
     await field(page).getByText('Drop an image here or').dispatchEvent('drop', { dataTransfer: dropped })
+
     await expect(field(page).locator('img')).toHaveAttribute('src', /^blob:/)
     await expect(field(page)).toContainText('dropped.png')
 
     await field(page).getByRole('button', { name: 'Remove image' }).click()
+
     await expect(field(page).locator('img')).toHaveCount(0)
     await expect(field(page).getByRole('button', { name: 'Choose image' })).toBeVisible()
   })
@@ -84,8 +88,11 @@ test.describe('new product image', () => {
     const picker = field(page).locator('input[type="file"]')
 
     await picker.setInputFiles({ name: 'big.jpg', mimeType: 'image/jpeg', buffer: Buffer.alloc(2 * 1024 * 1024 + 10, 1) })
+
     await expect(field(page).getByRole('alert')).toHaveText('The file is larger than 2 MB.')
+
     await picker.setInputFiles({ name: 'drawing.svg', mimeType: 'image/svg+xml', buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>') })
+
     await expect(field(page).getByRole('alert')).toHaveText('Choose a JPEG, PNG or WebP image.')
     await expect(field(page).locator('img')).toHaveCount(0)
   })
@@ -97,9 +104,11 @@ test.describe('new product image', () => {
     const picker = field(page).locator('input[type="file"]')
 
     await picker.setInputFiles(await poster())
+
     await expect(field(page).locator('img')).toHaveAttribute('src', /^blob:/)
 
     await picker.setInputFiles({ name: 'big.jpg', mimeType: 'image/jpeg', buffer: Buffer.alloc(2 * 1024 * 1024 + 10, 1) })
+
     await expect(field(page).getByRole('alert')).toHaveText('The file is larger than 2 MB.')
     await expect(field(page).locator('img')).toHaveAttribute('src', /^blob:/)
     await expect(field(page)).toContainText('salt-flat.png')
@@ -117,17 +126,24 @@ test.describe('new product image', () => {
     const clear = 'rgba(0, 0, 0, 0)'
 
     await frame.dispatchEvent('dragover')
+
     await expect(frame).not.toHaveCSS('background-color', clear)
+
     await frame.dispatchEvent('dragleave')
+
     await expect(frame).toHaveCSS('background-color', clear)
 
     await page.getByRole('button', { name: 'Create product' }).click()
+
     await expect(page.getByRole('button', { name: 'Uploading the image…' })).toBeDisabled()
+
     await frame.dispatchEvent('dragover')
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)))
+
     await expect(frame).toHaveCSS('background-color', clear)
 
     release()
+
     await expect(page).toHaveURL(/\/products\/still-water$/)
   })
 
@@ -157,6 +173,7 @@ test.describe('new product image', () => {
     await expect(page.getByLabel('Ink', { exact: true })).toBeChecked()
 
     release()
+
     await expect(page).toHaveURL(/\/products\/slow-tide$/)
   })
 
@@ -168,9 +185,11 @@ test.describe('new product image', () => {
     await fillProduct(page, 'Night Ferry')
     await field(page).locator('input[type="file"]').setInputFiles(await poster())
     await page.getByRole('button', { name: 'Create product' }).click()
+
     await expect(page.getByRole('button', { name: 'Uploading the image…' })).toBeVisible()
 
     await page.getByRole('navigation', { name: 'Main menu' }).getByRole('link', { name: /^Orders/ }).click()
+
     await expect(page.getByRole('heading', { level: 1, name: 'Orders' })).toBeVisible()
 
     // Once the upload ends the form refreshes the page in view instead of opening the product.
@@ -178,8 +197,11 @@ test.describe('new product image', () => {
     const refreshed = page.waitForRequest(request => new URL(request.url()).pathname === '/orders' && new URL(request.url()).searchParams.has('_rsc'))
 
     release()
+
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('Product created.')).toBeVisible()
+
     await (await refreshed).response()
+
     expect(visits).toEqual([])
     await expect(page).toHaveURL(/\/orders$/)
   })

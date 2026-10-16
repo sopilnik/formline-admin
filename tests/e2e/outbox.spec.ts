@@ -43,6 +43,7 @@ test.describe('outbox', () => {
 
     await writeLetters(workspaceId)
     await page.goto('/outbox')
+
     await expect(page.getByRole('heading', { level: 1, name: 'Outbox' })).toBeVisible()
     await expect(page).toHaveTitle('Outbox · Formline Admin')
     await expect(page.getByText('3 letters')).toBeVisible()
@@ -71,6 +72,7 @@ test.describe('outbox', () => {
 
     await page.goto('/outbox')
     await page.getByRole('link', { name: 'Новый вход в ваш аккаунт' }).click()
+
     await expect(page).toHaveURL(new RegExp(`/outbox/${id}$`))
     await expect(page.getByRole('heading', { level: 1, name: 'Новый вход в ваш аккаунт' })).toBeVisible()
 
@@ -81,13 +83,16 @@ test.describe('outbox', () => {
     await expect(letter).toContainText('Здравствуйте, Dana Ortiz!')
     await expect(letter).toContainText('с устройства Firefox, Linux')
     await expectNoSeriousA11yViolationsInBothThemes(page)
+
     await letter.getByRole('link', { name: 'Проверить сессии' }).click()
+
     await expect(page).toHaveURL(/\/settings\/security$/)
   })
 
   test('says what will appear in an empty outbox', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/outbox')
+
     await expect(page.getByRole('heading', { name: 'No letters yet' })).toBeVisible()
     await expect(page.getByText('Invite a team member and the invitation appears here.')).toBeVisible()
   })
@@ -97,10 +102,13 @@ test.describe('outbox', () => {
     const id = await writeLetters(workspaceId)
 
     await page.goto('/overview')
+
     await expect(page.getByRole('link', { name: 'Outbox' })).toHaveCount(0)
+
     // The general page at both addresses: the letter's own view would offer "All letters", which this role may not open.
     for (const path of ['/outbox', `/outbox/${id}`]) {
       await page.goto(path)
+
       await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible()
       await expect(page.getByRole('link', { name: 'All letters' })).toHaveCount(0)
       await expect(page.getByRole('main')).toHaveCount(1)

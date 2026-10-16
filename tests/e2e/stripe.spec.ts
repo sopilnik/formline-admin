@@ -68,14 +68,19 @@ test('a store order arrives through the webhook: the owner sees it, its stock is
 
   await signInAsOwner(context)
   await page.goto('/orders?source=stripe')
+
   await expect(page.getByRole('table', { name: 'Orders' }).getByRole('row').filter({ hasText: `#${number}` })).toContainText(BUYER)
+
   await page.goto(`/orders/${number}`)
+
   await expect(page.getByRole('heading', { level: 1, name: `Order #${number}` })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Far Orbit · A2 · Ink' })).toBeVisible()
   await expect(page.getByText('The store does not collect shipping addresses.')).toBeVisible()
   await expect(page.getByText('Delivery: Express')).toBeVisible()
   await expectNoSeriousA11yViolations(page)
+
   await page.getByRole('button', { name: /^Notifications/ }).click()
+
   await expect(page.getByRole('dialog', { name: 'Notifications' }).getByText(`New order #${number}`)).toBeVisible()
 })
 
@@ -121,6 +126,7 @@ test('the owner imports a store order the webhook missed, after a fresh sign-in,
   await signInAsOwner(context)
   await page.goto('/settings/store')
   await section.getByRole('button', { name: 'Import missed orders' }).click()
+
   await expect(section.getByRole('status')).toContainText(/Imported 1 order: #\d+\./)
 
   const number = await numberOf(missed.session.id)
@@ -128,6 +134,8 @@ test('the owner imports a store order the webhook missed, after a fresh sign-in,
   await expect(section.getByRole('status')).toContainText(`Imported 1 order: #${number}.`)
   await expect(section.getByRole('status')).toContainText('1 order of the last 30 days was already here.')
   await expectNoSeriousA11yViolations(page)
+
   await page.goto('/activity')
+
   await expect(page.getByRole('table').getByRole('row').filter({ hasText: 'Imported missed store orders' }).first()).toContainText('1 order')
 })

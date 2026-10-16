@@ -14,7 +14,10 @@ type Hold = { url: string | RegExp; ms: number; pick?: (headers: Record<string, 
 
 async function hold(page: Page, { url, ms, pick = () => true }: Hold): Promise<void> {
   await page.route(url, async route => {
-    if (pick(route.request().headers())) await new Promise(resolve => setTimeout(resolve, ms))
+    if (pick(route.request().headers())) {
+      await new Promise(resolve => setTimeout(resolve, ms))
+    }
+
     await route.fallback()
   })
 }
@@ -28,8 +31,11 @@ test.describe('a slow link', () => {
     const poster = await sharp({ create: { width: 600, height: 800, channels: 3, background: '#a9cdb2' } }).png().toBuffer()
 
     await page.getByRole('region', { name: 'Image' }).locator('input[type="file"]').setInputFiles({ name: 'poster.png', mimeType: 'image/png', buffer: poster })
+
     await expect(page.getByRole('button', { name: 'Uploading…' })).toBeVisible()
+
     await sidebar(page).getByRole('link', { name: /^Orders/ }).click()
+
     await expect(page).toHaveURL(/\/orders$/, { timeout: 3000 })
     // The upload still ends, and says so on the page the person went on to.
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('Image updated.')).toBeVisible({ timeout: 10_000 })
@@ -41,6 +47,7 @@ test.describe('a slow link', () => {
     await hold(page, { url: '**/api/orders/export**', ms: 5000 })
     await page.getByRole('button', { name: /^Export [\d,]+ as CSV$/ }).click()
     await sidebar(page).getByRole('link', { name: 'Customers' }).click()
+
     await expect(page).toHaveURL(/\/customers$/, { timeout: 3000 })
   })
 
@@ -62,17 +69,24 @@ test.describe('a slow link', () => {
     await order.hover()
     await page.waitForLoadState('networkidle')
     await order.click()
+
     await expect(loading('Loading the order…')).toBeAttached()
     await expect(loading('Loading orders…')).toHaveCount(0)
+
     await page.waitForLoadState('networkidle')
     await sidebar(page).getByRole('link', { name: 'Team' }).click()
+
     await expect(loading('Loading the team…')).toBeAttached()
+
     await page.waitForLoadState('networkidle')
     await sidebar(page).getByRole('link', { name: 'Activity' }).click()
+
     await expect(loading('Loading the activity log…')).toBeAttached()
+
     await openFramed(page, '/products')
     await page.waitForLoadState('networkidle')
     await page.getByRole('link', { name: 'New product' }).click()
+
     await expect(loading('Loading the new product form…')).toBeAttached()
     await expect(loading('Loading products…')).toHaveCount(0)
   })
@@ -84,7 +98,9 @@ test.describe('a slow link', () => {
     const settings = sidebar(page).getByRole('link', { name: 'Settings' })
 
     await expect(settings).toHaveAttribute('href', '/settings/profile')
+
     await openFramed(page, '/settings/store')
+
     await expect(sidebar(page).getByRole('link', { name: 'Settings' })).toHaveAttribute('aria-current', 'page')
   })
 })

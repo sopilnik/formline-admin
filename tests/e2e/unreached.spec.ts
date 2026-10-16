@@ -13,10 +13,17 @@ async function failNextAction(page: Page, how: 'error page' | 'cut'): Promise<vo
   let armed = true
 
   await page.route('**/*', async route => {
-    if (!armed || !route.request().headers()['next-action']) return route.fallback()
+    if (!armed || !route.request().headers()['next-action']) {
+      return route.fallback()
+    }
+
     armed = false
-    if (how === 'cut') await route.abort('failed')
-    else await route.fulfill({ status: 500, body: 'Internal Server Error' })
+
+    if (how === 'cut') {
+      await route.abort('failed')
+    } else {
+      await route.fulfill({ status: 500, body: 'Internal Server Error' })
+    }
   })
 }
 
@@ -33,11 +40,14 @@ test.describe('a request that gets no answer', () => {
     await note.fill(text)
     await context.setOffline(true)
     await page.getByRole('button', { name: 'Add note' }).click()
+
     await expect(page.getByRole('main').getByRole('alert')).toHaveText(NO_ANSWER)
     await expect(page.getByRole('heading', { level: 1, name: /^Order #\d+$/ })).toBeVisible()
     await expect(note).toHaveValue(text)
+
     await context.setOffline(false)
     await page.getByRole('button', { name: 'Add note' }).click()
+
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('Note added.')).toBeVisible()
     await expect(page.getByRole('region', { name: 'History' })).toContainText(text)
   })
@@ -52,9 +62,12 @@ test.describe('a request that gets no answer', () => {
     await details.getByLabel('Description').fill('Quiet type on black, printed on matte paper.')
     await failNextAction(page, 'error page')
     await details.getByRole('button', { name: 'Save changes' }).click()
+
     await expect(details.getByRole('alert')).toHaveText(NO_ANSWER)
     await expect(details.getByLabel('Description')).toHaveValue('Quiet type on black, printed on matte paper.')
+
     await details.getByRole('button', { name: 'Save changes' }).click()
+
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('Changes saved.')).toBeVisible()
   })
 
@@ -66,6 +79,7 @@ test.describe('a request that gets no answer', () => {
     await page.getByLabel('Slug').fill('deep-sea')
     await failNextAction(page, 'cut')
     await page.getByRole('button', { name: 'Create collection' }).click()
+
     await expect(page.getByRole('main').getByRole('alert')).toHaveText(NO_ANSWER)
     await expect(page.getByLabel('Name')).toHaveValue('Deep Sea')
     await expect(page.getByLabel('Slug')).toHaveValue('deep-sea')
@@ -75,10 +89,13 @@ test.describe('a request that gets no answer', () => {
     await signInAsSandboxUser(context)
     await openFramed(page, '/orders?status=paid')
     await page.getByRole('table', { name: 'Orders' }).getByRole('link', { name: /^#\d+$/ }).first().click()
+
     await expect(page.getByRole('heading', { level: 1, name: /^Order #\d+$/ })).toBeVisible()
+
     await failNextAction(page, 'cut')
     await page.getByRole('button', { name: 'Change status' }).click()
     await page.getByRole('menuitem', { name: 'Processing' }).click()
+
     await expect(page.getByRole('region', { name: 'Messages' }).getByText(NO_ANSWER)).toBeVisible()
     await expect(page.getByRole('heading', { level: 1, name: /^Order #\d+$/ })).toBeVisible()
     await expect(page.getByRole('main').getByText('Paid', { exact: true })).toBeVisible()
@@ -95,6 +112,7 @@ test.describe('a request that gets no answer', () => {
     await failNextAction(page, 'error page')
     await page.getByRole('banner').getByRole('button', { name: /^Theme/ }).click()
     await page.getByRole('menuitemradio', { name: 'Dark' }).click()
+
     await expect(page.getByRole('region', { name: 'Messages' }).getByText(NO_ANSWER)).toBeVisible()
     await expect(page.getByRole('navigation', { name: 'Main menu' })).toBeVisible()
     await expect(description).toHaveValue('A draft not saved yet.')

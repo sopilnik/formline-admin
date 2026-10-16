@@ -20,6 +20,7 @@ test.describe('customer page', () => {
     const customer = await busiest(workspaceId)
 
     await page.goto(`/customers/${customer.id}`)
+
     await expect(page.getByRole('heading', { level: 1, name: customer.name })).toBeVisible()
     await expect(page).toHaveTitle(`${customer.name} · Formline Admin`)
     await expect(page.getByText(customer.email)).toBeVisible()
@@ -32,7 +33,9 @@ test.describe('customer page', () => {
     await expect(orders.getByRole('listitem').first().getByRole('link')).toHaveText(`#${customer.latest}`)
     await expect(page.getByRole('region', { name: 'Summary' })).toContainText(`Orders${customer.orders}`)
     await expectNoSeriousA11yViolationsInBothThemes(page)
+
     await page.getByRole('link', { name: `Show all ${customer.orders} in Orders` }).click()
+
     await expect(page).toHaveURL(new RegExp(`/orders\\?q=${RegExp.escape(encodeURIComponent(customer.email))}$`))
     await expect(page.getByText(new RegExp(`^${customer.orders} of [\\d,]+ orders$`))).toBeVisible()
   })
@@ -47,8 +50,11 @@ test.describe('customer page', () => {
 
     await field.fill('Prefers express delivery.\nWraps every poster as a gift.')
     await page.getByRole('button', { name: 'Save notes' }).click()
+
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('Notes saved.')).toBeVisible()
+
     await page.reload()
+
     await expect(page.getByLabel('Notes about this customer')).toHaveValue('Prefers express delivery.\nWraps every poster as a gift.')
 
     const entries = await asSchemaOwner(async c => (await c.query<{ n: number }>(
@@ -74,8 +80,10 @@ test.describe('customer page', () => {
 
   test('answers an unknown or malformed address with the not-found view', async ({ page, context }) => {
     await signInAsSandboxUser(context)
+
     for (const id of [randomUUID(), 'not-a-customer']) {
       await page.goto(`/customers/${id}`)
+
       await expect(page.getByRole('heading', { level: 1, name: 'Customer not found' })).toBeVisible()
       await expect(page.getByRole('link', { name: 'All customers' })).toHaveAttribute('href', '/customers')
     }
@@ -87,9 +95,12 @@ test.describe('customer page', () => {
 
     await page.goto(`/customers?q=${encodeURIComponent(customer.email)}`)
     await page.getByRole('table', { name: 'Customers' }).getByRole('link', { name: customer.name }).click()
+
     await expect(page).toHaveURL(new RegExp(`/customers/${customer.id}$`))
+
     await page.goto(`/orders/${customer.latest}`)
     await page.getByRole('link', { name: 'Customer page' }).click()
+
     await expect(page).toHaveURL(new RegExp(`/customers/${customer.id}$`))
     await expect(page.getByRole('heading', { level: 1, name: customer.name })).toBeVisible()
   })

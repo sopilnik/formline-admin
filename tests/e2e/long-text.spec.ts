@@ -26,8 +26,10 @@ test.describe('long unbroken text', () => {
     const note = history.getByText(token, { exact: false })
 
     await expect(note).toBeVisible()
+
     for (const width of [390, 1280]) {
       await page.setViewportSize({ width, height: 900 })
+
       expect(await pageWidth(page), String(width)).toBeLessThanOrEqual(width)
 
       const card = await box(page, history)
@@ -46,13 +48,18 @@ test.describe('long unbroken text', () => {
     await page.getByLabel('Name').fill(name)
     await page.getByLabel('Slug').fill('long-name')
     await page.getByRole('button', { name: 'Create collection' }).click()
+
     await expect(page).toHaveURL(/\/collections\/long-name$/)
+
     for (const width of [390, 1280]) {
       await page.setViewportSize({ width, height: 900 })
       await page.goto('/collections')
+
       await expect(page.getByRole('link', { name })).toBeVisible()
       expect(await pageWidth(page), `collections ${width}`).toBeLessThanOrEqual(width)
+
       await page.goto('/overview')
+
       await expect(page.getByRole('region', { name: 'Revenue by collection' }).getByText(name)).toBeVisible()
       expect(await pageWidth(page), `overview ${width}`).toBeLessThanOrEqual(width)
     }
@@ -69,7 +76,9 @@ test.describe('long unbroken text', () => {
     await page.getByLabel('Base price, $').fill('35')
     await page.getByLabel('Ink', { exact: true }).check()
     await page.getByRole('button', { name: 'Create product' }).click()
+
     await expect(page).toHaveURL(/\/products\/donau-poster$/)
+
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto('/products?status=draft')
 
@@ -89,6 +98,7 @@ test.describe('long unbroken text', () => {
     const tall = await sharp({ create: { width: 400, height: 1600, channels: 3, background: '#a9cdb2' } }).png().toBuffer()
 
     await image.locator('input[type="file"]').setInputFiles({ name: 'tall.png', mimeType: 'image/png', buffer: tall })
+
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('Image updated.')).toBeVisible()
     await expect.poll(() => image.locator('img').evaluate(img => (img as HTMLImageElement).naturalWidth)).toBe(400)
 
@@ -101,6 +111,7 @@ test.describe('long unbroken text', () => {
 
   test('the image buttons stand one under the other in both languages', async ({ page, context }) => {
     await signInAsSandboxUser(context)
+
     for (const [lang, replace, remove] of [['en', 'Replace image', 'Remove image'], ['ru', 'Заменить изображение', 'Убрать изображение']]) {
       await page.goto(`/products/hush?lang=${lang}`)
 

@@ -13,6 +13,7 @@ export const test = base.extend<{ cspGuard: void; sandboxes: void }>({
     await page.exposeBinding('reportCspViolation', (_source, text: string) => {
       violations.push(text)
     })
+
     await page.addInitScript(() => {
       document.addEventListener('securitypolicyviolation', event => {
         const report = (window as unknown as { reportCspViolation: (text: string) => Promise<void> }).reportCspViolation
@@ -20,7 +21,9 @@ export const test = base.extend<{ cspGuard: void; sandboxes: void }>({
         void report(`${event.violatedDirective} ${event.blockedURI}`)
       })
     })
+
     await use()
+
     expect(violations).toEqual([])
   }, { auto: true }],
   sandboxes: [async ({}, use) => {

@@ -21,19 +21,25 @@ test.describe('command palette', () => {
     const { number, name } = rows[0]!
 
     await openFramed(page, '/overview')
+
     await expect(page.getByRole('button', { name: 'Search…' })).toHaveAttribute('aria-keyshortcuts', 'Control+K')
+
     await page.keyboard.press('Control+k')
+
     await expect(palette(page)).toBeVisible()
     await expect(input(page)).toBeFocused()
     await expect(group(page, 'Pages').getByRole('option')).toHaveCount(9)
     await expectNoSeriousA11yViolationsInBothThemes(page, '[role="dialog"][aria-label="Search and commands"]')
+
     await input(page).fill(`#${number}`)
 
     const order = group(page, 'Orders').getByRole('option', { name: new RegExp(`^#${number} · ${name}`) })
 
     await expect(order).toBeVisible()
     await expect(group(page, 'Pages')).toHaveCount(0)
+
     await page.keyboard.press('Enter')
+
     await expect(page).toHaveURL(new RegExp(`/orders/${number}$`))
     await expect(palette(page)).toBeHidden()
   })
@@ -43,8 +49,11 @@ test.describe('command palette', () => {
     await page.goto('/overview')
     await page.getByRole('button', { name: 'Search…' }).click()
     await input(page).fill('cust')
+
     await expect(group(page, 'Pages').getByRole('option')).toHaveText(['Customers'])
+
     await group(page, 'Pages').getByRole('option', { name: 'Customers' }).click()
+
     await expect(page).toHaveURL(/\/customers$/)
   })
 
@@ -58,6 +67,7 @@ test.describe('command palette', () => {
     await page.keyboard.press('Control+k')
     await input(page).fill(rows[0]!.name.split(' ')[1]!)
     await group(page, 'Customers').getByRole('option', { name: new RegExp(`^${rows[0]!.name}`) }).click()
+
     await expect(page).toHaveURL(new RegExp(`/customers/${rows[0]!.id}$`))
   })
 
@@ -70,9 +80,13 @@ test.describe('command palette', () => {
 
     await expect(actions).toHaveText(['Follow the system theme', 'Use the light theme', 'Use the dark theme', 'Switch to Russian', 'Keyboard shortcuts', 'Sign out'])
     await expect(group(page, 'Pages').getByRole('option', { name: 'Team' })).toHaveCount(0)
+
     await actions.filter({ hasText: 'Sign out' }).click()
+
     await expect(page.getByRole('dialog', { name: 'Sign out and end the demo?' })).toBeVisible()
+
     await page.getByRole('button', { name: 'Cancel' }).click()
+
     await expect(page).toHaveURL(/\/overview$/)
   })
 
@@ -80,17 +94,26 @@ test.describe('command palette', () => {
     await signInAsSandboxUser(context)
     await openFramed(page, '/overview')
     await page.keyboard.press('Control+k')
+
     await expect(group(page, 'Actions').getByRole('option', { name: 'New product' })).toBeVisible()
+
     await group(page, 'Actions').getByRole('option', { name: 'Invite a member' }).click()
+
     await expect(page).toHaveURL(/\/team#team-invite$/)
+
     await page.keyboard.press('Control+k')
     await group(page, 'Actions').getByRole('option', { name: 'Use the dark theme' }).click()
+
     await expect(page.locator('html')).toHaveClass(/\bdark\b/)
+
     await page.keyboard.press('Control+k')
     await input(page).fill('russ')
     await page.keyboard.press('Enter')
+
     await expect(page.getByRole('button', { name: 'Поиск…' })).toBeVisible()
+
     await page.keyboard.press('Control+k')
+
     await expect(page.getByRole('dialog', { name: 'Поиск и команды' }).getByRole('group', { name: 'Страницы' })).toBeVisible()
   })
 
@@ -98,16 +121,21 @@ test.describe('command palette', () => {
     await signInAsSandboxUser(context)
     await page.setViewportSize({ width: 375, height: 740 })
     await page.goto('/overview')
+
     await expect(page.getByRole('button', { name: 'Search…' })).toBeVisible()
+
     await page.getByRole('button', { name: 'Search…' }).click()
     await input(page).fill('zzqx')
+
     await expect(palette(page).getByText('Nothing found for “zzqx”.')).toBeVisible()
 
     const box = (await palette(page).boundingBox())!
 
     expect(box.x).toBeGreaterThanOrEqual(0)
     expect(box.x + box.width).toBeLessThanOrEqual(375)
+
     await page.keyboard.press('Escape')
+
     await expect(palette(page)).toBeHidden()
   })
 })

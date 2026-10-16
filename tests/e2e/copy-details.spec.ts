@@ -12,6 +12,7 @@ test.describe('copy details', () => {
 
     await asSchemaOwner(c => c.query('update fa.users set name = $3 where workspace_id = $1 and id = $2', [workspaceId, userId, '😀 Émile Zola']))
     await openFramed(page, '/overview')
+
     await expect(page.getByRole('button', { name: /^Account menu/ })).toContainText('ÉZ')
   })
 
@@ -31,6 +32,7 @@ test.describe('copy details', () => {
 
     await asSchemaOwner(c => c.query('update fa.store_settings set timezone = $2 where workspace_id = $1', [workspaceId, 'Europe/Kiev']))
     await openFramed(page, '/settings/store')
+
     await expect(page.getByLabel('Time zone')).toHaveValue('Europe/Kyiv')
   })
 
@@ -42,8 +44,11 @@ test.describe('copy details', () => {
 
     await details.getByLabel('Slug').fill('hush-again')
     await details.getByRole('button', { name: 'Save changes' }).click()
+
     await expect(page).toHaveURL(/\/products\/hush-again$/)
+
     await openFramed(page, '/activity')
+
     await expect(page.getByRole('main')).toContainText('Changed: slug')
   })
 })

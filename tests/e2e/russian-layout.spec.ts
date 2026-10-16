@@ -56,11 +56,16 @@ async function problems(page: Page): Promise<string[]> {
     const out: string[] = []
     const overflow = document.documentElement.scrollWidth - document.documentElement.clientWidth
 
-    if (overflow > 0) out.push(`page ${overflow}px wider than the screen`)
+    if (overflow > 0) {
+      out.push(`page ${overflow}px wider than the screen`)
+    }
+
     for (const cell of document.querySelectorAll('th, td')) {
       const box = cell.getBoundingClientRect()
 
-      if (box.width === 0 || [cell, ...cell.querySelectorAll('*')].some(el => getComputedStyle(el).textOverflow === 'ellipsis')) continue
+      if (box.width === 0 || [cell, ...cell.querySelectorAll('*')].some(el => getComputedStyle(el).textOverflow === 'ellipsis')) {
+        continue
+      }
 
       const range = document.createRange()
 
@@ -68,7 +73,9 @@ async function problems(page: Page): Promise<string[]> {
 
       const content = range.getBoundingClientRect()
 
-      if (content.width > 0 && (content.right > box.right + 1 || content.left < box.left - 1)) out.push(`cell «${(cell.textContent ?? '').trim().slice(0, 30)}» spills`)
+      if (content.width > 0 && (content.right > box.right + 1 || content.left < box.left - 1)) {
+        out.push(`cell «${(cell.textContent ?? '').trim().slice(0, 30)}» spills`)
+      }
     }
 
     const rows = new Map<number, number[]>()
@@ -78,7 +85,12 @@ async function problems(page: Page): Promise<string[]> {
 
       rows.set(top, [...(rows.get(top) ?? []), Math.round(card.querySelector('p')!.getBoundingClientRect().top)])
     }
-    for (const values of rows.values()) if (new Set(values).size > 1) out.push(`KPI values at ${values.join(', ')}`)
+
+    for (const values of rows.values()) {
+      if (new Set(values).size > 1) {
+        out.push(`KPI values at ${values.join(', ')}`)
+      }
+    }
 
     return out
   })
@@ -94,8 +106,10 @@ test.describe('the Russian layout', () => {
 
       await page.setViewportSize({ width, height })
       await page.goto('/overview?lang=ru')
+
       for (const path of pages(fixture)) {
         await page.goto(path)
+
         await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible()
         expect(await problems(page), path).toEqual([])
       }
@@ -112,13 +126,17 @@ test.describe('the Russian layout', () => {
 
     for (const width of [640, 768, 1024, 1280]) {
       await page.setViewportSize({ width, height: 800 })
+
       await expect(account).toBeVisible()
       expect(await problems(page), `${width} px`).toEqual([])
 
       const name = account.getByText(LONG.member)
 
-      if (width < 1024) await expect(name).toBeHidden()
-      else await expect(name).toHaveCSS('text-overflow', 'ellipsis')
+      if (width < 1024) {
+        await expect(name).toBeHidden()
+      } else {
+        await expect(name).toHaveCSS('text-overflow', 'ellipsis')
+      }
     }
   })
 
@@ -140,7 +158,9 @@ test.describe('the Russian layout', () => {
 
     expect(Math.abs(phoneCount.x - phoneName.x)).toBeLessThanOrEqual(1)
     expect(phoneCount.y).toBeGreaterThanOrEqual(phoneName.y + phoneName.height)
+
     await page.setViewportSize({ width: 1280, height: 800 })
+
     expect((await count.boundingBox())!.x).toBeGreaterThan((await name.boundingBox())!.x + 200)
   })
 
@@ -177,11 +197,13 @@ test.describe('the Russian layout', () => {
     const customer = page.getByRole('group', { name: 'Покупатели' }).getByRole('option').first()
 
     await expect(customer).toContainText(LONG.email)
+
     await inside('Поиск и команды')
 
     const [label, hint] = await customer.locator('span').evaluateAll(spans => spans.map(span => span.getBoundingClientRect().top))
 
     expect(hint!, 'the hint stands under the name').toBeGreaterThan(label!)
+
     await page.keyboard.press('Escape')
 
     await page.getByRole('region', { name: 'Демо-песочница' }).getByRole('button', { name: 'Ещё действия' }).click()
@@ -203,6 +225,7 @@ test.describe('the Russian layout', () => {
       const dialog = page.getByRole('dialog', { name })
 
       await expect(dialog).toBeVisible()
+
       // Measured once its opening zoom has finished.
       await dialog.evaluate(el => Promise.all(el.getAnimations().map(animation => animation.finished)))
 
@@ -224,8 +247,11 @@ test.describe('the Russian layout', () => {
     const cancel = dialog.getByRole('button', { name: 'Отмена' })
 
     await cancel.scrollIntoViewIfNeeded()
+
     await expect(cancel).toBeInViewport()
+
     await cancel.click()
+
     await expect(dialog).toBeHidden()
   })
 })

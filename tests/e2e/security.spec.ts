@@ -25,6 +25,7 @@ test('the passkey challenge comes in a signed, strict, five-minute cookie and as
 test('in a sandbox, passkeys are explained, not offered', async ({ page, context }) => {
   await signInAsSandboxUser(context)
   await page.goto('/settings/security')
+
   await expect(page.getByRole('heading', { level: 1, name: 'Security' })).toBeVisible()
   await expect(page.getByText(/Passkeys are available in a real account/)).toBeVisible()
   await expect(page.getByRole('button', { name: 'Add a passkey' })).toHaveCount(0)

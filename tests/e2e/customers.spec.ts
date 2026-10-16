@@ -19,6 +19,7 @@ test.describe('customers list', () => {
     const expected = await names(workspaceId, 'max(o.placed_at) desc nulls last, c.name collate "unicode" desc, c.id desc')
 
     await page.goto('/customers')
+
     await expect(page.getByRole('heading', { level: 1, name: 'Customers' })).toBeVisible()
     await expect(page).toHaveTitle('Customers · Formline Admin')
     await expect(page.getByText(`${expected.length} customers`)).toBeVisible()
@@ -43,13 +44,18 @@ test.describe('customers list', () => {
     const table = page.getByRole('table', { name: 'Customers' })
 
     await page.getByRole('searchbox', { name: 'Search customers' }).fill(email.toUpperCase())
+
     await expect(page).toHaveURL(new RegExp(`/customers\\?q=${RegExp.escape(encodeURIComponent(email.toUpperCase()))}$`))
     await expect(table.getByRole('row')).toHaveCount(2)
     await expect(table.getByRole('link', { name })).toBeVisible()
     await expect(page.getByText(/^1 of \d+ customers$/)).toBeVisible()
+
     await page.getByRole('searchbox', { name: 'Search customers' }).fill('nobody at all')
+
     await expect(page.getByRole('heading', { name: 'No customers match this search' })).toBeVisible()
+
     await page.getByRole('link', { name: 'Clear search' }).first().click()
+
     await expect(page).toHaveURL(/\/customers$/)
     await expect(table.getByRole('row')).toHaveCount(26)
     await expect(page.getByRole('searchbox', { name: 'Search customers' })).toHaveValue('')
@@ -64,6 +70,7 @@ test.describe('customers list', () => {
     const table = page.getByRole('table', { name: 'Customers' })
 
     await table.getByRole('link', { name: 'Customer' }).click()
+
     await expect(page).toHaveURL(/\/customers\?sort=name$/)
     await expect(table.getByRole('columnheader', { name: 'Customer' })).toHaveAttribute('aria-sort', 'ascending')
     await expect(table.getByRole('row').nth(1).getByRole('link')).toHaveText(byName[0]!)
@@ -71,10 +78,13 @@ test.describe('customers list', () => {
     const pager = page.getByRole('navigation', { name: 'Pagination' })
 
     await pager.getByRole('link', { name: 'Page 2' }).click()
+
     await expect(page).toHaveURL(/\/customers\?sort=name&page=2$/)
     await expect(pager.getByText(`26–50 of ${byName.length}`)).toBeVisible()
     await expect(table.getByRole('row').nth(1).getByRole('link')).toHaveText(byName[25]!)
+
     await page.getByLabel('Customers per page').selectOption('100')
+
     await expect(page).toHaveURL(/\/customers\?sort=name&size=100$/)
     await expect(table.getByRole('row')).toHaveCount(101)
   })
@@ -83,6 +93,7 @@ test.describe('customers list', () => {
     await signInAsSandboxUser(context)
     await page.setViewportSize({ width: 375, height: 800 })
     await page.goto('/customers')
+
     await expect(page.getByRole('table', { name: 'Customers' })).toBeHidden()
 
     const cards = page.getByRole('list', { name: 'Customers' })

@@ -13,6 +13,7 @@ test.describe('product page', () => {
     await signInAsSandboxUser(context, 'viewer')
     await page.goto('/products')
     await page.getByRole('table', { name: 'Products' }).getByRole('link', { name: 'Far Orbit' }).click()
+
     await expect(page).toHaveURL(/\/products\/far-orbit$/)
     await expect(page.getByRole('heading', { level: 1, name: 'Far Orbit' })).toBeVisible()
     await expect(page).toHaveTitle('Far Orbit · Formline Admin')
@@ -39,6 +40,7 @@ test.describe('product page', () => {
     await details(page).getByLabel('Base price, $').fill('33.5')
     await details(page).getByLabel('Tags').fill('calm, Sea Glass')
     await details(page).getByRole('button', { name: 'Save changes' }).click()
+
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('Changes saved.')).toBeVisible()
     await expect(page.getByRole('heading', { level: 1, name: 'Low Tide, Revisited' })).toBeVisible()
     await expect(details(page).getByLabel('Base price, $')).toHaveValue('33.50')
@@ -49,7 +51,9 @@ test.describe('product page', () => {
       "select details from fa.activity_log where workspace_id = $1 and action = 'product.updated'", [workspaceId])).rows)
 
     expect(entries.map(e => e.details.changed)).toEqual([['name', 'basePrice', 'tags']])
+
     await page.goto('/products?q=revisited')
+
     await expect(page.getByRole('table', { name: 'Products' }).getByRole('link', { name: 'Low Tide, Revisited' })).toBeVisible()
   })
 
@@ -58,10 +62,13 @@ test.describe('product page', () => {
     await page.goto('/products/sparse')
     await details(page).getByLabel('Slug').fill('sparse-grid')
     await details(page).getByRole('button', { name: 'Save changes' }).click()
+
     await expect(page).toHaveURL(/\/products\/sparse-grid$/)
     await expect(details(page).getByLabel('Slug')).toHaveValue('sparse-grid')
+
     // The page streams behind its loading state, so a missing product is a 200 with the not-found page (as on the orders).
     await page.goto('/products/sparse')
+
     await expect(page.getByRole('heading', { name: 'Product not found' })).toBeVisible()
   })
 
@@ -73,6 +80,7 @@ test.describe('product page', () => {
     await details(page).getByLabel('Tags').fill('dark, #bold')
     await details(page).getByLabel('Collection').selectOption({ label: 'Pastel' })
     await details(page).getByRole('button', { name: 'Save changes' }).click()
+
     await expect(details(page).getByText('Enter a name.')).toBeVisible()
     await expect(details(page).getByText('Enter a price from 0.01 to 9959.99. The largest size costs $40 more.')).toBeVisible()
     await expect(details(page).getByText(/^Use up to 12 tags/)).toBeVisible()
@@ -97,11 +105,15 @@ test.describe('product page', () => {
 
     await expect(alert).toContainText('Someone changed this product while the page was open.')
     await expect(details(page).getByLabel('Name')).toHaveValue('Louder')
+
     // The action sits inside the message in nearly its color: the underline is what marks it as a control.
     // The pointer still rests where Save was clicked, and the page has moved under it: away first, or a hover decides.
     await page.mouse.move(0, 0)
+
     await expect(alert.getByRole('button', { name: 'Load the current version' })).toHaveCSS('text-decoration-line', 'underline')
+
     await alert.getByRole('button', { name: 'Load the current version' }).click()
+
     await expect(details(page).getByLabel('Description')).toHaveValue('Changed in another tab.')
     await expect(details(page).getByLabel('Name')).toHaveValue('Loud')
     await expect(details(page).getByRole('alert')).toHaveCount(0)
@@ -119,6 +131,7 @@ test.describe('product page', () => {
     await page.setViewportSize({ width: 375, height: 800 })
     await page.goto(`/orders/${line.number}`)
     await page.getByRole('link', { name: line.name }).click()
+
     await expect(page).toHaveURL(new RegExp(`/products/${line.slug}$`))
     await expect(page.getByRole('table', { name: 'Variants' })).toBeHidden()
     await expect(page.getByRole('list', { name: 'Variants' }).getByRole('listitem').first()).toBeVisible()

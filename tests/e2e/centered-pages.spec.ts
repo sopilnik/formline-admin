@@ -23,8 +23,10 @@ const offCenter = (page: Page) => page.locator('main').evaluate(main => {
 test.describe('narrow pages', () => {
   test('stand in the middle of the content area', async ({ page, context }) => {
     await signInAsSandboxUser(context)
+
     for (const path of ['/products/new', '/collections/new', '/collections', '/notifications', '/settings/profile', '/settings/security', '/settings/store']) {
       await page.goto(path)
+
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
       expect(await offCenter(page), path).toBe(0)
     }
@@ -35,9 +37,12 @@ test.describe('narrow pages', () => {
     await page.goto('/team')
     await page.getByLabel('Email').fill('sam.lee@example.test')
     await page.getByRole('button', { name: 'Send invitation' }).click()
+
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('The invitation to sam.lee@example.test is in the Outbox.')).toBeVisible()
+
     await page.goto('/outbox')
     await page.getByRole('list', { name: 'Outbox' }).getByRole('link').first().click()
+
     await expect(page.getByRole('article')).toBeVisible()
     expect(await offCenter(page)).toBe(0)
   })

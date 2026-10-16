@@ -38,7 +38,9 @@ test.describe('order columns', () => {
     expect((await table.getByRole('row').first().getByRole('columnheader').allTextContents()).slice(1).map(text => text.trim()))
       .toEqual(['Order', 'Placed', 'Customer', 'Source', 'Status', 'Items', 'Total'])
 
-    for (const room of await roomBesideStatus(table, 5)) expect(Math.abs(room.left - room.right)).toBeLessThanOrEqual(8)
+    for (const room of await roomBesideStatus(table, 5)) {
+      expect(Math.abs(room.left - room.right)).toBeLessThanOrEqual(8)
+    }
   })
 
   test('the latest orders: Status, then Total, the chip centered in the spare room', async ({ page, context }) => {
@@ -53,6 +55,9 @@ test.describe('order columns', () => {
     const widths = await table.getByRole('columnheader').evaluateAll(headers => headers.map(th => th.getBoundingClientRect().width))
 
     expect(widths[3]).toBeGreaterThan(widths[2]!)
-    for (const room of await roomBesideStatus(table, 3)) expect(Math.abs(room.offCenter)).toBeLessThanOrEqual(1)
+
+    for (const room of await roomBesideStatus(table, 3)) {
+      expect(Math.abs(room.offCenter)).toBeLessThanOrEqual(1)
+    }
   })
 })

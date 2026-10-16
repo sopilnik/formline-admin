@@ -12,10 +12,13 @@ test.describe('Enter the demo', () => {
 
   test('opens a fresh sandbox on the overview as the demo owner', async ({ page, context }) => {
     await page.goto('/sign-in')
+
     await expect(page.getByRole('heading', { level: 2, name: 'Try the demo' })).toBeVisible()
     await expect(page.getByRole('heading', { level: 2, name: 'Owner sign-in' })).toBeVisible()
     await expectNoSeriousA11yViolations(page)
+
     await page.getByRole('button', { name: 'Enter the demo' }).click()
+
     await expect(page).toHaveURL(/\/overview$/)
     await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Account menu: Dana Ortiz, Owner' })).toBeVisible()
@@ -24,8 +27,10 @@ test.describe('Enter the demo', () => {
 
     expect(cookies.find(c => c.name === E2E_SESSION_COOKIE)).toMatchObject({ httpOnly: true, secure: true, sameSite: 'Lax' })
     expect(cookies.find(c => c.name === E2E_DEMO_COOKIE)).toMatchObject({ httpOnly: true, secure: true, sameSite: 'Lax' })
+
     // A returning visitor with a live cookie continues in the same sandbox.
     await page.goto('/sign-in')
+
     await expect(page).toHaveURL(/\/overview$/)
   })
 
@@ -34,11 +39,14 @@ test.describe('Enter the demo', () => {
       await context.clearCookies()
       await page.goto('/sign-in')
       await page.getByRole('button', { name: 'Enter the demo' }).click()
+
       await expect(page).toHaveURL(/\/overview$/)
     }
+
     await context.clearCookies()
     await page.goto('/sign-in')
     await page.getByRole('button', { name: 'Enter the demo' }).click()
+
     // Next's route announcer also carries role="alert"; this is the form's own alert.
     await expect(page.locator('p[role="alert"]')).toHaveText(/^Too many demo sandboxes from your network\. Try again in \d+ minutes?\.$/)
     await expect(page).toHaveURL(/\/sign-in$/)

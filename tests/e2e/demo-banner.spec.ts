@@ -44,6 +44,7 @@ test.describe('demo banner', () => {
     await signInAsSandboxUser(context)
     await page.goto('/overview?lang=ru')
     await page.getByRole('region', { name: 'Демо-песочница' }).getByRole('button', { name: 'Ещё действия' }).click()
+
     for (const name of ['Сбросить данные', 'Сменить пользователя']) {
       const item = page.getByRole('menuitem', { name })
 

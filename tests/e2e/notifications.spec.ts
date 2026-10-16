@@ -24,8 +24,11 @@ test.describe('notifications', () => {
     const number = await newestOrder(workspaceId)
 
     await page.goto('/overview')
+
     await expect(bell(page)).toHaveAccessibleName('Notifications, 8 unread')
+
     await bell(page).click()
+
     await expect(page.getByRole('dialog', { name: 'Notifications' })).toBeVisible()
     await expect(latest(page)).toHaveCount(6)
     await expect(latest(page).first()).toContainText(`New order #${number}`)
@@ -41,6 +44,7 @@ test.describe('notifications', () => {
     await page.goto('/overview')
     await bell(page).click()
     await latest(page).first().getByRole('button').click()
+
     await expect(page).toHaveURL(new RegExp(`/orders/${number}$`))
     await expect(page.getByRole('heading', { level: 1, name: `Order #${number}` })).toBeVisible()
     await expect(bell(page)).toHaveAccessibleName('Notifications, 7 unread')
@@ -58,6 +62,7 @@ test.describe('notifications', () => {
     await page.goto('/overview')
     await bell(page).click()
     await latest(page).filter({ hasText: 'Low stock:' }).first().getByRole('button').click()
+
     await expect(page).toHaveURL(new RegExp(`/products/${rows[0]!.slug}$`))
   })
 
@@ -66,9 +71,12 @@ test.describe('notifications', () => {
     await page.goto('/overview')
     await bell(page).click()
     await page.getByRole('button', { name: 'Mark all as read' }).click()
+
     await expect(bell(page)).toHaveAccessibleName('Notifications')
     await expect(latest(page).getByText('Unread')).toHaveCount(0)
+
     await page.getByRole('link', { name: 'All notifications' }).click()
+
     await expect(page).toHaveURL(/\/notifications$/)
     await expect(page.getByText('All read · 8 notifications')).toBeVisible()
   })
@@ -76,6 +84,7 @@ test.describe('notifications', () => {
   test('the page lists every notification with its count, marks them read and passes axe', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/notifications')
+
     await expect(page.getByRole('heading', { level: 1, name: 'Notifications' })).toBeVisible()
     await expect(page).toHaveTitle('Notifications · Formline Admin')
     await expect(page.getByText('8 unread · 8 notifications')).toBeVisible()
@@ -86,7 +95,9 @@ test.describe('notifications', () => {
     await expect(page.getByRole('region', { name: 'Notifications' })).toHaveCount(0)   // the list carries the name, once
     await expect(entries.filter({ hasText: 'Low stock:' })).toHaveCount(3)
     await expectNoSeriousA11yViolationsInBothThemes(page)
+
     await page.getByRole('button', { name: 'Mark all as read' }).click()
+
     await expect(page.getByText('All read · 8 notifications')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Mark all as read' })).toHaveCount(0)
     await expect(bell(page)).toHaveAccessibleName('Notifications')
@@ -100,6 +111,7 @@ test.describe('notifications', () => {
       `insert into fa.notifications (workspace_id, user_id, kind, payload)
        select workspace_id, null, kind, payload from fa.notifications where workspace_id = $1 and kind = 'stock.low' limit 2`, [workspaceId]))
     await page.goto('/overview')
+
     await expect(bell(page)).toHaveAccessibleName('Notifications, 10 unread')
     await expect(bell(page).locator('span[aria-hidden]')).toHaveText('10')
 
@@ -119,11 +131,14 @@ test.describe('notifications', () => {
     const { workspaceId, userId } = await signInAsSandboxUser(context)
 
     await page.goto('/overview')
+
     await expect(bell(page)).toHaveAccessibleName('Notifications, 8 unread')
+
     await asSchemaOwner(c => c.query(
       `insert into fa.notification_reads (workspace_id, notification_id, user_id)
        select workspace_id, id, $2 from fa.notifications where workspace_id = $1 and kind = 'stock.low'`, [workspaceId, userId]))
     await page.getByRole('navigation', { name: 'Main menu' }).getByRole('link', { name: 'Orders' }).click()
+
     await expect(page).toHaveURL(/\/orders$/)
     await expect(bell(page)).toHaveAccessibleName('Notifications, 5 unread')
   })
@@ -140,8 +155,11 @@ test.describe('notifications', () => {
       await insert(own.rows[0]!.sign_in_id, 1)
       await insert(randomUUID(), 2)
     })
+
     await page.goto('/overview')
+
     await expect(bell(page)).toHaveAccessibleName('Notifications, 9 unread')
+
     await bell(page).click()
 
     const signIns = latest(page).filter({ hasText: 'New sign-in to your account' })
@@ -160,7 +178,9 @@ test.describe('notifications', () => {
 
     await page.setViewportSize({ width: 375, height: 740 })
     await page.goto('/overview?lang=ru')
+
     await expect(bell(page)).toHaveAccessibleName('Уведомления, 8 непрочитанных')
+
     await bell(page).click()
 
     const popup = page.getByRole('dialog', { name: 'Уведомления' })

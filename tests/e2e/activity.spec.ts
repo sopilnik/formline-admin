@@ -12,8 +12,11 @@ test.describe('activity log', () => {
     await page.goto('/team')
     await page.getByRole('button', { name: 'Actions for Priya Nair' }).click()
     await page.getByRole('menuitem', { name: 'Make viewer' }).click()
+
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('Priya Nair is now a viewer.')).toBeVisible()
+
     await page.goto('/activity')
+
     await expect(page.getByRole('heading', { level: 1, name: 'Activity' })).toBeVisible()
     await expect(page).toHaveTitle('Activity · Formline Admin')
 
@@ -40,16 +43,24 @@ test.describe('activity log', () => {
     const table = page.getByRole('table', { name: 'Activity' })
 
     await expect(table.getByRole('row')).toHaveCount(3)
+
     await page.getByLabel('Who', { exact: true }).selectOption('system')
+
     await expect(page).toHaveURL(/\/activity\?actor=system$/)
     await expect(table.getByRole('row')).toHaveCount(2)
     await expect(table.getByRole('row').nth(1)).toContainText('System')
     await expect(table.getByRole('row').nth(1).getByRole('link', { name: `#${order.number}` })).toHaveAttribute('href', `/orders/${order.number}`)
+
     await page.getByLabel('When', { exact: true }).selectOption('30d')
+
     await expect(page.getByRole('heading', { name: 'No entries' })).toBeVisible()
+
     await page.getByRole('link', { name: 'Clear filters' }).first().click()
+
     await expect(page).toHaveURL(/\/activity$/)
+
     await page.getByLabel('Action', { exact: true }).selectOption('sandbox.created')
+
     await expect(page).toHaveURL(/\/activity\?action=sandbox\.created$/)
     await expect(table.getByRole('row')).toHaveCount(2)
     await expect(page.getByText('1 of 2 entries')).toBeVisible()
@@ -58,6 +69,7 @@ test.describe('activity log', () => {
   test('speaks Russian and is not there for a manager', async ({ page, context, browser }) => {
     await signInAsSandboxUser(context)
     await page.goto('/activity?lang=ru')
+
     await expect(page.getByRole('heading', { level: 1, name: 'Журнал' })).toBeVisible()
     await expect(page.getByRole('table', { name: 'Журнал' }).getByRole('row').last()).toContainText('Вход в демо')
 
@@ -68,7 +80,9 @@ test.describe('activity log', () => {
     const managerPage = await other.newPage()
 
     await managerPage.goto('/activity')
+
     await expect(managerPage.getByRole('heading', { level: 1, name: /not found/ })).toBeVisible()
+
     await other.close()
   })
 
@@ -76,6 +90,7 @@ test.describe('activity log', () => {
     await signInAsSandboxUser(context)
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/activity')
+
     await expect(page.getByRole('table', { name: 'Activity' })).toBeVisible()
 
     const widths = await page.getByRole('table', { name: 'Activity' }).getByRole('columnheader')

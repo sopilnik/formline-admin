@@ -16,6 +16,7 @@ test.describe('invitations', () => {
     await page.getByLabel('Email').fill('alex.kim@example.test')
     await page.getByLabel('Role').selectOption('manager')
     await page.getByRole('button', { name: 'Send invitation' }).click()
+
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('The invitation to alex.kim@example.test is in the Outbox.')).toBeVisible()
 
     const open = page.getByRole('list', { name: 'Open invitations' })
@@ -26,8 +27,11 @@ test.describe('invitations', () => {
 
     await page.goto('/outbox')
     await page.getByRole('link', { name: 'Dana Ortiz invited you to Formline Admin' }).click()
+
     await expect(page.getByRole('article')).toContainText('as a manager')
+
     await page.getByRole('link', { name: 'Accept the invitation' }).click()
+
     await expect(page).toHaveURL(/\/invite\/[a-z2-7]{32}$/)
     await expect(page.getByRole('heading', { level: 1, name: 'Invitation to the team' })).toBeVisible()
     await expect(page.getByText('Dana Ortiz invited alex.kim@example.test to join the Formline team. Role: Manager.')).toBeVisible()
@@ -37,9 +41,12 @@ test.describe('invitations', () => {
 
     await page.getByLabel('Your name').fill('Alex Kim')
     await page.getByRole('button', { name: 'Accept and continue' }).click()
+
     await expect(page).toHaveURL(/\/overview$/)
     await expect(page.getByRole('button', { name: 'Account menu: Alex Kim, Manager' })).toBeVisible()
+
     await page.goto(link)
+
     await expect(page.getByRole('heading', { name: 'This invitation cannot be used' })).toBeVisible()
     await expect(page.getByText('It has already been accepted.')).toBeVisible()
   })
@@ -50,9 +57,12 @@ test.describe('invitations', () => {
     await page.goto('/team')
     await page.getByLabel('Email').fill('lee.park@example.test')
     await page.getByRole('button', { name: 'Send invitation' }).click()
+
     await expect(page.getByRole('list', { name: 'Open invitations' }).getByRole('listitem')).toHaveCount(1)
+
     await page.goto(`/invite/${await tokenOfLetter(workspaceId, 'lee.park@example.test')}`)
     await page.getByRole('button', { name: 'Accept and continue' }).press('Enter')
+
     await expect(page.getByRole('main').getByRole('alert')).toHaveText('Enter a name of up to 120 characters.')
     await expect(page.getByLabel('Your name')).toBeFocused()
   })
@@ -62,10 +72,13 @@ test.describe('invitations', () => {
     await page.goto('/team')
     await page.getByLabel('Email').fill('noah.becker@formline.example')
     await page.getByRole('button', { name: 'Send invitation' }).click()
+
     await expect(page.getByText('A member of this team already has this email.')).toBeVisible()
     await expect(page.getByLabel('Email')).toBeFocused()
+
     await page.getByLabel('Email').fill('not an email')
     await page.getByRole('button', { name: 'Send invitation' }).click()
+
     await expect(page.getByText('Enter an email address such as alex@example.com.')).toBeVisible()
     await expect(page.getByLabel('Email')).toHaveValue('not an email')
   })
@@ -77,6 +90,7 @@ test.describe('invitations', () => {
     await page.getByLabel('Email').fill('sam.lee@example.test')
     await page.getByRole('button', { name: 'Send invitation' }).click()
     await page.getByRole('button', { name: 'Resend the invitation to sam.lee@example.test' }).click()
+
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('A new letter to sam.lee@example.test is in the Outbox.')).toBeVisible()
 
     const letters = await asSchemaOwner(async c => (await c.query<{ n: number }>(
@@ -87,9 +101,12 @@ test.describe('invitations', () => {
     const token = await tokenOfLetter(workspaceId, 'sam.lee@example.test')
 
     await page.getByRole('button', { name: 'Revoke the invitation to sam.lee@example.test' }).click()
+
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('The invitation to sam.lee@example.test is revoked.')).toBeVisible()
     await expect(page.getByRole('list', { name: 'Open invitations' })).toHaveCount(0)
+
     await page.goto(`/invite/${token}`)
+
     await expect(page.getByText('It was revoked.')).toBeVisible()
   })
 
@@ -99,6 +116,7 @@ test.describe('invitations', () => {
     await page.goto('/team')
     await page.getByLabel('Email').fill('kept.private@example.test')
     await page.getByRole('button', { name: 'Send invitation' }).click()
+
     await expect(page.getByRole('list', { name: 'Open invitations' }).getByRole('listitem')).toHaveCount(1)
 
     const token = await tokenOfLetter(workspaceId, 'kept.private@example.test')
@@ -109,8 +127,10 @@ test.describe('invitations', () => {
     const other = await stranger.newPage()
 
     await other.goto(`/invite/${token}`)
+
     await expect(other.getByText('This sandbox has no invitation at this address.')).toBeVisible()
     await expect(other.getByRole('button', { name: 'Accept and continue' })).toHaveCount(0)
+
     await stranger.close()
   })
 

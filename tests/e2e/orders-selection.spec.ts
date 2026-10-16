@@ -45,6 +45,7 @@ test.describe('the orders selection', () => {
     await cards.getByRole('checkbox', { name: /^Select order #/ }).nth(0).check()
     await cards.getByRole('checkbox', { name: /^Select order #/ }).nth(1).check()
     await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
+
     for (const target of [page.getByRole('link', { name: 'Next page' }), page.locator('#orders-page-size')]) {
       await expect.poll(() => reachable(target)).toBe(true)
     }
@@ -58,9 +59,12 @@ test.describe('the orders selection', () => {
     const chips = page.getByRole('group', { name: 'Status' }).getByRole('button')
 
     await expect(chips).toHaveCount(7)
+
     await chips.first().focus()
+
     for (let i = 1; i < 7; i++) {
       await page.keyboard.press('Tab')
+
       await expect(chips.nth(i)).toBeFocused()
     }
 

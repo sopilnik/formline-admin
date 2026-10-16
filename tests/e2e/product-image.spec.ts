@@ -24,9 +24,12 @@ test.describe('product image', () => {
     await page.getByLabel('Base price, $').fill('27')
     await page.getByLabel('Sage', { exact: true }).check()
     await page.getByRole('button', { name: 'Create product' }).click()
+
     await expect(page).toHaveURL(/\/products\/tide-pool$/)
     await expect(image(page).getByText('No image')).toBeVisible()
+
     await image(page).locator('input[type="file"]').setInputFiles(await poster())
+
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('Image updated.')).toBeVisible()
 
     const shown = image(page).locator('img')
@@ -47,6 +50,7 @@ test.describe('product image', () => {
     expect(served).toEqual({ status: 200, type: 'image/webp', cache: 'private, no-store', sniff: 'nosniff' })
 
     await page.goto('/products?status=draft')
+
     // The list shows the upload's small copy.
     await expect(page.getByRole('table', { name: 'Products' }).locator(`img[src="${src}?size=thumb"]`)).toBeVisible()
 
@@ -62,8 +66,11 @@ test.describe('product image', () => {
     const other = await stranger.newPage()
 
     await other.goto('/products')
+
     expect(await other.evaluate(async url => (await fetch(url)).status, src)).toBe(404)
+
     await stranger.close()
+
     expect(await page.evaluate(async () => (await fetch('/media/posters')).status)).toBe(404)
   })
 
@@ -71,8 +78,11 @@ test.describe('product image', () => {
     const { workspaceId } = await signInAsSandboxUser(context)
 
     await page.goto('/products/hush')
+
     await expect(image(page).locator('img')).toHaveAttribute('src', '/posters/hush.webp')
+
     await image(page).locator('input[type="file"]').setInputFiles(await poster())
+
     await expect(image(page).locator('img')).toHaveAttribute('src', /^\/media\//)
 
     const first = (await image(page).locator('img').getAttribute('src'))!.split('/').pop()!
@@ -82,6 +92,7 @@ test.describe('product image', () => {
     const dialog = page.getByRole('dialog', { name: 'Remove the image of Hush?' })
 
     await dialog.getByRole('button', { name: 'Remove image' }).click()
+
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('Image removed.')).toBeVisible()
     await expect(image(page).getByText('No image')).toBeVisible()
 
@@ -98,10 +109,15 @@ test.describe('product image', () => {
     const picker = image(page).locator('input[type="file"]')
 
     await picker.setInputFiles({ name: 'big.jpg', mimeType: 'image/jpeg', buffer: Buffer.alloc(2 * 1024 * 1024 + 10, 1) })
+
     await expect(image(page).getByRole('alert')).toHaveText('The file is larger than 2 MB.')
+
     await picker.setInputFiles({ name: 'drawing.svg', mimeType: 'image/svg+xml', buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>') })
+
     await expect(image(page).getByRole('alert')).toHaveText('Choose a JPEG, PNG or WebP image.')
+
     await picker.setInputFiles({ name: 'broken.png', mimeType: 'image/png', buffer: (await poster()).buffer.subarray(0, 100) })
+
     await expect(image(page).getByRole('alert')).toHaveText('The image could not be read. It may be damaged.')
     await expect(image(page).locator('img')).toHaveAttribute('src', '/posters/loud.webp')
   })
@@ -109,6 +125,7 @@ test.describe('product image', () => {
   test('shows a viewer the image without the controls', async ({ page, context }) => {
     await signInAsSandboxUser(context, 'viewer')
     await page.goto('/products/hush')
+
     await expect(image(page).locator('img')).toHaveAttribute('src', '/posters/hush.webp')
     await expect(image(page).getByRole('button')).toHaveCount(0)
     await expect(image(page).locator('input[type="file"]')).toHaveCount(0)

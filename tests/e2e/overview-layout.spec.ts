@@ -9,7 +9,10 @@ async function holdPage(page: Page, path: string): Promise<() => void> {
 
   // Only the navigation's request waits: the prefetch brings the loading state and must arrive.
   await page.route(url => url.pathname === path && url.searchParams.has('_rsc'), async route => {
-    if (route.request().headers()['next-router-prefetch']) return route.continue()
+    if (route.request().headers()['next-router-prefetch']) {
+      return route.continue()
+    }
+
     await held
     await route.continue()
   })
@@ -39,7 +42,9 @@ test.describe('overview layout', () => {
     await signInAsSandboxUser(context)
     await page.setViewportSize({ width: 1100, height: 900 })
     await page.goto('/orders')
+
     await expect(page.getByRole('heading', { level: 1, name: 'Orders' })).toBeVisible()
+
     // Not a wait for hydration: the overview's prefetch, which brings its loading state, must arrive before the hold.
     await page.waitForLoadState('networkidle')
 
@@ -87,6 +92,7 @@ test.describe('overview layout', () => {
 
   test('the overview’s cards share one inner edge on a phone and on a desktop', async ({ page, context }) => {
     await signInAsSandboxUser(context)
+
     for (const [width, padding] of [[375, '16px'], [1280, '20px']] as const) {
       await page.setViewportSize({ width, height: 900 })
       await page.goto('/overview')

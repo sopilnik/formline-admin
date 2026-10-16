@@ -16,13 +16,16 @@ test.describe('product variants', () => {
     const { workspaceId } = await signInAsSandboxUser(context, 'admin')
 
     await page.goto('/products/far-orbit')
+
     await expect(variants(page).getByRole('group', { name: 'A3 · Ink' })).toContainText('far-orbit-a3-ink')
     await expect(variants(page).getByLabel('Own price, $, A1 · Ink')).toHaveAttribute('placeholder', '71.00')
     await expectNoSeriousA11yViolationsInBothThemes(page)
+
     await variants(page).getByLabel('Own price, $, A1 · Ink').fill('65')
     await variants(page).getByLabel('Stock, A3 · Ocean').fill('40')
     await variants(page).getByLabel('Low at, A3 · Ocean').fill('6')
     await variants(page).getByRole('button', { name: 'Save variants' }).click()
+
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('Variants saved.')).toBeVisible()
     await expect(variants(page).getByLabel('Own price, $, A1 · Ink')).toHaveValue('65.00')
     await expect(variants(page).getByLabel('Stock, A3 · Ocean')).toHaveValue('40')
@@ -40,6 +43,7 @@ test.describe('product variants', () => {
     await variants(page).getByLabel('Stock, A2 · Ink').fill('-3')
     await variants(page).getByLabel('Own price, $, A3 · Ocean').fill('free')
     await variants(page).getByRole('button', { name: 'Save variants' }).click()
+
     await expect(variants(page).getByText('A whole number up to 100,000.')).toBeVisible()
     await expect(variants(page).getByText('From 0.01 to 9999.99, or empty.')).toBeVisible()
     await expect(variants(page).getByLabel('Stock, A2 · Ink')).toBeFocused()
@@ -60,17 +64,23 @@ test.describe('product variants', () => {
 
     await expect(alert).toContainText('The stock of loud-a3-signal changed while the page was open')
     expect(await stockOf(workspaceId, 'loud-a3-signal')).toBe(3)
+
     // The action sits inside the message in nearly its color: the underline is what marks it as a control.
     // The pointer still rests where Save was clicked, and the page has moved under it: away first, or a hover decides.
     await page.mouse.move(0, 0)
+
     await expect(alert.getByRole('button', { name: 'Load the current stock' })).toHaveCSS('text-decoration-line', 'underline')
+
     await alert.getByRole('button', { name: 'Load the current stock' }).click()
+
     await expect(variants(page).getByLabel('Stock, A3 · Signal')).toHaveValue('3')
     await expect(variants(page).getByRole('alert')).toHaveCount(0)
     // Only the stock is loaded: the own price and the threshold typed before stay to be saved.
     await expect(variants(page).getByLabel('Own price, $, A2 · Signal')).toHaveValue('55')
     await expect(variants(page).getByLabel('Low at, A1 · Signal')).toHaveValue('1')
+
     await variants(page).getByRole('button', { name: 'Save variants' }).click()
+
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('Variants saved.')).toBeVisible()
 
     const saved = await asSchemaOwner(async c => (await c.query<{ sku: string; price: number | null; threshold: number; stock: number }>(
@@ -85,6 +95,7 @@ test.describe('product variants', () => {
   test('names each field with its variant, a comma straight after the field', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/products/far-orbit')
+
     await expect(variants(page).getByRole('group', { name: 'A3 · Ink' })).toBeVisible()
 
     // The name Chrome itself gives each field, as a screen reader hears it.

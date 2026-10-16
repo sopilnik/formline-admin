@@ -27,6 +27,7 @@ test.describe('orders list', () => {
     const newest = await firstNumber(workspaceId, 'placed_at desc, id desc')
 
     await page.goto('/orders')
+
     await expect(page.getByRole('heading', { level: 1, name: 'Orders' })).toBeVisible()
     await expect(page).toHaveTitle('Orders · Formline Admin')
     await expect(page.getByText(`${total} orders`, { exact: true })).toBeVisible()
@@ -54,9 +55,13 @@ test.describe('orders list', () => {
 
     await expect(chips.getByRole('button', { name: /^All/ })).toHaveAttribute('aria-pressed', 'true')
     await expect(chips.getByRole('button', { name: /^Paid/ })).toHaveAccessibleName(`Paid, ${paid}`)
+
     await chips.getByRole('button', { name: /^Paid/ }).click()
+
     await expect(page).toHaveURL(/\/orders\?status=paid$/)
+
     await chips.getByRole('button', { name: /^Processing/ }).click()
+
     await expect(page).toHaveURL(/\/orders\?status=paid,processing$/)
     await expect(page.getByText(`${paid + processing} of ${total} orders`, { exact: true })).toBeVisible()
     await expect(chips.getByRole('button', { name: /^All/ })).toHaveAttribute('aria-pressed', 'false')
@@ -64,12 +69,20 @@ test.describe('orders list', () => {
 
     const table = page.getByRole('table', { name: 'Orders' })
 
-    for (const other of ['Shipped', 'Delivered', 'Canceled', 'Refunded']) await expect(table.getByText(other, { exact: true })).toHaveCount(0)
+    for (const other of ['Shipped', 'Delivered', 'Canceled', 'Refunded']) {
+      await expect(table.getByText(other, { exact: true })).toHaveCount(0)
+    }
+
     await chips.getByRole('button', { name: /^All/ }).click()
+
     await expect(page).toHaveURL(/\/orders$/)
+
     await chips.getByRole('button', { name: /^Shipped/ }).click()
+
     await expect(page).toHaveURL(/\/orders\?status=shipped$/)
+
     await page.getByRole('link', { name: 'Clear filters' }).click()
+
     await expect(page).toHaveURL(/\/orders$/)
     await expect(chips.getByRole('button', { name: /^All/ })).toHaveAttribute('aria-pressed', 'true')
   })
@@ -88,16 +101,23 @@ test.describe('orders list', () => {
     const search = page.getByRole('searchbox', { name: 'Search orders' })
 
     await search.fill(String(order.number))
+
     await expect(page).toHaveURL(new RegExp(`\\?q=${order.number}$`))
 
     const table = page.getByRole('table', { name: 'Orders' })
 
     await expect(table.getByRole('link', { name: /^#\d+$/ })).toHaveText([`#${order.number}`])
+
     await search.fill(lastName)
+
     await expect(page.getByText(`${byName} of ${total} orders`, { exact: true })).toBeVisible()
+
     await search.fill('nobody@nowhere.invalid')
+
     await expect(page.getByText('No orders match these filters', { exact: true })).toBeVisible()
+
     await page.getByRole('link', { name: 'Clear filters' }).first().click()
+
     await expect(page).toHaveURL(/\/orders$/)
     await expect(search).toHaveValue('')
   })
@@ -113,14 +133,18 @@ test.describe('orders list', () => {
     const placed = page.getByLabel('Placed', { exact: true })
 
     await expect(placed).toHaveValue('any')
+
     await placed.selectOption('7d')
+
     await expect(page).toHaveURL(/\/orders\?placed=7d$/)
     await expect(page.getByText(`${week} of ${total} orders`, { exact: true })).toBeVisible()
 
     const background = await placed.evaluate(el => getComputedStyle(el).backgroundColor)
 
     expect(background).toBe('rgb(23, 24, 26)')
+
     await page.getByLabel('Source', { exact: true }).selectOption('seed')
+
     await expect(page).toHaveURL(/\/orders\?placed=7d&source=seed$/)
     await expect(page.getByText(`${weekSample} of ${total} orders`, { exact: true })).toBeVisible()
   })
@@ -135,26 +159,34 @@ test.describe('orders list', () => {
     const header = page.getByRole('columnheader', { name: 'Total' })
 
     await header.getByRole('link').click()
+
     await expect(page).toHaveURL(/\/orders\?sort=total$/)
     await expect(header).toHaveAttribute('aria-sort', 'descending')
 
     const numbers = page.getByRole('table', { name: 'Orders' }).getByRole('link', { name: /^#\d+$/ })
 
     await expect(numbers.first()).toHaveText(`#${top}`)
+
     await header.getByRole('link').click()
+
     await expect(page).toHaveURL(/\/orders\?sort=total&dir=asc$/)
     await expect(header).toHaveAttribute('aria-sort', 'ascending')
 
     const pager = page.getByRole('navigation', { name: 'Pagination' })
 
     await pager.getByRole('link', { name: 'Next page' }).click()
+
     await expect(page).toHaveURL(/\/orders\?sort=total&dir=asc&page=2$/)
     await expect(pager.getByRole('link', { name: 'Page 2' })).toHaveAttribute('aria-current', 'page')
     await expect(pager.getByText(`26–50 of ${total}`)).toBeVisible()
+
     await pager.getByLabel('Orders per page').selectOption('50')
+
     await expect(page).toHaveURL(/\/orders\?sort=total&dir=asc&size=50$/)
     await expect(numbers).toHaveCount(50)
+
     await page.goto('/orders?page=999')
+
     await expect(page).toHaveURL(new RegExp(`/orders\\?page=${Math.ceil(total / 25)}$`))
   })
 
@@ -162,6 +194,7 @@ test.describe('orders list', () => {
     await page.setViewportSize({ width: 375, height: 740 })
     await signInAsSandboxUser(context)
     await page.goto('/orders')
+
     await expect(page.getByRole('table', { name: 'Orders' })).toBeHidden()
 
     const cards = page.getByRole('list', { name: 'Orders' })

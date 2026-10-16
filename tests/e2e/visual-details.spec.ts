@@ -39,6 +39,7 @@ test.describe('visual details', () => {
     const send = page.getByRole('button', { name: 'Send invitation' })
 
     await send.hover()
+
     // The hover color fades in (transition-all): the reading waits for the end of it.
     await expect.poll(() => send.evaluate(element => getComputedStyle(element).backgroundColor)).toBe('rgb(163, 49, 12)')
     expect(await ownContrast(send)).toBeGreaterThanOrEqual(4.5)
@@ -54,6 +55,7 @@ test.describe('visual details', () => {
 
     await expect(addNote).toHaveCSS('height', '32px')
     await expect(addNote).toHaveCSS('font-size', '14px')
+
     await busiestCustomer(page, workspaceId)
 
     const saveNotes = page.getByRole('button', { name: 'Save notes' })
@@ -86,7 +88,9 @@ test.describe('visual details', () => {
 
     const heads = page.getByRole('table').first().locator('thead th')
 
-    for (const text of await heads.allTextContents()) expect(text, text).not.toMatch(/\d [A-Za-z]|[A-Za-z] \d/)
+    for (const text of await heads.allTextContents()) {
+      expect(text, text).not.toMatch(/\d [A-Za-z]|[A-Za-z] \d/)
+    }
 
     await page.getByRole('button', { name: /^Notifications/ }).click()
 

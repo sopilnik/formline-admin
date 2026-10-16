@@ -7,6 +7,7 @@ test('liveness answers without the origin secret', async ({ playwright, baseURL 
 
   expect(res.status()).toBe(200)
   expect(await res.json()).toEqual({ status: 'ok' })
+
   await bare.dispose()
 })
 
@@ -19,6 +20,7 @@ for (const [name, headers] of [
     const ctx = await playwright.request.newContext({ baseURL, extraHTTPHeaders: headers })
 
     expect((await ctx.get('/')).status()).toBe(403)
+
     await ctx.dispose()
   })
 }
@@ -43,7 +45,11 @@ test('pages carry the security headers and a per-request nonce the scripts use',
 
   const violations: string[] = []
 
-  page.on('console', m => { if (m.type() === 'error' && /Content Security Policy/i.test(m.text())) violations.push(m.text()) })
+  page.on('console', m => {
+    if (m.type() === 'error' && /Content Security Policy/i.test(m.text())) {
+      violations.push(m.text())
+    }
+  })
 
   const res = await page.goto('/sign-in')
   const nonce = /'nonce-([^']+)'/.exec(res?.headers()['content-security-policy'] ?? '')?.[1]

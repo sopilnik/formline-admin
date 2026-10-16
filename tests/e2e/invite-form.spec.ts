@@ -4,6 +4,7 @@ import { expect, test } from './test.ts'
 test.describe('invitation form', () => {
   test('stacks below 1024 px, so the email field never collapses beside an open menu', async ({ page, context }) => {
     await signInAsSandboxUser(context)
+
     for (const width of [768, 800, 900]) {
       await page.setViewportSize({ width, height: 900 })
       await page.goto('/team?lang=ru')
@@ -19,6 +20,7 @@ test.describe('invitation form', () => {
     await signInAsSandboxUser(context)
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/team')
+
     await expect(page.locator('#invite-email')).toBeVisible()
 
     const top = async (y: Promise<{ y: number } | null>) => Math.round((await y)!.y)

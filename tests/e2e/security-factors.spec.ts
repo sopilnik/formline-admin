@@ -33,11 +33,15 @@ test.describe('second factors in a sandbox', () => {
 
     await expect(authenticator.getByLabel('6-digit code')).toHaveAttribute('placeholder', '6-digit code')
     await expect(authenticator.locator('label', { hasText: '6-digit code' })).toHaveClass(/\bsr-only\b/)
+
     await authenticator.getByLabel('6-digit code').fill('000000')
     await authenticator.getByRole('button', { name: 'Turn on' }).click()
+
     await expect(authenticator.getByText('The code is not correct. Check it and try again.')).toBeVisible()
+
     await authenticator.getByLabel('6-digit code').fill(await codeFor(totp))
     await authenticator.getByRole('button', { name: 'Turn on' }).click()
+
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('Authenticator app turned on. Your other devices are signed out.')).toBeVisible()
 
     const codes = page.getByRole('list', { name: 'Save your recovery codes' }).getByRole('listitem')
@@ -46,7 +50,9 @@ test.describe('second factors in a sandbox', () => {
     // Until the codes are closed the card offers nothing else.
     await expect(page.getByRole('button', { name: 'Replace the authenticator…' })).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Turn off…' })).toHaveCount(0)
+
     await page.getByRole('button', { name: 'I have saved the codes' }).click()
+
     await expect(codes).toHaveCount(0)
     await expect(section(page, 'Authenticator app On')).toBeVisible()
     await expect(section(page, 'Recovery codes')).toContainText('10 unused codes left of 10.')
@@ -56,16 +62,22 @@ test.describe('second factors in a sandbox', () => {
     await replaceSection.getByRole('button', { name: 'Replace the authenticator…' }).click()
     await replaceSection.getByLabel('6-digit code').fill('000000')
     await replaceSection.getByRole('button', { name: 'Replace the authenticator', exact: true }).click()
+
     await expect(replaceSection.getByText('The code is not correct. Check it and try again.')).toBeVisible()
+
     await replaceSection.getByRole('button', { name: 'Cancel' }).click()
     await replaceSection.getByRole('button', { name: 'Replace the authenticator…' }).click()
+
     await expect(replaceSection.getByText('The code is not correct. Check it and try again.')).toHaveCount(0)
+
     await replaceSection.getByRole('button', { name: 'Cancel' }).click()
 
     await page.getByRole('region', { name: 'Demo sandbox' }).getByRole('button', { name: 'Switch user' }).click()
     await page.getByRole('dialog', { name: 'Switch user' }).getByRole('radio', { name: /Noah Becker/ }).check()
     await page.getByRole('dialog', { name: 'Switch user' }).getByRole('button', { name: 'Switch', exact: true }).click()
+
     await expect(page.getByRole('button', { name: 'Account menu: Noah Becker, Admin' })).toBeVisible()
+
     await page.getByRole('region', { name: 'Demo sandbox' }).getByRole('button', { name: 'Switch user' }).click()
 
     const dialog = page.getByRole('dialog', { name: 'Switch user' })
@@ -73,6 +85,7 @@ test.describe('second factors in a sandbox', () => {
     await dialog.getByRole('radio', { name: /Dana Ortiz/ }).check()
     await dialog.getByLabel('Authenticator code').fill(await codeFor(totp))
     await dialog.getByRole('button', { name: 'Switch', exact: true }).click()
+
     await expect(page.getByRole('button', { name: 'Account menu: Dana Ortiz, Owner' })).toBeVisible()
 
     const logged = await asSchemaOwner(async c => (await c.query<{ action: string }>(
@@ -96,7 +109,9 @@ test.describe('second factors in a sandbox', () => {
     const confirm = page.getByRole('dialog', { name: 'Make new recovery codes?' })
 
     await confirm.getByRole('button', { name: 'Make new codes' }).click()
+
     await expect(page.getByRole('list', { name: 'Save your recovery codes' }).getByRole('listitem')).toHaveCount(10)
+
     await page.getByRole('button', { name: 'I have saved the codes' }).click()
 
     const replaceSection = section(page, 'Authenticator app On')
@@ -104,10 +119,13 @@ test.describe('second factors in a sandbox', () => {
     await replaceSection.getByRole('button', { name: 'Replace the authenticator…' }).click()
     await replaceSection.getByLabel('6-digit code').fill('000000')
     await replaceSection.getByRole('button', { name: 'Replace the authenticator', exact: true }).click()
+
     await expect(replaceSection.getByText('The code is not correct. Check it and try again.')).toBeVisible()
+
     await replaceSection.getByRole('button', { name: 'Cancel' }).click()
     await section(page, 'Authenticator app On').getByRole('button', { name: 'Turn off…' }).click()
     await page.getByRole('dialog', { name: 'Turn off the authenticator app?' }).getByRole('button', { name: 'Turn off' }).click()
+
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('Authenticator app turned off.')).toBeVisible()
     await expect(section(page, 'Authenticator app Off')).toBeVisible()
     await expect(section(page, 'Authenticator app Off').getByText('The code is not correct. Check it and try again.')).toHaveCount(0)

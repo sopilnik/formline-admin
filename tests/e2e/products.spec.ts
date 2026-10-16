@@ -18,6 +18,7 @@ test.describe('products list', () => {
     const total = await count('select count(*) as n from fa.products where workspace_id = $1', [workspaceId])
 
     await page.goto('/products')
+
     await expect(page.getByRole('heading', { level: 1, name: 'Products' })).toBeVisible()
     await expect(page).toHaveTitle('Products · Formline Admin')
     await expect(page.getByText(`${total} products`)).toBeVisible()
@@ -42,16 +43,23 @@ test.describe('products list', () => {
 
     await page.goto('/overview')
     await page.getByRole('navigation', { name: 'Needs attention' }).getByRole('link', { name: /sold out/ }).click()
+
     await expect(page).toHaveURL(/\/products\?stock=out$/)
     await expect(page.getByLabel('Stock', { exact: true })).toHaveValue('out')
 
     const table = page.getByRole('table', { name: 'Products' })
 
     await expect(table.getByRole('row')).toHaveCount(soldOut + 1)
-    for (const row of await table.locator('tbody tr').all()) await expect(row).toContainText('sold out')
+
+    for (const row of await table.locator('tbody tr').all()) {
+      await expect(row).toContainText('sold out')
+    }
+
     await expect(page.getByText(`${soldOut} of 16 products`)).toBeVisible()
+
     await page.goto('/overview')
     await page.getByRole('region', { name: 'Low stock' }).getByRole('link', { name: /^View all/ }).click()
+
     await expect(page).toHaveURL(/\/products\?stock=low$/)
     await expect(page.getByLabel('Stock', { exact: true })).toHaveValue('low')
   })
@@ -65,20 +73,29 @@ test.describe('products list', () => {
     const table = page.getByRole('table', { name: 'Products' })
 
     await page.getByRole('button', { name: 'Draft, 1' }).click()
+
     await expect(page).toHaveURL(/\/products\?status=draft$/)
     await expect(table.getByRole('row')).toHaveCount(2)
     await expect(table.getByRole('link', { name: 'Hush' })).toBeVisible()
+
     await page.getByRole('button', { name: 'All, 16' }).click()
     await page.getByLabel('Collection', { exact: true }).selectOption('night')
+
     await expect(page).toHaveURL(/\/products\?collection=night$/)
     await expect(table.getByRole('row')).toHaveCount(5)
+
     await page.getByRole('searchbox', { name: 'Search products' }).fill('orbit')
+
     await expect(page).toHaveURL(/\/products\?q=orbit&collection=night$/)
     await expect(table.getByRole('row')).toHaveCount(2)
     await expect(table.getByRole('link', { name: 'Far Orbit' })).toBeVisible()
+
     await page.getByRole('searchbox', { name: 'Search products' }).fill('no such poster')
+
     await expect(page.getByRole('heading', { name: 'No products match these filters' })).toBeVisible()
+
     await page.getByRole('link', { name: 'Clear filters' }).first().click()
+
     await expect(page).toHaveURL(/\/products$/)
     await expect(table.getByRole('row')).toHaveCount(17)
     await expect(page.getByRole('searchbox', { name: 'Search products' })).toHaveValue('')
@@ -93,6 +110,7 @@ test.describe('products list', () => {
     const table = page.getByRole('table', { name: 'Products' })
 
     await table.getByRole('link', { name: 'Price from' }).click()
+
     await expect(page).toHaveURL(/\/products\?sort=price$/)
     await expect(table.getByRole('columnheader', { name: 'Price from' })).toHaveAttribute('aria-sort', 'ascending')
 
@@ -113,7 +131,9 @@ test.describe('products list', () => {
     const ascending = await prices()
 
     expect(ascending).toEqual([...ascending].sort((a, b) => a - b))
+
     await table.getByRole('link', { name: 'Price from' }).click()
+
     await expect(page).toHaveURL(/\/products\?sort=price&dir=desc$/)
     await expect(table.getByRole('columnheader', { name: 'Price from' })).toHaveAttribute('aria-sort', 'descending')
 
@@ -137,17 +157,25 @@ test.describe('products list', () => {
 
     await expect(table.getByRole('row')).toHaveCount(26)
     await expect(pager.getByText('1–25 of 36')).toBeVisible()
+
     await pager.getByRole('link', { name: 'Next page' }).click()
+
     await expect(page).toHaveURL(/\/products\?page=2$/)
     await expect(pager.getByRole('link', { name: 'Page 2' })).toHaveAttribute('aria-current', 'page')
     await expect(table.getByRole('row')).toHaveCount(12)
     await expect(table.getByRole('row').last().getByRole('link', { name: 'Zz Extra 20' })).toBeVisible()
+
     await page.getByRole('button', { name: 'Draft, 20' }).click()
+
     await expect(page).toHaveURL(/\/products\?status=draft$/)
     await expect(table.getByRole('row')).toHaveCount(21)
+
     await pager.getByLabel('Products per page').selectOption('50')
+
     await expect(page).toHaveURL(/\/products\?status=draft&size=50$/)
+
     await page.goto('/products?page=999')
+
     await expect(page).toHaveURL(/\/products\?page=2$/)
   })
 
@@ -155,6 +183,7 @@ test.describe('products list', () => {
     await page.setViewportSize({ width: 375, height: 800 })
     await signInAsSandboxUser(context)
     await page.goto('/products')
+
     await expect(page.getByRole('table', { name: 'Products' })).toBeHidden()
 
     const cards = page.getByRole('list', { name: 'Products' }).getByRole('listitem')
@@ -180,7 +209,9 @@ test.describe('products list', () => {
       const cell = tr.children[4] as HTMLElement
       const note = cell.querySelector('span')
 
-      if (!note) return []
+      if (!note) {
+        return []
+      }
 
       const range = document.createRange()
 

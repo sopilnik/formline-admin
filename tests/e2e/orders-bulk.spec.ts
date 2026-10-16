@@ -26,7 +26,10 @@ test.describe('selection and bulk status', () => {
     const placedCell = firstRow.getByRole('cell').nth(2)
     const before = (await placedCell.boundingBox())!
 
-    for (const order of newest) await table.getByRole('checkbox', { name: `Select order #${order.number}` }).check()
+    for (const order of newest) {
+      await table.getByRole('checkbox', { name: `Select order #${order.number}` }).check()
+    }
+
     await expect(table.getByRole('checkbox', { name: 'Select all orders on this page' })).toHaveAttribute('aria-checked', 'mixed')
     await expect(toolbar.getByText('3 selected')).toBeVisible()
     // The toolbar lies over the header row: the headers stay in the table and still name its cells.
@@ -43,8 +46,11 @@ test.describe('selection and bulk status', () => {
     expect([after.x, after.y]).toEqual([before.x, before.y])
 
     await toolbar.getByRole('button', { name: 'Change status' }).click()
+
     await expect(page.getByRole('menuitem')).toHaveText(['Processing', 'Canceled', 'Refunded'])
+
     await page.getByRole('menuitem', { name: 'Processing' }).click()
+
     await expect(page.getByText('2 orders changed to Processing.')).toBeVisible()
     await expect(page.getByText(`Skipped #${newest[2]!.number}: not allowed from its status.`)).toBeVisible()
     await expect(table.getByRole('columnheader', { name: 'Placed' })).toBeVisible()
@@ -68,10 +74,13 @@ test.describe('selection and bulk status', () => {
     const boxes = table.getByRole('checkbox', { name: /^Select order #/ })
 
     await table.getByRole('checkbox', { name: 'Select all orders on this page' }).check()
+
     await expect(page.getByRole('toolbar', { name: 'Selected orders' }).getByText('25 selected')).toBeVisible()
     await expect(boxes.first()).toBeChecked()
     await expect(boxes.last()).toBeChecked()
+
     await page.getByRole('toolbar', { name: 'Selected orders' }).getByRole('button', { name: 'Clear selection' }).click()
+
     await expect(table.getByRole('columnheader', { name: 'Placed' })).toBeVisible()
     await expect(boxes.first()).not.toBeChecked()
   })
@@ -83,6 +92,7 @@ test.describe('selection and bulk status', () => {
     const table = page.getByRole('table', { name: 'Orders' })
 
     await table.getByRole('checkbox', { name: /^Select order #/ }).first().check()
+
     await expect(page.getByRole('toolbar', { name: 'Selected orders' }).getByText('1 selected')).toBeVisible()
     await expect(page.getByRole('toolbar', { name: 'Selected orders' }).getByRole('button', { name: 'Change status' })).toHaveCount(0)
     await expectNoSeriousA11yViolationsInBothThemes(page)

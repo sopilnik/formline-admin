@@ -84,8 +84,10 @@ test.describe('CSV export', () => {
 
   test('answers 401 without a session and 400 for malformed ids', async ({ page, context, request }) => {
     expect((await request.get('/api/orders/export')).status()).toBe(401)
+
     await signInAsSandboxUser(context)
     await page.goto('/orders')
+
     expect(await page.evaluate(async () => (await fetch('/api/orders/export?ids=not-a-uuid')).status)).toBe(400)
   })
 
@@ -98,14 +100,18 @@ test.describe('CSV export', () => {
     const statuses = await page.evaluate(async () => {
       const out: number[] = []
 
-      while (out.length < 21 && out.at(-1) !== 429) out.push((await fetch('/api/orders/export?status=cancelled')).status)
+      while (out.length < 21 && out.at(-1) !== 429) {
+        out.push((await fetch('/api/orders/export?status=cancelled')).status)
+      }
 
       return out
     })
 
     expect(statuses.at(-1)).toBe(429)
     expect(statuses.filter(status => status === 200).length).toBeGreaterThanOrEqual(10)
+
     await page.getByRole('button', { name: /^Export \d+ as CSV$/ }).click()
+
     // Base UI announces an error toast through a separate alert and hides the visible copy from the accessibility
     // tree, so the text is looked up by its text inside the toast list.
     await expect(page.getByRole('region', { name: 'Messages' }).getByText(/^Too many exports\. Try again in \d+ seconds?\.$/)).toBeVisible()
@@ -116,6 +122,7 @@ test.describe('CSV export', () => {
     await page.goto('/orders?status=paid')
     await page.route('**/api/orders/export**', route => route.abort('connectionreset'))
     await page.getByRole('button', { name: /^Export \d+ as CSV$/ }).click()
+
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('The export failed. Try again.')).toBeVisible()
     await expect(page.getByRole('table', { name: 'Orders' })).toBeVisible()
     await expect(page.getByRole('group', { name: 'Status' }).getByRole('button', { name: /^Paid, / })).toHaveAttribute('aria-pressed', 'true')

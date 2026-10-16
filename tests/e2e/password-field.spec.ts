@@ -12,18 +12,23 @@ test('a password field shows what was typed and hides it again, from a button af
 
   await hydrated(show)
   await password.fill('correct horse battery')
+
   await expect(password).toHaveAttribute('type', 'password')
   await expect(show).toHaveAttribute('aria-pressed', 'false')
 
   // The button is the next stop after the field, and the keyboard works it.
   await password.press('Tab')
+
   await expect(show).toBeFocused()
+
   await page.keyboard.press('Enter')
+
   await expect(password).toHaveAttribute('type', 'text')
   await expect(password).toHaveValue('correct horse battery')
   await expect(show).toHaveAttribute('aria-pressed', 'true')
 
   await show.click()
+
   await expect(password).toHaveAttribute('type', 'password')
   await expect(show).toHaveAttribute('aria-pressed', 'false')
 })

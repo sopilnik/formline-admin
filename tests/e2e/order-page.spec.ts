@@ -22,6 +22,7 @@ test.describe('order page', () => {
 
     await page.goto('/orders?status=paid')
     await page.getByRole('table', { name: 'Orders' }).getByRole('link', { name: `#${order.number}` }).click()
+
     await expect(page).toHaveURL(new RegExp(`/orders/${order.number}$`))
     await expect(page.getByRole('heading', { level: 1, name: `Order #${order.number}` })).toBeVisible()
     await expect(page).toHaveTitle(`Order #${order.number} · Formline Admin`)
@@ -47,8 +48,11 @@ test.describe('order page', () => {
 
     await page.goto(`/orders/${order.number}`)
     await page.getByRole('button', { name: 'Change status' }).click()
+
     await expect(page.getByRole('menuitem')).toHaveText(['Processing', 'Canceled', 'Refunded'])
+
     await page.getByRole('menuitem', { name: 'Processing' }).click()
+
     await expect(page.getByText(`Order #${order.number} is now Processing.`)).toBeVisible()
     await expect(page.getByRole('main').getByText('Processing', { exact: true }).first()).toBeVisible()
     await expect(page.getByRole('region', { name: 'History' }).getByRole('listitem').last()).toContainText('Paid → Processing')
@@ -68,6 +72,7 @@ test.describe('order page', () => {
     await asSchemaOwner(c => c.query("update fa.orders set status = 'cancelled' where workspace_id = $1 and id = $2", [workspaceId, order.id]))
     await page.getByRole('button', { name: 'Change status' }).click()
     await page.getByRole('menuitem', { name: 'Processing' }).click()
+
     // Base UI announces an error toast through a separate alert and hides the visible copy from the accessibility tree.
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('This order changed while the page was open. It now shows its current status.')).toBeVisible()
     await expect(page.getByRole('main').getByText('Canceled', { exact: true }).first()).toBeVisible()
@@ -83,8 +88,10 @@ test.describe('order page', () => {
     const field = page.getByLabel('Internal note')
 
     await page.getByRole('button', { name: 'Add note' }).click()
+
     await expect(page.getByText('Write the note first.')).toBeVisible()
     await expect(field).toBeFocused()
+
     await field.fill('Customer asked for a gift wrap.')
     await page.getByRole('button', { name: 'Add note' }).click()
 
@@ -111,9 +118,12 @@ test.describe('order page', () => {
   test('says so inside the frame when the number is not an order', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/orders/999999')
+
     await expect(page.getByRole('heading', { level: 1, name: 'Order not found' })).toBeVisible()
     await expect(page.getByRole('navigation', { name: 'Main menu' })).toBeVisible()
+
     await page.getByRole('main').getByRole('link', { name: 'All orders' }).click()
+
     await expect(page).toHaveURL(/\/orders$/)
   })
 })

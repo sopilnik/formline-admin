@@ -10,6 +10,7 @@ const workers = Array.from({ length: E2E_WORKERS }, (_, index) => e2eWorker(inde
 const admin = new pg.Client({ connectionString: E2E_ADMIN_URL })
 
 await admin.connect()
+
 try {
   for (const worker of workers) {
     // FORCE ends PgBouncer's server connections left from the previous run.
@@ -21,7 +22,10 @@ try {
 }
 
 // One after another: the migrations keep the two roles of the whole cluster in shape.
-for (const worker of workers) await migrate({ migratorUrl: worker.migratorUrl, appUrl: worker.appUrl })
+for (const worker of workers) {
+  await migrate({ migratorUrl: worker.migratorUrl, appUrl: worker.appUrl })
+}
+
 // Uploads of the previous run belong to sandboxes that no longer exist.
 await rm('test-media', { recursive: true, force: true })
 console.log(JSON.stringify({ event: 'e2e.databases.ready', databases: workers.map(worker => worker.database) }))

@@ -23,12 +23,17 @@ test.describe('pointer cursor', () => {
 
     await expect(themes).toHaveCount(3)
     expect(await Promise.all((await themes.all()).map(cursorOf))).toEqual(['pointer', 'pointer', 'pointer'])
+
     await page.keyboard.press('Escape')
+
     await expect(themes).toHaveCount(0)
 
     await header.getByRole('button', { name: /^Account menu/ }).click()
+
     expect(await cursorOf(page.getByRole('menuitem', { name: 'Sign out' }))).toBe('pointer')
+
     await page.keyboard.press('Escape')
+
     await expect(page.getByRole('menuitem', { name: 'Sign out' })).toHaveCount(0)
 
     await page.getByRole('button', { name: 'Switch user' }).click()
@@ -37,7 +42,9 @@ test.describe('pointer cursor', () => {
 
     await expect(people.first()).toBeVisible()
     expect(await cursorOf(people.first())).toBe('pointer')
+
     await page.keyboard.press('Escape')
+
     await expect(people).toHaveCount(0)
 
     await page.keyboard.press('Control+k')
@@ -46,13 +53,16 @@ test.describe('pointer cursor', () => {
 
     await expect(option).toBeVisible()
     expect(await cursorOf(option)).toBe('pointer')
+
     await page.keyboard.press('Escape')
 
     await page.goto('/orders')
+
     expect(await cursorOf(page.getByRole('checkbox').first())).toBe('pointer')
     expect(await cursorOf(page.locator('select').first())).toBe('pointer')
 
     await page.goto('/collections')
+
     expect(await cursorOf(page.getByRole('button', { name: 'Move Monochrome up' }))).not.toBe('pointer')
   })
 })

@@ -10,6 +10,7 @@ test.describe('roles, languages and unsaved forms', () => {
     await signInAsSandboxUser(context)
     await openFramed(page, '/orders?status=paid')
     await page.getByRole('table', { name: 'Orders' }).getByRole('link', { name: /^#\d+$/ }).first().click()
+
     await expect(page.getByRole('button', { name: 'Change status' })).toBeVisible()
 
     // Another tab of the same browser continues as a viewer.
@@ -19,10 +20,12 @@ test.describe('roles, languages and unsaved forms', () => {
     await other.getByRole('region', { name: 'Demo sandbox' }).getByRole('button', { name: 'Switch user' }).click()
     await other.getByRole('dialog', { name: 'Switch user' }).getByRole('radio', { name: /Tomás Ferreira/ }).check()
     await other.getByRole('dialog', { name: 'Switch user' }).getByRole('button', { name: 'Switch', exact: true }).click()
+
     await expect(other.getByRole('button', { name: 'Account menu: Tomás Ferreira, Viewer' })).toBeVisible()
 
     await page.getByRole('button', { name: 'Change status' }).click()
     await page.getByRole('menuitem', { name: 'Processing' }).click()
+
     await expect(page.getByRole('region', { name: 'Messages' }).getByText('Your role cannot change orders.')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Change status' })).toHaveCount(0)
   })
@@ -31,8 +34,11 @@ test.describe('roles, languages and unsaved forms', () => {
     await signInAsSandboxUser(context)
     await openFramed(page, '/overview?lang=ru')
     await openFramed(page, '/settings/profile')
+
     await expect(page.getByLabel('Язык', { exact: true })).toHaveValue('ru')
+
     await openFramed(page, '/settings/profile?lang=en')
+
     await expect(page.getByLabel('Language', { exact: true })).toHaveValue('en')
   })
 
@@ -50,6 +56,7 @@ test.describe('roles, languages and unsaved forms', () => {
     }))
 
     await typed.close({ runBeforeUnload: true })
+
     expect(await Promise.race([asked, new Promise<string>(resolve => setTimeout(() => resolve('no dialog'), 5000))])).toBe('beforeunload')
     await expect(typed.getByLabel('Name')).toHaveValue('Half Typed')
 
@@ -68,6 +75,7 @@ test.describe('roles, languages and unsaved forms', () => {
 
     await untouched.close({ runBeforeUnload: true })
     await closed
+
     expect(dialogs).toBe(0)
   })
 
@@ -79,6 +87,7 @@ test.describe('roles, languages and unsaved forms', () => {
     await openFramed(refused, '/products/new')
     await refused.getByLabel('Name').fill('Half Typed')
     await refused.getByRole('button', { name: 'Create product' }).click()
+
     await expect(refused.getByLabel('Base price, $')).toHaveAttribute('aria-invalid', 'true')
 
     const asked = new Promise<string>(resolve => refused.once('dialog', dialog => {
@@ -87,6 +96,7 @@ test.describe('roles, languages and unsaved forms', () => {
     }))
 
     await refused.close({ runBeforeUnload: true })
+
     expect(await Promise.race([asked, new Promise<string>(resolve => setTimeout(() => resolve('no dialog'), 5000))])).toBe('beforeunload')
   })
 })

@@ -41,6 +41,7 @@ test.describe('thumbnails', () => {
   test('the products list shows the small copies of the posters', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/products')
+
     // The list streams in behind the loading skeleton and is revealed a frame after the load event.
     await expect(page.locator('main img').first()).toBeVisible()
 
@@ -62,10 +63,12 @@ test.describe('thumbnails', () => {
     expect(await sizeAt(page, `/media/${id}`)).toEqual([360, 509])
 
     await page.goto('/products')
+
     await expect(page.locator(`main img[src="/media/${id}?size=thumb"]`).first()).toBeVisible()
 
     // An image uploaded before the copies existed has none: the full file stands in.
     rmSync(join(E2E_MEDIA_DIR, `ws/${workspaceId}/${id}.thumb.webp`))
+
     expect(await sizeAt(page, `/media/${id}?size=thumb`)).toEqual([360, 509])
   })
 })

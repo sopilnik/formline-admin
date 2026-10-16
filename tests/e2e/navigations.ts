@@ -7,7 +7,9 @@ export function navigationsTo(page: Page, path: string): string[] {
   page.on('request', request => {
     const url = new URL(request.url())
 
-    if (url.pathname === path && url.searchParams.has('_rsc') && !request.headers()['next-router-prefetch']) seen.push(url.href)
+    if (url.pathname === path && url.searchParams.has('_rsc') && !request.headers()['next-router-prefetch']) {
+      seen.push(url.href)
+    }
   })
 
   return seen

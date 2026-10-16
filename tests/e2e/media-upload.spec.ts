@@ -60,6 +60,7 @@ test.describe('POST /api/media', () => {
     expect((await api.post(url, { headers: { cookie, origin: E2E_BASE_URL }, data })).status()).toBe(403)
     expect((await api.post(url, { headers: { cookie, origin: 'https://elsewhere.example', 'x-requested-with': 'formline' }, data })).status()).toBe(403)
     expect((await api.post(url, { headers: { origin: E2E_BASE_URL, 'x-requested-with': 'formline' }, data })).status()).toBe(401)
+
     await api.dispose()
   })
 
@@ -99,7 +100,10 @@ test.describe('POST /api/media', () => {
 
     const answers: Answer[] = []
 
-    for (let i = 0; i < 21; i++) answers.push(await upload(page, '/api/media?product=00000000-0000-4000-8000-000000000000', Buffer.alloc(0)))
+    for (let i = 0; i < 21; i++) {
+      answers.push(await upload(page, '/api/media?product=00000000-0000-4000-8000-000000000000', Buffer.alloc(0)))
+    }
+
     expect(answers.slice(0, 20).map(a => a.status)).toEqual(Array.from({ length: 20 }, () => 400))
     expect(answers[20]!.status).toBe(429)
     expect(Number(answers[20]!.retry)).toBeGreaterThan(0)

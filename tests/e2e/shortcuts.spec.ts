@@ -22,8 +22,10 @@ async function turnShortcutsOff(page: Page): Promise<void> {
   const box = page.getByRole('checkbox', { name: 'Single-key shortcuts' })
 
   await expect(box).toBeChecked()
+
   await box.uncheck()
   await page.getByRole('button', { name: 'Save profile' }).click()
+
   await expect(page.getByRole('region', { name: 'Messages' }).getByText('Profile saved.')).toBeVisible()
   await expect(box).not.toBeChecked()
 }
@@ -36,6 +38,7 @@ test.describe('keyboard shortcuts', () => {
     await focusPage(page)
     await page.keyboard.press('g')
     await page.keyboard.press('o')
+
     await expect(page).toHaveURL(/\/orders$/)
 
     await focusPage(page)
@@ -44,17 +47,21 @@ test.describe('keyboard shortcuts', () => {
     const search = page.getByRole('searchbox')
 
     await expect(search).toBeFocused()
+
     await page.keyboard.type('go')
+
     await expect(search).toHaveValue('go')
     await expect(page).toHaveURL(/\/orders(\?|$)/)
 
     await focusPage(page)
     await page.keyboard.press('g')
     await page.keyboard.press('c')
+
     await expect(page).toHaveURL(/\/customers$/)
 
     await focusPage(page)
     await page.keyboard.press('Shift+?')
+
     await expect(help(page)).toBeVisible()
     await expect(help(page).getByRole('button', { name: 'Dismiss' })).toBeVisible()   // the close button speaks the interface's language
     await expect(help(page).getByRole('term')).toHaveText([
@@ -69,6 +76,7 @@ test.describe('keyboard shortcuts', () => {
     await page.keyboard.press('g')
     await page.keyboard.press('p')
     await page.keyboard.press('Escape')
+
     await expect(help(page)).toBeHidden()
     expect(toProducts).toEqual([])
     await expect(page).toHaveURL(/\/customers$/)
@@ -87,13 +95,18 @@ test.describe('keyboard shortcuts', () => {
     await page.keyboard.press('Shift+?')
     // Ctrl+K stays on: once its palette shows, the keys before it have been handled.
     await page.keyboard.press('Control+k')
+
     await expect(palette(page)).toBeVisible()
     await expect(help(page)).toBeHidden()
     expect(toOrders).toEqual([])
     await expect(page).toHaveURL(/\/overview$/)
+
     await palette(page).getByRole('option', { name: 'Keyboard shortcuts' }).click()
+
     await expect(help(page)).toContainText('Single-key shortcuts are off.')
+
     await help(page).getByRole('link', { name: 'Turn them on in your profile' }).click()
+
     await expect(page).toHaveURL(/\/settings\/profile$/)
   })
 
@@ -106,7 +119,9 @@ test.describe('keyboard shortcuts', () => {
 
     await dialog.getByRole('radio', { name: /Priya Nair/ }).check()
     await dialog.getByRole('button', { name: 'Switch', exact: true }).click()
+
     await expect(page.getByRole('button', { name: 'Account menu: Priya Nair, Manager' })).toBeVisible()
+
     await focusPage(page)
 
     const toOrders = navigationsTo(page, '/orders')
@@ -114,11 +129,14 @@ test.describe('keyboard shortcuts', () => {
     await page.keyboard.press('g')
     await page.keyboard.press('o')
     await page.keyboard.press('Control+k')
+
     await expect(palette(page)).toBeVisible()
     expect(toOrders).toEqual([])
     await expect(page).toHaveURL(/\/overview$/)
+
     await page.keyboard.press('Escape')
     await page.goto('/settings/profile')
+
     await expect(page.getByRole('checkbox', { name: 'Single-key shortcuts' })).not.toBeChecked()
   })
 })

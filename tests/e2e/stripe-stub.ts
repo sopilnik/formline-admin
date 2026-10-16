@@ -18,7 +18,9 @@ function send(response: ServerResponse, status: number, body: unknown): void {
 async function readJson(request: IncomingMessage): Promise<unknown> {
   const chunks: Buffer[] = []
 
-  for await (const chunk of request) chunks.push(chunk as Buffer)
+  for await (const chunk of request) {
+    chunks.push(chunk as Buffer)
+  }
 
   return JSON.parse(Buffer.concat(chunks).toString('utf8'))
 }
@@ -26,7 +28,9 @@ async function readJson(request: IncomingMessage): Promise<unknown> {
 createServer(async (request, response) => {
   const url = new URL(request.url ?? '/', `http://127.0.0.1:${E2E_STRIPE_PORT}`)
 
-  if (request.method === 'GET' && url.pathname === '/health') return send(response, 200, { ok: true })
+  if (request.method === 'GET' && url.pathname === '/health') {
+    return send(response, 200, { ok: true })
+  }
   if (request.method === 'POST' && url.pathname === '/__stub/sessions') {
     const fixture = await readJson(request) as Fixture
 
@@ -43,7 +47,9 @@ createServer(async (request, response) => {
   if (request.method === 'GET' && items) {
     const fixture = fixtures.get(decodeURIComponent(items[1]!))
 
-    if (!fixture) return send(response, 404, missing)
+    if (!fixture) {
+      return send(response, 404, missing)
+    }
 
     return send(response, 200, { object: 'list', data: fixture.lineItems, has_more: false, url: url.pathname })
   }
@@ -55,5 +61,6 @@ createServer(async (request, response) => {
 
     return send(response, 200, { object: 'list', data, has_more: false, url: url.pathname })
   }
+
   send(response, 404, missing)
 }).listen(E2E_STRIPE_PORT, '127.0.0.1')

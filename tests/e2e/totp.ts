@@ -25,6 +25,7 @@ export async function codeFor(totp: Totp): Promise<string> {
 
       return generateHOTP(totp.secret, BigInt(step), 6)
     }
+
     await new Promise(resolve => setTimeout(resolve, 30_000 - (Date.now() % 30_000) + 250))
   }
 }

@@ -9,6 +9,7 @@ import { expect } from './test.ts'
 export async function expectNoSeriousA11yViolations(page: Page, scope?: string): Promise<void> {
   // A refresh or a navigation replaces the title in two steps; axe reported "document-title" when it looked between them.
   await page.waitForFunction(() => document.title !== '')
+
   // A transition in progress is blended with what lies behind it: axe once read the opening drawer's
   // text against the page under it. Finite animations finish first; an infinite one is left running.
   // A transition replaced midway is cancelled and a new one runs in its place — a theme switch does
@@ -18,7 +19,10 @@ export async function expectNoSeriousA11yViolations(page: Page, scope?: string):
       const running = document.getAnimations()
         .filter(animation => animation.effect?.getTiming().iterations !== Infinity && animation.playState === 'running')
 
-      if (running.length === 0) return
+      if (running.length === 0) {
+        return
+      }
+
       await Promise.all(running.map(animation => animation.finished.catch(() => undefined)))
     }
   })
@@ -36,7 +40,9 @@ export async function expectNoSeriousA11yViolations(page: Page, scope?: string):
 export async function expectNoSeriousA11yViolationsInBothThemes(page: Page, scope?: string): Promise<void> {
   for (const colorScheme of ['light', 'dark'] as const) {
     await page.emulateMedia({ colorScheme })
+
     await expectNoSeriousA11yViolations(page, scope)
   }
+
   await page.emulateMedia({ colorScheme: null })
 }
