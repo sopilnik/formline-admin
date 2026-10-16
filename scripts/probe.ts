@@ -103,7 +103,9 @@ export async function runProbe(o: ProbeOptions): Promise<boolean> {
 
       const caching = checks.filter(c => c.kind === 'cache')
 
-      for (const check of [...caching, cached]) o.log({ probe: 'p4', ...check })
+      for (const check of [...caching, cached]) {
+        o.log({ probe: 'p4', ...check })
+      }
 
       // An empty list would pass every(): without its cache checks the probe proves nothing.
       return caching.length > 0 && caching.every(c => c.ok) && cached.ok
@@ -124,7 +126,9 @@ export async function runProbe(o: ProbeOptions): Promise<boolean> {
       const first = await demoChecks({ siteUrl: o.siteUrl })
       const second = await demoChecks({ siteUrl: o.siteUrl })
 
-      for (const check of [...first, ...second]) o.log({ probe: 'p6', ...check })
+      for (const check of [...first, ...second]) {
+        o.log({ probe: 'p6', ...check })
+      }
 
       return [...first, ...second].every(c => c.ok)
     }
@@ -147,7 +151,9 @@ if (import.meta.main) {
   const bunny: Bunny = async path => {
     const res = await fetch(`https://api.bunny.net${path.replace('{id}', appId)}`, { headers: { AccessKey: key, Accept: 'application/json' }, signal: AbortSignal.timeout(20_000) })
 
-    if (!res.ok) throw new Error(`bunny GET ${path}: HTTP ${res.status}`)
+    if (!res.ok) {
+      throw new Error(`bunny GET ${path}: HTTP ${res.status}`)
+    }
 
     return (await res.json()) as Record<string, unknown>
   }

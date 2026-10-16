@@ -62,6 +62,7 @@ describe('generateTemplate', () => {
     data.orders.forEach((o, i) => {
       expect(o.number).toBe(FIRST_ORDER_NUMBER + i)
       expect(o.placedAt.getTime()).toBeGreaterThanOrEqual(previous)
+
       previous = o.placedAt.getTime()
 
       const lines = data.lines.filter(l => l.orderId === o.id)
@@ -83,13 +84,19 @@ describe('generateTemplate', () => {
     expect(Math.min(...times)).toBeGreaterThanOrEqual(epoch - HISTORY_DAYS * DAY)
     expect(Math.max(...times)).toBeLessThanOrEqual(epoch)
     expect(epoch - Math.max(...times)).toBeLessThanOrEqual(30 * 60_000)
-    for (const e of data.events) expect(e.at.getTime()).toBeLessThanOrEqual(epoch)
-    for (const c of data.customers) expect(c.createdAt.getTime()).toBeLessThanOrEqual(epoch)
+
+    for (const e of data.events) {
+      expect(e.at.getTime()).toBeLessThanOrEqual(epoch)
+    }
+    for (const c of data.customers) {
+      expect(c.createdAt.getTime()).toBeLessThanOrEqual(epoch)
+    }
   })
 
   it('has a status mix that leaves work on the overview and a full history behind each order', () => {
     expect(data.orders.filter(o => o.status === 'paid').length).toBeGreaterThanOrEqual(12)
     expect(data.orders.filter(o => o.status === 'delivered').length).toBeGreaterThan(ORDER_COUNT / 2)
+
     for (const status of ['processing', 'shipped', 'cancelled', 'refunded'] as const) {
       expect(data.orders.some(o => o.status === status), status).toBe(true)
     }
@@ -101,6 +108,7 @@ describe('generateTemplate', () => {
       expect(history[history.length - 1]!.toStatus).toBe(o.status)
       expect(o.updatedAt.getTime()).toBe(history[history.length - 1]!.at.getTime())
     }
+
     expect(data.events.some(e => e.kind === 'note')).toBe(true)
   })
 

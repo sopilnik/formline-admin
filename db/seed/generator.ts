@@ -64,7 +64,9 @@ function drawDaysAgo(random: Random): number {
     const trend = 1 + 0.6 * (1 - days / HISTORY_DAYS)
     const weekday = new Date(TEMPLATE_EPOCH.getTime() - days * DAY).getUTCDay()
 
-    if (random() * 1.7 < trend * WEEKDAY_FACTOR[weekday]!) return days
+    if (random() * 1.7 < trend * WEEKDAY_FACTOR[weekday]!) {
+      return days
+    }
   }
 }
 
@@ -77,9 +79,15 @@ function drawSecondOfDay(random: Random): number {
 function targetStatus(random: Random, ageMs: number): OrderStatus {
   const hours = ageMs / HOUR
 
-  if (hours < 24) return weighted(random, [['paid', 75], ['processing', 25]] as const)
-  if (hours < 72) return weighted(random, [['paid', 45], ['processing', 40], ['shipped', 15]] as const)
-  if (hours < 240) return weighted(random, [['paid', 8], ['processing', 12], ['shipped', 50], ['delivered', 25], ['cancelled', 5]] as const)
+  if (hours < 24) {
+    return weighted(random, [['paid', 75], ['processing', 25]] as const)
+  }
+  if (hours < 72) {
+    return weighted(random, [['paid', 45], ['processing', 40], ['shipped', 15]] as const)
+  }
+  if (hours < 240) {
+    return weighted(random, [['paid', 8], ['processing', 12], ['shipped', 50], ['delivered', 25], ['cancelled', 5]] as const)
+  }
 
   return weighted(random, [['delivered', 86], ['cancelled', 6], ['refunded', 4], ['shipped', 4]] as const)
 }
@@ -98,9 +106,15 @@ function stepDelayMs(random: Random, step: OrderStatus): number {
 function stockLevel(random: Random): number {
   const bucket = weighted(random, [['out', 7], ['low', 10], ['mid', 33], ['high', 50]] as const)
 
-  if (bucket === 'out') return 0
-  if (bucket === 'low') return between(random, 1, 3)
-  if (bucket === 'mid') return between(random, 4, 12)
+  if (bucket === 'out') {
+    return 0
+  }
+  if (bucket === 'low') {
+    return between(random, 1, 3)
+  }
+  if (bucket === 'mid') {
+    return between(random, 4, 12)
+  }
 
   return between(random, 13, 40)
 }
@@ -162,7 +176,10 @@ export function generateTemplate(version: number = TEMPLATE_VERSION): TemplateDa
     const local = `${first}.${last.replace(/\s+/g, '')}`.toLowerCase()
     let email = `${local}@${pick(random, EMAIL_DOMAINS)}`
 
-    for (let n = 2; emails.has(email); n++) email = `${local}${n}@${pick(random, EMAIL_DOMAINS)}`
+    for (let n = 2; emails.has(email); n++) {
+      email = `${local}${n}@${pick(random, EMAIL_DOMAINS)}`
+    }
+
     emails.add(email)
 
     return { id: stableId(`customer:${i}`), email, name: `${first} ${last}`, city: place.city, country: place.country, postal: place.postal, createdAt: new Date(epoch) }
@@ -190,7 +207,9 @@ export function generateTemplate(version: number = TEMPLATE_VERSION): TemplateDa
     while (chosen.length < lineCount) {
       const variant = pick(random, variants)
 
-      if (!chosen.some(v => v.productId === variant.productId)) chosen.push(variant)
+      if (!chosen.some(v => v.productId === variant.productId)) {
+        chosen.push(variant)
+      }
     }
 
     let subtotal = 0
@@ -212,7 +231,11 @@ export function generateTemplate(version: number = TEMPLATE_VERSION): TemplateDa
 
     for (const step of STATUS_STEPS[targetStatus(random, epoch - draft.placedAt)]) {
       at += stepDelayMs(random, step)
-      if (at > epoch) break
+
+      if (at > epoch) {
+        break
+      }
+
       history.push({ id: stableId(`event:${number}:${history.length}`), orderId, kind: 'status', fromStatus: status, toStatus: step, note: null, actorUserId: pick(random, staff).id, at: new Date(at) })
       status = step
     }
@@ -222,6 +245,7 @@ export function generateTemplate(version: number = TEMPLATE_VERSION): TemplateDa
     if (random() < 0.08) {
       history.push({ id: stableId(`event:${number}:note`), orderId, kind: 'note', fromStatus: null, toStatus: null, note: pick(random, ORDER_NOTES), actorUserId: pick(random, staff).id, at: new Date(between(random, draft.placedAt, last)) })
     }
+
     events.push(...history)
 
     orders.push({
@@ -238,17 +262,28 @@ export function generateTemplate(version: number = TEMPLATE_VERSION): TemplateDa
   for (let i = orders.length - 1; i >= 0 && paid < 12; i--) {
     const o = orders[i]!
 
-    if (o.status === 'paid' || epoch - o.placedAt.getTime() >= 3 * DAY) continue
-    for (const e of events) if (e.orderId === o.id && e.kind === 'status' && e.fromStatus !== null) dropped.add(e.id)
+    if (o.status === 'paid' || epoch - o.placedAt.getTime() >= 3 * DAY) {
+      continue
+    }
+
+    for (const e of events) {
+      if (e.orderId === o.id && e.kind === 'status' && e.fromStatus !== null) {
+        dropped.add(e.id)
+      }
+    }
+
     o.status = 'paid'
     o.updatedAt = new Date(o.placedAt)
     paid++
   }
+
   events = events.filter(e => !dropped.has(e.id))
 
   const firstOrder = new Map<string, number>()
 
-  for (const o of orders) firstOrder.set(o.customerId, Math.min(firstOrder.get(o.customerId) ?? Infinity, o.placedAt.getTime()))
+  for (const o of orders) {
+    firstOrder.set(o.customerId, Math.min(firstOrder.get(o.customerId) ?? Infinity, o.placedAt.getTime()))
+  }
   for (const c of customers) {
     const first = firstOrder.get(c.id)
 

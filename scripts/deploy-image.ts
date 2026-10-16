@@ -34,7 +34,9 @@ async function liveVersion(o: DeployOptions): Promise<string | null> {
     // A query of its own keeps any cache out of the way; through the edge it is still the liveness check.
     const res = await o.fetch(new URL(`/api/health?deploy=${encodeURIComponent(o.tag)}`, o.siteUrl), { signal: AbortSignal.timeout(10_000) })
 
-    if (!res.ok) return null
+    if (!res.ok) {
+      return null
+    }
 
     const body = (await res.json()) as { version?: unknown }
 
@@ -61,7 +63,10 @@ export async function deployImage(o: DeployOptions): Promise<void> {
   const app = (await bunnyApi(containers(o), { method: 'GET', path: `/apps/${o.appId}` })) as { containerTemplates?: Template[] }
   const templates = (app.containerTemplates ?? []).filter(t => t.name === o.container)
 
-  if (templates.length !== 1) throw new Error(`expected one container named ${o.container}, found ${templates.length}`)
+  if (templates.length !== 1) {
+    throw new Error(`expected one container named ${o.container}, found ${templates.length}`)
+  }
+
   await bunnyApi(containers(o), { method: 'PATCH', path: `/apps/${o.appId}/containers/${templates[0]!.id}`, body: { imageTag: o.tag, imageDigest: o.digest } })
   o.log({ event: 'deploy.updated', container: o.container, tag: o.tag })
 
@@ -78,8 +83,13 @@ export async function deployImage(o: DeployOptions): Promise<void> {
 
     const status = await appStatus(o)
 
-    if (status === 'failing' || status === 'suspended') throw new Error(`bunny reports the application ${status}`)
-    if (o.now() >= deadline) throw new Error(`the panel still answers ${version ?? 'nothing'} instead of ${o.tag}`)
+    if (status === 'failing' || status === 'suspended') {
+      throw new Error(`bunny reports the application ${status}`)
+    }
+    if (o.now() >= deadline) {
+      throw new Error(`the panel still answers ${version ?? 'nothing'} instead of ${o.tag}`)
+    }
+
     await o.sleep(o.pollMs ?? 10_000)
   }
 }
@@ -93,6 +103,7 @@ if (import.meta.main) {
     log({ event: 'deploy.failed', message: `missing ${missing.join(', ')}` })
     process.exit(1)
   }
+
   deployImage({
     key: env.BUNNY_API_KEY!, appId: env.MC_APP_ID!, container: env.MC_CONTAINER_NAME!, tag: env.IMAGE_TAG!, digest: env.IMAGE_DIGEST!,
     siteUrl: env.SITE_URL!, fetch, sleep: ms => new Promise(resolve => setTimeout(resolve, ms)), now: () => Date.now(), log,

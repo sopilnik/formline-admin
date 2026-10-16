@@ -7,7 +7,9 @@ export async function register(): Promise<void> {
 
     // While the database is unreachable the container start runs the server in maintenance mode: nothing here
     // may wait for the database then, and the start restarts the server without the flag once the database is back.
-    if (env.FORMLINE_MAINTENANCE === '1') return
+    if (env.FORMLINE_MAINTENANCE === '1') {
+      return
+    }
 
     const { getPool } = await import('@/server/db/pool')
     const { assertAppRole } = await import('@/server/db/role-check')
@@ -25,7 +27,9 @@ export async function register(): Promise<void> {
  * Next prints the same error once more after this returns, so the values of a failed query are taken out of it first.
  */
 export const onRequestError: Instrumentation.onRequestError = async (error, request, context) => {
-  if (process.env.NEXT_RUNTIME !== 'nodejs') return
+  if (process.env.NEXT_RUNTIME !== 'nodejs') {
+    return
+  }
 
   const { log, pathOnly, scrubError } = await import('@/server/log')
 

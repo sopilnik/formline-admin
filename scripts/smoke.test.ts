@@ -18,6 +18,7 @@ describe('securityHeaders', () => {
 
     weak.delete('X-Frame-Options')
     weak.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'")
+
     expect(securityHeaders(weak).filter(c => !c.ok)).toEqual([
       { check: 'header content-security-policy', ok: false },
       { check: 'header x-frame-options', ok: false, detail: 'missing' },
@@ -55,12 +56,18 @@ describe('requestChecks', () => {
   const panel = (async (input: string | URL | Request) => {
     const url = new URL(String(input))
 
-    if (url.hostname !== 'formline-admin.test') return new Response('Forbidden', { status: 403 })
-    if (url.pathname === '/api/health') return Response.json(url.search ? { status: 'ok', db: 'ok', role: 'ok' } : { status: 'ok' })
+    if (url.hostname !== 'formline-admin.test') {
+      return new Response('Forbidden', { status: 403 })
+    }
+    if (url.pathname === '/api/health') {
+      return Response.json(url.search ? { status: 'ok', db: 'ok', role: 'ok' } : { status: 'ok' })
+    }
 
     const noStore = { 'Cache-Control': 'private, no-store' }
 
-    if (url.pathname === '/sign-in') return new Response('', { headers: { ...Object.fromEntries(good), ...noStore } })
+    if (url.pathname === '/sign-in') {
+      return new Response('', { headers: { ...Object.fromEntries(good), ...noStore } })
+    }
 
     return new Response('', { status: 401, headers: noStore })
   }) as typeof fetch

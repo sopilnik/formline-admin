@@ -6,7 +6,9 @@
  * message; its reasons are the errors it holds.
  */
 export function messageOf(error: Error): string {
-  if (!(error instanceof AggregateError) || error.message) return error.message
+  if (!(error instanceof AggregateError) || error.message) {
+    return error.message
+  }
 
   return error.errors.map(e => (e instanceof Error ? e.message : String(e))).join('; ')
 }
@@ -15,7 +17,9 @@ export function messageOf(error: Error): string {
 function causeOf(error: unknown): string | undefined {
   let reason: string | undefined
 
-  for (let e = error instanceof Error ? error.cause : undefined; e instanceof Error; e = e.cause) reason = messageOf(e)
+  for (let e = error instanceof Error ? error.cause : undefined; e instanceof Error; e = e.cause) {
+    reason = messageOf(e)
+  }
 
   return reason
 }
@@ -25,7 +29,9 @@ function detailOf(error: unknown): string | undefined {
   for (let e: unknown = error; e instanceof Error; e = e.cause) {
     const detail = (e as { detail?: unknown }).detail
 
-    if (typeof detail === 'string' && detail !== '') return detail
+    if (typeof detail === 'string' && detail !== '') {
+      return detail
+    }
   }
 
   return undefined

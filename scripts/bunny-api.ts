@@ -17,7 +17,9 @@ export type BunnyRequest = { method: 'GET' | 'POST' | 'PATCH'; path: string; bod
 function requestInit({ method, body }: BunnyRequest, key: string): RequestInit {
   const headers: Record<string, string> = { [ACCESS_KEY_HEADER]: key, [ACCEPT_HEADER]: JSON_TYPE }
 
-  if (body) headers[CONTENT_TYPE_HEADER] = JSON_TYPE
+  if (body) {
+    headers[CONTENT_TYPE_HEADER] = JSON_TYPE
+  }
 
   return { method, headers, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) }
 }
@@ -26,7 +28,9 @@ export async function bunnyApi(connection: BunnyConnection, request: BunnyReques
   const base = connection.base ?? BUNNY_API
   const res = await connection.fetch(`${base}${request.path}`, requestInit(request, connection.key))
 
-  if (!res.ok) throw new Error(`bunny ${request.method} ${request.path.replace(APP_ID_IN_PATH, MASKED_APP_PATH)}: HTTP ${res.status}`)
+  if (!res.ok) {
+    throw new Error(`bunny ${request.method} ${request.path.replace(APP_ID_IN_PATH, MASKED_APP_PATH)}: HTTP ${res.status}`)
+  }
 
   const text = await res.text()
 

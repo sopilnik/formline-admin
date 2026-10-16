@@ -37,7 +37,10 @@ async function connect(url: string, delays: number[]): Promise<pg.Client> {
 
       const delay = delays[attempt]
 
-      if (delay === undefined) throw new Error(`database unreachable after ${attempt + 1} attempts`, { cause: error })
+      if (delay === undefined) {
+        throw new Error(`database unreachable after ${attempt + 1} attempts`, { cause: error })
+      }
+
       await sleep(delay)
     }
   }
@@ -46,11 +49,15 @@ async function connect(url: string, delays: number[]): Promise<pg.Client> {
 function appCredentials(appUrl: string): { password: string } {
   const url = new URL(appUrl)
 
-  if (decodeURIComponent(url.username) !== 'app') throw new MigrateConfigError('DATABASE_URL must connect as the app role')
+  if (decodeURIComponent(url.username) !== 'app') {
+    throw new MigrateConfigError('DATABASE_URL must connect as the app role')
+  }
 
   const password = decodeURIComponent(url.password)
 
-  if (password.length < 16) throw new MigrateConfigError('the app role password must be at least 16 characters')
+  if (password.length < 16) {
+    throw new MigrateConfigError('the app role password must be at least 16 characters')
+  }
 
   return { password }
 }
@@ -105,11 +112,14 @@ export async function migrate(options: MigrateOptions): Promise<{ applied: strin
     const applied: string[] = []
 
     for (const file of files) {
-      if (done.has(file)) continue
+      if (done.has(file)) {
+        continue
+      }
 
       const text = await readFile(new URL(file, dir), 'utf8')
 
       await client.query('begin')
+
       try {
         await client.query('set local role schema_owner')
         await client.query('set local search_path = pg_catalog')
@@ -118,6 +128,7 @@ export async function migrate(options: MigrateOptions): Promise<{ applied: strin
         await client.query('commit')
       } catch (error) {
         await client.query('rollback')
+
         throw error
       }
 
@@ -130,7 +141,9 @@ export async function migrate(options: MigrateOptions): Promise<{ applied: strin
     if (!options.dir) {
       const template = await buildTemplate(client)
 
-      if (template.rebuilt) log({ event: 'template.built', version: template.version })
+      if (template.rebuilt) {
+        log({ event: 'template.built', version: template.version })
+      }
     }
 
     return { applied }

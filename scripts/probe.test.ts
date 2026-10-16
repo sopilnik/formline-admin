@@ -28,7 +28,9 @@ describe('runProbe', () => {
       probe,
       siteUrl: 'https://formline-admin.test',
       bunny: async path => {
-        if (!(path in answers)) throw new Error(`bunny GET ${path}: HTTP 404`)
+        if (!(path in answers)) {
+          throw new Error(`bunny GET ${path}: HTTP 404`)
+        }
 
         return answers[path]!
       },
@@ -67,6 +69,7 @@ describe('runProbe', () => {
 
     refused.o.rawHosts = async () => hosts
     refused.o.fetch = answering(403)
+
     expect(await runProbe(refused.o)).toBe(true)
     expect(refused.events).toEqual([{
       probe: 'p2', viaEdgeWithForgedHeaders: 200, rawHosts: 2, rawWithForgedHeaders: [403, 403], rawWithout: [403, 403], rawImage: [403, 403],
@@ -77,6 +80,7 @@ describe('runProbe', () => {
 
     served.o.rawHosts = async () => hosts
     served.o.fetch = answering(200)
+
     expect(await runProbe(served.o)).toBe(false)
 
     const none = options('p2', {}, new Response('', { status: 200 }))
@@ -99,9 +103,15 @@ describe('runProbe', () => {
         const url = new URL(String(input))
         const noStore = { 'Cache-Control': 'private, no-store', 'CDN-Cache': 'MISS' }
 
-        if (url.pathname.startsWith('/_next/static/')) return new Response('', { headers: { 'CDN-Cache': asset++ === 0 ? 'MISS' : hits } })
-        if (url.pathname === '/sign-in') return new Response('<script src="/_next/static/chunks/app.js"></script>', { headers: noStore })
-        if (url.pathname === '/api/health') return Response.json({ status: 'ok', db: 'ok', role: 'ok' })
+        if (url.pathname.startsWith('/_next/static/')) {
+          return new Response('', { headers: { 'CDN-Cache': asset++ === 0 ? 'MISS' : hits } })
+        }
+        if (url.pathname === '/sign-in') {
+          return new Response('<script src="/_next/static/chunks/app.js"></script>', { headers: noStore })
+        }
+        if (url.pathname === '/api/health') {
+          return Response.json({ status: 'ok', db: 'ok', role: 'ok' })
+        }
 
         return new Response('', { status: 401, headers: noStore })
       }) as typeof fetch
@@ -109,12 +119,14 @@ describe('runProbe', () => {
     const served = options('p4', {})
 
     served.o.fetch = edge('HIT')
+
     expect(await runProbe(served.o)).toBe(true)
     expect(served.events.map(e => e.check)).toEqual(['sign-in not cached', 'sign-in not cached on a second request', 'media not cached', 'built files come from the edge'])
 
     const missed = options('p4', {})
 
     missed.o.fetch = edge('MISS')
+
     expect(await runProbe(missed.o)).toBe(false)
   })
 

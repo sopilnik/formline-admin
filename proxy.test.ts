@@ -17,6 +17,7 @@ function production() {
 describe('origin check', () => {
   it('lets the liveness probe through without the secret', () => {
     production()
+
     expect(proxy(req('/api/health')).status).toBe(200)
   })
 
@@ -37,23 +38,27 @@ describe('origin check', () => {
 
   it('accepts the edge headers', () => {
     production()
+
     expect(proxy(req('/overview', good)).status).toBe(200)
   })
 
   it('ignores ORIGIN_AUTH_DISABLED in production', () => {
     production()
     vi.stubEnv('ORIGIN_AUTH_DISABLED', '1')
+
     expect(proxy(req('/overview')).status).toBe(403)
   })
 
   it('honors ORIGIN_AUTH_DISABLED in development', () => {
     vi.stubEnv('NODE_ENV', 'development')
     vi.stubEnv('ORIGIN_AUTH_DISABLED', '1')
+
     expect(proxy(req('/overview')).status).toBe(200)
   })
 
   it('lets only the bare liveness path through: the readiness check needs the edge', () => {
     production()
+
     expect(proxy(req('/api/health?db=1')).status).toBe(403)
     expect(proxy(req('/api/health?db=1', good)).status).toBe(200)
   })
@@ -84,6 +89,7 @@ describe('maintenance mode', () => {
 
   it('keeps liveness answering and the edge check in front', () => {
     maintenance()
+
     expect(proxy(req('/api/health')).status).toBe(200)
     expect(proxy(req('/overview')).status).toBe(403)
   })
@@ -104,6 +110,7 @@ describe('request decoration', () => {
 
   it('sets the language cookie from ?lang and ignores unknown values', () => {
     production()
+
     expect(proxy(req('/?lang=ru', good)).cookies.get('NEXT_LOCALE')?.value).toBe('ru')
     expect(proxy(req('/?lang=de', good)).cookies.get('NEXT_LOCALE')).toBeUndefined()
   })
@@ -125,12 +132,15 @@ describe('request decoration', () => {
 
     expect(res.headers.get('x-middleware-request-x-forwarded-host')).toBe('formline-admin.sopilnik.dev')
     expect(res.headers.get('x-middleware-request-x-forwarded-proto')).toBe('https')
+
     vi.stubEnv('NODE_ENV', 'development')
+
     expect(proxy(req('/overview', good)).headers.get('x-middleware-request-x-forwarded-host')).toBeNull()
   })
 
   it('tells the frame which language a ?lang link chose, and drops the mark when a browser sends it', () => {
     production()
+
     expect(proxy(req('/overview?lang=ru', good)).headers.get('x-middleware-request-x-lang-link')).toBe('ru')
     expect(proxy(req('/overview', { ...good, 'x-lang-link': 'ru' })).headers.get('x-middleware-request-x-lang-link')).toBeNull()
   })

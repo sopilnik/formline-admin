@@ -16,17 +16,22 @@ function world(opts: { templates?: { id: string; name: string }[]; versions: (st
     const method = init?.method ?? 'GET'
 
     calls.push({ method, url, body: init?.body ? JSON.parse(String(init.body)) : undefined, key: new Headers(init?.headers).get('AccessKey') })
+
     if (url.startsWith('https://formline-admin.test/api/health')) {
       const version = versions.shift() ?? null
 
       return version === null ? new Response('', { status: 502 }) : Response.json({ status: 'ok', version })
     }
-    if (method === 'PATCH') return new Response('', { status: opts.patch ?? 200 })
+    if (method === 'PATCH') {
+      return new Response('', { status: opts.patch ?? 200 })
+    }
 
     const status = statuses.shift() ?? 'progressing'
 
     // A status of "502" stands for one call bunny's API fails.
-    if (status === '502') return new Response('', { status: 502 })
+    if (status === '502') {
+      return new Response('', { status: 502 })
+    }
 
     return Response.json({ status, containerTemplates: opts.templates ?? [{ id: 'c-1', name: 'web' }] })
   }) as typeof fetch
@@ -76,6 +81,7 @@ describe('deployImage', () => {
     const w = world({ versions: ['old-commit', 'old-commit', TAG], statuses: ['active', '502', 'progressing'] })
 
     await deployImage(w.options)
+
     expect(w.events).toEqual([
       { event: 'deploy.updated', container: 'web', tag: TAG },
       { event: 'deploy.poll_error', message: 'bunny GET /apps/{id}: HTTP 502' },

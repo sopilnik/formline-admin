@@ -16,6 +16,7 @@ const code = encodeBase32LowerCaseNoPadding(randomBytes(20))
 const client = new pg.Client({ connectionString: url })
 
 await client.connect()
+
 try {
   await client.query('begin')
   await client.query('set local role schema_owner')

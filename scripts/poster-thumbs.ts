@@ -15,4 +15,5 @@ const posters = (await readdir(POSTERS)).filter(name => name.endsWith('.webp')).
 for (const name of posters) {
   await sharp(fileURLToPath(new URL(name, POSTERS))).resize({ width: 120, height: 170, fit: 'cover' }).webp({ quality: 75 }).toFile(fileURLToPath(new URL(name, THUMBS)))
 }
+
 console.log(`${posters.length} small copies in public/posters/thumb/`)

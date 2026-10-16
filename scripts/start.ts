@@ -13,6 +13,7 @@ import { migrate, MigrateConfigError } from './migrate.ts'
 
 export type Env = Record<string, string | undefined>
 export type Server = { stop(signal: NodeJS.Signals): void; exited: Promise<number> }
+
 type Log = (event: Record<string, unknown>) => void
 
 export type StartDeps = {
@@ -38,7 +39,9 @@ export const RETRY_EVERY_MS = 30_000
  */
 export function classify(error: unknown): 'unreachable' | 'refused' {
   for (let e: unknown = error; e instanceof Error; e = e.cause) {
-    if (e instanceof AppRoleError || e instanceof MigrateConfigError) return 'refused'
+    if (e instanceof AppRoleError || e instanceof MigrateConfigError) {
+      return 'refused'
+    }
     if (e instanceof pg.DatabaseError) {
       // Class 08 is a connection exception; 57P01–57P03 a server shutting down or starting; 53300 too many connections.
       return /^(08|57P0[1-3]|53300)/.test(e.code ?? '') ? 'unreachable' : 'refused'
@@ -75,7 +78,10 @@ async function prepare(deps: StartDeps, retryDelaysMs: number[]): Promise<'ready
 export async function runStart(deps: StartDeps): Promise<number> {
   try {
     readEnv(deps.env)
-    if (!deps.env.DATABASE_URL_MIGRATOR) throw new Error('DATABASE_URL_MIGRATOR is required')
+
+    if (!deps.env.DATABASE_URL_MIGRATOR) {
+      throw new Error('DATABASE_URL_MIGRATOR is required')
+    }
   } catch (error) {
     deps.log({ event: 'start.refused', ...errorFields(error) })
 
@@ -92,7 +98,9 @@ export async function runStart(deps: StartDeps): Promise<number> {
 
     return 128 + constants.signals[first.signal]
   }
-  if (first === 'refused') return 1
+  if (first === 'refused') {
+    return 1
+  }
 
   let maintenance = first === 'unreachable'
   let server = deps.serve(maintenance ? { ...serverEnv, FORMLINE_MAINTENANCE: '1' } : serverEnv)
@@ -119,10 +127,17 @@ export async function runStart(deps: StartDeps): Promise<number> {
 
     const verdict = await prepare(deps, [])
 
-    if (verdict === 'unreachable') continue
+    if (verdict === 'unreachable') {
+      continue
+    }
+
     server.stop('SIGTERM')
     await server.exited
-    if (verdict === 'refused') return 1
+
+    if (verdict === 'refused') {
+      return 1
+    }
+
     server = deps.serve(serverEnv)
     maintenance = false
     deps.log({ event: 'start.serving', maintenance })
@@ -155,7 +170,9 @@ export function main(): void {
   const log: Log = event => console.log(JSON.stringify(event))
   const env: Env = process.env
   const stopped = new Promise<NodeJS.Signals>(resolve => {
-    for (const signal of ['SIGTERM', 'SIGINT'] as const) process.once(signal, () => resolve(signal))
+    for (const signal of ['SIGTERM', 'SIGINT'] as const) {
+      process.once(signal, () => resolve(signal))
+    }
   })
 
   void runStart({

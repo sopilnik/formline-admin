@@ -16,6 +16,7 @@ export async function buildTemplate(client: pg.ClientBase, options: { version?: 
   const version = options.version ?? TEMPLATE_VERSION
 
   await client.query('begin')
+
   try {
     await client.query('set local role schema_owner')
     await client.query('set local search_path = pg_catalog')
@@ -27,7 +28,9 @@ export async function buildTemplate(client: pg.ClientBase, options: { version?: 
     const template = rows.find(r => r.kind === 'template')!
     const owner = rows.find(r => r.kind === 'owner')
 
-    if (!owner) throw new Error('the owner workspace does not exist; the migrations create it')
+    if (!owner) {
+      throw new Error('the owner workspace does not exist; the migrations create it')
+    }
 
     const result = { version, templateWorkspaceId: template.id, ownerWorkspaceId: owner.id }
 
@@ -74,6 +77,7 @@ export async function buildTemplate(client: pg.ClientBase, options: { version?: 
     return { rebuilt: true, ...result }
   } catch (error) {
     await client.query('rollback')
+
     throw error
   }
 }
@@ -94,7 +98,10 @@ async function writeUsers(client: pg.ClientBase, workspaceId: string, data: Temp
 async function giveOwnerCatalog(client: pg.ClientBase, workspaceId: string, data: TemplateData): Promise<void> {
   const { rowCount } = await client.query('select 1 from fa.collections where workspace_id = $1 limit 1', [workspaceId])
 
-  if (rowCount) return
+  if (rowCount) {
+    return
+  }
+
   await writeCatalog(client, workspaceId, { data, mode: 'keep' })
 }
 

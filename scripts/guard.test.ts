@@ -42,11 +42,16 @@ function bunny(answers: Record<string, unknown>, health = 200) {
     const method = init?.method ?? 'GET'
 
     calls.push({ url, method, key: new Headers(init?.headers).get('AccessKey') })
-    if (url.endsWith('/api/health')) return new Response('{"status":"ok"}', { status: health })
+
+    if (url.endsWith('/api/health')) {
+      return new Response('{"status":"ok"}', { status: health })
+    }
 
     const key = `${method} ${url.replace('https://api.bunny.net', '')}`
 
-    if (!(key in answers)) return new Response('', { status: 404 })
+    if (!(key in answers)) {
+      return new Response('', { status: 404 })
+    }
 
     const body = answers[key]
 

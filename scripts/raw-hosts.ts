@@ -20,7 +20,9 @@ export async function fetchRawHosts(o: { key: string; appId: string; siteUrl: st
   const get = async (path: string, label: string): Promise<unknown> => {
     const res = await o.fetch(`https://api.bunny.net${path}`, { headers: { AccessKey: o.key, Accept: 'application/json' }, signal: AbortSignal.timeout(20_000) })
 
-    if (!res.ok) throw new Error(`bunny GET ${label}: HTTP ${res.status}`)
+    if (!res.ok) {
+      throw new Error(`bunny GET ${label}: HTTP ${res.status}`)
+    }
 
     return res.json()
   }
@@ -28,7 +30,9 @@ export async function fetchRawHosts(o: { key: string; appId: string; siteUrl: st
   const { items } = (await get(`/mc/apps/${o.appId}/endpoints`, '/mc/apps/{id}/endpoints')) as { items?: { type?: string; pullZoneId?: string | number | null }[] }
   const zoneId = items?.find(item => item.type === 'cdn')?.pullZoneId
 
-  if (zoneId === undefined || zoneId === null || zoneId === '') return []
+  if (zoneId === undefined || zoneId === null || zoneId === '') {
+    return []
+  }
 
   return rawHostsOf((await get(`/pullzone/${zoneId}`, '/pullzone/{id}')) as PullZone, o.siteUrl)
 }

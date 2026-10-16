@@ -14,6 +14,7 @@ describe('catalog snapshot', () => {
     const slugs = new Set(PRODUCTS.map(p => p.slug))
 
     expect(slugs.size).toBe(PRODUCTS.length)
+
     for (const p of PRODUCTS) {
       expect(COLLECTIONS.some(c => c.slug === p.collection), p.slug).toBe(true)
       expect(p.palettes.every(id => id in PALETTES), p.slug).toBe(true)

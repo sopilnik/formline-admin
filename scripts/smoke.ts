@@ -102,7 +102,9 @@ export async function requestChecks(o: SmokeOptions): Promise<Check[]> {
   checks.push(notCached('media not cached', media.headers))
 
   // The hostnames themselves stay out of the log: one numbered check each.
-  if (o.rawHosts.length === 0) checks.push({ check: 'raw hostnames refuse a request around the panel\'s address', ok: true, detail: 'skipped: no raw hostname' })
+  if (o.rawHosts.length === 0) {
+    checks.push({ check: 'raw hostnames refuse a request around the panel\'s address', ok: true, detail: 'skipped: no raw hostname' })
+  }
   for (const [index, host] of o.rawHosts.entries()) {
     const label = `raw hostname ${index + 1} of ${o.rawHosts.length}`
     const raw = await o.fetch(`https://${host}/sign-in`, { redirect: 'manual', signal: AbortSignal.timeout(20_000) }).catch(() => null)
@@ -129,7 +131,10 @@ async function uploadCheck(page: Page, siteUrl: string): Promise<Check> {
   const refused = card.getByRole('alert')
 
   await shown.or(refused).first().waitFor({ timeout: 30_000 })
-  if (await refused.isVisible()) return { check: UPLOAD_CHECK, ok: false, detail: (await refused.innerText()).trim() }
+
+  if (await refused.isVisible()) {
+    return { check: UPLOAD_CHECK, ok: false, detail: (await refused.innerText()).trim() }
+  }
 
   const src = await shown.getAttribute('src')
 
@@ -173,7 +178,9 @@ export async function demoSteps(page: Page, siteUrl: string, steps: { upload?: b
 
     checks.push({ check: 'enter the demo', ok: elapsed < DEMO_ENTRY_LIMIT_MS, detail: `${elapsed} ms` })
 
-    if (steps.upload) checks.push(await uploadCheck(page, siteUrl).catch(error => ({ check: UPLOAD_CHECK, ok: false, detail: firstLine(error) })))
+    if (steps.upload) {
+      checks.push(await uploadCheck(page, siteUrl).catch(error => ({ check: UPLOAD_CHECK, ok: false, detail: firstLine(error) })))
+    }
 
     await step('open the account menu', () => page.getByRole('button', { name: /^Account menu: / }).click())
     await step('choose Sign out', () => page.getByRole('menuitem', { name: 'Sign out' }).click())
@@ -212,7 +219,9 @@ if (import.meta.main) {
   const log = (event: Record<string, unknown>) => console.log(JSON.stringify(event))
 
   const run = async (): Promise<number> => {
-    if (!env.SITE_URL) throw new Error('SITE_URL is required')
+    if (!env.SITE_URL) {
+      throw new Error('SITE_URL is required')
+    }
 
     // Read from bunny's API, so the check of the raw hostnames needs no extra setting.
     const rawHosts = env.BUNNY_API_KEY && env.MC_APP_ID ? await fetchRawHosts({ key: env.BUNNY_API_KEY, appId: env.MC_APP_ID, siteUrl: env.SITE_URL, fetch }) : []
@@ -221,7 +230,9 @@ if (import.meta.main) {
 
     const checks = await smoke({ siteUrl: env.SITE_URL, rawHosts, headers, fetch })
 
-    for (const check of checks) log(check)
+    for (const check of checks) {
+      log(check)
+    }
 
     return checks.every(check => check.ok) ? 0 : 1
   }

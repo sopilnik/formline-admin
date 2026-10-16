@@ -35,7 +35,9 @@ function isLiveness(request: NextRequest): boolean {
 // control — that lives in the data access layer — it keeps the client IP
 // trustworthy for rate limits and keeps the raw endpoint closed.
 function fromEdge(request: NextRequest): boolean {
-  if (process.env.NODE_ENV !== 'production' && process.env.ORIGIN_AUTH_DISABLED === '1') return true
+  if (process.env.NODE_ENV !== 'production' && process.env.ORIGIN_AUTH_DISABLED === '1') {
+    return true
+  }
 
   const secret = process.env.ORIGIN_AUTH_SECRET ?? ''
   const given = request.headers.get('x-origin-auth') ?? ''
@@ -75,16 +77,25 @@ export function proxy(request: NextRequest): NextResponse {
   const locale = request.method === 'GET' ? knownLocale(lang) : null
 
   // The request that carries ?lang renders in that language already, not only the next one.
-  if (locale) request.cookies.set(LOCALE_COOKIE, locale)
+  if (locale) {
+    request.cookies.set(LOCALE_COOKIE, locale)
+  }
 
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
   const csp = buildCsp(nonce, process.env.NODE_ENV === 'development')
   const headers = new Headers(request.headers)
 
-  if (locale) headers.set('cookie', request.cookies.toString())
+  if (locale) {
+    headers.set('cookie', request.cookies.toString())
+  }
+
   // Only this proxy says that a link chose the language: a header the browser sent itself is dropped.
   headers.delete(LANG_LINK_HEADER)
-  if (locale) headers.set(LANG_LINK_HEADER, locale)
+
+  if (locale) {
+    headers.set(LANG_LINK_HEADER, locale)
+  }
+
   headers.set('x-nonce', nonce)
   headers.set('x-request-id', requestId)
   headers.set('Content-Security-Policy', csp)
@@ -102,7 +113,10 @@ export function proxy(request: NextRequest): NextResponse {
 
   response.headers.set('Content-Security-Policy', csp)
   response.headers.set('X-Request-Id', requestId)
-  if (locale) response.cookies.set(LOCALE_COOKIE, locale, PREFERENCE_COOKIE_OPTIONS)
+
+  if (locale) {
+    response.cookies.set(LOCALE_COOKIE, locale, PREFERENCE_COOKIE_OPTIONS)
+  }
 
   return response
 }

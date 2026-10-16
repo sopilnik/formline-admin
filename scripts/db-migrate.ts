@@ -10,6 +10,7 @@ if (!migratorUrl || !appUrl) {
   console.error(JSON.stringify({ event: 'migrate.failed', message: 'DATABASE_URL_MIGRATOR and DATABASE_URL are required' }))
   process.exit(1)
 }
+
 migrate({ migratorUrl, appUrl, log: e => console.log(JSON.stringify(e)) }).then(
   r => console.log(JSON.stringify({ event: 'migrate.done', applied: r.applied })),
   e => {

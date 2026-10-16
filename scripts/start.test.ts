@@ -35,10 +35,14 @@ function harness(steps: Array<'ok' | Error>, role: 'ok' | Error = 'ok') {
 
       const step = steps.shift() ?? 'ok'
 
-      if (step !== 'ok') throw step
+      if (step !== 'ok') {
+        throw step
+      }
     },
     checkRole: async () => {
-      if (role !== 'ok') throw role
+      if (role !== 'ok') {
+        throw role
+      }
     },
     serve: env => {
       let exit: (code: number) => void = () => undefined
@@ -82,10 +86,13 @@ describe('runStart', () => {
     const h = harness([])
 
     h.deps.env = { ...ENV, IP_HASH_KEY: 'short' }
+
     expect(await runStart(h.deps)).toBe(1)
     expect(h.retries).toEqual([])
     expect(h.servers).toEqual([])
+
     h.deps.env = withoutMigrator(ENV)
+
     expect(await runStart(h.deps)).toBe(1)
     expect(h.events.at(-1)).toMatchObject({ event: 'start.refused', message: 'DATABASE_URL_MIGRATOR is required' })
   })
@@ -95,12 +102,15 @@ describe('runStart', () => {
     const running = runStart(h.deps)
 
     await h.flush()
+
     expect(h.retries).toEqual([[1_000, 2_000, 4_000, 8_000]])
     expect(h.servers).toHaveLength(1)
     expect(h.servers[0]!.env.DATABASE_URL_MIGRATOR).toBeUndefined()
     expect(h.servers[0]!.env.DATABASE_URL).toBe(ENV.DATABASE_URL)
     expect(h.servers[0]!.env.FORMLINE_MAINTENANCE).toBeUndefined()
+
     h.stop('SIGTERM')
+
     expect(await running).toBe(143)
     expect(h.servers[0]!.signals).toEqual(['SIGTERM'])
   })
@@ -114,6 +124,7 @@ describe('runStart', () => {
 
     await h.flush()
     h.stop('SIGTERM')
+
     expect(await running).toBe(143)
     expect(h.servers).toEqual([])
     expect(h.events.at(-1)).toEqual({ event: 'start.stopped', signal: 'SIGTERM' })
@@ -136,19 +147,26 @@ describe('runStart', () => {
     const running = runStart(h.deps)
 
     await h.flush()
+
     expect(h.servers).toHaveLength(1)
     expect(h.servers[0]!.env.FORMLINE_MAINTENANCE).toBe('1')
+
     h.tick()
     await h.flush()
+
     expect(h.servers).toHaveLength(1)
+
     h.tick()
     await h.flush()
+
     expect(h.retries).toEqual([[1_000, 2_000, 4_000, 8_000], [], []])
     expect(h.servers[0]!.signals).toEqual(['SIGTERM'])
     expect(h.servers).toHaveLength(2)
     expect(h.servers[1]!.env.FORMLINE_MAINTENANCE).toBeUndefined()
     expect(h.servers[1]!.env.DATABASE_URL_MIGRATOR).toBeUndefined()
+
     h.stop('SIGTERM')
+
     expect(await running).toBe(143)
   })
 
@@ -158,6 +176,7 @@ describe('runStart', () => {
 
     await h.flush()
     h.tick()
+
     expect(await running).toBe(1)
     expect(h.servers[0]!.signals).toEqual(['SIGTERM'])
     expect(h.servers).toHaveLength(1)
@@ -174,8 +193,11 @@ describe('runStart', () => {
     const running = runStart(away.deps)
 
     await away.flush()
+
     expect(away.events[0]).toEqual({ event: 'start.unreachable', message: 'database unreachable after 1 attempts', cause: 'connect ECONNREFUSED' })
+
     away.stop('SIGTERM')
+
     expect(await running).toBe(143)
 
     const role = harness(['ok'], new AppRoleError('over-privileged'))
@@ -205,16 +227,22 @@ describe('runStart', () => {
     const migrating = runStart(migration.deps)
 
     await migration.flush()
+
     expect(migration.events[0]).toEqual({ event: 'start.unreachable', message: 'database unreachable after 1 attempts', cause: reason })
+
     migration.stop('SIGTERM')
+
     expect(await migrating).toBe(143)
 
     const role = harness(['ok'], everyAddress())
     const checking = runStart(role.deps)
 
     await role.flush()
+
     expect(role.events[0]).toEqual({ event: 'start.unreachable', message: reason })
+
     role.stop('SIGTERM')
+
     expect(await checking).toBe(143)
   })
 
@@ -224,6 +252,7 @@ describe('runStart', () => {
 
     await h.flush()
     h.servers[0]!.exit(1)
+
     expect(await running).toBe(1)
     expect(h.events.at(-1)).toEqual({ event: 'start.server_exited', code: 1 })
   })

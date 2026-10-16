@@ -26,7 +26,10 @@ export function weighted<T>(random: Random, entries: readonly (readonly [T, numb
 
   for (const [item, weight] of entries) {
     roll -= weight
-    if (roll < 0) return item
+
+    if (roll < 0) {
+      return item
+    }
   }
 
   return entries[entries.length - 1]![0]
