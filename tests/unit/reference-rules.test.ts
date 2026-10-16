@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
@@ -10,11 +10,17 @@ const SKIP_PREFIXES = ['public/', 'src/server/db/migrations/']
 const TEXT = /\.(css|json|md|mjs|sql|ts|tsx|yml)$|(^|\/)(Dockerfile|\.env\.example)$/
 const SELF = 'tests/unit/reference-rules.test.ts'
 
-// The tracked files only: what git ignores is not part of the repository.
-function textFiles(): string[] {
-  const tracked = execFileSync('git', ['ls-files'], { cwd: root, encoding: 'utf8' }).split('\n')
+// A text source this test reads, by its name.
+function isChecked(name: string): boolean {
+  return TEXT.test(name) && name !== SELF && !SKIP_PREFIXES.some(prefix => name.startsWith(prefix))
+}
 
-  return tracked.filter(name => TEXT.test(name) && name !== SELF && !SKIP_PREFIXES.some(prefix => name.startsWith(prefix)))
+// The files git tracks and the new ones it would add, as they are on disk: what git ignores is not part of the
+// repository, and a file deleted but still in the index is gone.
+function textFiles(): string[] {
+  const listed = execFileSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], { cwd: root, encoding: 'utf8' })
+
+  return listed.split('\0').filter(name => isChecked(name) && existsSync(join(root, name)))
 }
 
 /** Pointers into private design notes, dated decisions and tracker labels: nothing in the repository resolves them. */
