@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { Brand } from '@/components/app/brand'
 import type { NavItem } from '@/components/app/nav'
 import { NavLinks } from '@/components/app/nav-links'
+import { StorefrontLink } from '@/components/app/storefront-link'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 
@@ -28,6 +29,7 @@ export function MobileNav({ items }: { items: NavItem[] }) {
         <nav aria-label={t('label')}>
           <NavLinks items={items} onNavigate={() => setOpen(false)} />
         </nav>
+        <StorefrontLink />
       </SheetContent>
     </Sheet>
   )

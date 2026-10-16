@@ -7,6 +7,7 @@ import { Brand } from '@/components/app/brand'
 import type { NavItem } from '@/components/app/nav'
 import { NavLinks } from '@/components/app/nav-links'
 import { SIDEBAR_LABEL } from '@/components/app/sidebar-label'
+import { StorefrontLink } from '@/components/app/storefront-link'
 import { SIDEBAR_COOKIE } from '@/lib/preferences'
 import { cn } from '@/lib/utils'
 
@@ -38,6 +39,7 @@ export function Sidebar({ items, collapsed: initiallyCollapsed }: { items: NavIt
       <nav aria-label={t('label')} className="-m-1 min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-1">
         <NavLinks items={items} collapsed={collapsed} />
       </nav>
+      <StorefrontLink collapsed={collapsed} />
       <button
         type="button"
         onClick={toggle}

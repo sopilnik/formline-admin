@@ -5,7 +5,8 @@
     "skipToContent": "Skip to content",
     "messages": "Messages",
     "unreached": "No answer from the server. Check the connection and try again.",
-    "showPassword": "Show password"
+    "showPassword": "Show password",
+    "newTab": "(opens in a new tab)"
   },
   "nav": {
     "label": "Main menu",
@@ -22,6 +23,7 @@
     "expand": "Expand menu",
     "open": "Open menu",
     "close": "Close menu",
+    "storefront": "Storefront",
     "ordersToProcess": "{count, plural, one {# to process} other {# to process}}"
   },
   "theme": {
@@ -270,6 +272,10 @@
     "description": "The page you are looking for does not exist."
   },
   "auth": {
+    "store": {
+      "title": "Formline store",
+      "note": "The shop this panel runs"
+    },
     "fields": {
       "name": "Your name",
       "email": "Email",
