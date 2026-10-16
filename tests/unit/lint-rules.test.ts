@@ -21,8 +21,14 @@ describe('project lint rules', () => {
   })
 
   it('lets an argument a signature demands go unused when its name starts with an underscore, and no other', async () => {
-    expect(await ruleIds('export const act = (_previous: unknown, _form: FormData) => 1\n', 'src/server/actions/example.ts')).toEqual([])
-    expect(await ruleIds('export const act = (previous: unknown) => 1\n', 'src/server/actions/example.ts')).toEqual(['@typescript-eslint/no-unused-vars'])
+    expect(await ruleIds('export const act = (_previous: unknown, _form: FormData): number => 1\n', 'src/server/actions/example.ts')).toEqual([])
+    expect(await ruleIds('export const act = (previous: unknown): number => 1\n', 'src/server/actions/example.ts')).toEqual(['@typescript-eslint/no-unused-vars'])
+  })
+
+  it('wants braces on every body and a blank line before a return', async () => {
+    const code = 'export function f(x: number): number {\n  if (x) return 1\n  const y = x\n  return y\n}\n'
+
+    expect(await ruleIds(code, 'src/lib/example.ts')).toEqual(expect.arrayContaining(['curly', '@stylistic/padding-line-between-statements']))
   })
 
   it('leaves the vendored ui primitives to their own style', async () => {
