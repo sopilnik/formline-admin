@@ -26,9 +26,9 @@ describe('project lint rules', () => {
   })
 
   it('wants braces on every body and a blank line before a return', async () => {
-    const code = 'export function f(x: number): number {\n  if (x) return 1\n  const y = x\n  return y\n}\n'
+    const code = 'export function f(x: number): number {\n  if (x) return 1\n  f(x - 1)\n  return x\n}\n'
 
-    expect(await ruleIds(code, 'src/lib/example.ts')).toEqual(expect.arrayContaining(['curly', '@stylistic/padding-line-between-statements']))
+    expect(await ruleIds(code, 'src/lib/example.ts')).toEqual(['curly', '@stylistic/padding-line-between-statements'])
   })
 
   it('leaves the vendored ui primitives to their own style', async () => {
