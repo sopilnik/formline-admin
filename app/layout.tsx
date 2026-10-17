@@ -22,7 +22,8 @@ export async function generateMetadata(): Promise<Metadata> {
     description,
     robots: { index: false, follow: false },
     // The card a link to the panel unfolds into in a chat or on a profile page. Its image is app/opengraph-image.png.
-    openGraph: { type: 'website', siteName: APP_NAME, title: APP_NAME, description, url: '/' },
+    // It names no og:url: link preview services file a card under that address, and '/' answers with a redirect only.
+    openGraph: { type: 'website', siteName: APP_NAME, title: APP_NAME, description },
   }
 }
 
