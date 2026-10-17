@@ -41,12 +41,15 @@ export function StatusChips<S extends string>({ label, allLabel, statuses, selec
       <Toggle pressed={pressed.includes(ALL)} onPressedChange={on => press(ALL, on)} aria-label={`${allLabel}, ${all}`} className={CHIP}>
         <Check aria-hidden className="hidden size-3.5 group-data-pressed/toggle:block" strokeWidth={2.5} />
         {allLabel}
+        {/* In every chip the space keeps the label and the count apart in its visible text, which its name must contain. */}
+        {' '}
         <span className={COUNT}>{all}</span>
       </Toggle>
       {statuses.map(status => (
         <Toggle key={status} pressed={pressed.includes(status)} onPressedChange={on => press(status, on)} aria-label={`${statusLabel(status)}, ${counts[status]}`} className={CHIP}>
           <Check aria-hidden className="hidden size-3.5 group-data-pressed/toggle:block" strokeWidth={2.5} />
           {statusLabel(status)}
+          {' '}
           <span className={COUNT}>{counts[status]}</span>
         </Toggle>
       ))}

@@ -10,6 +10,8 @@ export const NOTIFICATION_KINDS = [
   'auth.second_factor_locked',
   'auth.recovery_code_used',
 ] as const
+// The bell's badge shows at most this many unread notifications, and "99+" beyond it.
+const BADGE_MAX = 99
 
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number]
 
@@ -87,4 +89,16 @@ export function notificationTarget(kind: string, stored: unknown): NotificationT
     default:
       return null
   }
+}
+
+/**
+ * What the bell's badge shows for `unread`, and the count its name takes the plural form from: the name must contain
+ * what the badge shows, and 100 picks the form that reads with "99+" in both languages.
+ */
+export function bellBadge(unread: number): { shown: string; count: number } {
+  if (unread > BADGE_MAX) {
+    return { shown: `${BADGE_MAX}+`, count: BADGE_MAX + 1 }
+  }
+
+  return { shown: String(unread), count: unread }
 }

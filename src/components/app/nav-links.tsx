@@ -3,10 +3,11 @@
 import { Activity, Image, Layers, LayoutGrid, Mail, Settings, Shield, ShoppingBag, Users, type LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import type { NavItem, NavKey } from '@/components/app/nav'
 import { SIDEBAR_LABEL } from '@/components/app/sidebar-label'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { formatNumber } from '@/lib/intl'
 import { cn } from '@/lib/utils'
 
 const ICONS: Record<NavKey, LucideIcon> = {
@@ -19,6 +20,27 @@ const ICONS: Record<NavKey, LucideIcon> = {
   activity: Activity,
   outbox: Mail,
   settings: Settings,
+}
+
+// An item's count of the work waiting in its section, and the dot that stands for it in the collapsed menu.
+function NavCount({ count, collapsed }: { count: number; collapsed: boolean }) {
+  const locale = useLocale()
+
+  return (
+    <>
+      {/* The space keeps the label and the count apart in the link's visible text, and the count is grouped as the
+          link's name groups it: the name must contain the visible text. */}
+      {' '}
+      <span aria-hidden className={cn('ml-auto text-xs text-sidebar-muted tabular-nums', SIDEBAR_LABEL, collapsed && 'opacity-0')}>
+        {formatNumber(count, locale)}
+      </span>
+      {/* The count's dot appears once the width has settled, and leaves at once when the menu expands. */}
+      <span
+        aria-hidden
+        className={cn('absolute top-1.5 right-1.5 size-2 rounded-full bg-sidebar-bar', collapsed ? 'transition-opacity delay-200 duration-150 ease-out' : 'opacity-0')}
+      />
+    </>
+  )
 }
 
 export function NavLinks({ items, collapsed = false, onNavigate }: { items: NavItem[]; collapsed?: boolean; onNavigate?: () => void }) {
@@ -45,16 +67,7 @@ export function NavLinks({ items, collapsed = false, onNavigate }: { items: NavI
           >
             <Icon className="size-[18px] shrink-0" aria-hidden />
             <span className={cn(SIDEBAR_LABEL, collapsed && 'opacity-0')}>{t(item.key)}</span>
-            {item.count ? (
-              <>
-                <span aria-hidden className={cn('ml-auto text-xs text-sidebar-muted tabular-nums', SIDEBAR_LABEL, collapsed && 'opacity-0')}>{item.count}</span>
-                {/* The count's dot appears once the width has settled, and leaves at once when the menu expands. */}
-                <span
-                  aria-hidden
-                  className={cn('absolute top-1.5 right-1.5 size-2 rounded-full bg-sidebar-bar', collapsed ? 'transition-opacity delay-200 duration-150 ease-out' : 'opacity-0')}
-                />
-              </>
-            ) : null}
+            {item.count ? <NavCount count={item.count} collapsed={collapsed} /> : null}
           </Link>
         )
         const startsGroup = index > 0 && item.group !== items[index - 1]!.group

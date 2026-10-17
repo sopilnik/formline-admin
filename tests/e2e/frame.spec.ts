@@ -4,6 +4,7 @@ import { openFramed } from './ready.ts'
 import { signInAsSandboxUser } from './sessions.ts'
 import { expect, test } from './test.ts'
 
+const LANGUAGE_BUTTON = 'Language: EN (English)'
 const sidebarBackground = (page: Page) => page.locator('aside').evaluate(el => getComputedStyle(el).backgroundColor)
 
 test.describe('app frame', () => {
@@ -69,7 +70,7 @@ test.describe('app frame', () => {
   test('the language menu switches to Russian', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/overview')
-    await page.getByRole('button', { name: 'Language: English (EN)' }).click()
+    await page.getByRole('button', { name: LANGUAGE_BUTTON }).click()
     await page.getByRole('menuitemradio', { name: 'Русский' }).click()
 
     await expect(page.locator('html')).toHaveAttribute('lang', 'ru')
@@ -91,7 +92,7 @@ test.describe('app frame', () => {
 
     await expect(page.getByRole('menu')).toBeHidden()
 
-    await page.getByRole('button', { name: 'Language: English (EN)' }).click()
+    await page.getByRole('button', { name: LANGUAGE_BUTTON }).click()
     await page.getByRole('menuitemradio', { name: 'Русский' }).click()
 
     await expect(page.locator('html')).toHaveAttribute('lang', 'ru')
@@ -113,6 +114,23 @@ test.describe('app frame', () => {
     await expect(page.getByRole('link', { name: 'Outbox' })).toHaveCount(0)
   })
 
+  test('signing out ends the session', async ({ page, context }) => {
+    await signInAsSandboxUser(context)
+    await page.goto('/overview')
+    await page.getByRole('button', { name: /^Account menu/ }).click()
+    await page.getByRole('menuitem', { name: 'Sign out' }).click()
+    await page.getByRole('dialog', { name: 'Sign out and end the demo?' }).getByRole('button', { name: 'Sign out' }).click()
+
+    await expect(page).toHaveURL(/\/sign-in$/)
+    expect((await context.cookies()).some(c => c.name === '__Host-formline_session' && c.value !== '')).toBe(false)
+
+    await page.goto('/overview')
+
+    await expect(page).toHaveURL(/\/sign-in$/)
+  })
+})
+
+test.describe('app frame sidebar', () => {
   test('the menu collapses to icons and stays collapsed', async ({ page, context }) => {
     await signInAsSandboxUser(context)
     await page.goto('/overview')
@@ -216,20 +234,5 @@ test.describe('app frame', () => {
     await drawer.getByRole('button', { name: 'Close menu' }).click()
 
     await expect(drawer).toBeHidden()
-  })
-
-  test('signing out ends the session', async ({ page, context }) => {
-    await signInAsSandboxUser(context)
-    await page.goto('/overview')
-    await page.getByRole('button', { name: /^Account menu/ }).click()
-    await page.getByRole('menuitem', { name: 'Sign out' }).click()
-    await page.getByRole('dialog', { name: 'Sign out and end the demo?' }).getByRole('button', { name: 'Sign out' }).click()
-
-    await expect(page).toHaveURL(/\/sign-in$/)
-    expect((await context.cookies()).some(c => c.name === '__Host-formline_session' && c.value !== '')).toBe(false)
-
-    await page.goto('/overview')
-
-    await expect(page).toHaveURL(/\/sign-in$/)
   })
 })

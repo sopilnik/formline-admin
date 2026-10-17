@@ -9,7 +9,7 @@ import { useEffect, useState, useTransition } from 'react'
 import { useReach } from '@/components/app/use-reach'
 import { NotificationEntry } from '@/components/notifications/notification-entry'
 import { Button } from '@/components/ui/button'
-import type { NotificationItem } from '@/lib/notifications/view'
+import { bellBadge, type NotificationItem } from '@/lib/notifications/view'
 import { markAllNotificationsReadAction } from '@/server/actions/notifications'
 
 type Feed = { unread: number; total: number; items: NotificationItem[] }
@@ -52,6 +52,7 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
   const [failed, setFailed] = useState(false)
   const [, startTransition] = useTransition()
   const unread = feed?.unread ?? initialUnread
+  const badge = bellBadge(unread)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -110,14 +111,14 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
 
   return (
     <Popover.Root open={open} onOpenChange={openChange}>
-      <Popover.Trigger render={<Button variant="ghost" size="icon" className="relative" aria-label={t('bell', { count: unread })} />}>
+      <Popover.Trigger render={<Button variant="ghost" size="icon" className="relative" aria-label={t('bell', { count: badge.count, shown: badge.shown })} />}>
         <Bell aria-hidden />
         {unread > 0 ? (
           <span
             aria-hidden
             className="absolute top-0 left-[calc(50%+1px)] grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] leading-none font-semibold text-primary-foreground tabular-nums"
           >
-            {unread > 99 ? '99+' : unread}
+            {badge.shown}
           </span>
         ) : null}
       </Popover.Trigger>

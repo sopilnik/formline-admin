@@ -32,7 +32,7 @@ test.describe('top bar', () => {
   test('the language button’s name holds the code it shows, in both languages', async ({ page, context }) => {
     await signInAsSandboxUser(context)
 
-    for (const [lang, name, code] of [['en', 'Language: English (EN)', 'EN'], ['ru', 'Язык: Русский (RU)', 'RU']]) {
+    for (const [lang, name, code] of [['en', 'Language: EN (English)', 'EN'], ['ru', 'Язык: RU (Русский)', 'RU']]) {
       await page.goto(`/overview?lang=${lang}`)
 
       const button = page.getByRole('banner').getByRole('button', { name })

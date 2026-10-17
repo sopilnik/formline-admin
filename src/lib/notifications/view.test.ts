@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { NOTIFICATION_KINDS, notificationTarget, notificationView } from '@/lib/notifications/view'
+import { bellBadge, NOTIFICATION_KINDS, notificationTarget, notificationView } from '@/lib/notifications/view'
 
 const PRODUCT = '0b6f3c1e-8d2a-4b7e-9f10-2a3b4c5d6e7f'
 
@@ -53,5 +53,14 @@ describe('notificationTarget', () => {
     expect(notificationTarget('order.created', {})).toBeNull()
     expect(notificationTarget('stock.low', { productId: 'not-a-uuid' })).toBeNull()
     expect(notificationTarget('order.new', { number: 1 })).toBeNull()
+  })
+})
+
+describe('bellBadge', () => {
+  it('shows the count up to 99 and 99+ beyond it, with the plural form that reads with what it shows', () => {
+    expect(bellBadge(0)).toEqual({ shown: '0', count: 0 })
+    expect(bellBadge(99)).toEqual({ shown: '99', count: 99 })
+    expect(bellBadge(100)).toEqual({ shown: '99+', count: 100 })
+    expect(bellBadge(101)).toEqual({ shown: '99+', count: 100 })
   })
 })

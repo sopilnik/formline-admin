@@ -13,7 +13,10 @@ test.describe('copy details', () => {
     await asSchemaOwner(c => c.query('update fa.users set name = $3 where workspace_id = $1 and id = $2', [workspaceId, userId, '😀 Émile Zola']))
     await openFramed(page, '/overview')
 
-    await expect(page.getByRole('button', { name: /^Account menu/ })).toContainText('ÉZ')
+    const avatar = page.getByRole('button', { name: /^Account menu/ }).locator('[data-initials]')
+
+    await expect(avatar).toHaveAttribute('data-initials', 'ÉZ')
+    expect(await avatar.evaluate(el => getComputedStyle(el, '::before').content)).toBe('"ÉZ"')
   })
 
   test('the store offers UTC first and today\'s zone names', async ({ page, context }) => {
