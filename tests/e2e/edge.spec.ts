@@ -38,7 +38,7 @@ test('pages carry the security headers and a per-request nonce the scripts use',
   expect(h['strict-transport-security']).toBe('max-age=63072000; includeSubDomains')
   expect(h['x-frame-options']).toBe('DENY')
   expect(h['x-content-type-options']).toBe('nosniff')
-  expect(h['x-robots-tag']).toBe('noindex, nofollow')
+  expect(h['x-robots-tag']).toBe('noindex')
   expect(h['cross-origin-opener-policy']).toBe('same-origin')
   expect(h['x-request-id']).toMatch(/^[0-9a-f-]{36}$/)
   expect(h['x-powered-by']).toBeUndefined()

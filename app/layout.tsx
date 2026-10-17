@@ -20,7 +20,9 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: authConfig().siteUrl,
     title: { default: APP_NAME, template: `%s · ${APP_NAME}` },
     description,
-    robots: { index: false, follow: false },
+    // Kept out of search, as the store is. Links on the panel may be followed, as on the store: a link preview
+    // service may skip a page that says nofollow.
+    robots: { index: false, follow: true },
     // The card a link to the panel unfolds into in a chat or on a profile page. Its image is app/opengraph-image.png.
     // It names no og:url: link preview services file a card under that address, and '/' answers with a redirect only.
     openGraph: { type: 'website', siteName: APP_NAME, title: APP_NAME, description },

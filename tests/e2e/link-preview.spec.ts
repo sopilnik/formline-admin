@@ -19,6 +19,7 @@ test.describe('link preview', () => {
     expect(description).toMatch(/^The panel is where orders are processed/)
     expect(await metaContent(page, 'property="og:description"')).toBe(description)
     await expect(page.locator('head meta[property="og:url"]')).toHaveCount(0)
+    expect(await metaContent(page, 'name="robots"')).toBe('noindex, follow')
     expect(image.origin).toBe(baseURL)
     expect(image.pathname).toBe(IMAGE_PATH)
     expect(await metaContent(page, 'property="og:image:width"')).toBe('1200')
