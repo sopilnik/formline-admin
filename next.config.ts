@@ -17,6 +17,9 @@ const securityHeaders = [
 // instead of asking the origin in Frankfurt for each one. Uploads are a sandbox's own and stay private (app/media).
 const posterCaching = [{ key: 'Cache-Control', value: 'public, max-age=86400' }]
 
+// The link card's image is meant for other sites, and some show it from this address rather than from a copy of their own.
+const linkCardImage = [{ key: 'Cross-Origin-Resource-Policy', value: 'cross-origin' }]
+
 const nextConfig: NextConfig = {
   output: 'standalone',
   poweredByHeader: false,
@@ -42,7 +45,12 @@ const nextConfig: NextConfig = {
     staleTimes: { dynamic: 60 },
   },
   async headers() {
-    return [{ source: '/:path*', headers: securityHeaders }, { source: '/posters/:path*', headers: posterCaching }]
+    return [
+      { source: '/:path*', headers: securityHeaders },
+      { source: '/posters/:path*', headers: posterCaching },
+      // Listed after the security headers, so its Cross-Origin-Resource-Policy is the one sent.
+      { source: '/opengraph-image.png', headers: linkCardImage },
+    ]
   },
 }
 

@@ -8,12 +8,22 @@ import { APP_NAME } from '@/lib/app'
 import { inter, spaceGrotesk } from '@/lib/fonts'
 import { parseTheme, THEME_COOKIE, themeClassName } from '@/lib/theme'
 import { cn } from '@/lib/utils'
+import { authConfig } from '@/server/config'
 import { getNonce } from '@/server/request'
 import './globals.css'
 
-export const metadata: Metadata = {
-  title: { default: APP_NAME, template: `%s · ${APP_NAME}` },
-  robots: { index: false, follow: false },
+export async function generateMetadata(): Promise<Metadata> {
+  const description = (await getTranslations('common'))('description')
+
+  return {
+    // The card's addresses must be absolute and name the panel, not the address the server listens on.
+    metadataBase: authConfig().siteUrl,
+    title: { default: APP_NAME, template: `%s · ${APP_NAME}` },
+    description,
+    robots: { index: false, follow: false },
+    // The card a link to the panel unfolds into in a chat or on a profile page. Its image is app/opengraph-image.png.
+    openGraph: { type: 'website', siteName: APP_NAME, title: APP_NAME, description, url: '/' },
+  }
 }
 
 // Every page renders per request: the CSP nonce in proxy.ts requires it.

@@ -6,7 +6,8 @@
     "messages": "Messages",
     "unreached": "No answer from the server. Check the connection and try again.",
     "showPassword": "Show password",
-    "newTab": "(opens in a new tab)"
+    "newTab": "(opens in a new tab)",
+    "description": "The panel is where orders are processed, the catalog is kept and stock is tracked. Each visitor gets a private sandbox with no sign-up, kept apart by PostgreSQL row-level security."
   },
   "nav": {
     "label": "Main menu",
