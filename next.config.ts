@@ -10,7 +10,7 @@ const securityHeaders = [
   { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
   { key: 'Cross-Origin-Resource-Policy', value: 'same-origin' },
   { key: 'X-Frame-Options', value: 'DENY' },
-  { key: 'X-Robots-Tag', value: 'noindex' },
+  { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
 ]
 
 // The template posters and their small copies change only with a release: the browser and the CDN keep them for a day

@@ -7,7 +7,7 @@ const good = new Headers({
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'X-Robots-Tag': 'noindex',
+  'X-Robots-Tag': 'noindex, nofollow',
 })
 
 describe('securityHeaders', () => {
