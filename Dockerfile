@@ -2,7 +2,7 @@
 # scripts/container.ts (which runs scripts/start.ts) bundled to dist/start.mjs and copied in as scripts/start.mjs, migrates
 # the database, checks the role and then runs the standalone server.
 # Both stages name the same Node image by digest, so Dependabot moves them together (tests/unit/versions.test.ts).
-FROM node:26-slim@sha256:0d1e33586362bb9e608c4e751e7a9e7edb55c9ac11461ed5666af696cc461dd4 AS build
+FROM node:26-slim@sha256:36793bcbb160a6a16cede1e62b93f84e26b78a972a8a4c0b879c1c12f22761ec AS build
 ARG PNPM_VERSION=11.28.5
 ENV NEXT_TELEMETRY_DISABLED=1
 WORKDIR /src
@@ -12,7 +12,7 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm build && pnpm build:start
 
-FROM node:26-slim@sha256:0d1e33586362bb9e608c4e751e7a9e7edb55c9ac11461ed5666af696cc461dd4
+FROM node:26-slim@sha256:36793bcbb160a6a16cede1e62b93f84e26b78a972a8a4c0b879c1c12f22761ec
 WORKDIR /app
 # Root owns the files; the node user reads them and writes only Next.js's cache.
 COPY --from=build /src/.next/standalone ./
